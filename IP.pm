@@ -28,7 +28,7 @@ require Exporter;
 	
 );
 
-$VERSION = '2.21';
+$VERSION = '2.22';
 
 
 # Preloaded methods go here.
@@ -361,10 +361,8 @@ sub expand {
     my $bits = shift;
     my @addr = @_;
 
-    if (@addr == 1 and scalar $addr[0]) {
-	my $b = $bits;
-	$bits = $addr[0];
-	$addr[0] = $b;
+    if (@addr == 1 and !ref $addr[0]) {
+	($bits, $addr[0]) = ($addr[0], $bits);
     }
 
     @addr = _arrange_compact_list(@addr);
@@ -523,7 +521,12 @@ sub range {
 sub set_mask {
     my $self = shift;
     my $other = shift;
-    $self->{'mask'} = $other->{'mask'};
+    if (ref $other) {
+	$self->{'mask'} = $other->{'mask'};
+    }
+    elsif ($other =~ /^\/?(\d+)$/ and $1 >= 1 and $1 <= 32) {
+	$self->{mask} = $1;
+    }
     $self;
 }
 
@@ -617,6 +620,9 @@ NetAddr::IP - Manipulate IP Addresses easily
   $ip1->set_addr($ip2);
   $ip1->set_mask($subnet);
 
+  # ...or set directly
+  $ip1->set_mask(25);
+
   # Ammount of hosts in a subnet can also be easily calculated
   $max_hosts_in_subnet = $subnet->how_many - 2;
 
@@ -633,8 +639,9 @@ NetAddr::IP - Manipulate IP Addresses easily
   # Compact subnets or addresses into the largest possible CIDR block
   @compact_block = NetAddr::IP::compact(@many_small_ip_address_blocks);
 
-  # Split a set of blocks into smaller subnets
-  @small_subnets = NetAddr::IP::expand(@ip_address_blocks);
+  # Split a set of blocks into smaller (/30) subnets
+  @small_subnets = NetAddr::IP::expand(30, @ip_address_blocks);
+  @more_subnets = NetAddr::IP::expand(30, @block1, @block2);
 
   # Obtain a numeric representation of an IP address
   my $number = $ip->addr_number;
