@@ -139,7 +139,7 @@ use overload
 				#############################################
 
 
-our $VERSION = '3.06';
+our $VERSION = '3.07';
 
 # Preloaded methods go here.
 
@@ -177,14 +177,14 @@ sub plus {
 
     my $a = $ip->{addr};
     my $m = $ip->{mask};
+    my $b = $ip->{bits};
 
     my $hp = "$a" & ~"$m";
     my $np = "$a" & "$m";
 
-    vec($hp, 0, 32) += $const;
+    vec($hp, 0, $b) += $const;
 
-    return _fnew NetAddr::IP [ "$np" | ("$hp" & ~"$m"), 
-			       $ip->{mask}, $ip->{bits}];
+    return _fnew NetAddr::IP [ "$np" | ("$hp" & ~"$m"), $m, $b];
 }
 
 sub minus {
@@ -253,6 +253,9 @@ sub _parse_mask ($$) {
     }
     elsif ($mask =~ m/^loopback$/i) {
 	vec($bmask, 0, 8) = 255;
+	vec($bmask, 1, 8) = 0;
+	vec($bmask, 2, 8) = 0;
+	vec($bmask, 3, 8) = 0;
     }
     elsif ($mask =~ m/^(\d+)\.(\d+)\.(\d+)\.(\d+)$/) {
 	vec($bmask, 0, 8) = $1;
@@ -528,8 +531,12 @@ sub _broadcast ($) {
     my $self	= shift;
     my $a = $self->{addr};
     my $m = $self->{mask};
+    my $c = '';
 
-    return [ "$a" | ~ "$m", $self->{mask}, $self->{bits} ];
+    vec($c, 0, $self->{bits}) = _ones $self->{bits};
+    vec($c, 0, $self->{bits}) ^= vec($m, 0, $self->{bits});
+
+    return [ "$a" | ~ "$m" | $c, $self->{mask}, $self->{bits} ];
 }
 
 				# This will become an lvalue later
@@ -587,7 +594,7 @@ sub nprefix ($) {
     return $self->addr if $mask == 32;
 
     my @faddr = split (/\./, $self->first->addr);
-    my @laddr = split (/\./, ($self->last - 1)->addr);
+    my @laddr = split (/\./, $self->last->addr);
 
     return do_prefix $mask, \@faddr, \@laddr;
 }
@@ -600,7 +607,7 @@ sub prefix ($) {
     return $self->addr if $mask == 32;
 
     my @faddr = split (/\./, $self->first->addr);
-    my @laddr = split (/\./, $self->last->addr);
+    my @laddr = split (/\./, $self->broadcast->addr);
 
     return do_prefix $mask, \@faddr, \@laddr;
 }
@@ -821,32 +828,16 @@ sub within ($$) {
 
 sub first ($) {
     my $self	= shift;
-    my $bits 	= $self->{bits};
-    my $a 	= $self->{addr};
-    my $m 	= $self->{mask};
 
-    my $h 	= '';
-    my $addr	= '';
-
-    vec($h, 0, $bits) = 0x1;	# Turn on just the first bit
-
-    return $self->_fnew([ ("$a" & "$m") | "$h", 
-			  $self->{mask}, $bits ]);
+    return $self->network + 1;
 }
 
 sub last ($) {
     my $self	= shift;
-    my $bits 	= $self->{bits};
-    my $a 	= $self->{addr};
-    my $m 	= $self->{mask};
 
-    my $h 	= '';
-    my $addr	= '';
+    return $self if $self->masklen == $self->{bits};
 
-    vec($h, 0, $bits) = _ones $bits;
-
-    return $self->_fnew([ ("$a" & "$m") | ("$h" & ~"$m"), 
-			  $self->{mask}, $bits ]);
+    return $self->broadcast - 1;
 }
 
 				# XXX - The constant below should be
@@ -1427,6 +1418,20 @@ are given as arguments to C<-E<gt>new()>.
 
 Andrew Ruthven pointed out a bug related to proper interpretation of
 "compact" CIDR blocks. This was fixed. Thanks!
+
+=back
+
+=item 3.07
+
+=over
+
+=item *
+
+Sami Pohto pointed out a bug with C<-E<gt>last()>. This was fixed.
+
+=item *
+
+A small bug related to parsing of 'localhost' was fixed.
 
 =back
 

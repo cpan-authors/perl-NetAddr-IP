@@ -9,6 +9,7 @@ t/v4-num.t
 t/relops.t
 t/v4-snew.t
 t/v4-cnew.t
+t/v4-last.t
 t/over-qq.t
 t/masklen.t
 t/v4-base.t
