@@ -1,11 +1,36 @@
+# Generic load/POD test suite
 
-# Test if the module will load correctly
+# $Id: 00-load.t,v 1.3 2003/10/08 06:46:02 lem Exp $
 
-# $Id: 00-load.t,v 1.2 2002/10/31 04:30:35 lem Exp $
+use Test::More;
 
-BEGIN { $| = 1; print "1..1\n"; }
-END {print "not ok 1\n" unless $loaded;}
-use NetAddr::IP;
-$loaded = 1;
-print "ok 1\n";
+my @modules = qw/
+	NetAddr::IP
+	/;
+
+my @paths = ();
+
+plan tests => 2 * scalar @modules;
+
+use_ok($_) for @modules;
+
+my $checker = 0;
+
+eval { use Test::Pod;
+       $checker = 1; };
+
+for my $m (@modules)
+{
+    my $p = $m . ".pm";
+    $p =~ s!::!/!g;
+    push @paths, $INC{$p};
+}
+
+END { unlink "./out.$$" };
+
+SKIP: {
+    skip "Test::Pod is not available on this host", scalar @paths
+	unless $checker;
+    pod_file_ok($_) for @paths;
+}
 

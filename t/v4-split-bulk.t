@@ -1,25 +1,23 @@
+use Test::More;
 use NetAddr::IP;
 
-# $Id: v4-split-bulk.t,v 1.2 2002/10/31 04:30:36 lem Exp $
+# $Id: v4-split-bulk.t,v 1.3 2003/10/08 06:46:02 lem Exp $
 
 my @addr = ( [ '10.0.0.0', 20, 32, 4096 ],
 	     [ '10.0.0.0', 22, 32, 1024 ],
+	     [ '10.0.0.0', 22, 24, 4 ],
+	     [ '10.0.0.0', 22, 23, 2 ],
 	     [ '10.0.0.0', 24, 32, 256 ],
-	     [ '10.0.0.0', 19, 32, 8192 ]
+	     [ '10.0.0.0', 19, 32, 8192 ],
+	     [ '10.0.0.0', 24, 24, 1 ],
+	     [ '10.0.0.0', 31, 32, 2 ]
 	    );
 
-my $count = $| = 1;
-print "1..", (scalar @addr), "\n";
+plan tests => (scalar @addr);
 
 for my $a (@addr) {
     my $ip = new NetAddr::IP $a->[0], $a->[1];
     my $r = $ip->splitref($a->[2]);
 
-    if (scalar @$r == $a->[3]) {
-	print "ok ", $count++, "\n";
-    }
-    else {
-	print "not ok ", $count++, " (number $a)\n";
-    }
-
+    is(@$r, $a->[3]);
 }

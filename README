@@ -1,4 +1,7 @@
-NetAddr::IP - Manages IPv4 (your traditional IP) addresses and subnets
+-----BEGIN PGP SIGNED MESSAGE-----
+Hash: SHA1
+
+NetAddr::IP - Manages IP addresses and subnets
 
      * * * * THIS MODULE REQUIRES PERL 5.6.0 OR NEWER. * * * *
 
@@ -44,6 +47,10 @@ This will print out something like...
 
 ...which  is  quite  useful   for  generating  config  files  and  the
 such. This works even for huge ranges of IP addresses.
+
+As of version 3.14_1, it is  able to handle some representations of v6
+subnets thanks  to Kadlecsik  Jozsi. Note that  this support  is still
+preliminary and has not been widely tested.
 
 This module is entirely written in  Perl, so you do not need access to
 a compiler to use it.  It  has been extensively tested in a variety of
@@ -109,9 +116,41 @@ cases where warnings are generated so that I can fix them.
 
 Report your bugs to me (luismunoz@cpan.org).
 
-This software is (c) Luis E. Munoz.  It can be used under the terms of
+SECURITY CONSIDERATIONS
+
+I  have  no control  on  the machanisms  involved  in  the storage  or
+transport  of this distribution.  This means  that I  cannot guarantee
+that  the distribution  you have  in your  hands is  indeed,  the same
+distribution I packed and uploaded.
+
+Starting with v3.14_1, along the  distribution file, you should have a
+file  with  the  extension  ".asc".  This  contains  a  GPG  "detached
+signature"  that  makes  it  impossible  for  anybody  to  alter  this
+distribution.  If security  is of  any concern  to you,  by  all means
+verify  the signature  of  this file  and  contact the  author if  any
+discrepancy is detected.
+
+You can find more information about this at the following URL
+
+             http://mipagina.cantv.net/lem/gpg/
+
+This  information includes  the correct  keys,  fingerprints, etc.Note
+that this README file should also be signed.
+
+LICENSE AND WARRANTY
+
+This software is (c) Luis E. Muñoz.  It can be used under the terms of
 the perl artistic license provided  that proper credit for the work of
 the  author is  preserved in  the form  of this  copyright  notice and
 license for this module.
 
-$Id: README,v 1.2 2002/10/31 04:30:22 lem Exp $
+No warranty of any kind is  expressed or implied. This code might make
+your computer go up in a puff of black smoke.
+-----BEGIN PGP SIGNATURE-----
+Version: GnuPG v1.0.6 (Darwin)
+Comment: For info see http://www.gnupg.org
+
+iD8DBQE99iAmQyDWGRI/hhARAsPlAJ9VFVFGSUHjxDUvXm2x9x20YfhuYQCeJu5A
+F5c3pam/zZQiVf7ZaUVs3fc=
+=VNNB
+-----END PGP SIGNATURE-----

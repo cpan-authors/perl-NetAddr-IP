@@ -1,6 +1,6 @@
 #!/usr/bin/perl -w
 
-# $Id: IP.pm,v 1.5 2002/10/31 21:32:20 lem Exp $
+# $Id: IP.pm,v 1.13 2003/10/09 00:12:21 lem Exp $
 
 package NetAddr::IP;
 
@@ -8,7 +8,7 @@ package NetAddr::IP;
 
 =head1 NAME
 
-NetAddr::IP - Manages IPv4 addresses and subnets
+NetAddr::IP - Manages IPv4 and IPv6 addresses and subnets
 
 =head1 SYNOPSIS
 
@@ -35,8 +35,6 @@ operations are supported, as described below:
 
 Many operators have been overloaded, as described below:
 
-=over
-
 =cut
 
 require 5.005_62;
@@ -44,8 +42,13 @@ use Carp;
 use Socket;
 use strict;
 use warnings;
+require Exporter;
 
-our $VERSION = '3.14';
+our @EXPORT_OK = qw(Compact);
+
+our @ISA = qw(Exporter);
+
+our $VERSION = '3.15';
 
 				#############################################
 				# These are the overload methods, placed here
@@ -82,20 +85,18 @@ use overload
 	return 0 unless ref $_[1] eq 'NetAddr::IP';
 	$_[0]->cidr eq $_[1]->cidr;
     },
-				# The comparisons below are not portable
-				# when attempted with the full bit vector.
-				# This is why we break them down and do it
-				# one octet at a time. String comparison
-
-				# is not portable because of endianness.
 
     '>'		=> sub {
 	return undef unless $_[0]->{bits} == $_[1]->{bits};
+	return ($_[0]->numeric)[1] > ($_[1]->numeric)[1]
+	    if scalar($_[0]->numeric()) == scalar($_[1]->numeric());
 	return scalar($_[0]->numeric()) > scalar($_[1]->numeric());
     },
 
     '<'		=> sub {
 	return undef unless $_[0]->{bits} == $_[1]->{bits};
+	return ($_[0]->numeric)[1] < ($_[1]->numeric)[1]
+	    if scalar($_[0]->numeric()) == scalar($_[1]->numeric());
 	return scalar($_[0]->numeric()) < scalar($_[1]->numeric());
     },
 
@@ -112,12 +113,16 @@ use overload
     '<=>'		=> sub {
 
 	return undef unless $_[0]->{bits} == $_[1]->{bits};
+	return ($_[0]->numeric)[1] <=> ($_[1]->numeric)[1]
+	    if scalar($_[0]->numeric()) == scalar($_[1]->numeric());
 	return scalar($_[0]->numeric()) <=> scalar($_[1]->numeric());
     },
 
     'cmp'		=> sub {
 
 	return undef unless $_[0]->{bits} == $_[1]->{bits};
+	return ($_[0]->numeric)[1] <=> ($_[1]->numeric)[1]
+	    if scalar($_[0]->numeric()) == scalar($_[1]->numeric());
 	return scalar($_[0]->numeric()) <=> scalar($_[1]->numeric());
     },
 
@@ -126,6 +131,8 @@ use overload
     };
 
 =pod
+
+=over
 
 =item B<Assignment (C<=>)>
 
@@ -205,14 +212,41 @@ sub plus {
 
     return $ip unless $const;
 
+    my $b = $ip->{bits};
     my $a = $ip->{addr};
     my $m = $ip->{mask};
-    my $b = $ip->{bits};
-
+    
     my $hp = "$a" & ~"$m";
     my $np = "$a" & "$m";
 
-    vec($hp, 0, $b) += $const;
+    if ($b == 128)		# v6?
+    {
+	use Math::BigInt;
+
+	my $num = new Math::BigInt 0;
+
+	for (0 .. 15)
+	{
+	    $num <<= 8;
+	    $num |= vec($hp, $_, 8);
+	}
+
+#  	warn "# add - before badd($const): $num\n";
+	$num->badd($const);
+#  	warn "# add - after badd($const): $num\n";
+
+	for (reverse 0 .. 15)
+	{
+	    my $x = new Math::BigInt $num;
+	    vec($hp, $_, 8) = $x & 0xFF;
+	    $num >>= 8;
+#  	    warn "# add - octet $_ == $num / ", vec($hp, $_, 8), "\n";
+	}
+    }
+    else			# v4
+    {
+	vec($hp, 0, $b) += $const;
+    }
 
     return _fnew NetAddr::IP [ "$np" | ("$hp" & ~"$m"), $m, $b];
 }
@@ -317,6 +351,19 @@ sub _to_quad ($) {
 		vec($vec, 3, 8);
 }
 
+sub _to_ipv6 ($) {
+    my $vec = shift;
+    my $r = '';
+
+    foreach (0..3) {
+	$r .= ':' . sprintf("%02x%02x:%02x%02x",
+			    vec($vec, 4*$_, 8), vec($vec, 4*$_ + 1, 8),
+			    vec($vec, 4*$_ + 2, 8), vec($vec, 4*$_ + 3, 8));
+    }
+    $r =~ s/^://;
+    return $r;
+}
+
 sub do_prefix ($$$) {
     my $mask	= shift;
     my $faddr	= shift;
@@ -351,7 +398,32 @@ sub _parse_mask ($$) {
 
     my $bmask	= '';
 
-    if ($mask eq 'default' or $mask eq 'any') {
+    if ($bits == 128) {
+	if (grep($mask eq $_ , qw(unspecified loopback))) {
+	    for (0..3) {
+	    	vec($bmask, $_, 32) = 0xFFFFFFFF;
+	    }
+	}
+	elsif ($mask =~ /^(\d+)$/ && $1 <= 128) {
+	    foreach (0..3) {
+		if ($mask >= 32*($_ + 1)) {
+		    vec($bmask, $_, 32) = 0xFFFFFFFF;
+		}
+		elsif ($mask > 32*$_) {
+		    vec($bmask, $_, 32) = 0xFFFFFFFF;
+		    vec($bmask, $_, 32) <<= (32*($_ + 1) - $mask);
+		} 
+		else {
+			vec($bmask, $_, 32) = 0x0;
+		}
+	    }
+	}
+	else {
+	     $bmask = undef;
+	}
+        return $bmask;
+    }
+    elsif ($mask eq 'default' or $mask eq 'any') {
 	vec($bmask, 0, $bits) = 0x0;
     }
     elsif ($mask eq 'broadcast' or $mask eq 'host') {
@@ -423,25 +495,47 @@ sub _v4 ($$$) {
 	vec($addr, 0, 8) = 127;
 	vec($addr, 3, 8) = 1;
     }
-    elsif ($ip =~ m/^(\d+)\.(\d+)\.(\d+)\.(\d+)$/) {
+    elsif ($ip =~ m/^(\d+)\.(\d+)\.(\d+)\.(\d+)$/
+	   and $1 >= 0 and $1 <= 255
+	   and $2 >= 0 and $2 <= 255
+	   and $3 >= 0 and $3 <= 255
+	   and $4 >= 0 and $4 <= 255)
+    {
 	vec($addr, 0, 8) = $1;
 	vec($addr, 1, 8) = $2;
 	vec($addr, 2, 8) = $3;
 	vec($addr, 3, 8) = $4;
     }
-    elsif ($ip =~ m/^(\d+)\.(\d+)$/) {
+    elsif ($ip =~ m/^(\d+)\.(\d+)$/
+	   and $1 >= 0 and $1 <= 255
+	   and $2 >= 0 and $2 <= 255)
+    {
 	vec($addr, 0, 8) = $1;
 	vec($addr, 1, 8) = ($present ? $2 : 0);
 	vec($addr, 2, 8) = 0;
 	vec($addr, 3, 8) = ($present ? 0 : $2);
     }
-    elsif ($ip =~ m/^(\d+)\.(\d+)\.(\d+)$/) {
+    elsif ($ip =~ m/^(\d+)\.(\d+)\.(\d+)$/
+	   and $1 >= 0 and $1 <= 255
+	   and $2 >= 0 and $2 <= 255
+	   and $3 >= 0 and $3 <= 255)
+    {
 	vec($addr, 0, 8) = $1;
 	vec($addr, 1, 8) = $2;
 	vec($addr, 2, 8) = ($present ? $3 : 0);
 	vec($addr, 3, 8) = ($present ? 0 : $3);
     }
-    elsif ($ip =~ m/^([xb\d]+)$/) {
+    elsif ($ip =~ m/^([xb\d]+)$/ and $1 >= 0 and $1 < 255 and $present) 
+    {
+	vec($addr, 0, 8) = $1;
+	vec($addr, 1, 8) = 0;
+	vec($addr, 2, 8) = 0;
+	vec($addr, 3, 8) = 0;
+    }
+    elsif ($ip =~ m/^([xb\d]+)$/) 
+    {
+	my $num = $1;
+	$num += 2 ** 32 if $num < 0;
 	vec($addr, 0, 32) = $1;
     }
 
@@ -591,6 +685,69 @@ sub _v4 ($$$) {
     return { addr => $addr, mask => $mask, bits => 32 };
 }
 
+sub expand_v6 ($) {
+    my $pat = shift;
+
+    if (length($pat) < 4) {
+	$pat = ('0' x (4 - length($pat))) . $pat;
+    }
+    return $pat;
+}
+
+sub _v6_part ($$$) {
+    my $addr = shift;
+    my $four = shift;
+    my $n = shift;
+
+    my($a, $b);
+
+    return undef unless length($four) == 4;
+    $four =~ /^(.{2})(.{2})/;
+    ($a, $b) = ($1, $2);
+
+    vec($addr, 2*$n, 8) = hex($a);
+    vec($addr, 2*$n + 1, 8) = hex($b);
+
+    return $addr;
+}
+
+sub _v6 ($$$) {
+    my $ip	= lc shift;
+    my $mask	= shift;
+    my $present	= shift;
+
+    my $addr = '';
+    my $colons; 
+    my $expanded;
+    my @ip;
+
+    if ($ip eq 'unspecified') {
+	$ip = '::';
+    }
+    elsif ($ip eq 'loopback') {
+	$ip = '::1';
+    }
+    elsif ($ip =~ /:::/ || $ip =~ /::.*::/) {
+	return undef;
+    }
+    return undef unless $ip =~ /^[\da-f\:]+$/i;
+
+    $colons = ($ip =~ tr/:/:/);
+    return undef unless $colons >= 2 && $colons <= 7;
+    $expanded = ':0' x (9 - $colons);
+    $ip =~ s/::/$expanded/;
+    $ip = '0' . $ip if $ip =~ /^:/;
+    # .:.:.:.:.:.:.:.
+    @ip = split(/:/, $ip);
+    grep($_ = expand_v6($_), @ip);;
+    for (0..$#ip) {
+    	$addr = _v6_part($addr, $ip[$_], $_);
+        return undef unless defined $addr;
+    }
+
+    return { addr => $addr, mask => $mask, bits => 128 };
+}
+
 sub new4 ($$;$) {
     new($_[0], $_[1], $_[2]);
 }
@@ -603,7 +760,7 @@ sub new4 ($$;$) {
 
 =over
 
-=item C<-E<gt>new([$addr, [ $mask ]])>
+=item C<-E<gt>new([$addr, [ $mask|IPv6 ]])>
 
 This method creates a new IPv4 address with the supplied address in
 C<$addr> and an optional netmask C<$mask>, which can be omitted to get
@@ -622,6 +779,9 @@ specified for them.
 
 If called with no arguments, 'default' is assumed.
 
+IPv6 addresses according to RFC 1884 are also supported, except IPv4
+compatible IPv6 addresses.
+
 =cut
 
 sub new ($$;$) {
@@ -629,9 +789,11 @@ sub new ($$;$) {
     my $class	= ref($type) || $type || "NetAddr::IP";
     my $ip	= lc $_[1];
     my $hasmask	= 1;
+    my $bits;
     my $mask;
 
     $ip = 'default' unless defined $ip;
+    $bits = $ip =~ /:/ ? 128 : 32;
 
     if (@_ == 2) {
 	if ($ip =~ m!^(.+)/(.+)$!) {
@@ -645,20 +807,32 @@ sub new ($$;$) {
     }
 
     if (defined $_[2]) {
-	$mask 		= _parse_mask $_[2], 32;
+	if ($_[2] =~ /^ipv6$/i) {
+	    if (grep { $ip eq $_ } (qw(unspecified loopback))) {
+		$bits	= 128;
+	    	$mask	= _parse_mask $ip, $bits;
+	    }
+	    else {
+		return undef;
+	   }
+	}
+	else {
+	    $mask	= _parse_mask $_[2], $bits;
+	}
 	return undef unless defined $mask;
     }
     elsif (defined $mask) {
-	$mask 		= _parse_mask $mask, 32;
+	$mask 		= _parse_mask $mask, $bits;
 	return undef unless defined $mask;
     }
     else {
 	$hasmask	= 0;
-	$mask 		= _parse_mask 32, 32;
+	$mask 		= _parse_mask $bits, $bits;
 	return undef unless defined $mask;
     }
 
-    my $self = _v4($ip, $mask, $hasmask);
+    my $self = $bits == 32 ? _v4($ip, $mask, $hasmask)
+			   : _v6($ip, $mask, $hasmask);
 
     return undef unless $self;
 
@@ -729,7 +903,26 @@ address.
 
 sub addr ($) {
     my $self	= shift;
-    _to_quad $self->{addr};
+    $self->{bits} == 32 ? _to_quad $self->{addr}
+			: _to_ipv6 $self->{addr};
+}
+
+sub _compact ($) {
+    my $addr = shift;
+
+    $addr =~ s/(^|:)0{1,3}/${1}/g;
+    # Not optimized for the biggest :0 sequence to collapse
+    $addr =~ s/((^|:)0)+/:/;
+    # unspecified :-(
+    $addr .= ':' if $addr eq ':';
+
+    return $addr;
+}
+
+sub compact_addr ($) {
+    my $self	= shift;
+    $self->{bits} == 32 ? _to_quad $self->{addr}
+			: _compact _to_ipv6 $self->{addr};
 }
 
 =pod
@@ -742,7 +935,8 @@ Returns a scalar with the mask as a dotted-quad.
 
 sub mask ($) {
     my $self	= shift;
-    _to_quad $self->{mask};
+    $self->{bits} == 32 ? _to_quad $self->{mask}
+			: _to_ipv6 $self->{mask};
 }
 
 =pod
@@ -766,6 +960,27 @@ sub masklen ($) {
 
     return $bits;
 }
+
+=pod
+
+=item C<-E<gt>bits()>
+
+Returns the wide of the address in bits. Normally 32 for v4 and 128 for v6.
+
+=cut
+
+sub bits { return $_[0]->{bits}; }
+
+=pod
+
+=item C<-E<gt>version()>
+
+Returns the version of the address or subnet. Currently this can be
+either 4 or 6.
+
+=cut
+
+sub version { return $_[0]->{bits} == 32 ? 4 : 6; }
 
 =pod
 
@@ -896,6 +1111,7 @@ wildcard translation of the mask.
 
 sub wildcard ($) {
     my $self	= shift;
+    return undef if $self->{bits} > 32;
     return wantarray() ? ($self->addr, _to_quad ~$self->{mask}) :
 	_to_quad ~$self->{mask};
 			      
@@ -908,6 +1124,8 @@ sub wildcard ($) {
 Returns true when C<$me> completely contains C<$other>. False is
 returned otherwise and C<undef> is returned if C<$me> and C<$other>
 are of different versions.
+
+Note that C<$me> and C<$other> must be C<NetAddr::IP> objects.
 
 =cut
 
@@ -942,6 +1160,8 @@ sub contains ($$) {
 
 The complement of C<-E<gt>contains()>. Returns true when C<$me> is
 completely con tained within C<$other>.
+
+Note that C<$me> and C<$other> must be C<NetAddr::IP> objects.
 
 =cut
 
@@ -988,36 +1208,82 @@ sub splitref ($;$) {
     if (vec($self->{mask}, 0, $bits) 
 	<= vec($mask, 0, $bits))
     {
-
-	my $delta	= '';
 	my $num		= '';
 	my $v		= '';
 
-	vec($num, 0, $bits) = _ones $bits;
-	vec($num, 0, $bits) ^= vec($mask, 0, $bits);
-	vec($num, 0, $bits) ++;
-
-	vec($delta, 0, $bits) = (vec($self->{mask}, 0, $bits) 
-				 ^ vec($mask, 0, $bits));
-
-	my $net	= $self->network->{addr}; 
+	my $net	= $self->network->{addr};
 	$net = "$net" & "$mask";
 
-	my $to = $self->broadcast->{addr}; 
+	my $to = $self->broadcast->{addr};
 	$to = "$to" & "$mask";
 
-				# XXX - Note that most likely, 
-				# this loop will NOT work on IPv6... 
-				# $net, $to and $num might very well 
-				# be too large for most integer or 
-				# floating point representations.
-
-	for (my $i	= vec($net, 0, $bits);
-	     $i 	<= vec($to, 0, $bits);
-	     $i 	+= vec($num, 0, $bits))
+	if ($bits == 128)
 	{
-	    vec($v, 0, $bits) = $i;
-	    push @ret, $self->_fnew([ $v, $mask, $bits ]);
+	    use Math::BigInt;
+
+	    my $n = new Math::BigInt 0;
+	    my $t = new Math::BigInt 0;
+	    my $u = new Math::BigInt 0;
+	    my $x = '';
+
+	    for (0 .. 15)
+	    {
+		vec($num, $_, 8) = _ones 8;
+		vec($num, $_, 8) ^= vec($mask, $_, 8);
+		$n <<= 8;
+		$t <<= 8;
+		$u <<= 8;
+		$n |= vec($net, $_, 8);
+		$t |= vec($to, $_, 8);
+		$u |= vec($num, $_, 8);
+	    }
+
+#    	    warn "# splitref $self $mask\n";
+#      	    warn "# net = ", $self->network, "\n";
+#      	    warn "# bro = ", $self->broadcast, "\n";
+
+#      	    warn "# before, n = $n\n";
+#      	    warn "# before, t = $t\n";
+#      	    warn "# before, u = $u\n";
+
+	    $u++;
+	    my $i = $n->copy;
+
+	    do {
+		
+		my $j = $i->copy;
+
+#      		warn "# i = $i\n";
+#      		warn "# j = $j\n";
+#      		warn "# n = $n\n";
+#      		warn "# u = $u\n";
+#      		warn "# t = $t\n";
+#      		warn "###\n";
+
+		for (reverse 0 .. 15)
+		{
+		    vec($v, $_, 8) = ($j & 0xFF);
+		    $j >>= 8;
+		}
+
+		push @ret, $self->_fnew([ $v, $mask, $bits ]);
+#		warn "# add ", $self->_fnew([$v, $mask, $bits]), "\n";
+		$i += $u;
+	    } while ($i <= $t);
+	}
+	else
+	{
+	    vec($num, 0, $bits) = _ones $bits;
+	    vec($num, 0, $bits) ^= vec($mask, 0, $bits);
+	    vec($num, 0, $bits) ++;
+
+	    for (my $i	= vec($net, 0, $bits);
+		 $i 	<= vec($to, 0, $bits);
+		 $i 	+= vec($num, 0, $bits))
+	    {
+		vec($v, 0, $bits) = $i;
+		push @ret, $self->_fnew([ $v, $mask, $bits ]);
+	    }
 	}
     }
 
@@ -1066,11 +1332,15 @@ multiple times, these subnets would be returned. From 3.02 on, a more
 "correct" approach has been adopted and only one address would be
 returned.
 
+Note that C<$me> and all C<$addr>-n must be C<NetAddr::IP> objects.
+
 =cut
 
 sub compact {
     return @{compactref(\@_)};
 }
+
+*Compact = \&compact;
 
 =pod
 
@@ -1080,13 +1350,12 @@ As usual, a faster version of =item C<-E<gt>compact()> that returns a
 reference to a list. Note that this method takes a reference to a list
 instead.
 
+Note that C<$me> must be a C<NetAddr::IP> object.
 =cut
 
 sub compactref ($) {
-    my @addr = sort 
-
-    @{$_[0]} or
-	return [];
+    my @addr = sort @{$_[0]} 
+    or return [];
 
     my $bits = $addr[0]->{bits};
     my $changed;
@@ -1106,7 +1375,7 @@ sub compactref ($) {
 		-- $i;
 	    }
 	    elsif (vec($lip->{mask}, 0, $bits) 
-		== vec($hip->{mask}, 0, $bits)) 
+		   == vec($hip->{mask}, 0, $bits)) 
 	    {
 		my $la = $lip->{addr};
 		my $ha = $hip->{addr};
@@ -1223,7 +1492,7 @@ None by default.
 
 =head1 HISTORY
 
-$Id: IP.pm,v 1.5 2002/10/31 21:32:20 lem Exp $
+$Id: IP.pm,v 1.13 2003/10/09 00:12:21 lem Exp $
 
 =over
 
@@ -1689,11 +1958,89 @@ difference.
 
 =back
 
+=item 3.14_1
+
+This is an interim release just to incorporate the v6 patches
+contributed.  No extensive testing has been done with this support
+yet. More tests are needed.
+
+=over
+
+=item *
+
+Preliminary support for IPv6 contributed by Kadlecsik Jozsi
+E<lt>kadlec at sunserv.kfki.huE<gt>. Thanks a lot!
+
+=item *
+
+IP.pm and other files are enconded in ISO-8859-1 (Latin1) so that I
+can spell my name properly.
+
+=item *
+
+Tested under Perl 5.8.0, no surprises found.
+
+=back
+
+=item 3.14_2
+
+Minor development release.
+
+=over
+
+=item *
+
+Added C<-E<gt>version> and C<-E<gt>bits>, including testing.
+
+=item *
+
+C<Compact> can now be exported if the user so requests.
+
+=item *
+
+Fixed a bug when octets in a dotted quad were > 256 (ie, were not
+octets). Thanks to Anton Berezin for pointing this out.
+
+=back
+
+=item 3.14_3
+
+Fixed a bug pointed out by Brent Imhoff related to the implicit
+comparison that happens within C<Compact()>. The netmask was being
+ignored in the comparison (ie, 10/8 was considered the same as
+10.0/16). Since some people have requested that 10.0/16 was considered
+larger than 10/8, I added this change, which makes the bug go
+away. This will be the last '_' release, pending new bugs.
+
+Regarding the comparison of subnets, I'm still open to debate so as to
+wether 10.0/16 > 10/8. Certainly 255.255.0.0 > 255.0.0.0, but 2 ** 24
+are more hosts than 2 ** 16. I think we might use gt & friends for
+this semantic and make everyone happy, but I won't do anything else
+here without (significant) feedback.
+
+=item 3.14_4
+
+As noted by Michael, 127/8 should be 127.0.0.0/8 and not
+0.0.0.128/8. Also, improved docs on the usage of contains() and
+friends.
+
+=item 3.15
+
+Finally. Added POD tests (and fixed minor doc bug in IP.pm). As
+reported by Anand Vijay, negative numbers are assumed to be signed
+ints and converted accordingly to a v4 address. split() and nth() now
+work with IPv6 addresses (Thanks to Venkata Pingali for
+reporting). Tests were added for v6 base functionality and
+splitting. Also tests for bitwise aritmethic with long integers has
+been added. I'm afraid Math::BigInt is now required.
+
+Note that IPv6 might not be as solid as I would like. Be careful...
+
 =back
 
 =head1 AUTHOR
 
-Luis E. Munoz <luismunoz@cpan.org>
+Luis E. Muñoz <luismunoz@cpan.org>
 
 =head1 WARRANTY
 
@@ -1702,7 +2049,7 @@ so by using it you accept any and all the liability.
 
 =head1 LICENSE
 
-This software is (c) Luis E. Munoz.  It can be used under the terms of
+This software is (c) Luis E. Muñoz.  It can be used under the terms of
 the perl artistic license provided  that proper credit for the work of
 the  author is  preserved in  the form  of this  copyright  notice and
 license for this module.

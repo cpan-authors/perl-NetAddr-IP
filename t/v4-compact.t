@@ -1,6 +1,6 @@
-use NetAddr::IP;
+use NetAddr::IP qw(Compact);
 
-# $Id: v4-compact.t,v 1.2 2002/10/31 04:30:36 lem Exp $
+# $Id: v4-compact.t,v 1.3 2002/12/27 20:37:55 lem Exp $
 
 my @r = (
 	 [ '10.0.0.0', '255.255.255.0'],
@@ -30,7 +30,7 @@ for my $ip ('20.0.0.0', '30.0.0.0', '40.0.0.0') {
     push @ips, NetAddr::IP->new($ip, 16)->split(28);
 }
 
-my @c = NetAddr::IP::compact(@ips);
+my @c = Compact(@ips);
 my @m;
 
 for my $c (@c) {

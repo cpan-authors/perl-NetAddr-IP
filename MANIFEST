@@ -2,13 +2,16 @@ IP.pm
 TODO
 README
 MANIFEST
+MANIFEST.SKIP
 Makefile.PL
 tutorial.htm
 t/00-load.t
 t/loops.t
+t/bitops.t
 t/v4-new.t
 t/v4-num.t
 t/relops.t
+t/imhoff.t
 t/v4-aton.t
 t/v4-snew.t
 t/v4-cnew.t
@@ -18,6 +21,7 @@ t/over-qq.t
 t/masklen.t
 t/v4-base.t
 t/v4-cidr.t
+t/v6-base.t
 t/over-arr.t
 t/v4-range.t
 t/v4-badnm.t
@@ -32,4 +36,5 @@ t/v4-compplus.t
 t/v4-contains.t
 t/v4-hostenum.t
 t/v4-split-bulk.t
+t/v6-split-bulk.t
 t/v4-split-list.t

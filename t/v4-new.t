@@ -1,17 +1,19 @@
 use NetAddr::IP;
-#require "IP.pm";
 
-# $Id: v4-new.t,v 1.2 2002/10/31 04:30:36 lem Exp $
+# $Id: v4-new.t,v 1.7 2003/10/08 06:46:02 lem Exp $
 
-my @a = (
-	 [ 'localhost', '127.0.0.1' ],
-	 [ 0x01010101, '1.1.1.1' ],
-	 [ 1, '0.0.0.1' ],
-	 [ 'default', '0.0.0.0' ],
-	 [ 'any', '0.0.0.0' ],
+BEGIN {
+our @a = (
+	  [ 'localhost', '127.0.0.1' ],
+	  [ 0x01010101, '1.1.1.1' ],
+	  [ 1, '1.0.0.0' ],	# Because it will have a mask. 0.0.0.1 ow
+	  [ 'default', '0.0.0.0' ],
+	  [ 'any', '0.0.0.0' ],
+	  [-809041407, '207.199.2.1'],
+	  [3485925889, '207.199.2.1'],
 	);
 
-my @m = (
+our @m = (
 	 [ 0, '0.0.0.0' ],
 	 [ 1, '128.0.0.0' ],
 	 [ 2, '192.0.0.0' ],
@@ -28,33 +30,22 @@ my @m = (
 	 [ '255.255.128.0', '255.255.128.0' ],
 	 [ 0b11111111111111110000000000000000, '255.255.0.0' ],
 	 );
+};
 
-$| = 1;
+use Test::More tests => (4 * scalar @a * scalar @m) + 4;
 
-print '1..', (2 * scalar @a * scalar @m), "\n";
-
-my $count = 1;
+ok(! defined NetAddr::IP->new('256.1.1.1'), "Invalid IP returns undef");
+ok(! defined NetAddr::IP->new('256.256.1.1'), "Invalid IP returns undef");
+ok(! defined NetAddr::IP->new('256.256.256.1'), "Invalid IP returns undef");
+ok(! defined NetAddr::IP->new('256.256.256.256'), "Invalid IP returns undef");
 
 for my $a (@a) {
     for my $m (@m) {
 	my $ip = new NetAddr::IP $a->[0], $m->[0];
-	if ($ip->addr eq $a->[1]) {
-	    print "ok ", $count++, "\n";
-	}
-	else {
-	    print "not ok ", $count++, "\n";
-	}
-
-	if ($ip->mask eq $m->[1]) {
-	    print "ok ", $count++, "\n";
-	}
-	else {
-	    print "not ok ", $count++, "\n";
-	}
-
-#	print "mask=", $ip->mask, "\n";
-
+	is($ip->addr, $a->[1], "$a->[0] / $m->[0] is $a->[1]");
+	is($ip->mask, $m->[1], "$a->[0] / $m->[0] is $m->[1]");
+	is($ip->bits, 32, "$a->[0] / $m->[0] is 32 bits wide");
+	is($ip->version, 4, "$a->[0] / $m->[0] is version 4");
     }
 }
-
 
