@@ -1,6 +1,6 @@
 # This -*- perl -*- code excercises the basic v6 functionality
 
-# $Id: v6-base.t,v 1.7 2003/10/09 00:14:06 lem Exp $
+# $Id: v6-base.t,v 1.9 2003/10/10 18:46:53 lem Exp $
 
 our @addr = 
     (
@@ -38,14 +38,10 @@ for $a (@addr) {
 	is($ip->nth($a->[1]), $a->[2]);
 }
 
-$test = new NetAddr::IP f34::1;
+$test = new NetAddr::IP 'f34::1';
 isa_ok($test, 'NetAddr::IP');
 ok($ip->network->contains($test), "->contains");
 
-$test = new NetAddr::IP f35::1/40;
+$test = new NetAddr::IP 'f35::1/40';
 isa_ok($test, 'NetAddr::IP');
-ok(!$ip->network->contains($test), "!->contains");
-
-
-
-
+ok($ip->network->contains($test), "->contains");

@@ -1,6 +1,6 @@
 #!/usr/bin/perl -w
 
-# $Id: IP.pm,v 1.13 2003/10/09 00:12:21 lem Exp $
+# $Id: IP.pm,v 1.14 2003/10/10 17:51:17 lem Exp $
 
 package NetAddr::IP;
 
@@ -48,7 +48,7 @@ our @EXPORT_OK = qw(Compact);
 
 our @ISA = qw(Exporter);
 
-our $VERSION = '3.15';
+our $VERSION = '3.16';
 
 				#############################################
 				# These are the overload methods, placed here
@@ -1351,6 +1351,7 @@ reference to a list. Note that this method takes a reference to a list
 instead.
 
 Note that C<$me> must be a C<NetAddr::IP> object.
+
 =cut
 
 sub compactref ($) {
@@ -1492,7 +1493,7 @@ None by default.
 
 =head1 HISTORY
 
-$Id: IP.pm,v 1.13 2003/10/09 00:12:21 lem Exp $
+$Id: IP.pm,v 1.14 2003/10/10 17:51:17 lem Exp $
 
 =over
 
@@ -2035,6 +2036,12 @@ splitting. Also tests for bitwise aritmethic with long integers has
 been added. I'm afraid Math::BigInt is now required.
 
 Note that IPv6 might not be as solid as I would like. Be careful...
+
+=item 3.16
+
+Fixed a couple of (minor) bugs in shipped tests in the last
+version. Also, fixed a small pod typo that caused code to show up in
+the documentation.
 
 =back
 
