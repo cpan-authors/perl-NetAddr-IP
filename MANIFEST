@@ -3,8 +3,10 @@ MANIFEST
 Makefile.PL
 README
 t/00-load.t
+t/loops.t
 t/v4-new.t
 t/v4-num.t
+t/relops.t
 t/v4-snew.t
 t/over-qq.t
 t/masklen.t
@@ -13,6 +15,7 @@ t/v4-cidr.t
 t/over-arr.t
 t/v4-basem.t
 t/v4-first.t
+t/wildcard.t
 t/v4-compact.t
 t/v4-numeric.t
 t/v4-compplus.t

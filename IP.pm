@@ -7,24 +7,139 @@ use Carp;
 use Socket;
 use strict;
 use warnings;
+
+				#############################################
+				# These are the overload methods, placed here
+				# for convenience.
+				#############################################
+
 use overload
-    '""'	=> sub { $_[0]->cidr(); },
 
-    'eq'	=> sub { my $a = ref $_[0] eq 'NetAddr::IP' ? 
-			     $_[0]->cidr : $_[0];
-			 my $b = ref $_[1] eq 'NetAddr::IP' ? 
-			     $_[1]->cidr : $_[1];
-			 $a eq $b;
-		     },
+    '+'		=> \&plus,
 
-    '=='	=> sub { return 0 unless ref $_[0] eq 'NetAddr::IP';
-			 return 0 unless ref $_[1] eq 'NetAddr::IP';
-			 $_[0]->cidr eq $_[1]->cidr;
-		     },
+    '-'		=> \&minus,
 
-    '@{}'	=> sub { return [ $_[0]->hostenum ]; };
+    '++'	=> \&plusplus,
 
-our $VERSION = '3.02';
+    '--'	=> \&minusminus,
+
+    "="		=> sub {
+	return _fnew NetAddr::IP [ $_[0]->{addr}, $_[0]->{mask}, 
+				   $_[0]->{bits} ];
+    },
+    
+    '""'	=> sub { 
+	$_[0]->cidr(); 
+    },
+
+    'eq'	=> sub { 
+	my $a = ref $_[0] eq 'NetAddr::IP' ? $_[0]->cidr : $_[0];
+	my $b = ref $_[1] eq 'NetAddr::IP' ? $_[1]->cidr : $_[1];
+	$a eq $b;
+    },
+
+    '=='	=> sub { 
+	return 0 unless ref $_[0] eq 'NetAddr::IP';
+	return 0 unless ref $_[1] eq 'NetAddr::IP';
+	$_[0]->cidr eq $_[1]->cidr;
+    },
+				# The comparisons below are not portable
+				# when attempted with the full bit vector.
+				# This is why we break them down and do it
+				# one octet at a time. String comparison
+				# is not portable because of endianness.
+    '>'		=> sub {
+	return 0 if ($_[0]->{bits} != $_[1]->{bits});
+	for my $b (0 .. $_[0]->{bits}/8 - 1) {
+	    return 1 if vec($_[0]->{addr}, $b, 8) 
+		> vec($_[1]->{addr}, $b, 8);
+	}
+	for my $b (0 .. $_[0]->{bits}/8 - 1) {
+	    return 1 if vec($_[0]->{mask}, $b, 8) 
+		> vec($_[1]->{mask}, $b, 8);
+	}
+	return 0;
+    },
+
+    '<'		=> sub {
+	return 0 if ($_[0]->{bits} != $_[1]->{bits});
+	for my $b (0 .. $_[0]->{bits}/8 - 1) {
+	    return 1 if vec($_[0]->{addr}, $b, 8) 
+		< vec($_[1]->{addr}, $b, 8);
+	}
+	for my $b (0 .. $_[0]->{bits}/8 - 1) {
+	    return 1 if vec($_[0]->{mask}, $b, 8) 
+		< vec($_[1]->{mask}, $b, 8);
+	}
+	return 0;
+    },
+
+    '>='	=> sub {
+	return 0 if ($_[0]->{bits} != $_[1]->{bits});
+	for my $b (0 .. $_[0]->{bits}/8 - 1) {
+	    return 1 if vec($_[0]->{addr}, $b, 8) 
+		>= vec($_[1]->{addr}, $b, 8);
+	}
+	for my $b (0 .. $_[0]->{bits}/8 - 1) {
+	    return 1 if vec($_[0]->{mask}, $b, 8) 
+		>= vec($_[1]->{mask}, $b, 8);
+	}
+	return 0;
+    },
+
+    '<='	=> sub {
+	return 0 if ($_[0]->{bits} != $_[1]->{bits});
+	for my $b (0 .. $_[0]->{bits}/8 - 1) {
+	    return 1 if vec($_[0]->{addr}, $b, 8) 
+		<= vec($_[1]->{addr}, $b, 8);
+	}
+	for my $b (0 .. $_[0]->{bits}/8 - 1) {
+	    return 1 if vec($_[0]->{mask}, $b, 8) 
+		<= vec($_[1]->{mask}, $b, 8);
+	}
+	return 0;
+    },
+
+    '<=>'		=> sub {
+	return undef if ($_[0]->{bits} != $_[1]->{bits});
+	for my $b (0 .. $_[0]->{bits}/8 - 1) {
+	    my $r = vec($_[0]->{addr}, $b, 8) 
+		<=> vec($_[1]->{addr}, $b, 8);
+	    return $r if $r;
+	}
+	for my $b (0 .. $_[0]->{bits}/8 - 1) {
+	    my $r = vec($_[0]->{mask}, $b, 8) 
+		<=> vec($_[1]->{mask}, $b, 8);
+	    return $r if $r;
+	}
+	return 0;
+    },
+
+    'cmp'		=> sub {
+	return undef if ($_[0]->{bits} != $_[1]->{bits});
+	for my $b (0 .. $_[0]->{bits}/8 - 1) {
+	    my $r = vec($_[0]->{addr}, $b, 8) 
+		<=> vec($_[1]->{addr}, $b, 8);
+	    return $r if $r;
+	}
+	for my $b (0 .. $_[0]->{bits}/8 - 1) {
+	    my $r = vec($_[0]->{mask}, $b, 8) 
+		<=> vec($_[1]->{mask}, $b, 8);
+	    return $r if $r;
+	}
+	return 0;
+    },
+
+    '@{}'	=> sub { 
+	return [ $_[0]->hostenum ]; 
+    };
+
+				#############################################
+				# End of the overload methods.
+				#############################################
+
+
+our $VERSION = '3.03';
 
 # Preloaded methods go here.
 
@@ -50,6 +165,64 @@ sub _fnew ($$) {
 sub _ones ($) {
     my $bits	= shift;
     return ~vec('', 0, $bits);
+}
+
+				# Addition of a constant to an
+				# object
+sub plus {
+    my $ip	= shift;
+    my $const	= shift;
+
+    return $ip unless $const;
+
+    my $a = $ip->{addr};
+    my $m = $ip->{mask};
+
+    my $hp = "$a" & ~"$m";
+    my $np = "$a" & "$m";
+
+    vec($hp, 0, 32) += $const;
+
+    return _fnew NetAddr::IP [ "$np" | ("$hp" & ~"$m"), 
+			       $ip->{mask}, $ip->{bits}];
+}
+
+sub minus {
+    my $ip	= shift;
+    my $const	= shift;
+
+    return plus($ip, -$const, @_);
+}
+
+				# Auto-increment an object
+sub plusplus {
+    my $ip	= shift;
+
+    my $a = $ip->{addr};
+    my $m = $ip->{mask};
+
+    my $hp = "$a" & ~"$m";
+    my $np = "$a" & "$m";
+
+    vec($hp, 0, 32) ++;
+
+    $ip->{addr} = "$np" | ("$hp" & ~"$m");
+    return $ip;
+}
+
+sub minusminus {
+    my $ip	= shift;
+
+    my $a = $ip->{addr};
+    my $m = $ip->{mask};
+
+    my $hp = "$a" & ~"$m";
+    my $np = "$a" & "$m";
+
+    vec($hp, 0, 32) --;
+
+    $ip->{addr} = "$np" | ("$hp" & ~"$m");
+    return $ip;
 }
 
 sub masklen ($) {
@@ -248,6 +421,13 @@ sub network ($) {
     return $self->_fnew($self->_network);
 }
 
+sub wildcard ($) {
+    my $self	= shift;
+    return wantarray() ? ($self->addr, _to_quad ~$self->{mask}) :
+	_to_quad ~$self->{mask};
+			      
+}
+
 sub numeric ($) {
     my $self	= shift;
     return 
@@ -262,11 +442,12 @@ sub numeric ($) {
 
 sub compactref ($) {
     my @addr = sort 
-    { (vec($a->{addr}, 0, $a->{bits}) <=> vec($b->{addr}, 0, $a->{bits}))
-	  || (vec($a->{mask}, 0, $a->{bits}) 
-	      <=> vec($b->{mask}, 0, $a->{bits}))
-	  } @{$_[0]} or
-	      return [];
+#    { (vec($a->{addr}, 0, $a->{bits}) <=> vec($b->{addr}, 0, $a->{bits}))
+#	  || (vec($a->{mask}, 0, $a->{bits}) 
+#	      <=> vec($b->{mask}, 0, $a->{bits}))
+#	  } 
+    @{$_[0]} or
+	return [];
 
     my $bits = $addr[0]->{bits};
     my $changed;
@@ -553,6 +734,15 @@ contest, it returns a list of two elements. The first element is as
 described, the second element is the numeric representation of the
 netmask.
 
+=item C<-E<gt>wildcard()>
+
+When called in a scalar context, returns the wildcard bits
+corresponding to the mask, in dotted-quad format.
+
+When called in an array context, returns a two-element array. The
+first element, is the address part. The second element, is the
+wildcard translation of the mask.
+
 =item C<$me-E<gt>contains($other)>
 
 Returns true when C<$me> completely contains C<$other>. False is
@@ -652,6 +842,17 @@ You can do something along the lines of
 
 However, note that this might generate a very large amount of items
 in the list. You must be careful when doing this kind of expansion.
+
+=item B<Sum and auto-increment>
+
+You can add a constant to an object. This will return a new object
+referring to the host address obtained by incrementing (or
+decrementing) the given address. YOu can do this with the operators
+B<+>, B<->, B<+=> and B<-=>.
+
+The auto-increment or auto-decrement operators will return a new
+object pointing to the next or previous host address in the
+subnet. These are the B<++> and B<--> operators.
 
 =back
 
@@ -950,6 +1151,23 @@ Introduced overloading to ease certain common operations.
 
 =back
 
+=item 3.03
+
+=over
+
+=item *
+
+Added more comparison operators.
+
+=item *
+
+As per Peter Wirdemo's suggestion, added C<-E<gt>wildcard()> for
+producing subnets in wildcard format.
+
+=item *
+
+Added C<++> and C<+> to provide for efficient iteration operations
+over all the hosts of a subnet without C<-E<gt>expand()>ing it.
 
 =back
 

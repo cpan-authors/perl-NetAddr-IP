@@ -61,6 +61,14 @@ DESCRIPTION
         element is as described, the second element is the numeric
         representation of the netmask.
 
+    `->wildcard()'
+        When called in a scalar context, returns the wildcard bits
+        corresponding to the mask, in dotted-quad format.
+
+        When called in an array context, returns a two-element array. The
+        first element, is the address part. The second element, is the
+        wildcard translation of the mask.
+
     `$me->contains($other)'
         Returns true when `$me' completely contains `$other'. False is
         returned otherwise and `undef' is returned if `$me' and `$other' are
@@ -142,6 +150,16 @@ DESCRIPTION
 
         However, note that this might generate a very large amount of items
         in the list. You must be careful when doing this kind of expansion.
+
+    Sum and auto-increment
+        You can add a constant to an object. This will return a new object
+        referring to the host address obtained by incrementing (or
+        decrementing) the given address. YOu can do this with the operators
+        +, -, += and -=.
+
+        The auto-increment or auto-decrement operators will return a new
+        object pointing to the next or previous host address in the subnet.
+        These are the ++ and -- operators.
 
   EXPORT
 
@@ -269,19 +287,28 @@ HISTORY
         *
                 Fixed compatibility issue with C<-E<gt>num()> on 64-bit processors.
 
+    3.03
+        *   Added more comparison operators.
+
+        *   As per Peter Wirdemo's suggestion, added `->wildcard()' for
+            producing subnets in wildcard format.
+
+        *   Added `++' and `+' to provide for efficient iteration operations
+            over all the hosts of a subnet without `->expand()'ing it.
+
 AUTHOR
-    Luis E. Munoz <lem@cantv.net>
+        Luis E. Munoz <lem@cantv.net>
 
 WARRANTY
-    This software comes with the same warranty as perl itself (ie, none), so
-    by using it you accept any and all the liability.
+        This software comes with the same warranty as perl itself (ie,
+        none), so by using it you accept any and all the liability.
 
 LICENSE
-    This software is (c) Luis E. Munoz. It can be used under the terms of
-    the perl artistic license provided that proper credit for the work of
-    the author is preserved in the form of this copyright notice and license
-    for this module.
+        This software is (c) Luis E. Munoz. It can be used under the terms
+        of the perl artistic license provided that proper credit for the
+        work of the author is preserved in the form of this copyright notice
+        and license for this module.
 
 SEE ALSO
-    perl(1).
+        perl(1).
 
