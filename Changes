@@ -43,4 +43,11 @@ Revision history for Perl extension IP::Address.
 	- Added support for ->new($min, $max, $bits) form
 	- Added ->to_numeric. This helps serializing objects
 
+2.11  Fri Oct 13 2000
+	- Fixed ->to_numeric to output plain numbers
+	- Removed leftover debug statements
+
+
+
+
 

@@ -28,7 +28,7 @@ require Exporter;
 	
 );
 
-$VERSION = '2.10';
+$VERSION = '2.11';
 
 
 # Preloaded methods go here.
@@ -107,10 +107,14 @@ sub _addr_to_number {
     $o[2] = new Math::BigInt $o[2];
     $o[3] = new Math::BigInt $o[3];
 
-    return ($o[0] * 2 ** 24 + 
-	    $o[1] * 2 ** 16 + 
-	    $o[2] * 2 ** 8 + 
-	    $o[3]);
+    my $o = ($o[0] * 2 ** 24 + 
+	     $o[1] * 2 ** 16 + 
+	     $o[2] * 2 ** 8 + 
+	     $o[3]);
+
+    $o =~ s/[-+]//g;
+
+    return $o;
 }
 
 sub _number_to_addr {
@@ -124,7 +128,6 @@ sub _number_to_addr {
 
     foreach (@o) { s/[-+]//g; }
 
-    print "_number_to_addr $number is ", join('.', @o), "\n";
     return join('.', @o);
 
 }
