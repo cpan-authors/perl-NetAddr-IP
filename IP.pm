@@ -1,6 +1,6 @@
 #!/usr/bin/perl -w
 
-# $Id: IP.pm,v 1.4 2002/10/31 13:48:04 lem Exp $
+# $Id: IP.pm,v 1.5 2002/10/31 21:32:20 lem Exp $
 
 package NetAddr::IP;
 
@@ -45,7 +45,7 @@ use Socket;
 use strict;
 use warnings;
 
-our $VERSION = '3.13';
+our $VERSION = '3.14';
 
 				#############################################
 				# These are the overload methods, placed here
@@ -411,6 +411,7 @@ sub _v4 ($$$) {
     my $present	= shift;
 
     my $addr = '';
+    my $a; 
 
     if ($ip eq 'default' or $ip eq 'any') {
 	vec($addr, 0, 32) = 0x0;
@@ -567,8 +568,9 @@ sub _v4 ($$$) {
 	vec($mask, 2, 8) = _obits $3, $7;
 	vec($mask, 3, 8) = _obits $4, $8;
     }
-    elsif (my $a = gethostbyname($ip)) {
-	if (inet_ntoa($a) =~ m!^(\d+)\.(\d+)\.(\d+)\.(\d+)$!)  {
+    elsif (($a = gethostbyname($ip)) and defined($a)
+	   and ($a ne pack("C4", 0, 0, 0, 0))) {
+	if ($a and inet_ntoa($a) =~ m!^(\d+)\.(\d+)\.(\d+)\.(\d+)$!)  {
 	    vec($addr, 0, 8) = $1;
 	    vec($addr, 1, 8) = $2;
 	    vec($addr, 2, 8) = $3;
@@ -576,7 +578,6 @@ sub _v4 ($$$) {
 	}
     }
     elsif (!$present and length($ip) == 4) {
-
 	my @o = unpack("C4", $ip);
 
 	vec($addr, $_, 8) = $o[$_] for 0 .. 3;
@@ -626,7 +627,7 @@ If called with no arguments, 'default' is assumed.
 sub new ($$;$) {
     my $type	= $_[0];
     my $class	= ref($type) || $type || "NetAddr::IP";
-    my $ip	= $_[1];
+    my $ip	= lc $_[1];
     my $hasmask	= 1;
     my $mask;
 
@@ -637,7 +638,8 @@ sub new ($$;$) {
 	    $ip		= $1;
 	    $mask	= $2;
 	}
-	elsif ($ip =~ m!^(default|any|broadcast|loopback)$!) {
+	elsif (grep { $ip eq $_ } (qw(default any broadcast loopback))) 
+	{
 	    $mask	= $ip;
 	}
     }
@@ -1221,7 +1223,7 @@ None by default.
 
 =head1 HISTORY
 
-$Id: IP.pm,v 1.4 2002/10/31 13:48:04 lem Exp $
+$Id: IP.pm,v 1.5 2002/10/31 21:32:20 lem Exp $
 
 =over
 
@@ -1672,6 +1674,18 @@ old-style socket code.
 
 Fixes a warning related to 'wrapping', introduced in 3.12 in
 C<pack()>/C<unpack()> for the new support for C<-E<gt>aton()>.
+
+=back
+
+=item 3.14
+
+=over
+
+=item *
+
+C<Socket::gethostbyaddr> in Solaris seems to behave a bit different
+from other OSes. Reversed change in 3.13 and added code around this
+difference.
 
 =back
 
