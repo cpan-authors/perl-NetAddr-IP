@@ -1,0 +1,42 @@
+Revision history for Perl extension IP::Address.
+
+0.01  Sun Jul 11 13:26:27 1999
+	- original version; Basic testing and release to CPAN as
+	version 0.01. This is considered beta software.
+
+0.02  Mon Jul 12
+	- Multiple changes to fix endiannes issues. This code is now
+	moderately tested on Wintel and Sun/Solaris boxes.
+
+0.03  Wed Jul 14
+	- Added ->first and ->last methods. Version changed to 0.03.
+
+1.00  Wed Dec 05 2000
+	- Implemented ->new_subnet. Version changed to 1.00.
+	- less croak()ing when improper input is fed to the
+	module. A more consistent 'undef' is returned now
+	instead to allow the user to better handle the error.
+	- Released
+
+1.10  Wed May 02 2000
+	- As per MARNIX A. VAN AMMERS [mav6@ns02.comp.pge.com]
+	suggestion, changed the syntax of the loop in host_enum
+	to be the same of the enum method.
+	- Fixed the MS-DOS ^M at the end-of-line problem. This
+	should make the module easier to use for *nix users.
+	- Released
+
+1.20  Sun Jun 25 2000
+	- Implemented ->compact and ->expand methods.
+	- Applying for official name
+	- Released
+
+1.21  Mon Jun 26 2000
+	- Added ->addr_number and ->mask_bits. Currently we return
+	normal numbers (not BigInts). Please test this in your
+	platform and report any problems!
+
+2.00  Wed Jun 28 2000
+	- Released under the new *official* name of NetAddr::IP
+
+
