@@ -12,6 +12,9 @@ SYNOPSIS
           print "Is a loopback address\n";
       }
 
+                                    # This prints 127.0.0.1/32
+      print "You can also say $ip...\n";
+
 DESCRIPTION
     This module provides a number of methods useful for handling IPv4
     addresses ans subnets. Hopefully, its methods are also usable for IPv6
@@ -19,7 +22,7 @@ DESCRIPTION
 
     Methods so far include:
 
-    `->new($addr, [ $mask ])'
+    `->new([$addr, [ $mask ]])'
         This method creates a new IPv4 address with the supplied address in
         `$addr' and an optional netmask `$mask', which can be omitted to get
         a /32 mask.
@@ -28,23 +31,35 @@ DESCRIPTION
         in all the notations I have seen over time. It can optionally
         contain the mask in CIDR notation.
 
+        If called with no arguments, 'default' is assumed.
+
     `->broadcast()'
-        Returns the broadcast address for a subnet.
+        Returns a new object refering to the broadcast address of a given
+        subnet.
 
     `->network()'
-        Returns the "network" address for a subnet.
+        Returns a new object refering to the network address of a given
+        subnet.
 
     `->addr()'
-        Returns the address part of the object as a dotted-quad.
+        Returns a scalar with the address part of the object as a
+        dotted-quad.
 
     `->mask()'
-        Returns the mask as a dotted-quad.
+        Returns a scalar with the mask as a dotted-quad.
 
     `->masklen()'
-        Returns the number of one bits in the mask.
+        Returns a scalar the number of one bits in the mask.
 
     `->cidr()'
-        Returns the address and mask in CIDR notation.
+        Returns a scalar with the address and mask in CIDR notation.
+
+    `->numeric()'
+        When called in a scalar context, will return a numeric
+        representation of the address part of the IP address. When called in
+        an array contest, it returns a list of two elements. The first
+        element is as described, the second element is the numeric
+        representation of the netmask.
 
     `$me->contains($other)'
         Returns true when `$me' completely contains `$other'. False is
@@ -80,6 +95,11 @@ DESCRIPTION
         all the addresses and subnets into the largest (ie, least specific)
         subnets possible that contain exactly all of the given objects.
 
+        Note that in versions prior to 3.02, if fed with the same IP subnets
+        multiple times, these subnets would be returned. From 3.02 on, a
+        more "correct" approach has been adopted and only one address would
+        be returned.
+
     `$me->compactref(\@list)'
         As usual, a faster version of =item `->compact()' that returns a
         reference to a list. Note that this method takes a reference to a
@@ -96,6 +116,32 @@ DESCRIPTION
     `->num()'
         Returns the number of useable addresses IP addresses within the
         subnet, not counting the broadcast address.
+
+    In addition to the methods, some functions are overloaded to ease
+    manipulation of the objects. The available operations are:
+
+    Stringification
+        An object can be used just as a string. For instance, the following
+        code
+
+                my $ip = new NetAddr::IP 'loopback';
+                print "$ip\n";
+
+        Will print the string 127.0.0.1/8.
+
+    Equality
+        You can test for equality with either `eq' or `=='.
+
+    Dereferencing as an ARRAY
+        You can do something along the lines of
+
+                my $net = new NetAddr::IP $cidr_spec;
+                for my $ip (@$net) {
+                  print "Host $ip is in $net\n";
+                }
+
+        However, note that this might generate a very large amount of items
+        in the list. You must be careful when doing this kind of expansion.
 
   EXPORT
 
@@ -203,6 +249,25 @@ HISTORY
             5.6.0/5.6.1), HP-UX11 on PA-RISC (5.6.0), RedHat Linux 6.2
             (5.6.0), Digital Unix on Alpha (5.6.0), Solaris on Sparc (5.6.0)
             and possibly others.
+
+    3.01
+        *   Added `->numeric()'.
+
+        *   `->new()' called with no parameters creates a default
+            NetAddr::IP object.
+
+    3.02
+        *   Fxed `->compact()' for cases of equal subnets or
+            mutually-contained IP addresses as pointed out by Peter Wirdemo.
+            Note that now only distinct IP addresses will be returned by
+            this method.
+
+        *   Fixed the docs as suggested by Thomas Linden.
+
+        *   Introduced overloading to ease certain common operations.
+
+        *
+                Fixed compatibility issue with C<-E<gt>num()> on 64-bit processors.
 
 AUTHOR
     Luis E. Munoz <lem@cantv.net>

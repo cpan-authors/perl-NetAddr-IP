@@ -7,8 +7,24 @@ use Carp;
 use Socket;
 use strict;
 use warnings;
+use overload
+    '""'	=> sub { $_[0]->cidr(); },
 
-our $VERSION = '3.00';
+    'eq'	=> sub { my $a = ref $_[0] eq 'NetAddr::IP' ? 
+			     $_[0]->cidr : $_[0];
+			 my $b = ref $_[1] eq 'NetAddr::IP' ? 
+			     $_[1]->cidr : $_[1];
+			 $a eq $b;
+		     },
+
+    '=='	=> sub { return 0 unless ref $_[0] eq 'NetAddr::IP';
+			 return 0 unless ref $_[1] eq 'NetAddr::IP';
+			 $_[0]->cidr eq $_[1]->cidr;
+		     },
+
+    '@{}'	=> sub { return [ $_[0]->hostenum ]; };
+
+our $VERSION = '3.02';
 
 # Preloaded methods go here.
 
@@ -144,6 +160,8 @@ sub new ($$;$) {
     my $ip	= $_[1];
     my $mask;
 
+    $ip = 'default' unless defined $ip;
+
     if (@_ == 2) {
 	if ($ip =~ m!^(.+)/(.+)$!) {
 	    $ip		= $1;
@@ -230,6 +248,14 @@ sub network ($) {
     return $self->_fnew($self->_network);
 }
 
+sub numeric ($) {
+    my $self	= shift;
+    return 
+	wantarray() ? ( vec($self->{addr}, 0, 32), 
+			vec($self->{mask}, 0, 32) ) :
+			    vec($self->{addr}, 0, 32);
+}
+
 				# Return the shortest possible subnet
 				# list that completely contains all
 				# the given addresses or subnets.
@@ -253,7 +279,13 @@ sub compactref ($) {
 	{
 	    my $lip = $addr[$i];
 	    my $hip = $addr[$i + 1];
-	    if (vec($lip->{mask}, 0, $bits) 
+
+	    if ($lip->contains($hip)) {
+		splice(@addr, $i + 1, 1);
+		++ $changed;
+		-- $i;
+	    }
+	    elsif (vec($lip->{mask}, 0, $bits) 
 		== vec($hip->{mask}, 0, $bits)) 
 	    {
 		my $la = $lip->{addr};
@@ -276,9 +308,14 @@ sub compactref ($) {
 
 		if (("$la" & "$nm") eq ("$ha" & "$nm"))
 		{
-		    $addr[$i] = ($lip->_fnew([ "$na" & "$nm", 
-					       $nm, $bits ]));
-		    splice(@addr, $i + 1, 1);
+		    if ("$la" eq "$ha") {
+			splice(@addr, $i + 1, 1);
+		    }
+		    else {
+			$addr[$i] = ($lip->_fnew([ "$na" & "$nm", 
+						   $nm, $bits ]));
+			splice(@addr, $i + 1, 1);
+		    }
 
 #		    print $lip->addr, "/", $lip->mask, " + ", $hip->addr, 
 #		    "/", $hip->mask, " = ", $addr[$i]->addr, "/", 
@@ -429,9 +466,13 @@ sub last ($) {
 			  $self->{mask}, $bits ]);
 }
 
+				# XXX - The constant below should be
+				# constructed dinamically depending on
+				# the address size in order to work with
+				# V6.
 sub num ($) {
     my $self	= shift;
-    return ~vec($self->{mask}, 0, $self->{bits});
+    return ~vec($self->{mask}, 0, $self->{bits}) & 0xFFFFFFFF;
 }
 
 1;
@@ -453,6 +494,9 @@ NetAddr::IP - Manages IPv4 addresses and subnets
       print "Is a loopback address\n";
   }
 
+				# This prints 127.0.0.1/32
+  print "You can also say $ip...\n";
+
 =head1 DESCRIPTION
 
 This module provides a number of methods useful for handling IPv4
@@ -463,7 +507,7 @@ Methods so far include:
 
 =over
 
-=item C<-E<gt>new($addr, [ $mask ])>
+=item C<-E<gt>new([$addr, [ $mask ]])>
 
 This method creates a new IPv4 address with the supplied address in
 C<$addr> and an optional netmask C<$mask>, which can be omitted to get
@@ -473,29 +517,41 @@ C<$addr> can be almost anything that can be resolved to an IP address
 in all the notations I have seen over time. It can optionally contain
 the mask in CIDR notation.
 
+If called with no arguments, 'default' is assumed.
+
 =item C<-E<gt>broadcast()>
 
-Returns the broadcast address for a subnet.
+Returns a new object refering to the broadcast address of a given
+subnet.
 
 =item C<-E<gt>network()>
 
-Returns the "network" address for a subnet.
+Returns a new object refering to the network address of a given
+subnet.
 
 =item C<-E<gt>addr()>
 
-Returns the address part of the object as a dotted-quad.
+Returns a scalar with the address part of the object as a dotted-quad.
 
 =item C<-E<gt>mask()>
 
-Returns the mask as a dotted-quad.
+Returns a scalar with the mask as a dotted-quad.
 
 =item C<-E<gt>masklen()>
 
-Returns the number of one bits in the mask.
+Returns a scalar the number of one bits in the mask.
 
 =item C<-E<gt>cidr()>
 
-Returns the address and mask in CIDR notation.
+Returns a scalar with the address and mask in CIDR notation.
+
+=item C<-E<gt>numeric()>
+
+When called in a scalar context, will return a numeric representation
+of the address part of the IP address. When called in an array
+contest, it returns a list of two elements. The first element is as
+described, the second element is the numeric representation of the
+netmask.
 
 =item C<$me-E<gt>contains($other)>
 
@@ -538,6 +594,11 @@ Given a list of objects (including C<$me>), this method will compact
 all the addresses and subnets into the largest (ie, least specific)
 subnets possible that contain exactly all of the given objects.
 
+Note that in versions prior to 3.02, if fed with the same IP subnets
+multiple times, these subnets would be returned. From 3.02 on, a more
+"correct" approach has been adopted and only one address would be
+returned.
+
 =item C<$me-E<gt>compactref(\@list)>
 
 As usual, a faster version of =item C<-E<gt>compact()> that returns a
@@ -559,6 +620,38 @@ the subnet (ie, one less than the broadcast address).
 
 Returns the number of useable addresses IP addresses within the
 subnet, not counting the broadcast address.
+
+=back
+
+In addition to the methods, some functions are overloaded to ease
+manipulation of the objects. The available operations are:
+
+=over
+
+=item B<Stringification>
+
+An object can be used just as a string. For instance, the following code
+
+	my $ip = new NetAddr::IP 'loopback';
+        print "$ip\n";
+
+Will print the string 127.0.0.1/8.
+
+=item B<Equality>
+
+You can test for equality with either C<eq> or C<==>.
+
+=item B<Dereferencing as an ARRAY>
+
+You can do something along the lines of
+
+	my $net = new NetAddr::IP $cidr_spec;
+        for my $ip (@$net) {
+	  print "Host $ip is in $net\n";
+	}
+
+However, note that this might generate a very large amount of items
+in the list. You must be careful when doing this kind of expansion.
 
 =back
 
@@ -817,6 +910,46 @@ HP-UX11 on PA-RISC (5.6.0), RedHat  Linux 6.2 (5.6.0), Digital Unix on
 Alpha (5.6.0), Solaris on Sparc (5.6.0) and possibly others.
 
 =back
+
+=item 3.01
+
+=over
+
+=item * 
+
+Added C<-E<gt>numeric()>.
+
+=item *
+
+C<-E<gt>new()> called with no parameters creates a B<default>
+NetAddr::IP object.
+
+=back
+
+=item 3.02
+
+=over
+
+=item *
+
+Fxed C<-E<gt>compact()> for cases of equal subnets or
+mutually-contained IP addresses as pointed out by Peter Wirdemo. Note
+that now only distinct IP addresses will be returned by this method.
+
+=item *
+
+Fixed the docs as suggested by Thomas Linden.
+
+=item *
+
+Introduced overloading to ease certain common operations.
+
+=item *
+
+    Fixed compatibility issue with C<-E<gt>num()> on 64-bit processors.
+
+=back
+
 
 =back
 

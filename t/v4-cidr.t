@@ -1,5 +1,4 @@
-#use NetAddr::IP;
-require "IP.pm";
+use NetAddr::IP;
 
 $| = 1;
 

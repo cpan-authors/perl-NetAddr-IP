@@ -11,7 +11,7 @@ my @r = (
 
 $| = 1;
 
-print "1..1\n";
+print "1..2\n";
 
 my @ips;
 
@@ -36,3 +36,19 @@ if (@m == @c) {
 else {
     print "not ok 1\n";
 }
+
+@ips = ();
+
+for my $ip (qw(1.1.1.1 1.1.1.1 1.1.1.1 1.1.1.1)) {
+    push(@ips, NetAddr::IP->new($ip));
+}
+
+@c = NetAddr::IP::compact(@ips);
+
+if (@c == 1 and $c[0]->cidr() eq '1.1.1.1/32') {
+    print "ok 2\n";
+}
+else {
+    print "not ok 2\n";
+}
+
