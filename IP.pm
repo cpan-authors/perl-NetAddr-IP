@@ -1,6 +1,6 @@
 #!/usr/bin/perl -w
 
-# $Id: IP.pm,v 1.2 2002/10/31 04:30:22 lem Exp $
+# $Id: IP.pm,v 1.4 2002/10/31 13:48:04 lem Exp $
 
 package NetAddr::IP;
 
@@ -45,7 +45,7 @@ use Socket;
 use strict;
 use warnings;
 
-our $VERSION = '3.12';
+our $VERSION = '3.13';
 
 				#############################################
 				# These are the overload methods, placed here
@@ -577,7 +577,7 @@ sub _v4 ($$$) {
     }
     elsif (!$present and length($ip) == 4) {
 
-	my @o = unpack("c4", $ip);
+	my @o = unpack("C4", $ip);
 
 	vec($addr, $_, 8) = $o[$_] for 0 .. 3;
 	vec($mask, 0, 32) = 0xFFFFFFFF;
@@ -791,7 +791,7 @@ required to deal with "old-style" sockets.
 
 sub aton {
     my $self = shift;
-    return pack "c4", split /\./, $self->addr;
+    return pack "C4", split /\./, $self->addr;
 }
 
 =pod
@@ -1221,7 +1221,7 @@ None by default.
 
 =head1 HISTORY
 
-$Id: IP.pm,v 1.2 2002/10/31 04:30:22 lem Exp $
+$Id: IP.pm,v 1.4 2002/10/31 13:48:04 lem Exp $
 
 =over
 
@@ -1661,6 +1661,17 @@ helps document the code.
 Added C<-E<gt>aton()> and support for this format in
 C<-E<gt>new()>. This makes the code helpful to interface with
 old-style socket code.
+
+=back
+
+=item 3.13
+
+=over
+
+=item *
+
+Fixes a warning related to 'wrapping', introduced in 3.12 in
+C<pack()>/C<unpack()> for the new support for C<-E<gt>aton()>.
 
 =back
 
