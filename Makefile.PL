@@ -2,7 +2,7 @@ use ExtUtils::MakeMaker;
 # See lib/ExtUtils/MakeMaker.pm for details of how to influence
 # the contents of the Makefile that is written.
 
-# $Id: Makefile.PL,v 1.5 2003/10/09 00:12:22 lem Exp $
+# $Id: Makefile.PL,v 1.7 2003/10/22 23:20:27 lem Exp $
 
 my $checker = 0;
 

@@ -1,6 +1,6 @@
 use NetAddr::IP;
 
-# $Id: v4-new.t,v 1.7 2003/10/08 06:46:02 lem Exp $
+# $Id: v4-new.t,v 1.8 2003/10/14 18:01:40 lem Exp $
 
 BEGIN {
 our @a = (
@@ -42,10 +42,15 @@ ok(! defined NetAddr::IP->new('256.256.256.256'), "Invalid IP returns undef");
 for my $a (@a) {
     for my $m (@m) {
 	my $ip = new NetAddr::IP $a->[0], $m->[0];
-	is($ip->addr, $a->[1], "$a->[0] / $m->[0] is $a->[1]");
-	is($ip->mask, $m->[1], "$a->[0] / $m->[0] is $m->[1]");
-	is($ip->bits, 32, "$a->[0] / $m->[0] is 32 bits wide");
-	is($ip->version, 4, "$a->[0] / $m->[0] is version 4");
+      SKIP:
+	{
+	    skip "Failed to make an object for $a->[0]/$m->[0]", 4
+		unless defined $ip;
+	    is($ip->addr, $a->[1], "$a->[0] / $m->[0] is $a->[1]");
+	    is($ip->mask, $m->[1], "$a->[0] / $m->[0] is $m->[1]");
+	    is($ip->bits, 32, "$a->[0] / $m->[0] is 32 bits wide");
+	    is($ip->version, 4, "$a->[0] / $m->[0] is version 4");
+	};
     }
 }
 

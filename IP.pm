@@ -1,6 +1,6 @@
 #!/usr/bin/perl -w
 
-# $Id: IP.pm,v 1.14 2003/10/10 17:51:17 lem Exp $
+# $Id: IP.pm,v 1.15 2003/10/22 23:20:27 lem Exp $
 
 package NetAddr::IP;
 
@@ -48,7 +48,7 @@ our @EXPORT_OK = qw(Compact);
 
 our @ISA = qw(Exporter);
 
-our $VERSION = '3.16';
+our $VERSION = '3.17';
 
 				#############################################
 				# These are the overload methods, placed here
@@ -532,7 +532,7 @@ sub _v4 ($$$) {
 	vec($addr, 2, 8) = 0;
 	vec($addr, 3, 8) = 0;
     }
-    elsif ($ip =~ m/^([xb\d]+)$/) 
+    elsif ($ip =~ m/^(-?[xb\d]+)$/) 
     {
 	my $num = $1;
 	$num += 2 ** 32 if $num < 0;
@@ -1493,7 +1493,7 @@ None by default.
 
 =head1 HISTORY
 
-$Id: IP.pm,v 1.14 2003/10/10 17:51:17 lem Exp $
+$Id: IP.pm,v 1.15 2003/10/22 23:20:27 lem Exp $
 
 =over
 
@@ -2042,6 +2042,11 @@ Note that IPv6 might not be as solid as I would like. Be careful...
 Fixed a couple of (minor) bugs in shipped tests in the last
 version. Also, fixed a small pod typo that caused code to show up in
 the documentation.
+
+=item 3.17
+
+Fixed IP.pm so that all test could pass in Solaris machines. Thanks to
+all who reported this.
 
 =back
 
