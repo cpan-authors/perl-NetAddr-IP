@@ -6,8 +6,8 @@ use ExtUtils::MakeMaker;
 
 my $checker = 0;
 
-eval { use Test::Pod;
-       $checker = 1; };
+eval q{ use Test::Pod;
+	$checker = 1; };
 
 unless ($checker)
 {

@@ -37,7 +37,7 @@ Many operators have been overloaded, as described below:
 
 =cut
 
-require 5.005_62;
+require 5.6.0;
 use Carp;
 use Socket;
 use strict;
@@ -48,7 +48,7 @@ our @EXPORT_OK = qw(Compact);
 
 our @ISA = qw(Exporter);
 
-our $VERSION = '3.17';
+our $VERSION = '3.18';
 
 				#############################################
 				# These are the overload methods, placed here
@@ -2047,6 +2047,11 @@ the documentation.
 
 Fixed IP.pm so that all test could pass in Solaris machines. Thanks to
 all who reported this.
+
+=item 3.18
+
+Fixed some bugs pointed out by David Lloyd, having to do with the
+module packaging and version requirements. Thanks David!
 
 =back
 
