@@ -8,7 +8,7 @@ use Socket;
 use strict;
 use warnings;
 
-our $VERSION = '3.09';
+our $VERSION = '3.10';
 
 				#############################################
 				# These are the overload methods, placed here
@@ -51,85 +51,109 @@ use overload
 				# one octet at a time. String comparison
 				# is not portable because of endianness.
     '>'		=> sub {
-	return 0 if ($_[0]->{bits} != $_[1]->{bits});
-	for my $b (0 .. $_[0]->{bits}/8 - 1) {
-	    return 1 if vec($_[0]->{addr}, $b, 8) 
-		> vec($_[1]->{addr}, $b, 8);
-	}
-	for my $b (0 .. $_[0]->{bits}/8 - 1) {
-	    return 1 if vec($_[0]->{mask}, $b, 8) 
-		> vec($_[1]->{mask}, $b, 8);
-	}
-	return 0;
+	
+	return undef unless $_[0]->{bits} == $_[1]->{bits};
+	return scalar($_[0]->numeric()) > scalar($_[1]->numeric());
+
+#  	return 0 if ($_[0]->{bits} != $_[1]->{bits});
+#  	for my $b (0 .. $_[0]->{bits}/8 - 1) {
+#  	    return 1 if vec($_[0]->{addr}, $b, 8) 
+#  		> vec($_[1]->{addr}, $b, 8);
+#  	}
+#  	for my $b (0 .. $_[0]->{bits}/8 - 1) {
+#  	    return 1 if vec($_[0]->{mask}, $b, 8) 
+#  		> vec($_[1]->{mask}, $b, 8);
+#  	}
+#	return 0;
     },
 
     '<'		=> sub {
-	return 0 if ($_[0]->{bits} != $_[1]->{bits});
-	for my $b (0 .. $_[0]->{bits}/8 - 1) {
-	    return 1 if vec($_[0]->{addr}, $b, 8) 
-		< vec($_[1]->{addr}, $b, 8);
-	}
-	for my $b (0 .. $_[0]->{bits}/8 - 1) {
-	    return 1 if vec($_[0]->{mask}, $b, 8) 
-		< vec($_[1]->{mask}, $b, 8);
-	}
-	return 0;
+
+	return undef unless $_[0]->{bits} == $_[1]->{bits};
+	return scalar($_[0]->numeric()) < scalar($_[1]->numeric());
+
+#  	return 0 if ($_[0]->{bits} != $_[1]->{bits});
+#  	for my $b (0 .. $_[0]->{bits}/8 - 1) {
+#  	    return 1 if vec($_[0]->{addr}, $b, 8) 
+#  		< vec($_[1]->{addr}, $b, 8);
+#  	}
+#  	for my $b (0 .. $_[0]->{bits}/8 - 1) {
+#  	    return 1 if vec($_[0]->{mask}, $b, 8) 
+#  		< vec($_[1]->{mask}, $b, 8);
+#  	}
+#  	return 0;
     },
 
     '>='	=> sub {
-	return 0 if ($_[0]->{bits} != $_[1]->{bits});
-	for my $b (0 .. $_[0]->{bits}/8 - 1) {
-	    return 1 if vec($_[0]->{addr}, $b, 8) 
-		>= vec($_[1]->{addr}, $b, 8);
-	}
-	for my $b (0 .. $_[0]->{bits}/8 - 1) {
-	    return 1 if vec($_[0]->{mask}, $b, 8) 
-		>= vec($_[1]->{mask}, $b, 8);
-	}
-	return 0;
+
+	return undef unless $_[0]->{bits} == $_[1]->{bits};
+	return scalar($_[0]->numeric()) >= scalar($_[1]->numeric());
+
+#  	return 0 if ($_[0]->{bits} != $_[1]->{bits});
+#  	for my $b (0 .. $_[0]->{bits}/8 - 1) {
+#  	    return 1 if vec($_[0]->{addr}, $b, 8) 
+#  		>= vec($_[1]->{addr}, $b, 8);
+#  	}
+#  	for my $b (0 .. $_[0]->{bits}/8 - 1) {
+#  	    return 1 if vec($_[0]->{mask}, $b, 8) 
+#  		>= vec($_[1]->{mask}, $b, 8);
+#  	}
+#  	return 0;
     },
 
     '<='	=> sub {
-	return 0 if ($_[0]->{bits} != $_[1]->{bits});
-	for my $b (0 .. $_[0]->{bits}/8 - 1) {
-	    return 1 if vec($_[0]->{addr}, $b, 8) 
-		<= vec($_[1]->{addr}, $b, 8);
-	}
-	for my $b (0 .. $_[0]->{bits}/8 - 1) {
-	    return 1 if vec($_[0]->{mask}, $b, 8) 
-		<= vec($_[1]->{mask}, $b, 8);
-	}
-	return 0;
+
+	return undef unless $_[0]->{bits} == $_[1]->{bits};
+	return scalar($_[0]->numeric()) <= scalar($_[1]->numeric());
+
+#  	return 0 if ($_[0]->{bits} != $_[1]->{bits});
+#  	for my $b (0 .. $_[0]->{bits}/8 - 1) {
+#  	    return 1 if vec($_[0]->{addr}, $b, 8) 
+#  		<= vec($_[1]->{addr}, $b, 8);
+#  	}
+#  	for my $b (0 .. $_[0]->{bits}/8 - 1) {
+#  	    return 1 if vec($_[0]->{mask}, $b, 8) 
+#  		<= vec($_[1]->{mask}, $b, 8);
+#  	}
+#  	return 0;
     },
 
     '<=>'		=> sub {
-	return undef if ($_[0]->{bits} != $_[1]->{bits});
-	for my $b (0 .. $_[0]->{bits}/8 - 1) {
-	    my $r = vec($_[0]->{addr}, $b, 8) 
-		<=> vec($_[1]->{addr}, $b, 8);
-	    return $r if $r;
-	}
-	for my $b (0 .. $_[0]->{bits}/8 - 1) {
-	    my $r = vec($_[0]->{mask}, $b, 8) 
-		<=> vec($_[1]->{mask}, $b, 8);
-	    return $r if $r;
-	}
-	return 0;
+
+	return undef unless $_[0]->{bits} == $_[1]->{bits};
+	return scalar($_[0]->numeric()) <=> scalar($_[1]->numeric());
+
+#  	return undef if ($_[0]->{bits} != $_[1]->{bits});
+#  	for my $b (0 .. $_[0]->{bits}/8 - 1) {
+#  	    my $r = vec($_[0]->{addr}, $b, 8) 
+#  		<=> vec($_[1]->{addr}, $b, 8);
+#  	    return $r if $r;
+#  	}
+#  	for my $b (0 .. $_[0]->{bits}/8 - 1) {
+#  	    my $r = vec($_[0]->{mask}, $b, 8) 
+#  		<=> vec($_[1]->{mask}, $b, 8);
+#  	    return $r if $r;
+#  	}
+#  	return 0;
     },
 
     'cmp'		=> sub {
-	return undef if ($_[0]->{bits} != $_[1]->{bits});
-	for my $b (0 .. $_[0]->{bits}/8 - 1) {
-	    my $r = vec($_[0]->{addr}, $b, 8) 
-		<=> vec($_[1]->{addr}, $b, 8);
-	    return $r if $r;
-	}
-	for my $b (0 .. $_[0]->{bits}/8 - 1) {
-	    my $r = vec($_[0]->{mask}, $b, 8) 
-		<=> vec($_[1]->{mask}, $b, 8);
-	    return $r if $r;
-	}
-	return 0;
+
+	return undef unless $_[0]->{bits} == $_[1]->{bits};
+	return scalar($_[0]->numeric()) <=> scalar($_[1]->numeric());
+
+#  	return undef if ($_[0]->{bits} != $_[1]->{bits});
+#  	for my $b (0 .. $_[0]->{bits}/8 - 1) {
+#  	    my $r = vec($_[0]->{addr}, $b, 8) 
+#  		<=> vec($_[1]->{addr}, $b, 8);
+#  	    return $r if $r;
+#  	}
+#  	for my $b (0 .. $_[0]->{bits}/8 - 1) {
+#  	    my $r = vec($_[0]->{mask}, $b, 8) 
+#  		<=> vec($_[1]->{mask}, $b, 8);
+#  	    return $r if $r;
+#  	}
+#  	return 0;
     },
 
     '@{}'	=> sub { 
@@ -1470,6 +1494,18 @@ it receives. If the netmask is invalid, C<undef> will be returned.
 =item *
 
 Fixed typo that invalidated otherwise correct masks. This bug appeared in 3.08.
+
+=back
+
+=item 3.10
+
+=over
+
+=item *
+
+Fixed relops. Semantics where adjusted to remove the netmask from the
+comparison. (ie, it does not make sense to say that 10.0.0.0/24 is >
+10.0.0.0/16 or viceversa).
 
 =back
 
