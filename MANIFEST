@@ -18,6 +18,8 @@ t/v4-first.t
 t/wildcard.t
 t/v4-compact.t
 t/v4-numeric.t
+t/v4-sprefix.t
+t/v4-xprefix.t
 t/v4-compplus.t
 t/v4-contains.t
 t/v4-hostenum.t

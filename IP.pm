@@ -139,7 +139,7 @@ use overload
 				#############################################
 
 
-our $VERSION = '3.03';
+our $VERSION = '3.04';
 
 # Preloaded methods go here.
 
@@ -275,6 +275,14 @@ sub _parse_mask ($$) {
     return $bmask;
 }
 
+sub _obits ($$) {
+    my $lo = shift;
+    my $hi = shift;
+
+    return 0xFF if $lo == $hi;
+    return (~ ($hi ^ $lo)) & 0xFF;
+}
+
 sub _v4 ($$) {
     my $ip	= shift;
     my $mask	= shift;
@@ -312,6 +320,102 @@ sub _v4 ($$) {
     elsif ($ip =~ m/^([xb\d]+)$/) {
 	vec($addr, 0, 32) = $1;
     }
+
+				# The notations below, include an
+				# implicit mask specification.
+
+    elsif ($ip =~ m/^(\d+)\.$/ and $1 >= 0 and $1 <= 255) {
+	#print "^(\\d+)\\.\$\n";
+	vec($addr, 0, 8) = $1;
+	vec($addr, 1, 8) = 0;
+	vec($addr, 2, 8) = 0;
+	vec($addr, 3, 8) = 0;
+	vec($mask, 0, 32) = 0xFF000000;
+    }
+    elsif ($ip =~ m/^(\d+)\.(\d+)-(\d+)\.?$/ 
+	   and $1 >= 0 and $1 <= 255
+	   and $2 >= 0 and $2 <= 255
+	   and $3 >= 0 and $3 <= 255
+	   and $2 <= $3) {
+	#print "^(\\d+)\\.(\\d+)-(\\d+)\\.?\$\n";
+	vec($addr, 0, 8) = $1;
+	vec($addr, 1, 8) = $2;
+	vec($addr, 2, 8) = 0;
+	vec($addr, 3, 8) = 0;
+
+	vec($mask, 0, 32) = 0x0;
+	vec($mask, 0, 8) = 0xFF;
+	vec($mask, 1, 8) = _obits $2, $3;
+    }
+    elsif ($ip =~ m/^(\d+)-(\d+)\.?$/ 
+	   and $1 >= 0 and $1 <= 255
+	   and $2 >= 0 and $2 <= 255
+	   and $1 <= $2) {
+	#print "^(\\d+)-(\\d+)\\.?\$\n";
+	vec($addr, 0, 8) = $1;
+	vec($addr, 1, 8) = 0;
+	vec($addr, 2, 8) = 0;
+	vec($addr, 3, 8) = 0;
+
+	vec($mask, 0, 32) = 0x0;
+	vec($mask, 0, 8) = _obits $1, $2;
+    }
+    elsif ($ip =~ m/^(\d+)\.(\d+)\.$/ and $1 >= 0 
+	   and $1 <= 255 and $2 >= 0 and $2 <= 255) 
+    {
+	#print "^(\\d+)\\.(\\d+)\\.\$\n";
+	vec($addr, 0, 8) = $1;
+	vec($addr, 1, 8) = $2;
+	vec($addr, 2, 8) = 0;
+	vec($addr, 3, 8) = 0;
+	vec($mask, 0, 32) = 0xFFFF0000;
+    }
+    elsif ($ip =~ m/^(\d+)\.(\d+)\.(\d+)-(\d+)\.?$/ 
+	   and $1 >= 0 and $1 <= 255
+	   and $2 >= 0 and $2 <= 255
+	   and $3 >= 0 and $3 <= 255
+	   and $4 >= 0 and $4 <= 255
+	   and $3 <= $4) {
+	#print "^(\\d+)\\.(\\d+)\\.(\\d+)-(\\d+)\\.?\$\n";
+	vec($addr, 0, 8) = $1;
+	vec($addr, 1, 8) = $2;
+	vec($addr, 2, 8) = $3;
+	vec($addr, 3, 8) = 0;
+
+	vec($mask, 0, 32) = 0x0;
+	vec($mask, 0, 8) = 0xFF;
+	vec($mask, 1, 8) = 0xFF;
+	vec($mask, 2, 8) = _obits $3, $4;
+    }
+    elsif ($ip =~ m/^(\d+)\.(\d+)\.(\d+)\.$/ and $1 >= 0 
+	   and $1 <= 255 and $2 >= 0 and $2 <= 255
+	   and $3 >= 0 and $3 <= 255) 
+    {
+	#print "^(\\d+)\\.(\\d+)\\.(\\d+)\\.\$\n";
+	vec($addr, 0, 8) = $1;
+	vec($addr, 1, 8) = $2;
+	vec($addr, 2, 8) = $3;
+	vec($addr, 3, 8) = 0;
+	vec($mask, 0, 32) = 0xFFFFFF00;
+    }
+    elsif ($ip =~ m/^(\d+)\.(\d+)\.(\d+)\.(\d+)-(\d+)$/ 
+	   and $1 >= 0 and $1 <= 255
+	   and $2 >= 0 and $2 <= 255
+	   and $3 >= 0 and $3 <= 255
+	   and $4 >= 0 and $4 <= 255
+	   and $5 >= 0 and $5 <= 255
+	   and $4 <= $5) {
+	#print "^(\\d+)\\.(\\d+)\\.(\\d+)\\.(\\d+)-(\\d+)\$\n";
+	vec($addr, 0, 8) = $1;
+	vec($addr, 1, 8) = $2;
+	vec($addr, 2, 8) = $3;
+	vec($addr, 3, 8) = $4;
+
+	vec($mask, 0, 8) = 0xFF;
+	vec($mask, 1, 8) = 0xFF;
+	vec($mask, 2, 8) = 0xFF;
+	vec($mask, 3, 8) = _obits $4, $5;
+    }
     elsif (my $a = gethostbyname($ip)) {
 	if (inet_ntoa($a) =~ m!^(\d+)\.(\d+)\.(\d+)\.(\d+)$!)  {
 	    vec($addr, 0, 8) = $1;
@@ -321,7 +425,8 @@ sub _v4 ($$) {
 	}
     }
     else {
-	croak "Cannot obtain an IP address out of $ip";
+#	croak "Cannot obtain an IP address out of $ip";
+	return undef;
     }
 
     return { addr => $addr, mask => $mask, bits => 32 };
@@ -355,7 +460,11 @@ sub new ($$;$) {
 	$mask = _parse_mask 32, 32;
     }
 
-    return bless _v4($ip, $mask), $class;
+    my $self = _v4($ip, $mask);
+
+    return undef unless $self;
+
+    return bless $self, $class;
 }
 
 sub new4 ($$;$) {
@@ -409,6 +518,60 @@ sub addr ($) {
 sub cidr ($) {
     my $self	= shift;
     return $self->addr . '/' . $self->masklen;
+}
+
+sub do_prefix ($$$) {
+    my $mask	= shift;
+    my $faddr	= shift;
+    my $laddr	= shift;
+
+    if ($mask > 24) {
+        return "$faddr->[0].$faddr->[1].$faddr->[2].$faddr->[3]-$laddr->[3]";
+    }
+    elsif ($mask == 24) {
+        return "$faddr->[0].$faddr->[1].$faddr->[2].";
+    }
+    elsif ($mask > 16) {
+        return "$faddr->[0].$faddr->[1].$faddr->[2]-$laddr->[2].";
+    }
+    elsif ($mask == 16) {
+        return "$faddr->[0].$faddr->[1].";
+    }
+    elsif ($mask > 8) {
+        return "$faddr->[0].$faddr->[1]-$laddr->[1].";
+    }
+    elsif ($mask == 8) {
+        return "$faddr->[0].";
+    }
+    else {
+        return "$faddr->[0]-$laddr->[0]";
+    }
+}
+
+sub nprefix ($) {
+    my $self = shift;
+    my $mask = $self->masklen;
+
+    return undef if $self->{bits} > 32;
+    return $self->addr if $mask == 32;
+
+    my @faddr = split (/\./, $self->first->addr);
+    my @laddr = split (/\./, ($self->last - 1)->addr);
+
+    return do_prefix $mask, \@faddr, \@laddr;
+}
+
+sub prefix ($) {
+    my $self = shift;
+    my $mask = $self->masklen;
+
+    return undef if $self->{bits} > 32;
+    return $self->addr if $mask == 32;
+
+    my @faddr = split (/\./, $self->first->addr);
+    my @laddr = split (/\./, $self->last->addr);
+
+    return do_prefix $mask, \@faddr, \@laddr;
 }
 
 sub broadcast ($) {
@@ -698,6 +861,9 @@ C<$addr> can be almost anything that can be resolved to an IP address
 in all the notations I have seen over time. It can optionally contain
 the mask in CIDR notation.
 
+B<prefix> notation is understood, with the limitation that the range
+speficied by the prefix must match with a valid subnet.
+
 If called with no arguments, 'default' is assumed.
 
 =item C<-E<gt>broadcast()>
@@ -725,6 +891,17 @@ Returns a scalar the number of one bits in the mask.
 =item C<-E<gt>cidr()>
 
 Returns a scalar with the address and mask in CIDR notation.
+
+=item C<-E<gt>prefix()>
+
+Returns a scalar with the address and mask in prefix
+representation. This is useful for some programs, which expect its
+input to be in this format. This method will include the broadcast
+address in the encoding.
+
+=item C<-E<gt>nprefix()>
+
+Just as C<-E<gt>prefix()>, but does not include the broadcast address.
 
 =item C<-E<gt>numeric()>
 
@@ -1171,6 +1348,23 @@ over all the hosts of a subnet without C<-E<gt>expand()>ing it.
 
 =back
 
+=item 3.04
+
+=over
+
+=item *
+
+Got rid of C<croak()> when invalid input was fed to C<-E<gt>new()>.
+
+=item *
+
+As suggested by Andrew Gaskill, added support for prefix
+notation. Thanks for the code of the initial C<-E<gt>prefix()>
+function.
+
+=back
+
+=back
 
 =head1 AUTHOR
 
