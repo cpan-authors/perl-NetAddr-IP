@@ -1,6 +1,6 @@
 # Generic load/POD test suite
 
-# $Id: 00-load.t,v 1.3 2003/10/08 06:46:02 lem Exp $
+# $Id: 00-load.t,v 1.4 2004/03/02 20:21:36 lem Exp $
 
 use Test::More;
 
@@ -16,7 +16,8 @@ use_ok($_) for @modules;
 
 my $checker = 0;
 
-eval { use Test::Pod;
+eval { require Test::Pod;
+     Test::Pod::import();
        $checker = 1; };
 
 for my $m (@modules)

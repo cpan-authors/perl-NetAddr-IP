@@ -1,6 +1,6 @@
 # This -*- perl -*- code excercises the basic v6 functionality
 
-# $Id: v6-base.t,v 1.9 2003/10/10 18:46:53 lem Exp $
+# $Id: v6-base.t,v 1.13 2004/03/02 20:33:37 lem Exp $
 
 our @addr = 
     (
@@ -8,6 +8,9 @@ our @addr =
      ['::1', 3, '0000:0000:0000:0000:0000:0000:0000:0001/128'],
      ['f34::123/40', 3, '0f34:0000:0000:0000:0000:0000:0000:0003/40'],
      ['dead:beef::1/40', 3, 'dead:beef:0000:0000:0000:0000:0000:0003/40'],
+     ['1000::2/40', 1, '1000:0000:0000:0000:0000:0000:0000:0001/40'],
+     ['1000::2000/40', 1, '1000:0000:0000:0000:0000:0000:0000:0001/40'],
+     ['dead::cafe/40', 1, 'dead:0000:0000:0000:0000:0000:0000:0001/40'],
      ['dead:beef::1/40', 4, 'dead:beef:0000:0000:0000:0000:0000:0004/40'],
      ['dead:beef::1/40', 5, 'dead:beef:0000:0000:0000:0000:0000:0005/40'],
      ['dead:beef::1/40', 6, 'dead:beef:0000:0000:0000:0000:0000:0006/40'],
@@ -19,6 +22,10 @@ our @addr =
      ['dead:beef::1/40', 257, 'dead:beef:0000:0000:0000:0000:0000:0101/40'],
      ['dead:beef::1/40', 65536, 'dead:beef:0000:0000:0000:0000:0001:0000/40'],
      ['dead:beef::1/40', 65537, 'dead:beef:0000:0000:0000:0000:0001:0001/40'],
+     ['2001:620:0:4::/64', 1, '2001:0620:0000:0004:0000:0000:0000:0001/64'],
+     ['3ffe:2000:0:4::/64', 1, '3ffe:2000:0000:0004:0000:0000:0000:0001/64'],
+     ['2001:620:600::1', 1, '2001:0620:0600:0000:0000:0000:0000:0001/128'],
+     ['2001:620:600:0:1::1', 1,'2001:0620:0600:0000:0001:0000:0000:0001/128'], 
      );
 
 use NetAddr::IP;
@@ -31,17 +38,18 @@ plan tests => 5 * @addr + 4;
 for $a (@addr) {
 	$ip = new NetAddr::IP $a->[0];
 	$a->[0] =~ s,/\d+,,;
-	isa_ok($ip, 'NetAddr::IP');
-	is($ip->compact_addr, $a->[0]);
-	is($ip->bits, 128);
-	is($ip->version, 6);
-	is($ip->nth($a->[1]), $a->[2]);
+	isa_ok($ip, 'NetAddr::IP', "$a->[0] ");
+	is($ip->short, $a->[0], "short returns $a->[0]");
+	is($ip->bits, 128, "bits == 128");
+	is($ip->version, 6, "version == 6");
+	is($ip->nth($a->[1]), $a->[2], "nth $a->[0], $a->[1]");
 }
 
 $test = new NetAddr::IP 'f34::1';
 isa_ok($test, 'NetAddr::IP');
-ok($ip->network->contains($test), "->contains");
+ok($test->network->contains($test), "->contains");
 
 $test = new NetAddr::IP 'f35::1/40';
 isa_ok($test, 'NetAddr::IP');
-ok($ip->network->contains($test), "->contains");
+ok($test->network->contains($test), "->contains");
+

@@ -7,6 +7,7 @@ Makefile.PL
 tutorial.htm
 t/00-load.t
 t/loops.t
+t/short.t
 t/bitops.t
 t/v4-new.t
 t/v4-num.t
@@ -30,12 +31,16 @@ t/v4-first.t
 t/wildcard.t
 t/v4-compact.t
 t/v4-numeric.t
+t/v6-numeric.t
 t/v4-sprefix.t
 t/v4-xprefix.t
 t/v4-compplus.t
 t/v4-contains.t
+t/v6-contains.t
 t/v4-hostenum.t
 t/v4-split-bulk.t
 t/v6-split-bulk.t
 t/v4-split-list.t
+
+
 META.yml                                 Module meta-data (added by MakeMaker)

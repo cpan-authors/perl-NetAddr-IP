@@ -1,6 +1,6 @@
 #!/usr/bin/perl -w
 
-# $Id: IP.pm,v 1.16 2003/11/27 20:03:53 lem Exp $
+# $Id: IP.pm,v 1.22 2004/03/02 20:23:57 lem Exp $
 
 package NetAddr::IP;
 
@@ -48,7 +48,7 @@ our @EXPORT_OK = qw(Compact);
 
 our @ISA = qw(Exporter);
 
-our $VERSION = '3.19';
+our $VERSION = '3.20';
 
 				#############################################
 				# These are the overload methods, placed here
@@ -748,21 +748,25 @@ sub _v6 ($$$) {
 	$ip = '::1';
     }
     elsif ($ip =~ /:::/ || $ip =~ /::.*::/) {
-	return undef;
+	return;
     }
-    return undef unless $ip =~ /^[\da-f\:]+$/i;
+    return unless $ip =~ /^[\da-f\:]+$/i;
 
     $colons = ($ip =~ tr/:/:/);
-    return undef unless $colons >= 2 && $colons <= 7;
+    return unless $colons >= 2 && $colons <= 7;
     $expanded = ':0' x (9 - $colons);
+    $expanded =~ s/0$// if ($ip =~ /^[\da-f]+::[\da-f]+$/);
+#    warn "# colons = $colons\n";
+#    warn "# expanded = $expanded\n";
     $ip =~ s/::/$expanded/;
     $ip = '0' . $ip if $ip =~ /^:/;
+#    warn "# ip = $ip\n";
     # .:.:.:.:.:.:.:.
     @ip = split(/:/, $ip);
     grep($_ = expand_v6($_), @ip);;
     for (0..$#ip) {
     	$addr = _v6_part($addr, $ip[$_], $_);
-        return undef unless defined $addr;
+        return unless defined $addr;
     }
 
     return { addr => $addr, mask => $mask, bits => 128 };
@@ -928,23 +932,6 @@ sub addr ($) {
 			: _to_ipv6 $self->{addr};
 }
 
-sub _compact ($) {
-    my $addr = shift;
-
-    $addr =~ s/(^|:)0{1,3}/${1}/g;
-    # Not optimized for the biggest :0 sequence to collapse
-    $addr =~ s/((^|:)0)+/:/;
-    # unspecified :-(
-    $addr .= ':' if $addr eq ':';
-
-    return $addr;
-}
-
-sub compact_addr ($) {
-    my $self	= shift;
-    $self->{bits} == 32 ? _to_quad $self->{addr}
-			: _compact _to_ipv6 $self->{addr};
-}
 
 =pod
 
@@ -1111,10 +1098,29 @@ subnet.
 
 sub numeric ($) {
     my $self	= shift;
-    return 
-	wantarray() ? ( vec($self->{addr}, 0, 32), 
-			vec($self->{mask}, 0, 32) ) :
-			    vec($self->{addr}, 0, 32);
+    if ($self->version == 4)
+    {
+	return 
+	    wantarray() ? ( vec($self->{addr}, 0, 32), 
+			    vec($self->{mask}, 0, 32) ) :
+				vec($self->{addr}, 0, 32);
+    }
+    else
+    {
+	my $n = new Math::BigInt 0;
+	my $m = new Math::BigInt 0 if wantarray;
+	for (0 .. 3)
+	{
+	    $n <<= 32;
+	    $n += vec($self->{addr}, $_, 32);
+	    if (wantarray)
+	    {
+		$m <<= 32;
+		$m += vec($self->{mask}, $_, 32);
+	    }
+	}
+	return wantarray ? ($n, $m) : $n;
+    }
 }
 
 =pod
@@ -1137,6 +1143,73 @@ sub wildcard ($) {
 	_to_quad ~$self->{mask};
 			      
 }
+
+=pod
+
+=item C<-E<gt>short()>
+
+Returns the address part in a short or compact notation. (ie,
+127.0.0.1 becomes 127.1). Works with both, V4 and V6. Note that
+C<compact_addr> is now deprecated.
+
+=cut
+
+sub _compact_v6 ($) {
+    my $addr = shift;
+
+    my @o = split /:/, $addr;
+    return $addr unless @o and grep { $_ =~ m/^0+$/ } @o;
+
+    my @candidates	= ();
+    my $start		= undef;
+
+    for my $i (0 .. $#o)
+    {
+	if (defined $start)
+	{
+	    if ($o[$i] !~ m/^0+$/)
+	    {
+		push @candidates, [ $start, $i - $start ];
+		$start = undef;
+	    }
+	}
+	else
+	{
+	    $start = $i if $o[$i] =~ m/^0+$/;
+	}
+    }
+
+    push @candidates, [$start, 8 - $start] if defined $start;
+
+    my $l = (sort { $b->[1] <=> $a->[1] } @candidates)[0];
+
+    return $addr unless defined $l;
+
+    $addr = $l->[0] == 0 ? '' : join ':', @o[0 .. $l->[0] - 1];
+    $addr .= '::';
+    $addr .= join ':', @o[$l->[0] + $l->[1] .. $#o];
+    $addr =~ s/(^|:)0{1,3}/$1/g;
+
+    return $addr;
+}
+
+sub short ($)
+{
+    my $self = shift;
+    my $addr = $self->addr;
+    if ($self->{bits} == 32)
+    {
+	my @o = split(/\./, $addr, 4);
+	splice(@o, 1, 2) if $o[1] == 0 and $o[2] == 0;
+	return join '.', @o;
+    }
+    else
+    {
+	return _compact_v6 _to_ipv6 $self->{addr};
+    }
+}
+
+*{compact_addr} = \&short;
 
 =pod
 
@@ -1163,16 +1236,15 @@ sub contains ($$) {
 	unless $bits == $b->{bits};
 
 				# $a must be less specific than $b...
-    return 0
-	unless ($mask = vec($a->{mask}, 0, $bits))
-	    <= vec($b->{mask}, 0, $bits);
+    my ($a_addr, $a_mask) = $a->numeric;
+    my ($b_addr, $b_mask) = $b->numeric;
+
+    return 0 unless $a_mask <= $b_mask;
 
 				# A default address always contains
-    return 1 if ($mask == 0x0);
+    return 1 if ($a_mask == 0x0);
 
-    return 
-	((vec($a->{addr}, 0, $bits) & $mask)
-	 == (vec($b->{addr}, 0, $bits) & $mask));
+    return ($a_addr & $a_mask) == ($b_addr & $a_mask);
 }
 
 =pod
@@ -1514,7 +1586,7 @@ None by default.
 
 =head1 HISTORY
 
-$Id: IP.pm,v 1.16 2003/11/27 20:03:53 lem Exp $
+$Id: IP.pm,v 1.22 2004/03/02 20:23:57 lem Exp $
 
 =over
 
@@ -2078,6 +2150,16 @@ module packaging and version requirements. Thanks David!
 
 Fixed a bug pointed out by Andrew D. Clark, regarding proper parsing
 of IP ranges with non-contiguous masks. Thanks Andrew!
+
+=item 3.20
+
+Suggestion by Reuland Olivier gave birth to C<short()>, which provides
+for a compact representation of the IP address. Rewrote C<_compact> to
+find the longest sequence of zeros to compact. Reuland also pointed
+out a flaw in contains() and within(), which was fixed. Thanks
+Reuland!
+
+Fixed rt bug #5478 in t/00-load.t.
 
 =back
 
