@@ -16,6 +16,7 @@ t/v4-base.t
 t/v4-cidr.t
 t/over-arr.t
 t/v4-range.t
+t/v4-badnm.t
 t/v4-basem.t
 t/v4-first.t
 t/wildcard.t

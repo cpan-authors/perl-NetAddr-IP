@@ -139,7 +139,7 @@ use overload
 				#############################################
 
 
-our $VERSION = '3.07';
+our $VERSION = '3.08';
 
 # Preloaded methods go here.
 
@@ -258,6 +258,19 @@ sub _parse_mask ($$) {
 	vec($bmask, 3, 8) = 0;
     }
     elsif ($mask =~ m/^(\d+)\.(\d+)\.(\d+)\.(\d+)$/) {
+
+	for my $i ($1, $2, $3, $4) {
+	    return undef 
+		unless grep { $i == $_ }
+	    (255, 254, 252, 248, 224, 192, 160, 128, 0);
+	}
+
+	return undef if ($1 < $2 or $2 < $3 or $3 < $4);
+	
+	return undef if $2 != 0 and $1 != 255;
+	return undef if $3 != 0 and $2 != 255;
+	return undef if $4 != 0 and $3 != 255;
+					   
 	vec($bmask, 0, 8) = $1;
 	vec($bmask, 1, 8) = $2;
 	vec($bmask, 2, 8) = $3;
@@ -485,13 +498,16 @@ sub new ($$;$) {
 
     if (defined $_[2]) {
 	$mask 		= _parse_mask $_[2], 32;
+	return undef unless defined $mask;
     }
     elsif (defined $mask) {
 	$mask 		= _parse_mask $mask, 32;
+	return undef unless defined $mask;
     }
     else {
 	$hasmask	= 0;
 	$mask 		= _parse_mask 32, 32;
+	return undef unless defined $mask;
     }
 
     my $self = _v4($ip, $mask, $hasmask);
@@ -850,6 +866,7 @@ sub num ($) {
 }
 
 1;
+
 __END__
 
 =head1 NAME
@@ -1432,6 +1449,17 @@ Sami Pohto pointed out a bug with C<-E<gt>last()>. This was fixed.
 =item *
 
 A small bug related to parsing of 'localhost' was fixed.
+
+=back
+
+=item 3.08
+
+=over
+
+=item *
+
+By popular request, C<-E<gt>new()> now checks the sanity of the netmasks
+it receives. If the netmask is invalid, C<undef> will be returned.
 
 =back
 

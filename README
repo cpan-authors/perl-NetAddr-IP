@@ -1,5 +1,7 @@
 NetAddr::IP - Manages IPv4 (your traditional IP) addresses and subnets
 
+     * * * * THIS MODULE REQUIRES PERL 5.6.0 OR NEWER. * * * *
+
 This  module  is  designed as  a  help  for  managing (ranges  of)  IP
 addresses. It includes efficient implementations for most common tasks
 done  to subnets or  ranges of  IP addresses,  namely verifying  if an
