@@ -1,6 +1,6 @@
 #!/usr/bin/perl -w
 
-# $Id: IP.pm,v 1.22 2004/03/02 20:23:57 lem Exp $
+# $Id: IP.pm,v 1.24 2004/10/11 15:40:29 lem Exp $
 
 package NetAddr::IP;
 
@@ -37,7 +37,7 @@ Many operators have been overloaded, as described below:
 
 =cut
 
-require 5.6.0;
+require 5.006_000;
 use Carp;
 use Socket;
 use strict;
@@ -48,7 +48,7 @@ our @EXPORT_OK = qw(Compact);
 
 our @ISA = qw(Exporter);
 
-our $VERSION = '3.20';
+our $VERSION = '3.21';
 
 				#############################################
 				# These are the overload methods, placed here
@@ -70,9 +70,7 @@ use overload
 				   $_[0]->{bits} ];
     },
 
-    '""'	=> sub { 
-	$_[0]->cidr(); 
-    },
+    '""'	=> sub { $_[0]->cidr(); },
 
     'eq'	=> sub { 
 	my $a = ref $_[0] eq 'NetAddr::IP' ? $_[0]->cidr : $_[0];
@@ -779,6 +777,48 @@ sub new4 ($$;$) {
 =pod
 
 =back
+
+=head2 Serializing and Deserializing
+
+This module defines hooks to collaborate with L<Storable> for
+serializing C<NetAddr::IP> objects, through compact and human readable
+strings. You can revert to the old format by invoking this module as
+
+  use NetAddr::IP ':old_storable';
+
+You must do this if you have legacy data files containing NetAddr::IP
+objects stored using the L<Storable> module.
+
+=cut
+
+sub import
+{
+    unless (grep { $_ eq ':old_storable' } @_)
+    {
+	*{STORABLE_freeze} = sub 
+	{
+	    my $self = shift;
+	    return $self->cidr();	# use stringification
+	};
+	*{STORABLE_thaw} = sub 
+	{
+	    my $self	= shift;
+	    my $cloning	= shift;	# Not used
+	    my $serial	= shift;
+	    
+	    my $ip = new NetAddr::IP $serial;
+	    $self->{addr} = $ip->{addr};
+	    $self->{mask} = $ip->{mask};
+	    $self->{bits} = $ip->{bits};
+	    return;
+	};
+    }
+
+    @_ = grep { $_ ne ':old_storable' } @_;
+    NetAddr::IP->export_to_level(1, @_);
+}
+
+=pod
 
 =head2 Methods
 
@@ -1586,7 +1626,7 @@ None by default.
 
 =head1 HISTORY
 
-$Id: IP.pm,v 1.22 2004/03/02 20:23:57 lem Exp $
+$Id: IP.pm,v 1.24 2004/10/11 15:40:29 lem Exp $
 
 =over
 
@@ -2160,6 +2200,12 @@ out a flaw in contains() and within(), which was fixed. Thanks
 Reuland!
 
 Fixed rt bug #5478 in t/00-load.t.
+
+=item 3.21
+
+Fixed minor v-string problem pointed out by Steve Snodgrass (Thanks
+Steve!). NetAddr::IP can now collaborate with Storable to serialize
+itself.
 
 =back
 

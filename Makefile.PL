@@ -2,7 +2,7 @@ use ExtUtils::MakeMaker;
 # See lib/ExtUtils/MakeMaker.pm for details of how to influence
 # the contents of the Makefile that is written.
 
-# $Id: Makefile.PL,v 1.8 2003/11/27 20:01:45 lem Exp $
+# $Id: Makefile.PL,v 1.9 2004/10/11 15:40:29 lem Exp $
 
 my $checker = 0;
 
@@ -26,6 +26,26 @@ EOF
     ;
 }
 
+print <<EOF;
+
+======================================================================
+W A R N I N G - Please do read below if you have legacy code
+======================================================================
+
+Versions 3.21 and above of NetAddr::IP, include hooks for the Storable
+class that are incompatible with the old (automatic) method of storing
+data. To regain backwards compatibility, the module must be use()d as
+
+    use NetAddr::IP ':old_storable';
+
+Which will disable the new hooks and revert back to the old ways.
+
+If you do  not use Storable along NetAddr::IP or  just don't know what
+this all means, most likely you're safe to go along.
+
+EOF
+    ;
+
 WriteMakefile(
     'NAME'		=> 'NetAddr::IP',
     'VERSION_FROM'	=> 'IP.pm', # finds $VERSION
@@ -37,7 +57,3 @@ WriteMakefile(
 	       (ABSTRACT_FROM	=> 'IP.pm',
 		AUTHOR     	=> 'Luis E. Muñoz <luismunoz@cpan.org>') : ()),
 );
-
-
-
-
