@@ -28,7 +28,7 @@ require Exporter;
 	
 );
 
-$VERSION = '2.12';
+$VERSION = '2.20';
 
 
 # Preloaded methods go here.
@@ -107,14 +107,10 @@ sub _addr_to_number {
     $o[2] = new Math::BigInt $o[2];
     $o[3] = new Math::BigInt $o[3];
 
-    my $o = ($o[0] * 2 ** 24 + 
-	     $o[1] * 2 ** 16 + 
-	     $o[2] * 2 ** 8 + 
-	     $o[3]);
-
-    $o =~ s/[-+]//g;
-
-    return $o;
+    return ($o[0] * 2 ** 24 + 
+	    $o[1] * 2 ** 16 + 
+	    $o[2] * 2 ** 8 + 
+	    $o[3]);
 }
 
 sub _number_to_addr {
@@ -128,6 +124,7 @@ sub _number_to_addr {
 
     foreach (@o) { s/[-+]//g; }
 
+    print "_number_to_addr $number is ", join('.', @o), "\n";
     return join('.', @o);
 
 }
@@ -167,7 +164,7 @@ sub new {
     my $mask = shift;
     my $bits = shift;
     
-    if (defined($bits) and length($bits)) {
+    if (defined $bits and length $bits) {
 	my $min = $ip;
 	$ip = _number_to_addr($min);
 	$mask = $bits;
@@ -281,10 +278,11 @@ sub addr_number {
 
 sub _arrange_compact_list {
     my @addr = @_;
-    @addr = sort {
-  	new Math::BigInt(vec($a->{'mask'}, 0, 32)) 
-  	    <=> new Math::BigInt(vec($b->{'mask'}, 0, 32))
-	    } @addr;
+    @addr = sort { new Math::BigInt(vec($a->{'mask'}, 
+					0, 
+					32))->bcmp(new Math::BigInt(vec($b->{'mask'}, 
+									0, 32)))
+					} @addr;
     my @result;
     
   PROSPECT:
@@ -298,9 +296,12 @@ sub _arrange_compact_list {
     }
     
     sort {
-  	new Math::BigInt(vec($a->{'addr'}, 0, 32)) 
-  	    <=> new Math::BigInt(vec($b->{'addr'}, 0, 32))
-  	    } @result;
+  	new Math::BigInt(vec($a->{'addr'}, 
+			     0, 
+			     32))->bcmp(new Math::BigInt(vec($b->{'addr'}, 
+							     0, 
+							     32)))
+			     } @result;
 }
 
 sub _can_split {

@@ -43,14 +43,11 @@ Revision history for Perl extension IP::Address.
 	- Added support for ->new($min, $max, $bits) form
 	- Added ->to_numeric. This helps serializing objects
 
-2.11  Fri Oct 13 2000
-	- Fixed ->to_numeric to output plain numbers
-	- Removed leftover debug statements
-
-2.12  Fri Oct 13 2000
-	- Fixed spurious warnings in some platforms
-
-
-
+2.20  Mon Jan  1 2001
+	- Chris Dowling reported that the sort method introduced in 1.20 for 
+	->expand and ->compact doesn't always return a number under perl 
+	versions < 5.6.0. His fix was applied and redistributed. Thanks Chris!
+	- This module is hopefully released with no CR-LF issues!
+	- Fixed a warning about uninitialized values during make test
 
 
