@@ -2,7 +2,7 @@ use ExtUtils::MakeMaker;
 # See lib/ExtUtils/MakeMaker.pm for details of how to influence
 # the contents of the Makefile that is written.
 
-# $Id: Makefile.PL,v 1.9 2004/10/11 15:40:29 lem Exp $
+# $Id: Makefile.PL,v 1.10 2005/03/24 18:55:10 lem Exp $
 
 my $checker = 0;
 
@@ -47,13 +47,14 @@ EOF
     ;
 
 WriteMakefile(
-    'NAME'		=> 'NetAddr::IP',
-    'VERSION_FROM'	=> 'IP.pm', # finds $VERSION
-    'PREREQ_PM'		=> {
-      Test::More => 0,
-      Math::BigInt => 0,
-    }, # e.g., Module::Name => 1.1
+	      (MM->can('signature_target') ? (SIGN => 1) : ()),    
+	      'NAME'		=> 'NetAddr::IP',
+	      'VERSION_FROM'	=> 'IP.pm', # finds $VERSION
+	      'PREREQ_PM'		=> {
+		  Test::More => 0,
+		    Math::BigInt => 0,
+		}, # e.g., Module::Name => 1.1
 	      ($] >= 5.005 ?    ## Add these new keywords supported since 5.005
 	       (ABSTRACT_FROM	=> 'IP.pm',
 		AUTHOR     	=> 'Luis E. Muñoz <luismunoz@cpan.org>') : ()),
-);
+	      );

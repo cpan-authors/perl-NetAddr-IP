@@ -1,6 +1,9 @@
 -----BEGIN PGP SIGNED MESSAGE-----
 Hash: SHA1
 
+
+
+
 NetAddr::IP - Manages IP addresses and subnets
 
      * * * * THIS MODULE REQUIRES PERL 5.6.0 OR NEWER. * * * *
@@ -102,9 +105,14 @@ installing the module, you can do
 
 $ perldoc NetAddr::IP
 
-to access  the documentation. There is  also a tutorial  in HTML. Look
-for  the file  tutorial.htm  within  the package  bundle,  which is  a
-tutorial I submitted to perlmonks.org recently.
+to access the  documentation. There is also a tutorial  in HTML at the
+following URIs
+
+  http://mipagina.cantv.net/lem/perl/iptut.htm
+  http://mipagina.cantv.net/lem/perl/ipperf.htm
+
+If  you want to  thank me  for this  module, please  go look  at those
+tutorials and if you see banners there, click on a few of them :)
 
 Bug  reports  are  welcome. Please  do  not  forget  to tell  me  what
 version/platform are you running this code on. Providing a small piece
@@ -137,6 +145,11 @@ You can find more information about this at the following URL
 This  information includes  the correct  keys,  fingerprints, etc.Note
 that this README file should also be signed.
 
+Additionally,  I am  also  using Module::Signature  to  ease with  the
+signature  verification. Module::Signature can  automatically retrieve
+the  PGP  keys from  public  keyservers,  as  well as  verifying  each
+individual file.
+
 LICENSE AND WARRANTY
 
 This software is (c) Luis E. Muñoz.  It can be used under the terms of
@@ -147,10 +160,9 @@ license for this module.
 No warranty of any kind is  expressed or implied. This code might make
 your computer go up in a puff of black smoke.
 -----BEGIN PGP SIGNATURE-----
-Version: GnuPG v1.0.6 (Darwin)
-Comment: For info see http://www.gnupg.org
+Version: GnuPG v1.2.1 (Darwin)
 
-iD8DBQE99iAmQyDWGRI/hhARAsPlAJ9VFVFGSUHjxDUvXm2x9x20YfhuYQCeJu5A
-F5c3pam/zZQiVf7ZaUVs3fc=
-=VNNB
+iD8DBQFCQwzJQyDWGRI/hhARAqd9AJ0XLAPEZ/r0laqAs4XhZ26xf00OAQCgzYxk
+IjdkSW+uHhcUXN6nJlo7yqA=
+=9Ztj
 -----END PGP SIGNATURE-----

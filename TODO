@@ -1,8 +1,12 @@
 
-$Id: TODO,v 1.3 2002/12/10 17:14:02 lem Exp $
+$Id: TODO,v 1.6 2005/03/24 20:41:51 lem Exp $
 
 o More tests for IPv6 functionality. This should be thoroughly tested.
 
 o Extend the formats accepted for v6 addresses.
 
 o Add support for other notations (when found).
+
+o Add a way to force the recognition of a v6 IP address when the input
+  is presented numerically. (Suggested by Carlos Vicente)
+

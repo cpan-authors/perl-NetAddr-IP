@@ -1,6 +1,6 @@
 #!/usr/bin/perl -w
 
-# $Id: IP.pm,v 1.24 2004/10/11 15:40:29 lem Exp $
+# $Id: IP.pm,v 1.30 2005/03/24 21:14:46 lem Exp $
 
 package NetAddr::IP;
 
@@ -44,11 +44,11 @@ use strict;
 use warnings;
 require Exporter;
 
-our @EXPORT_OK = qw(Compact);
+our @EXPORT_OK = qw(Compact Coalesce);
 
 our @ISA = qw(Exporter);
 
-our $VERSION = '3.21';
+our $VERSION = '3.24';
 
 				#############################################
 				# These are the overload methods, placed here
@@ -229,16 +229,13 @@ sub plus {
 	    $num |= vec($hp, $_, 8);
 	}
 
-#  	warn "# add - before badd($const): $num\n";
 	$num->badd($const);
-#  	warn "# add - after badd($const): $num\n";
 
 	for (reverse 0 .. 15)
 	{
 	    my $x = new Math::BigInt $num;
 	    vec($hp, $_, 8) = $x & 0xFF;
 	    $num >>= 8;
-#  	    warn "# add - octet $_ == $num / ", vec($hp, $_, 8), "\n";
 	}
     }
     else			# v4
@@ -278,13 +275,22 @@ sub plusplus {
 
     my $a = $ip->{addr};
     my $m = $ip->{mask};
+    my $b = $ip->{bits};
 
-    my $hp = "$a" & ~"$m";
-    my $np = "$a" & "$m";
+    if ($b == 128)
+    {
+	my $nip = NetAddr::IP->new($ip) + 1;
+	$ip->{$_} = $nip->{$_} for keys %$nip;
+    }
+    else
+    {
+	my $hp = "$a" & ~"$m";
+	my $np = "$a" & "$m";
 
-    vec($hp, 0, 32) ++;
+	vec($hp, 0, 32) ++;
+	$ip->{addr} = "$np" | ("$hp" & ~"$m");
+    }
 
-    $ip->{addr} = "$np" | ("$hp" & ~"$m");
     return $ip;
 }
 
@@ -300,13 +306,22 @@ sub minusminus {
 
     my $a = $ip->{addr};
     my $m = $ip->{mask};
+    my $b = $ip->{bits};
 
-    my $hp = "$a" & ~"$m";
-    my $np = "$a" & "$m";
+    if ($b == 128)
+    {
+	my $nip = NetAddr::IP->new($ip) - 1;
+	$ip->{$_} = $nip->{$_} for keys %$nip;
+    }
+    else
+    {
+	my $hp = "$a" & ~"$m";
+	my $np = "$a" & "$m";
 
-    vec($hp, 0, 32) --;
+	vec($hp, 0, 32) --;
 
-    $ip->{addr} = "$np" | ("$hp" & ~"$m");
+	$ip->{addr} = "$np" | ("$hp" & ~"$m");
+    }
     return $ip;
 }
 
@@ -753,7 +768,7 @@ sub _v6 ($$$) {
     $colons = ($ip =~ tr/:/:/);
     return unless $colons >= 2 && $colons <= 7;
     $expanded = ':0' x (9 - $colons);
-    $expanded =~ s/0$// if ($ip =~ /^[\da-f]+::[\da-f]+$/);
+    $expanded =~ s/0$// if ($ip =~ /[\da-f]+::[\da-f]+/);
 #    warn "# colons = $colons\n";
 #    warn "# expanded = $expanded\n";
     $ip =~ s/::/$expanded/;
@@ -1477,6 +1492,64 @@ sub compact {
 
 =pod
 
+=item C<$me-E<gt>coalesce($masklen, $number, @list_of_subnets)>
+
+Will return a reference to list of C<NetAddr::IP> subnets of
+C<$masklen> mask length, when C<$number> or more addresses from
+C<@list_of_subnets> are found to be contained in said subnet.
+
+Subnets from C<@list_of_subnets> with a mask shorter than C<$masklen>
+are passed "as is" to the return list.
+
+Subnets from C<@list_of_subnets> with a mask longer than C<$masklen>
+will be counted (actually, the number of IP addresses is counted)
+towards C<$number>.
+
+=cut
+
+sub coalesce
+{
+    my $masklen	= shift;
+    my $number	= shift;
+
+    # Addresses are at @_
+    my %ret = ();
+
+    for my $ip (@_)
+    {
+	my $n = NetAddr::IP->new($ip->addr . '/' . $masklen)->network;
+	if ($ip->masklen > $masklen)
+	{
+	    $ret{$n} += $ip->num + 1;
+	}
+    }
+
+    my @ret = ();
+
+    # Add to @ret any arguments with netmasks longer than our argument
+    for my $c (sort { $a->masklen <=> $b->masklen } 
+	       grep { $_->masklen <= $masklen } @_)
+    {
+	next if grep { $_->contains($c) } @ret;
+	push @ret, $c->network;
+    }
+
+    # Now add to @ret all the subnets with more than $number hits
+    for my $c (map { new NetAddr::IP $_ } 
+	       grep { $ret{$_} >= $number } 
+	       keys %ret)
+    {
+	next if grep { $_->contains($c) } @ret;
+	push @ret, $c;
+    }
+
+    return \@ret;
+}
+
+*Coalesce = \&coalesce;
+
+=pod
+
 =item C<$me-E<gt>compactref(\@list)>
 
 As usual, a faster version of =item C<-E<gt>compact()> that returns a
@@ -1611,7 +1684,72 @@ sub num ($) {
     return ~vec($self->{mask}, 0, $self->{bits}) & 0xFFFFFFFF;
 }
 
-				# Output a vec() as a dotted-quad
+=pod
+
+=item C<-E<gt>re()>
+
+Returns a Perl regular expression that will match an IP address within
+the given subnet. This is currently only implemented for IPv4
+addresses.
+
+=cut
+
+sub re ($)
+{
+    my $self = shift->network;	# Insure a "zero" host part
+    return unless $self->bits == 32;
+    my ($addr, $mlen) = ($self->addr, $self->masklen);
+    my @o = split('\.', $addr, 4);
+    
+    my $octet= '(?:[0-9]|[1-9][0-9]|1[0-9][0-9]|2[0-4][0-9]|25[0-5])';
+    my @r = @o;
+    my $d;
+
+#    for my $i (0 .. $#o)
+#    {
+#	warn "# $self: $r[$i] == $o[$i]\n";
+#    }
+
+    if ($mlen != 32)
+    {
+        if ($mlen > 24)
+        {
+             $d	= 2 ** (32 - $mlen) - 1; 
+	     $r[3] = '(?:' . join('|', ($o[3]..$o[3] + $d)) . ')';
+        }
+        else
+        {
+            $r[3] = $octet;
+            if ($mlen > 16)
+            {
+                $d = 2 ** (24 - $mlen) - 1; 
+		$r[2] = '(?:' . join('|', ($o[2]..$o[2] + $d)) . ')';
+            }
+            else
+            {
+                $r[2] = $octet;
+                if ($mlen > 8)
+                {
+                    $d = 2 ** (16 - $mlen) - 1; 
+		    $r[1] = '(?:' . join('|', ($o[1]..$o[1] + $d)) . ')';
+                }
+                else
+                {
+                    $r[1] = $octet;
+                    if ($mlen > 0)
+                    {
+                        $d = 2 ** (8 - $mlen) - 1;
+			$r[0] = '(?:' . join('|', ($o[0] .. $o[0] + $d)) . ')';
+                    }
+                    else { $r[0] = $octet; }
+                }
+            }
+        }
+    }
+
+    ### no digit before nor after (look-behind, look-ahead)
+    return "(?:(?<![0-9])$r[0]\\.$r[1]\\.$r[2]\\.$r[3](?![0-9]))";
+}
 
 1;
 
@@ -1626,7 +1764,7 @@ None by default.
 
 =head1 HISTORY
 
-$Id: IP.pm,v 1.24 2004/10/11 15:40:29 lem Exp $
+$Id: IP.pm,v 1.30 2005/03/24 21:14:46 lem Exp $
 
 =over
 
@@ -2206,6 +2344,24 @@ Fixed rt bug #5478 in t/00-load.t.
 Fixed minor v-string problem pointed out by Steve Snodgrass (Thanks
 Steve!). NetAddr::IP can now collaborate with Storable to serialize
 itself.
+
+=item 3.22
+
+Fixed bug rt.cpan.org #7070 reported by Grover Browning (auto-inc/dec
+on v6 fails). Thanks Grover. Ruben van Staveren pointed out a bug in
+v6 canonicalization, as well as providing a patch that was
+applied. Thanks Ruben.
+
+=item 3.23
+
+Included support for Module::Signature. Added -E<gt>re() as
+contributed by Laurent Facq (Thanks Laurent!). Added Coalesce() as
+suggested by Perullo.
+
+=item 3.24
+
+Version bump. Transfer of 3.23 to CPAN ended up in a truncated file
+being uploaded.
 
 =back
 

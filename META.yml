@@ -1,12 +1,11 @@
-# http://module-build.sourceforge.net/META-spec.html
 #XXXXXXX This is a prototype!!!  It will change in the future!!! XXXXX#
 name:         NetAddr-IP
-version:      3.21
+version:      3.24
 version_from: IP.pm
 installdirs:  site
 requires:
-    Math::BigInt:                  0
     Test::More:                    0
+    Math::BigInt:                  0
 
 distribution_type: module
-generated_by: ExtUtils::MakeMaker version 6.17
+generated_by: ExtUtils::MakeMaker version 6.12
