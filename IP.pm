@@ -1,6 +1,6 @@
 #!/usr/bin/perl -w
 
-# $Id: IP.pm,v 1.15 2003/10/22 23:20:27 lem Exp $
+# $Id: IP.pm,v 1.16 2003/11/27 20:03:53 lem Exp $
 
 package NetAddr::IP;
 
@@ -48,7 +48,7 @@ our @EXPORT_OK = qw(Compact);
 
 our @ISA = qw(Exporter);
 
-our $VERSION = '3.18';
+our $VERSION = '3.19';
 
 				#############################################
 				# These are the overload methods, placed here
@@ -341,6 +341,26 @@ sub _fnew ($$) {
 sub _ones ($) {
     my $bits	= shift;
     return ~vec('', 0, $bits);
+}
+
+				# Validates that a mask is composed
+				# of a contiguous set of bits
+sub _contiguous ($$)
+{
+    my $mask	= shift;
+    my $octets	= shift;
+
+#    return 1 unless defined $mask and defined $octets;
+
+    $octets /= 8;
+
+    for my $o (0 .. $octets)
+    {
+	return unless grep { vec($mask, $o, 8) == $_ }
+	(255, 254, 252, 248, 240, 224, 192, 128, 0);
+    }
+
+    return 1;
 }
 
 sub _to_quad ($) {
@@ -834,7 +854,8 @@ sub new ($$;$) {
     my $self = $bits == 32 ? _v4($ip, $mask, $hasmask)
 			   : _v6($ip, $mask, $hasmask);
 
-    return undef unless $self;
+    return unless $self;
+    return unless _contiguous $self->{mask}, $self->{bits};
 
     return bless $self, $class;
 }
@@ -1493,7 +1514,7 @@ None by default.
 
 =head1 HISTORY
 
-$Id: IP.pm,v 1.15 2003/10/22 23:20:27 lem Exp $
+$Id: IP.pm,v 1.16 2003/11/27 20:03:53 lem Exp $
 
 =over
 
@@ -2052,6 +2073,11 @@ all who reported this.
 
 Fixed some bugs pointed out by David Lloyd, having to do with the
 module packaging and version requirements. Thanks David!
+
+=item 3.19
+
+Fixed a bug pointed out by Andrew D. Clark, regarding proper parsing
+of IP ranges with non-contiguous masks. Thanks Andrew!
 
 =back
 
