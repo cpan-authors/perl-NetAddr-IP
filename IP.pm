@@ -28,7 +28,7 @@ require Exporter;
 	
 );
 
-$VERSION = '2.22';
+$VERSION = '2.23';
 
 
 # Preloaded methods go here.
@@ -158,11 +158,11 @@ sub _negated_mask {
 }
 
 sub new {
-    my $type = shift;
-    my $class = ref($type) || $type || "NetAddr::IP";
-    my $ip = shift;
-    my $mask = shift;
-    my $bits = shift;
+    my $type	= shift;
+    my $class	= ref($type) || $type || "NetAddr::IP";
+    my $ip	= shift;
+    my $mask	= shift;
+    my $bits	= shift;
     
     if (defined $bits and length $bits) {
 	my $min = $ip;
@@ -175,7 +175,7 @@ sub new {
 #	croak "inconsistent mask. Use only one form of netmask"
 	return undef if defined $mask;
 	my $m = $1;
-	$ip =~ s/\/\d+$//;
+	$ip =~ s/\/[\d\.]+$//;
 	$mask = $m;
     }
     $mask = "32" unless defined $mask; # Assume a host mask if none is given

@@ -60,3 +60,8 @@ Revision history for Perl extension IP::Address.
 	- Some changes suggested by Jeroen Ruigrok and Anton Berezin were
 	included. Thanks guys!
 
+2.23  Tue Aug 14 2001
+	- Bug fix for /XXX.XXX.XXX.XXX netmasks under v5.6.1 suggested 
+	by Tim Wuyts. Thanks!
+	- Tested the module under MACHTYPE=hppa1.0-hp-hpux11.00
+
