@@ -6,4 +6,5 @@ README
 examples/example.pl
 examples/expand.pl
 examples/simple.pl
+examples/serial.pl
 t/1.t

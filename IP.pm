@@ -28,7 +28,7 @@ require Exporter;
 	
 );
 
-$VERSION = '2.00';
+$VERSION = '2.10';
 
 
 # Preloaded methods go here.
@@ -98,6 +98,37 @@ sub _bits_to_mask {
     $result;
 }
 
+sub _addr_to_number {
+    my $addr = shift;
+    my @o = split(/\./, $addr, 4);
+
+    $o[0] = new Math::BigInt $o[0];
+    $o[1] = new Math::BigInt $o[1];
+    $o[2] = new Math::BigInt $o[2];
+    $o[3] = new Math::BigInt $o[3];
+
+    return ($o[0] * 2 ** 24 + 
+	    $o[1] * 2 ** 16 + 
+	    $o[2] * 2 ** 8 + 
+	    $o[3]);
+}
+
+sub _number_to_addr {
+    my $number = new Math::BigInt shift;
+    my @o;
+
+    $o[0] = new Math::BigInt($number->bdiv(2**24));
+    $o[1] = new Math::BigInt($number->bdiv(2**16))-$o[0]*2**8;
+    $o[2] = new Math::BigInt($number->bdiv(2**8))-$o[0]*2**16-$o[1]*2**8;
+    $o[3] = new Math::BigInt($number)-$o[0]*2**24-$o[1]*2**16-$o[2]*2**8;
+
+    foreach (@o) { s/[-+]//g; }
+
+    print "_number_to_addr $number is ", join('.', @o), "\n";
+    return join('.', @o);
+
+}
+
 sub _mask_to_bits {
     my $mask = shift;
     my $i;
@@ -129,7 +160,16 @@ sub _negated_mask {
 sub new {
     my $type = shift;
     my $class = ref($type) || $type || "NetAddr::IP";
-    my ($ip, $mask) = @_;
+    my $ip = shift;
+    my $mask = shift;
+    my $bits = shift;
+    
+    if (length $bits) {
+	my $min = $ip;
+	$ip = _number_to_addr($min);
+	$mask = $bits;
+    }
+
     $ip = "0.0.0.0" unless defined $ip;
     if ($ip =~ /\/([\d\.]+)$/) {
 #	croak "inconsistent mask. Use only one form of netmask"
@@ -153,7 +193,20 @@ sub new {
     my $self = { 'addr' => _pack_address($ip),
 		 'mask' => $mask
 		 };
+
     bless $self, $class;
+}
+
+sub to_numeric {
+    my $self = shift;
+    if (wantarray) {
+	return (_addr_to_number(_unpack_address($self->{'addr'})), 
+		_addr_to_number(_unpack_address($self->broadcast->{'addr'})), 
+		_mask_to_bits $self->{'mask'});
+    }
+    else {
+	return _addr_to_number _unpack_address $self->network->{'addr'};
+    }
 }
 
 sub new_subnet {
@@ -512,10 +565,15 @@ NetAddr::IP - Manipulate IP Addresses easily
   my $subnet = new NetAddr::IP("10.0.0.0", "255.255.255.0");
   my $othersubnet = new NetAddr::IP("10.0.0.0", "24");
   my $yetanothersubnet = new NetAddr::IP "10.0.0.0/24";
+  my $serialsubnet = new NetAddr::IP($min, $max, $bits);
 
   # A proper subnet (or undef if any host but is set)
   my $subnet_ok = new_subnet NetAddr::IP("10.0.0.0", "24");
   my $subnet_undef = new_subnet NetAddr::IP("10.0.0.1", "24");
+
+  # A numeric representation of a subnet/host address
+  my $address = $ip->to_numeric();
+  my ($min, $max, $bits) = $ip->to_numeric();
 
   # A string representation of an address or subnet
   print "My ip address is ", $ip->to_string, "\n";
