@@ -28,7 +28,7 @@ require Exporter;
 	
 );
 
-$VERSION = '2.20';
+$VERSION = '2.21';
 
 
 # Preloaded methods go here.
@@ -296,12 +296,10 @@ sub _arrange_compact_list {
     }
     
     sort {
-  	new Math::BigInt(vec($a->{'addr'}, 
-			     0, 
-			     32))->bcmp(new Math::BigInt(vec($b->{'addr'}, 
-							     0, 
-							     32)))
-			     } @result;
+	my $ba = new Math::BigInt(vec($a->{'addr'}, 0, 32));
+	my $bb = new Math::BigInt(vec($b->{'addr'}, 0, 32));
+	int($ba->bcmp($bb));
+    } @result;
 }
 
 sub _can_split {

@@ -50,4 +50,11 @@ Revision history for Perl extension IP::Address.
 	- This module is hopefully released with no CR-LF issues!
 	- Fixed a warning about uninitialized values during make test
 
+2.21  Thu Feb  8 2001
+	- Dennis Boylan pointed out a bug under Linux and perhaps other
+	platforms as well causing the error "Sort subroutine didn't return 
+	single value at /usr/lib/perl5/site_perl/5.6.0/NetAddr/IP.pm line 
+	299, <> line 2." or similar. This was fixed.
+
+
 
