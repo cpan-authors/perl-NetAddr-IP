@@ -28,7 +28,7 @@ require Exporter;
 	
 );
 
-$VERSION = '2.11';
+$VERSION = '2.12';
 
 
 # Preloaded methods go here.
@@ -167,7 +167,7 @@ sub new {
     my $mask = shift;
     my $bits = shift;
     
-    if (length $bits) {
+    if (defined($bits) and length($bits)) {
 	my $min = $ip;
 	$ip = _number_to_addr($min);
 	$mask = $bits;

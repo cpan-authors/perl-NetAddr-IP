@@ -47,6 +47,9 @@ Revision history for Perl extension IP::Address.
 	- Fixed ->to_numeric to output plain numbers
 	- Removed leftover debug statements
 
+2.12  Fri Oct 13 2000
+	- Fixed spurious warnings in some platforms
+
 
 
 
