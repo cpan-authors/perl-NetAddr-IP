@@ -1,5 +1,7 @@
 # I know this does not look like -*- perl -*-, but I swear it is...
 
+# $Id: v4-badnm.t,v 1.2 2002/10/31 04:30:35 lem Exp $
+
 use NetAddr::IP;
 use strict;
 

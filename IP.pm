@@ -1,6 +1,43 @@
 #!/usr/bin/perl -w
 
+# $Id: IP.pm,v 1.2 2002/10/31 04:30:22 lem Exp $
+
 package NetAddr::IP;
+
+=pod
+
+=head1 NAME
+
+NetAddr::IP - Manages IPv4 addresses and subnets
+
+=head1 SYNOPSIS
+
+  use NetAddr::IP;
+
+  my $ip = new NetAddr::IP 'loopback';
+
+  print "The address is ", $ip->addr, " with mask ", $ip->mask, "\n" ;
+
+  if ($ip->within(new NetAddr::IP "127.0.0.0", "255.0.0.0")) {
+      print "Is a loopback address\n";
+  }
+
+				# This prints 127.0.0.1/32
+  print "You can also say $ip...\n";
+
+=head1 DESCRIPTION
+
+This module provides an object-oriented abstraction on top of IP
+addresses or IP subnets, that allows for easy manipulations. Many
+operations are supported, as described below:
+
+=head2 Overloaded Operators
+
+Many operators have been overloaded, as described below:
+
+=over
+
+=cut
 
 require 5.005_62;
 use Carp;
@@ -8,7 +45,7 @@ use Socket;
 use strict;
 use warnings;
 
-our $VERSION = '3.11';
+our $VERSION = '3.12';
 
 				#############################################
 				# These are the overload methods, placed here
@@ -29,7 +66,7 @@ use overload
 	return _fnew NetAddr::IP [ $_[0]->{addr}, $_[0]->{mask}, 
 				   $_[0]->{bits} ];
     },
-    
+
     '""'	=> sub { 
 	$_[0]->cidr(); 
     },
@@ -49,116 +86,197 @@ use overload
 				# when attempted with the full bit vector.
 				# This is why we break them down and do it
 				# one octet at a time. String comparison
+
 				# is not portable because of endianness.
+
     '>'		=> sub {
-	
 	return undef unless $_[0]->{bits} == $_[1]->{bits};
 	return scalar($_[0]->numeric()) > scalar($_[1]->numeric());
-
-#  	return 0 if ($_[0]->{bits} != $_[1]->{bits});
-#  	for my $b (0 .. $_[0]->{bits}/8 - 1) {
-#  	    return 1 if vec($_[0]->{addr}, $b, 8) 
-#  		> vec($_[1]->{addr}, $b, 8);
-#  	}
-#  	for my $b (0 .. $_[0]->{bits}/8 - 1) {
-#  	    return 1 if vec($_[0]->{mask}, $b, 8) 
-#  		> vec($_[1]->{mask}, $b, 8);
-#  	}
-#	return 0;
     },
 
     '<'		=> sub {
-
 	return undef unless $_[0]->{bits} == $_[1]->{bits};
 	return scalar($_[0]->numeric()) < scalar($_[1]->numeric());
-
-#  	return 0 if ($_[0]->{bits} != $_[1]->{bits});
-#  	for my $b (0 .. $_[0]->{bits}/8 - 1) {
-#  	    return 1 if vec($_[0]->{addr}, $b, 8) 
-#  		< vec($_[1]->{addr}, $b, 8);
-#  	}
-#  	for my $b (0 .. $_[0]->{bits}/8 - 1) {
-#  	    return 1 if vec($_[0]->{mask}, $b, 8) 
-#  		< vec($_[1]->{mask}, $b, 8);
-#  	}
-#  	return 0;
     },
 
     '>='	=> sub {
-
 	return undef unless $_[0]->{bits} == $_[1]->{bits};
 	return scalar($_[0]->numeric()) >= scalar($_[1]->numeric());
-
-#  	return 0 if ($_[0]->{bits} != $_[1]->{bits});
-#  	for my $b (0 .. $_[0]->{bits}/8 - 1) {
-#  	    return 1 if vec($_[0]->{addr}, $b, 8) 
-#  		>= vec($_[1]->{addr}, $b, 8);
-#  	}
-#  	for my $b (0 .. $_[0]->{bits}/8 - 1) {
-#  	    return 1 if vec($_[0]->{mask}, $b, 8) 
-#  		>= vec($_[1]->{mask}, $b, 8);
-#  	}
-#  	return 0;
     },
 
     '<='	=> sub {
-
 	return undef unless $_[0]->{bits} == $_[1]->{bits};
 	return scalar($_[0]->numeric()) <= scalar($_[1]->numeric());
-
-#  	return 0 if ($_[0]->{bits} != $_[1]->{bits});
-#  	for my $b (0 .. $_[0]->{bits}/8 - 1) {
-#  	    return 1 if vec($_[0]->{addr}, $b, 8) 
-#  		<= vec($_[1]->{addr}, $b, 8);
-#  	}
-#  	for my $b (0 .. $_[0]->{bits}/8 - 1) {
-#  	    return 1 if vec($_[0]->{mask}, $b, 8) 
-#  		<= vec($_[1]->{mask}, $b, 8);
-#  	}
-#  	return 0;
     },
 
     '<=>'		=> sub {
 
 	return undef unless $_[0]->{bits} == $_[1]->{bits};
 	return scalar($_[0]->numeric()) <=> scalar($_[1]->numeric());
-
-#  	return undef if ($_[0]->{bits} != $_[1]->{bits});
-#  	for my $b (0 .. $_[0]->{bits}/8 - 1) {
-#  	    my $r = vec($_[0]->{addr}, $b, 8) 
-#  		<=> vec($_[1]->{addr}, $b, 8);
-#  	    return $r if $r;
-#  	}
-#  	for my $b (0 .. $_[0]->{bits}/8 - 1) {
-#  	    my $r = vec($_[0]->{mask}, $b, 8) 
-#  		<=> vec($_[1]->{mask}, $b, 8);
-#  	    return $r if $r;
-#  	}
-#  	return 0;
     },
 
     'cmp'		=> sub {
 
 	return undef unless $_[0]->{bits} == $_[1]->{bits};
 	return scalar($_[0]->numeric()) <=> scalar($_[1]->numeric());
-
-#  	return undef if ($_[0]->{bits} != $_[1]->{bits});
-#  	for my $b (0 .. $_[0]->{bits}/8 - 1) {
-#  	    my $r = vec($_[0]->{addr}, $b, 8) 
-#  		<=> vec($_[1]->{addr}, $b, 8);
-#  	    return $r if $r;
-#  	}
-#  	for my $b (0 .. $_[0]->{bits}/8 - 1) {
-#  	    my $r = vec($_[0]->{mask}, $b, 8) 
-#  		<=> vec($_[1]->{mask}, $b, 8);
-#  	    return $r if $r;
-#  	}
-#  	return 0;
     },
 
     '@{}'	=> sub { 
 	return [ $_[0]->hostenum ]; 
     };
+
+=pod
+
+=item B<Assignment (C<=>)>
+
+Has been optimized to copy one NetAddr::IP object to another very quickly.
+
+=item B<Stringification>
+
+An object can be used just as a string. For instance, the following code
+
+	my $ip = new NetAddr::IP 'loopback';
+        print "$ip\n";
+
+Will print the string 127.0.0.1/8.
+
+=item B<Equality>
+
+You can test for equality with either C<eq> or C<==>. C<eq> allows the
+comparison with arbitrary strings as well as NetAddr::IP objects. The
+following example:
+
+    if (NetAddr::IP->new('loopback') eq '127.0.0.1/8') 
+       { print "Yes\n"; }
+
+Will print out "Yes".
+
+Comparison with C<==> requires both operands to be NetAddr::IP objects.
+
+In both cases, a true value is returned if the CIDR representation of
+the operands is equal.
+
+=item B<Comparison via E<gt>, E<lt>, E<gt>=, E<lt>=, E<lt>=E<gt> and C<cmp>>
+
+Those are numeric comparisons. All will return undef if you attempt to
+compare a V4 subnet with a V6 subnet, when V6 becomes supported some
+day.
+
+In case the version matches, the numeric representation of the network
+is compared through the corresponding operation. The netmask is
+ignored for these comparisons, as there is no standard criteria to say
+wether 10/8 is larger than 10/10 or not.
+
+=item B<Dereferencing as an ARRAY>
+
+You can do something along the lines of
+
+	my $net = new NetAddr::IP $cidr_spec;
+        for my $ip (@$net) {
+	  print "Host $ip is in $net\n";
+	}
+
+However, note that this might generate a very large amount of items in
+the list. You must be careful when doing this kind of expansion, as it
+is very easy to consume huge amounts of resources. See below for
+smarter ways to do loops and other constructions that are much more
+conservative.
+
+=item B<Addition of a constant>
+
+Adding a constant to a NetAddr::IP object changes its address part to
+point to the one so many hosts above the start address. For instance,
+this code:
+
+    print NetAddr::IP->new('loopback') + 5;
+
+will output 127.0.0.6/8. The address will wrap around at the broadcast
+back to the network address. This code:
+
+    print NetAddr::IP->new('10.0.0.1/24') + 255;
+
+outputs 10.0.0.0/24.
+
+=cut
+
+sub plus {
+    my $ip	= shift;
+    my $const	= shift;
+
+    return $ip unless $const;
+
+    my $a = $ip->{addr};
+    my $m = $ip->{mask};
+    my $b = $ip->{bits};
+
+    my $hp = "$a" & ~"$m";
+    my $np = "$a" & "$m";
+
+    vec($hp, 0, $b) += $const;
+
+    return _fnew NetAddr::IP [ "$np" | ("$hp" & ~"$m"), $m, $b];
+}
+
+=item B<Substraction of a constant>
+
+The complement of the addition of a constant.
+
+=cut
+
+sub minus {
+    my $ip	= shift;
+    my $const	= shift;
+
+    return plus($ip, -$const, @_);
+}
+
+				# Auto-increment an object
+=pod
+
+=item B<Auto-increment>
+
+Auto-incrementing a NetAddr::IP object causes the address part to be
+adjusted to the next host address within the subnet. It will wrap at
+the broadcast address and start again from the network address.
+
+=cut
+
+sub plusplus {
+    my $ip	= shift;
+
+    my $a = $ip->{addr};
+    my $m = $ip->{mask};
+
+    my $hp = "$a" & ~"$m";
+    my $np = "$a" & "$m";
+
+    vec($hp, 0, 32) ++;
+
+    $ip->{addr} = "$np" | ("$hp" & ~"$m");
+    return $ip;
+}
+
+=item B<Auto-decrement>
+
+Auto-decrementing a NetAddr::IP object performs exactly the opposite
+of auto-incrementing it, as you would expect.
+
+=cut
+
+sub minusminus {
+    my $ip	= shift;
+
+    my $a = $ip->{addr};
+    my $m = $ip->{mask};
+
+    my $hp = "$a" & ~"$m";
+    my $np = "$a" & "$m";
+
+    vec($hp, 0, 32) --;
+
+    $ip->{addr} = "$np" | ("$hp" & ~"$m");
+    return $ip;
+}
 
 				#############################################
 				# End of the overload methods.
@@ -191,91 +309,55 @@ sub _ones ($) {
     return ~vec('', 0, $bits);
 }
 
-				# Addition of a constant to an
-				# object
-sub plus {
-    my $ip	= shift;
-    my $const	= shift;
-
-    return $ip unless $const;
-
-    my $a = $ip->{addr};
-    my $m = $ip->{mask};
-    my $b = $ip->{bits};
-
-    my $hp = "$a" & ~"$m";
-    my $np = "$a" & "$m";
-
-    vec($hp, 0, $b) += $const;
-
-    return _fnew NetAddr::IP [ "$np" | ("$hp" & ~"$m"), $m, $b];
+sub _to_quad ($) {
+    my $vec = shift;
+    return vec($vec, 0, 8) . '.' . 
+	vec($vec, 1, 8) . '.' .
+	    vec($vec, 2, 8) . '.' . 
+		vec($vec, 3, 8);
 }
 
-sub minus {
-    my $ip	= shift;
-    my $const	= shift;
+sub do_prefix ($$$) {
+    my $mask	= shift;
+    my $faddr	= shift;
+    my $laddr	= shift;
 
-    return plus($ip, -$const, @_);
-}
-
-				# Auto-increment an object
-sub plusplus {
-    my $ip	= shift;
-
-    my $a = $ip->{addr};
-    my $m = $ip->{mask};
-
-    my $hp = "$a" & ~"$m";
-    my $np = "$a" & "$m";
-
-    vec($hp, 0, 32) ++;
-
-    $ip->{addr} = "$np" | ("$hp" & ~"$m");
-    return $ip;
-}
-
-sub minusminus {
-    my $ip	= shift;
-
-    my $a = $ip->{addr};
-    my $m = $ip->{mask};
-
-    my $hp = "$a" & ~"$m";
-    my $np = "$a" & "$m";
-
-    vec($hp, 0, 32) --;
-
-    $ip->{addr} = "$np" | ("$hp" & ~"$m");
-    return $ip;
-}
-
-sub masklen ($) {
-    my $self	= shift;
-    my $bits	= 0;
-
-    for (my $i = 0;
-	 $i < $self->{bits};
-	 $i ++) 
-    {
-	$bits += vec($self->{mask}, $i, 1);
+    if ($mask > 24) {
+        return "$faddr->[0].$faddr->[1].$faddr->[2].$faddr->[3]-$laddr->[3]";
     }
-
-    return $bits;
+    elsif ($mask == 24) {
+        return "$faddr->[0].$faddr->[1].$faddr->[2].";
+    }
+    elsif ($mask > 16) {
+        return "$faddr->[0].$faddr->[1].$faddr->[2]-$laddr->[2].";
+    }
+    elsif ($mask == 16) {
+        return "$faddr->[0].$faddr->[1].";
+    }
+    elsif ($mask > 8) {
+        return "$faddr->[0].$faddr->[1]-$laddr->[1].";
+    }
+    elsif ($mask == 8) {
+        return "$faddr->[0].";
+    }
+    else {
+        return "$faddr->[0]-$laddr->[0]";
+    }
 }
 
 sub _parse_mask ($$) {
-    my $mask	= shift;
+    my $mask	= lc shift;
     my $bits	= shift;
 
     my $bmask	= '';
 
-    if ($mask =~ m/^default|any$/i) {
+    if ($mask eq 'default' or $mask eq 'any') {
 	vec($bmask, 0, $bits) = 0x0;
     }
-    elsif ($mask =~ m/^broadcast|host$/i) {
+    elsif ($mask eq 'broadcast' or $mask eq 'host') {
 	vec($bmask, 0, $bits) = _ones $bits;
     }
-    elsif ($mask =~ m/^loopback$/i) {
+    elsif ($mask eq 'loopback') {
 	vec($bmask, 0, 8) = 255;
 	vec($bmask, 1, 8) = 0;
 	vec($bmask, 2, 8) = 0;
@@ -324,19 +406,19 @@ sub _obits ($$) {
 }
 
 sub _v4 ($$$) {
-    my $ip	= shift;
+    my $ip	= lc shift;
     my $mask	= shift;
     my $present	= shift;
 
     my $addr = '';
 
-    if ($ip =~ m!^default|any$!i) {
+    if ($ip eq 'default' or $ip eq 'any') {
 	vec($addr, 0, 32) = 0x0;
     }
-    elsif ($ip =~ m!^broadcast$!i) {
+    elsif ($ip eq 'broadcast') {
 	vec($addr, 0, 32) = _ones 32;
     }
-    elsif ($ip =~ m!^loopback$!i) {
+    elsif ($ip eq 'loopback') {
 	vec($addr, 0, 8) = 127;
 	vec($addr, 3, 8) = 1;
     }
@@ -493,6 +575,13 @@ sub _v4 ($$$) {
 	    vec($addr, 3, 8) = $4;
 	}
     }
+    elsif (!$present and length($ip) == 4) {
+
+	my @o = unpack("c4", $ip);
+
+	vec($addr, $_, 8) = $o[$_] for 0 .. 3;
+	vec($mask, 0, 32) = 0xFFFFFFFF;
+    }
     else {
 #	croak "Cannot obtain an IP address out of $ip";
 	return undef;
@@ -500,6 +589,39 @@ sub _v4 ($$$) {
 
     return { addr => $addr, mask => $mask, bits => 32 };
 }
+
+sub new4 ($$;$) {
+    new($_[0], $_[1], $_[2]);
+}
+
+=pod
+
+=back
+
+=head2 Methods
+
+=over
+
+=item C<-E<gt>new([$addr, [ $mask ]])>
+
+This method creates a new IPv4 address with the supplied address in
+C<$addr> and an optional netmask C<$mask>, which can be omitted to get
+a /32 mask.
+
+C<$addr> can be almost anything that can be resolved to an IP address
+in all the notations I have seen over time. It can optionally contain
+the mask in CIDR notation.
+
+B<prefix> notation is understood, with the limitation that the range
+speficied by the prefix must match with a valid subnet.
+
+Addresses in the same format returned by C<inet_aton> or
+C<gethostbyname> are also understood, although no mask can be
+specified for them.
+
+If called with no arguments, 'default' is assumed.
+
+=cut
 
 sub new ($$;$) {
     my $type	= $_[0];
@@ -541,31 +663,21 @@ sub new ($$;$) {
     return bless $self, $class;
 }
 
-sub new4 ($$;$) {
-    new($_[0], $_[1], $_[2]);
-}
+=pod
 
-				# Output a vec() as a dotted-quad
+=item C<-E<gt>broadcast()>
 
-sub _to_quad ($) {
-    my $vec = shift;
-    return vec($vec, 0, 8) . '.' . 
-	vec($vec, 1, 8) . '.' .
-	    vec($vec, 2, 8) . '.' . 
-		vec($vec, 3, 8);
-}
+Returns a new object refering to the broadcast address of a given
+subnet. The broadcast address has all ones in all the bit positions
+where the netmask has zero bits. This is normally used to address all
+the hosts in a given subnet.
 
-				# Get the network address
+=cut
 
-sub _network ($) {
+sub broadcast ($) {
     my $self	= shift;
-    my $a = $self->{addr};
-    my $m = $self->{mask};
-
-    return [ "$a" & "$m", $self->{mask}, $self->{bits} ];
+    return $self->_fnew($self->_broadcast);
 }
-
-				# Should be obvious
 
 sub _broadcast ($) {
     my $self	= shift;
@@ -579,65 +691,136 @@ sub _broadcast ($) {
     return [ "$a" | ~ "$m" | $c, $self->{mask}, $self->{bits} ];
 }
 
-				# This will become an lvalue later
+=pod
 
-sub mask ($) {
+=item C<-E<gt>network()>
+
+Returns a new object refering to the network address of a given
+subnet. A network address has all zero bits where the bits of the
+netmask are zero. Normally this is used to refer to a subnet.
+
+=cut
+
+sub network ($) {
     my $self	= shift;
-    _to_quad $self->{mask};
+    return $self->_fnew($self->_network);
 }
 
-				# idem
+sub _network ($) {
+    my $self	= shift;
+    my $a = $self->{addr};
+    my $m = $self->{mask};
+
+    return [ "$a" & "$m", $self->{mask}, $self->{bits} ];
+}
+
+=pod
+
+=item C<-E<gt>addr()>
+
+Returns a scalar with the address part of the object as a
+dotted-quad. This is useful for printing or for passing the address
+part of the NetAddr::IP object to other components that expect an IP
+address.
+
+=cut
 
 sub addr ($) {
     my $self	= shift;
     _to_quad $self->{addr};
 }
 
+=pod
+
+=item C<-E<gt>mask()>
+
+Returns a scalar with the mask as a dotted-quad.
+
+=cut
+
+sub mask ($) {
+    my $self	= shift;
+    _to_quad $self->{mask};
+}
+
+=pod
+
+=item C<-E<gt>masklen()>
+
+Returns a scalar the number of one bits in the mask.
+
+=cut
+
+sub masklen ($) {
+    my $self	= shift;
+    my $bits	= 0;
+
+    for (my $i = 0;
+	 $i < $self->{bits};
+	 $i ++) 
+    {
+	$bits += vec($self->{mask}, $i, 1);
+    }
+
+    return $bits;
+}
+
+=pod
+
+=item C<-E<gt>cidr()>
+
+Returns a scalar with the address and mask in CIDR notation. A
+NetAddr::IP object I<stringifies> to the result of this function.
+
+=cut
+
 sub cidr ($) {
     my $self	= shift;
     return $self->addr . '/' . $self->masklen;
 }
 
-sub do_prefix ($$$) {
-    my $mask	= shift;
-    my $faddr	= shift;
-    my $laddr	= shift;
+=pod
 
-    if ($mask > 24) {
-        return "$faddr->[0].$faddr->[1].$faddr->[2].$faddr->[3]-$laddr->[3]";
-    }
-    elsif ($mask == 24) {
-        return "$faddr->[0].$faddr->[1].$faddr->[2].";
-    }
-    elsif ($mask > 16) {
-        return "$faddr->[0].$faddr->[1].$faddr->[2]-$laddr->[2].";
-    }
-    elsif ($mask == 16) {
-        return "$faddr->[0].$faddr->[1].";
-    }
-    elsif ($mask > 8) {
-        return "$faddr->[0].$faddr->[1]-$laddr->[1].";
-    }
-    elsif ($mask == 8) {
-        return "$faddr->[0].";
-    }
-    else {
-        return "$faddr->[0]-$laddr->[0]";
-    }
+=item C<-E<gt>aton()>
+
+Returns the address part of the NetAddr::IP object in the same format
+as the C<inet_aton()> function. This should ease a bit the code
+required to deal with "old-style" sockets.
+
+=cut
+
+sub aton {
+    my $self = shift;
+    return pack "c4", split /\./, $self->addr;
 }
 
-sub nprefix ($) {
+=pod
+
+=item C<-E<gt>range()>
+
+Returns a scalar with the base address and the broadcast address
+separated by a dash and spaces. This is called range notation.
+
+=cut
+
+sub range ($) {
     my $self = shift;
     my $mask = $self->masklen;
 
     return undef if $self->{bits} > 32;
-    return $self->addr if $mask == 32;
-
-    my @faddr = split (/\./, $self->first->addr);
-    my @laddr = split (/\./, $self->last->addr);
-
-    return do_prefix $mask, \@faddr, \@laddr;
+    return $self->network->addr . ' - ' . $self->broadcast->addr;
 }
+
+=pod
+
+=item C<-E<gt>prefix()>
+
+Returns a scalar with the address and mask in prefix
+representation. This is useful for some programs, which expect its
+input to be in this format. This method will include the broadcast
+address in the encoding.
+
+=cut
 
 sub prefix ($) {
     my $self = shift;
@@ -652,30 +835,41 @@ sub prefix ($) {
     return do_prefix $mask, \@faddr, \@laddr;
 }
 
-sub range ($) {
+=pod
+
+=item C<-E<gt>nprefix()>
+
+Just as C<-E<gt>prefix()>, but does not include the broadcast address.
+
+=cut
+
+sub nprefix ($) {
     my $self = shift;
     my $mask = $self->masklen;
 
     return undef if $self->{bits} > 32;
-    return $self->network->addr . ' - ' . $self->broadcast->addr;
+    return $self->addr if $mask == 32;
+
+    my @faddr = split (/\./, $self->first->addr);
+    my @laddr = split (/\./, $self->last->addr);
+
+    return do_prefix $mask, \@faddr, \@laddr;
 }
 
-sub broadcast ($) {
-    my $self	= shift;
-    return $self->_fnew($self->_broadcast);
-}
+=pod
 
-sub network ($) {
-    my $self	= shift;
-    return $self->_fnew($self->_network);
-}
+=item C<-E<gt>numeric()>
 
-sub wildcard ($) {
-    my $self	= shift;
-    return wantarray() ? ($self->addr, _to_quad ~$self->{mask}) :
-	_to_quad ~$self->{mask};
-			      
-}
+When called in a scalar context, will return a numeric representation
+of the address part of the IP address. When called in an array
+contest, it returns a list of two elements. The first element is as
+described, the second element is the numeric representation of the
+netmask.
+
+This method is essential for serializing the representation of a
+subnet.
+
+=cut
 
 sub numeric ($) {
     my $self	= shift;
@@ -685,89 +879,101 @@ sub numeric ($) {
 			    vec($self->{addr}, 0, 32);
 }
 
-				# Return the shortest possible subnet
-				# list that completely contains all
-				# the given addresses or subnets.
+=pod
 
-sub compactref ($) {
-    my @addr = sort 
-#    { (vec($a->{addr}, 0, $a->{bits}) <=> vec($b->{addr}, 0, $a->{bits}))
-#	  || (vec($a->{mask}, 0, $a->{bits}) 
-#	      <=> vec($b->{mask}, 0, $a->{bits}))
-#	  } 
-    @{$_[0]} or
-	return [];
+=item C<-E<gt>wildcard()>
 
-    my $bits = $addr[0]->{bits};
-    my $changed;
+When called in a scalar context, returns the wildcard bits
+corresponding to the mask, in dotted-quad format.
 
-    do {
-	$changed = 0;
-	for (my $i = 0;
-	     $i <= $#addr - 1;
-	     $i ++)
-	{
-	    my $lip = $addr[$i];
-	    my $hip = $addr[$i + 1];
+When called in an array context, returns a two-element array. The
+first element, is the address part. The second element, is the
+wildcard translation of the mask.
 
-	    if ($lip->contains($hip)) {
-		splice(@addr, $i + 1, 1);
-		++ $changed;
-		-- $i;
-	    }
-	    elsif (vec($lip->{mask}, 0, $bits) 
-		== vec($hip->{mask}, 0, $bits)) 
-	    {
-		my $la = $lip->{addr};
-		my $ha = $hip->{addr};
-		my $nb = '';
-		my $na = '';
-		my $nm = '';
+=cut
 
-		vec($nb, 0, $bits) = 
-		    vec($na, 0, $bits) = 
-			vec($la, 0, $bits);
-		vec($nb, 0, $bits) ^= vec($ha, 0, $bits);
-		vec($na, 0, $bits) ^= vec($nb, 0, $bits);
-		vec($nm, 0, $bits) = vec($lip->{mask}, 0, $bits);
-		vec($nm, 0, $bits) <<= 1;
-
-
-#		if ((vec($la, 0, $bits) & vec($nm, 0, $bits))
-#		    == (vec($ha, 0, $bits) & vec($nm, 0, $bits)))
-
-		if (("$la" & "$nm") eq ("$ha" & "$nm"))
-		{
-		    if ("$la" eq "$ha") {
-			splice(@addr, $i + 1, 1);
-		    }
-		    else {
-			$addr[$i] = ($lip->_fnew([ "$na" & "$nm", 
-						   $nm, $bits ]));
-			splice(@addr, $i + 1, 1);
-		    }
-
-#		    print $lip->addr, "/", $lip->mask, " + ", $hip->addr, 
-#		    "/", $hip->mask, " = ", $addr[$i]->addr, "/", 
-#		    $addr[$i]->mask, "\n";
-
-		    -- $i;
-		    ++ $changed;
-		}
-	    }
-	}
-    } while ($changed);
-
-    return \@addr;
+sub wildcard ($) {
+    my $self	= shift;
+    return wantarray() ? ($self->addr, _to_quad ~$self->{mask}) :
+	_to_quad ~$self->{mask};
+			      
 }
 
-sub compact {
-    return @{compactref(\@_)};
+=pod
+
+=item C<$me-E<gt>contains($other)>
+
+Returns true when C<$me> completely contains C<$other>. False is
+returned otherwise and C<undef> is returned if C<$me> and C<$other>
+are of different versions.
+
+=cut
+
+sub contains ($$) {
+    my $a	= shift;
+    my $b	= shift;
+
+    my $bits	= $a->{bits};
+
+    my $mask;
+    
+				# Both must be of the same length...
+    return undef
+	unless $bits == $b->{bits};
+
+				# $a must be less specific than $b...
+    return 0
+	unless ($mask = vec($a->{mask}, 0, $bits))
+	    <= vec($b->{mask}, 0, $bits);
+
+				# A default address always contains
+    return 1 if ($mask == 0x0);
+
+    return 
+	((vec($a->{addr}, 0, $bits) & $mask)
+	 == (vec($b->{addr}, 0, $bits) & $mask));
 }
 
-				# Splits the current object in
-				# smaller subnets, of $bits bits
-				# netmask.
+=pod
+
+=item C<$me-E<gt>within($other)>
+
+The complement of C<-E<gt>contains()>. Returns true when C<$me> is
+completely con tained within C<$other>.
+
+=cut
+
+sub within ($$) {
+    return contains($_[1], $_[0]);
+}
+
+=pod
+
+=item C<-E<gt>split($bits)>
+
+Returns a list of objects, representing subnets of C<$bits> mask
+produced by splitting the original object, which is left
+unchanged. Note that C<$bits> must be longer than the original
+mask in order for it to be splittable.
+
+Note that C<$bits> can be given as an integer (the length of the mask)
+or as a dotted-quad. If omitted, a host mask is assumed.
+
+=cut
+
+sub split ($;$) {
+    return @{$_[0]->splitref($_[1])};
+}
+
+=pod
+
+=item C<-E<gt>splitref($bits)>
+
+A (faster) version of C<-E<gt>split()> that returns a reference to a
+list of objects instead of a real list. This is useful when large
+numbers of objects are expected.
+
+=cut
 
 sub splitref ($;$) {
     my $self	= shift;
@@ -816,9 +1022,25 @@ sub splitref ($;$) {
     return \@ret;
 }
 
-sub split ($;$) {
-    return @{$_[0]->splitref($_[1])};
+=pod
+
+=item C<-E<gt>hostenum()>
+
+Returns the list of hosts within a subnet.
+
+=cut
+
+sub hostenum ($) {
+    return @{$_[0]->hostenumref};
 }
+
+=pod
+
+=item C<-E<gt>hostenumref()>
+
+Faster version of C<-E<gt>hostenum()>, returning a reference to a list.
+
+=cut
 
 sub hostenumref ($) {
     my $r = $_[0]->splitref(32);
@@ -829,42 +1051,104 @@ sub hostenumref ($) {
     return $r;
 }
 
-sub hostenum ($) {
-    return @{$_[0]->hostenumref};
+=pod
+
+=item C<$me-E<gt>compact($addr1, $addr2, ...)>
+
+Given a list of objects (including C<$me>), this method will compact
+all the addresses and subnets into the largest (ie, least specific) 
+subnets possible that contain exactly all of the given objects.
+
+Note that in versions prior to 3.02, if fed with the same IP subnets 
+multiple times, these subnets would be returned. From 3.02 on, a more
+"correct" approach has been adopted and only one address would be
+returned.
+
+=cut
+
+sub compact {
+    return @{compactref(\@_)};
 }
 
+=pod
 
-				# Returns TRUE if $a completely
-				# contains $b and both are of the
-				# same length (ie, V4 or V6).
-sub contains ($$) {
-    my $a	= shift;
-    my $b	= shift;
+=item C<$me-E<gt>compactref(\@list)>
 
-    my $bits	= $a->{bits};
+As usual, a faster version of =item C<-E<gt>compact()> that returns a
+reference to a list. Note that this method takes a reference to a list
+instead.
 
-    my $mask;
-    
-				# Both must be of the same length...
-    return undef
-	unless $bits == $b->{bits};
+=cut
 
-				# $a must be less specific than $b...
-    return 0
-	unless ($mask = vec($a->{mask}, 0, $bits))
-	    <= vec($b->{mask}, 0, $bits);
+sub compactref ($) {
+    my @addr = sort 
 
-				# A default address always contains
-    return 1 if ($mask == 0x0);
+    @{$_[0]} or
+	return [];
 
-    return 
-	((vec($a->{addr}, 0, $bits) & $mask)
-	 == (vec($b->{addr}, 0, $bits) & $mask));
+    my $bits = $addr[0]->{bits};
+    my $changed;
+
+    do {
+	$changed = 0;
+	for (my $i = 0;
+	     $i <= $#addr - 1;
+	     $i ++)
+	{
+	    my $lip = $addr[$i];
+	    my $hip = $addr[$i + 1];
+
+	    if ($lip->contains($hip)) {
+		splice(@addr, $i + 1, 1);
+		++ $changed;
+		-- $i;
+	    }
+	    elsif (vec($lip->{mask}, 0, $bits) 
+		== vec($hip->{mask}, 0, $bits)) 
+	    {
+		my $la = $lip->{addr};
+		my $ha = $hip->{addr};
+		my $nb = '';
+		my $na = '';
+		my $nm = '';
+
+		vec($nb, 0, $bits) = 
+		    vec($na, 0, $bits) = 
+			vec($la, 0, $bits);
+		vec($nb, 0, $bits) ^= vec($ha, 0, $bits);
+		vec($na, 0, $bits) ^= vec($nb, 0, $bits);
+		vec($nm, 0, $bits) = vec($lip->{mask}, 0, $bits);
+		vec($nm, 0, $bits) <<= 1;
+
+		if (("$la" & "$nm") eq ("$ha" & "$nm"))
+		{
+		    if ("$la" eq "$ha") {
+			splice(@addr, $i + 1, 1);
+		    }
+		    else {
+			$addr[$i] = ($lip->_fnew([ "$na" & "$nm", 
+						   $nm, $bits ]));
+			splice(@addr, $i + 1, 1);
+		    }
+
+		    -- $i;
+		    ++ $changed;
+		}
+	    }
+	}
+    } while ($changed);
+
+    return \@addr;
 }
 
-sub within ($$) {
-    return contains($_[1], $_[0]);
-}
+=pod
+
+=item C<-E<gt>first()>
+
+Returns a new object representing the first useable IP address within
+the subnet (ie, the first host address).
+
+=cut
 
 sub first ($) {
     my $self	= shift;
@@ -872,15 +1156,14 @@ sub first ($) {
     return $self->network + 1;
 }
 
-sub nth ($$) {
-    my $self    = shift;
-    my $count   = shift;
+=pod
 
-    return undef if ($count < 1 or $count > $self->num ());
-    return $self->network + $count;
-}
+=item C<-E<gt>last()>
 
-    
+Returns a new object representing the last useable IP address within
+the subnet (ie, one less than the broadcast address).
+
+=cut
 
 sub last ($) {
     my $self	= shift;
@@ -890,183 +1173,7 @@ sub last ($) {
     return $self->broadcast - 1;
 }
 
-				# XXX - The constant below should be
-				# constructed dinamically depending on
-				# the address size in order to work with
-				# V6.
-sub num ($) {
-    my $self	= shift;
-    return ~vec($self->{mask}, 0, $self->{bits}) & 0xFFFFFFFF;
-}
-
-1;
-
-__END__
-
-=head1 NAME
-
-NetAddr::IP - Manages IPv4 addresses and subnets
-
-=head1 SYNOPSIS
-
-  use NetAddr::IP;
-
-  my $ip = new NetAddr::IP 'loopback';
-
-  print "The address is ", $ip->addr, " with mask ", $ip->mask, "\n" ;
-
-  if ($ip->within(new NetAddr::IP "127.0.0.0", "255.0.0.0")) {
-      print "Is a loopback address\n";
-  }
-
-				# This prints 127.0.0.1/32
-  print "You can also say $ip...\n";
-
-=head1 DESCRIPTION
-
-This module provides a number of methods useful for handling IPv4
-addresses ans subnets. Hopefully, its methods are also usable for IPv6
-addresses.
-
-Methods so far include:
-
-=over
-
-=item C<-E<gt>new([$addr, [ $mask ]])>
-
-This method creates a new IPv4 address with the supplied address in
-C<$addr> and an optional netmask C<$mask>, which can be omitted to get
-a /32 mask.
-
-C<$addr> can be almost anything that can be resolved to an IP address
-in all the notations I have seen over time. It can optionally contain
-the mask in CIDR notation.
-
-B<prefix> notation is understood, with the limitation that the range
-speficied by the prefix must match with a valid subnet.
-
-If called with no arguments, 'default' is assumed.
-
-=item C<-E<gt>broadcast()>
-
-Returns a new object refering to the broadcast address of a given
-subnet.
-
-=item C<-E<gt>network()>
-
-Returns a new object refering to the network address of a given
-subnet.
-
-=item C<-E<gt>addr()>
-
-Returns a scalar with the address part of the object as a dotted-quad.
-
-=item C<-E<gt>mask()>
-
-Returns a scalar with the mask as a dotted-quad.
-
-=item C<-E<gt>masklen()>
-
-Returns a scalar the number of one bits in the mask.
-
-=item C<-E<gt>cidr()>
-
-Returns a scalar with the address and mask in CIDR notation.
-
-=item C<-E<gt>range()>
-
-Returns a scalar with the base address and the broadcast address
-separated by a dash and spaces. This is called range notation.
-
-=item C<-E<gt>prefix()>
-
-Returns a scalar with the address and mask in prefix
-representation. This is useful for some programs, which expect its
-input to be in this format. This method will include the broadcast
-address in the encoding.
-
-=item C<-E<gt>nprefix()>
-
-Just as C<-E<gt>prefix()>, but does not include the broadcast address.
-
-=item C<-E<gt>numeric()>
-
-When called in a scalar context, will return a numeric representation
-of the address part of the IP address. When called in an array
-contest, it returns a list of two elements. The first element is as
-described, the second element is the numeric representation of the
-netmask.
-
-=item C<-E<gt>wildcard()>
-
-When called in a scalar context, returns the wildcard bits
-corresponding to the mask, in dotted-quad format.
-
-When called in an array context, returns a two-element array. The
-first element, is the address part. The second element, is the
-wildcard translation of the mask.
-
-=item C<$me-E<gt>contains($other)>
-
-Returns true when C<$me> completely contains C<$other>. False is
-returned otherwise and C<undef> is returned if C<$me> and C<$other>
-are of different versions.
-
-=item C<$me-E<gt>within($other)>
-
-The complement of C<-E<gt>contains()>. Returns true when C<$me> is
-completely con tained within C<$other>.
-
-=item C<-E<gt>split($bits)>
-
-Returns a list of objects, representing subnets of C<$bits> mask
-produced by splitting the original object, which is left
-unchanged. Note that C<$bits> must be longer than the original
-object's mask in order for it to be splittable.
-
-Note that C<$bits> can be given as an integer (the length of the mask)
-or as a dotted-quad. If omitted, a host mask is assumed.
-
-=item C<-E<gt>splitref($bits)>
-
-A (faster) version of C<-E<gt>split()> that returns a reference to a
-list of objects instead of a real list. This is useful when large
-numbers of objects are expected.
-
-=item C<-E<gt>hostenum()>
-
-Returns the list of hosts within a subnet.
-
-=item C<-E<gt>hostenumref()>
-
-Faster version of C<-E<gt>hostenum()>, returning a reference to a list.
-
-=item C<$me-E<gt>compact($addr1, $addr2, ...)>
-
-Given a list of objects (including C<$me>), this method will compact
-all the addresses and subnets into the largest (ie, least specific)
-subnets possible that contain exactly all of the given objects.
-
-Note that in versions prior to 3.02, if fed with the same IP subnets
-multiple times, these subnets would be returned. From 3.02 on, a more
-"correct" approach has been adopted and only one address would be
-returned.
-
-=item C<$me-E<gt>compactref(\@list)>
-
-As usual, a faster version of =item C<-E<gt>compact()> that returns a
-reference to a list. Note that this method takes a reference to a list
-instead.
-
-=item C<-E<gt>first()>
-
-Returns a new object representing the first useable IP address within
-the subnet (ie, the first host address).
-
-=item C<-E<gt>last()>
-
-Returns a new object representing the last useable IP address within
-the subnet (ie, one less than the broadcast address).
+=pod
 
 =item C<-E<gt>nth($index)>
 
@@ -1075,53 +1182,35 @@ the subnet (ie, the I<n>-th host address).  If no address is available
 (for example, when the network is too small for C<$index> hosts),
 C<undef> is returned.
 
+=cut
+
+sub nth ($$) {
+    my $self    = shift;
+    my $count   = shift;
+
+    return undef if ($count < 1 or $count > $self->num ());
+    return $self->network + $count;
+}
+
+=pod
+
 =item C<-E<gt>num()>
 
 Returns the number of useable addresses IP addresses within the
 subnet, not counting the broadcast address.
 
-=back
+=cut
 
-In addition to the methods, some functions are overloaded to ease
-manipulation of the objects. The available operations are:
+sub num ($) {
+    my $self	= shift;
+    return ~vec($self->{mask}, 0, $self->{bits}) & 0xFFFFFFFF;
+}
 
-=over
+				# Output a vec() as a dotted-quad
 
-=item B<Stringification>
+1;
 
-An object can be used just as a string. For instance, the following code
-
-	my $ip = new NetAddr::IP 'loopback';
-        print "$ip\n";
-
-Will print the string 127.0.0.1/8.
-
-=item B<Equality>
-
-You can test for equality with either C<eq> or C<==>.
-
-=item B<Dereferencing as an ARRAY>
-
-You can do something along the lines of
-
-	my $net = new NetAddr::IP $cidr_spec;
-        for my $ip (@$net) {
-	  print "Host $ip is in $net\n";
-	}
-
-However, note that this might generate a very large amount of items
-in the list. You must be careful when doing this kind of expansion.
-
-=item B<Sum and auto-increment>
-
-You can add a constant to an object. This will return a new object
-referring to the host address obtained by incrementing (or
-decrementing) the given address. YOu can do this with the operators
-B<+>, B<->, B<+=> and B<-=>.
-
-The auto-increment or auto-decrement operators will return a new
-object pointing to the next or previous host address in the
-subnet. These are the B<++> and B<--> operators.
+__END__
 
 =back
 
@@ -1131,6 +1220,8 @@ None by default.
 
 
 =head1 HISTORY
+
+$Id: IP.pm,v 1.2 2002/10/31 04:30:22 lem Exp $
 
 =over
 
@@ -1361,8 +1452,6 @@ Debian package.
 
 =item 3.00
 
-=over
-
 This is  a major rewrite, supposed  to fix a number  of issues pointed
 out in earlier versions.
 
@@ -1378,8 +1467,6 @@ versions have been removed in favor of faster performance.
 This  version  was tested  under  Win98/2K (ActiveState  5.6.0/5.6.1),
 HP-UX11 on PA-RISC (5.6.0), RedHat  Linux 6.2 (5.6.0), Digital Unix on
 Alpha (5.6.0), Solaris on Sparc (5.6.0) and possibly others.
-
-=back
 
 =item 3.01
 
@@ -1546,6 +1633,37 @@ now a valid (/32) netmask.
 
 =back
 
+=item 3.12
+
+=over
+
+=item *
+
+Added CVS control files, though this is of no relevance to the community.
+
+=item *
+
+Thanks to Steve Snodgrass for pointing out a bug in the processing of
+the special names such as default, any, etc. A fix was produced and
+adequate tests were added to the code.
+
+=item *
+
+First steps towards "regexp free" parsing.
+
+=item *
+
+Documentation revisited and reorganized within the file, so that it
+helps document the code.
+
+=item *
+
+Added C<-E<gt>aton()> and support for this format in
+C<-E<gt>new()>. This makes the code helpful to interface with
+old-style socket code.
+
+=back
+
 =back
 
 =head1 AUTHOR
@@ -1569,3 +1687,4 @@ license for this module.
 perl(1).
 
 =cut
+

@@ -60,6 +60,14 @@ with version 2.  Version 2 was a somewhat unstable  work that grew too
 fast. If you're  upgrading from 2.xx, please review  your code as some
 methods no longer exist or have changed.
 
+**********************************************************************
+* VERSIONS EARLIER THAN 3.00 WON'T BE SUPPORTED AT ALL. PLEASE DON'T *
+* EVEN ASK. I have very limited time and this module has grown quite *
+* popular. Please help me help you by staying up to date with it. If *
+* you find a bug, upgrade  to the  latest version  on CPAN  prior to *
+* contacting me.                                                     *
+**********************************************************************
+
 To install, follow the standard CPAN recipe of:
 
 $ perl Makefile.PL
@@ -69,6 +77,11 @@ $ make test
 If all tests pass, then do
 
 $ make install
+
+The  test suite includes  a lot  of cases.  Note that  currently, some
+tests require Test::More. Eventually all tests will require it, so you
+should really consider installing it if your Perl did not include this
+module.
 
 Tests related to address compaction could be too resource-intensive in
 some environments. If  this is your case, you can  skip those tests by
@@ -100,3 +113,5 @@ This software is (c) Luis E. Munoz.  It can be used under the terms of
 the perl artistic license provided  that proper credit for the work of
 the  author is  preserved in  the form  of this  copyright  notice and
 license for this module.
+
+$Id: README,v 1.2 2002/10/31 04:30:22 lem Exp $

@@ -1,5 +1,7 @@
 use NetAddr::IP;
 
+# $Id: masklen.t,v 1.2 2002/10/31 04:30:35 lem Exp $
+
 my @masks = 0 .. 32;
 
 $| = 1;

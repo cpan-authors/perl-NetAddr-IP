@@ -1,4 +1,5 @@
 IP.pm
+TODO
 README
 MANIFEST
 Makefile.PL
@@ -8,9 +9,11 @@ t/loops.t
 t/v4-new.t
 t/v4-num.t
 t/relops.t
+t/v4-aton.t
 t/v4-snew.t
 t/v4-cnew.t
 t/v4-last.t
+t/v4-wnew.t
 t/over-qq.t
 t/masklen.t
 t/v4-base.t

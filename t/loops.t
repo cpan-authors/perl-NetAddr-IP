@@ -1,5 +1,7 @@
 use NetAddr::IP;
 
+# $Id: loops.t,v 1.2 2002/10/31 04:30:35 lem Exp $
+
 $| = 1;
 
 my @deltas = (0, 1, 2, 3, 255);

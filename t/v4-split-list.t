@@ -1,5 +1,7 @@
 use NetAddr::IP;
 
+# $Id: v4-split-list.t,v 1.2 2002/10/31 04:30:37 lem Exp $
+
 my %addr = (
 	    '10.0.0.10' => [ '255.255.252.0', 24,
 			    [

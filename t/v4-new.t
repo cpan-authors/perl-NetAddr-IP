@@ -1,6 +1,8 @@
 use NetAddr::IP;
 #require "IP.pm";
 
+# $Id: v4-new.t,v 1.2 2002/10/31 04:30:36 lem Exp $
+
 my @a = (
 	 [ 'localhost', '127.0.0.1' ],
 	 [ 0x01010101, '1.1.1.1' ],

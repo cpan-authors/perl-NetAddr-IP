@@ -1,5 +1,7 @@
 use NetAddr::IP;
 
+# $Id: v4-hostenum.t,v 1.2 2002/10/31 04:30:36 lem Exp $
+
 my %addr = (
 	    '10.0.0.0' => [ '255.255.255.252',
 			    [
