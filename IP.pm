@@ -139,7 +139,7 @@ use overload
 				#############################################
 
 
-our $VERSION = '3.04';
+our $VERSION = '3.05';
 
 # Preloaded methods go here.
 
@@ -416,6 +416,34 @@ sub _v4 ($$) {
 	vec($mask, 2, 8) = 0xFF;
 	vec($mask, 3, 8) = _obits $4, $5;
     }
+    elsif ($ip =~ m/^(\d+)\.(\d+)\.(\d+)\.(\d+)
+	   \s*-\s*(\d+)\.(\d+)\.(\d+)\.(\d+)$/x
+	   and $1 >= 0 and $1 <= 255
+	   and $2 >= 0 and $2 <= 255
+	   and $3 >= 0 and $3 <= 255
+	   and $4 >= 0 and $4 <= 255
+	   and $5 >= 0 and $5 <= 255
+	   and $6 >= 0 and $6 <= 255
+	   and $7 >= 0 and $7 <= 255
+	   and $8 >= 0 and $8 <= 255)
+    {
+	my $last = '';
+
+	vec($addr, 0, 8) = $1;
+	vec($addr, 1, 8) = $2;
+	vec($addr, 2, 8) = $3;
+	vec($addr, 3, 8) = $4;
+
+	vec($last, 0, 8) = $5;
+	vec($last, 1, 8) = $6;
+	vec($last, 2, 8) = $7;
+	vec($last, 3, 8) = $8;
+
+	vec($mask, 0, 8) = _obits $1, $5;
+	vec($mask, 1, 8) = _obits $2, $6;
+	vec($mask, 2, 8) = _obits $3, $7;
+	vec($mask, 3, 8) = _obits $4, $8;
+    }
     elsif (my $a = gethostbyname($ip)) {
 	if (inet_ntoa($a) =~ m!^(\d+)\.(\d+)\.(\d+)\.(\d+)$!)  {
 	    vec($addr, 0, 8) = $1;
@@ -572,6 +600,14 @@ sub prefix ($) {
     my @laddr = split (/\./, $self->last->addr);
 
     return do_prefix $mask, \@faddr, \@laddr;
+}
+
+sub range ($) {
+    my $self = shift;
+    my $mask = $self->masklen;
+
+    return undef if $self->{bits} > 32;
+    return $self->network->addr . ' - ' . $self->broadcast->addr;
 }
 
 sub broadcast ($) {
@@ -891,6 +927,11 @@ Returns a scalar the number of one bits in the mask.
 =item C<-E<gt>cidr()>
 
 Returns a scalar with the address and mask in CIDR notation.
+
+=item C<-E<gt>range()>
+
+Returns a scalar with the base address and the broadcast address
+separated by a dash and spaces. This is called range notation.
 
 =item C<-E<gt>prefix()>
 
@@ -1361,6 +1402,17 @@ Got rid of C<croak()> when invalid input was fed to C<-E<gt>new()>.
 As suggested by Andrew Gaskill, added support for prefix
 notation. Thanks for the code of the initial C<-E<gt>prefix()>
 function.
+
+=back
+
+=item 3.05
+
+=over
+
+=item *
+
+Added support for range notation, where base and broadcast addresses
+are given as arguments to C<-E<gt>new()>.
 
 =back
 
