@@ -11,6 +11,11 @@ my @r = (
 
 $| = 1;
 
+if (defined($ENV{LIGHTERIPTESTS}) and $ENV{LIGHTERIPTESTS} =~ /yes/i) {
+    print "1..0\n";
+    exit 0;
+}
+
 print "1..2\n";
 
 my @ips;

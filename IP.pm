@@ -139,7 +139,7 @@ use overload
 				#############################################
 
 
-our $VERSION = '3.05';
+our $VERSION = '3.06';
 
 # Preloaded methods go here.
 
@@ -283,9 +283,10 @@ sub _obits ($$) {
     return (~ ($hi ^ $lo)) & 0xFF;
 }
 
-sub _v4 ($$) {
+sub _v4 ($$$) {
     my $ip	= shift;
     my $mask	= shift;
+    my $present	= shift;
 
     my $addr = '';
 
@@ -307,15 +308,15 @@ sub _v4 ($$) {
     }
     elsif ($ip =~ m/^(\d+)\.(\d+)$/) {
 	vec($addr, 0, 8) = $1;
-	vec($addr, 1, 8) = 0;
+	vec($addr, 1, 8) = ($present ? $2 : 0);
 	vec($addr, 2, 8) = 0;
-	vec($addr, 3, 8) = $2;
+	vec($addr, 3, 8) = ($present ? 0 : $2);
     }
     elsif ($ip =~ m/^(\d+)\.(\d+)\.(\d+)$/) {
 	vec($addr, 0, 8) = $1;
 	vec($addr, 1, 8) = $2;
-	vec($addr, 2, 8) = 0;
-	vec($addr, 3, 8) = $3;
+	vec($addr, 2, 8) = ($present ? $3 : 0);
+	vec($addr, 3, 8) = ($present ? 0 : $3);
     }
     elsif ($ip =~ m/^([xb\d]+)$/) {
 	vec($addr, 0, 32) = $1;
@@ -464,6 +465,7 @@ sub new ($$;$) {
     my $type	= $_[0];
     my $class	= ref($type) || $type || "NetAddr::IP";
     my $ip	= $_[1];
+    my $hasmask	= 1;
     my $mask;
 
     $ip = 'default' unless defined $ip;
@@ -479,16 +481,17 @@ sub new ($$;$) {
     }
 
     if (defined $_[2]) {
-	$mask = _parse_mask $_[2], 32;
+	$mask 		= _parse_mask $_[2], 32;
     }
     elsif (defined $mask) {
-	$mask = _parse_mask $mask, 32;
+	$mask 		= _parse_mask $mask, 32;
     }
     else {
-	$mask = _parse_mask 32, 32;
+	$hasmask	= 0;
+	$mask 		= _parse_mask 32, 32;
     }
 
-    my $self = _v4($ip, $mask);
+    my $self = _v4($ip, $mask, $hasmask);
 
     return undef unless $self;
 
@@ -1416,11 +1419,22 @@ are given as arguments to C<-E<gt>new()>.
 
 =back
 
+=item 3.06
+
+=over
+
+=item *
+
+Andrew Ruthven pointed out a bug related to proper interpretation of
+"compact" CIDR blocks. This was fixed. Thanks!
+
+=back
+
 =back
 
 =head1 AUTHOR
 
-Luis E. Munoz <lem@cantv.net>
+Luis E. Munoz <luismunoz@cpan.org>
 
 =head1 WARRANTY
 
@@ -1429,9 +1443,9 @@ by using it you accept any and all the liability.
 
 =head1 LICENSE
 
-This software is (c) Luis E. Munoz. It can be used under the terms of
-the perl artistic license provided that proper credit for the work of
-the author is preserved in the form of this copyright notice and
+This software is (c) Luis E. Munoz.  It can be used under the terms of
+the perl artistic license provided  that proper credit for the work of
+the  author is  preserved in  the form  of this  copyright  notice and
 license for this module.
 
 =head1 SEE ALSO
