@@ -28,7 +28,7 @@ require Exporter;
 	
 );
 
-$VERSION = '2.23';
+$VERSION = '2.24';
 
 
 # Preloaded methods go here.
@@ -307,7 +307,7 @@ sub _can_split {
     my $bits = shift;
 
     return ()			# $bits must make sense
-	unless $bits > 0 and $bits < 31;
+	unless $bits > 0 and $bits <= 32;
 
     my $m_len = _mask_to_bits($a->{'mask'});
 
@@ -394,7 +394,7 @@ sub expand {
 	    } 
 
 	    $b = $addr[$i + 1];
-	    if (my $container = _can_merge $a, $b, $bits) {
+	    if ($b and my $container = _can_merge $a, $b, $bits) {
 		$addr[$i] = $container;
 		$changes = 1;
 		next;
@@ -671,9 +671,10 @@ include a variable to change this.
 This code has not been widely tested yet. Endianness problems might very
 well exist. Please email the author if such problems are found.
 
-This software is (c) Luis E. Munoz. It can be used under the terms of the
-perl artistic license provided that proper credit is preserved and that
-the original documentation is not removed.
+This software is (c) Luis E. Munoz. It can be used under the terms of
+the perl artistic license provided that proper credit for the work of
+the author is preserved in the form of this copyright notice and
+license for this module.
 
 This software comes with the same warranty as perl itself (ie, none), so
 by using it you accept any and all the liability.

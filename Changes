@@ -1,29 +1,29 @@
 Revision history for Perl extension IP::Address.
 
 0.01  Sun Jul 11 13:26:27 1999
-	- original version; Basic testing and release to CPAN as
-	version 0.01. This is considered beta software.
+	- original  version;  Basic testing  and  release  to CPAN  as
+	  version 0.01. This is considered beta software.
 
 0.02  Mon Jul 12
-	- Multiple changes to fix endiannes issues. This code is now
-	moderately tested on Wintel and Sun/Solaris boxes.
+	- Multiple changes  to fix endiannes issues. This  code is now
+	  moderately tested on Wintel and Sun/Solaris boxes.
 
 0.03  Wed Jul 14
 	- Added ->first and ->last methods. Version changed to 0.03.
 
 1.00  Wed Dec 05 2000
 	- Implemented ->new_subnet. Version changed to 1.00.
-	- less croak()ing when improper input is fed to the
-	module. A more consistent 'undef' is returned now
-	instead to allow the user to better handle the error.
+	- less croak()ing when improper input  is fed to the module. A
+	  more consistent 'undef' is returned now instead to allow the
+	  user to better handle the error.
 	- Released
 
 1.10  Wed May 02 2000
-	- As per MARNIX A. VAN AMMERS [mav6@ns02.comp.pge.com]
-	suggestion, changed the syntax of the loop in host_enum
-	to be the same of the enum method.
-	- Fixed the MS-DOS ^M at the end-of-line problem. This
-	should make the module easier to use for *nix users.
+	- As  per  MARNIX   A.   VAN  AMMERS  [mav6@ns02.comp.pge.com]
+	  suggestion, changed  the syntax of the loop  in host_enum to
+	  be the same of the enum method.
+	- Fixed the MS-DOS ^M  at the end-of-line problem. This should
+	  make the module easier to use for *nix users.
 	- Released
 
 1.20  Sun Jun 25 2000
@@ -32,9 +32,9 @@ Revision history for Perl extension IP::Address.
 	- Released
 
 1.21  Mon Jun 26 2000
-	- Added ->addr_number and ->mask_bits. Currently we return
-	normal numbers (not BigInts). Please test this in your
-	platform and report any problems!
+	- Added  ->addr_number and  ->mask_bits.  Currently  we return
+	  normal  numbers (not  BigInts).   Please test  this in  your
+	  platform and report any problems!
 
 2.00  Wed Jun 28 2000
 	- Released under the new *official* name of NetAddr::IP
@@ -44,24 +44,37 @@ Revision history for Perl extension IP::Address.
 	- Added ->to_numeric. This helps serializing objects
 
 2.20  Mon Jan  1 2001
-	- Chris Dowling reported that the sort method introduced in 1.20 for 
-	->expand and ->compact doesn't always return a number under perl 
-	versions < 5.6.0. His fix was applied and redistributed. Thanks Chris!
+	- Chris Dowling  reported that  the sort method  introduced in
+	  v1.20  for ->expand  and ->compact  doesn't always  return a
+	  number under perl versions < 5.6.0.  His fix was applied and
+	  redistributed.  Thanks Chris!
 	- This module is hopefully released with no CR-LF issues!
 	- Fixed a warning about uninitialized values during make test
 
 2.21  Thu Feb  8 2001
-	- Dennis Boylan pointed out a bug under Linux and perhaps other
-	platforms as well causing the error "Sort subroutine didn't return 
-	single value at /usr/lib/perl5/site_perl/5.6.0/NetAddr/IP.pm line 
-	299, <> line 2." or similar. This was fixed.
+	- Dennis  Boylan pointed  out a  bug under  Linux  and perhaps
+	  other platforms  as well causing the  error "Sort subroutine
+	  didn't         return         single        value         at
+	  /usr/lib/perl5/site_perl/5.6.0/NetAddr/IP.pm  line  299,  <>
+	  line 2." or similar. This was fixed.
 
 2.22  Wed Mar 28 2001
-	- Some changes suggested by Jeroen Ruigrok and Anton Berezin were
-	included. Thanks guys!
+	- Some changes  suggested by Jeroen Ruigrok  and Anton Berezin
+	  were included. Thanks guys!
 
 2.23  Tue Aug 14 2001
-	- Bug fix for /XXX.XXX.XXX.XXX netmasks under v5.6.1 suggested 
-	by Tim Wuyts. Thanks!
-	- Tested the module under MACHTYPE=hppa1.0-hp-hpux11.00
+	- Bug fix for /XXX.XXX.XXX.XXX netmasks under v5.6.1 suggested
+	  by Tim Wuyts. Thanks!
+	- Tested the module under MACHTYPE=hppa1.0-hp-hpux11.00. It is
+          now  konwn to  work  under Linux  (Intel/AMD), Digital  Unix
+          (Alpha),   Solaris  (Sun),  HP-UX11   (HP-PA-RISC),  Windows
+          9x/NT/2K (using ActiveState on Intel).
+
+2.24  Sat Aug 25 2001
+	- A spurious  warning when  expand()ing with -w  under certain
+	  circumstances  was removed. This  involved using  /31s, /32s
+	  and the same netmask as the input.  Thanks to Elie Rosenblum
+	  for pointing it out.
+	- Slight change  in license terms to ease  redistribution as a
+          Debian package.
 
