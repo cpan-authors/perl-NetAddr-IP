@@ -45,7 +45,7 @@ This will print out something like...
 ...which  is  quite  useful   for  generating  config  files  and  the
 such. This works even for huge ranges of IP addresses.
 
-This module is entirely written in  perl, so you do not need access to
+This module is entirely written in  Perl, so you do not need access to
 a compiler to use it.  It  has been extensively tested in a variety of
 platforms.  An extensive  test suite  is provided  with the  module to
 verify correct results.
@@ -82,7 +82,9 @@ installing the module, you can do
 
 $ perldoc NetAddr::IP
 
-to access the documentation.
+to access  the documentation. There is  also a tutorial  in HTML. Look
+for  the file  tutorial.htm  within  the package  bundle,  which is  a
+tutorial I submitted to perlmonks.org recently.
 
 Bug  reports  are  welcome. Please  do  not  forget  to tell  me  what
 version/platform are you running this code on. Providing a small piece

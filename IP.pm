@@ -8,7 +8,7 @@ use Socket;
 use strict;
 use warnings;
 
-our $VERSION = '3.10';
+our $VERSION = '3.11';
 
 				#############################################
 				# These are the overload methods, placed here
@@ -269,10 +269,10 @@ sub _parse_mask ($$) {
 
     my $bmask	= '';
 
-    if ($mask =~ m/^default$/i) {
+    if ($mask =~ m/^default|any$/i) {
 	vec($bmask, 0, $bits) = 0x0;
     }
-    elsif ($mask =~ m/^broadcast$/i) {
+    elsif ($mask =~ m/^broadcast|host$/i) {
 	vec($bmask, 0, $bits) = _ones $bits;
     }
     elsif ($mask =~ m/^loopback$/i) {
@@ -330,7 +330,7 @@ sub _v4 ($$$) {
 
     my $addr = '';
 
-    if ($ip =~ m!^default$!i) {
+    if ($ip =~ m!^default|any$!i) {
 	vec($addr, 0, 32) = 0x0;
     }
     elsif ($ip =~ m!^broadcast$!i) {
@@ -515,7 +515,7 @@ sub new ($$;$) {
 	    $ip		= $1;
 	    $mask	= $2;
 	}
-	elsif ($ip =~ m!^(default|broadcast|loopback)$!) {
+	elsif ($ip =~ m!^(default|any|broadcast|loopback)$!) {
 	    $mask	= $ip;
 	}
     }
@@ -802,7 +802,7 @@ sub splitref ($;$) {
 				# this loop will NOT work on IPv6... 
 				# $net, $to and $num might very well 
 				# be too large for most integer or 
-				# floating pointrepresentations.
+				# floating point representations.
 
 	for (my $i	= vec($net, 0, $bits);
 	     $i 	<= vec($to, 0, $bits);
@@ -871,6 +871,16 @@ sub first ($) {
 
     return $self->network + 1;
 }
+
+sub nth ($$) {
+    my $self    = shift;
+    my $count   = shift;
+
+    return undef if ($count < 1 or $count > $self->num ());
+    return $self->network + $count;
+}
+
+    
 
 sub last ($) {
     my $self	= shift;
@@ -1058,6 +1068,12 @@ the subnet (ie, the first host address).
 Returns a new object representing the last useable IP address within
 the subnet (ie, one less than the broadcast address).
 
+=item C<-E<gt>nth($index)>
+
+Returns a new object representing the I<n>-th useable IP address within
+the subnet (ie, the I<n>-th host address).  If no address is available
+(for example, when the network is too small for C<$index> hosts),
+C<undef> is returned.
 
 =item C<-E<gt>num()>
 
@@ -1509,6 +1525,27 @@ comparison. (ie, it does not make sense to say that 10.0.0.0/24 is >
 
 =back
 
+=item 3.11
+
+=over
+
+=item *
+
+Thanks to David D. Zuhn for contributing the C<-E<gt>nth()> method.
+
+=item *
+
+tutorial.htm now included in the  distribution. I hope this helps some
+people to better  understand what kind of stuff can  be done with this
+module.
+
+=item *
+
+C<'any'> can be used as a synonim of C<'default'>. Also, C<'host'> is
+now a valid (/32) netmask.
+
+=back
+
 =back
 
 =head1 AUTHOR
@@ -1517,8 +1554,8 @@ Luis E. Munoz <luismunoz@cpan.org>
 
 =head1 WARRANTY
 
-This software comes with the same warranty as perl itself (ie, none), so
-by using it you accept any and all the liability.
+This software comes with the  same warranty as perl itself (ie, none),
+so by using it you accept any and all the liability.
 
 =head1 LICENSE
 

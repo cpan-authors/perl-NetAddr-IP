@@ -1,7 +1,8 @@
 IP.pm
+README
 MANIFEST
 Makefile.PL
-README
+tutorial.htm
 t/00-load.t
 t/loops.t
 t/v4-new.t
