@@ -1,49 +1,222 @@
+NAME
+    NetAddr::IP - Manages IPv4 addresses and subnets
 
-NetAddr::IP - Make it easier to manipulate IP addresses.
+SYNOPSIS
+      use NetAddr::IP;
 
-This module implements a simple class that allows for quite powerful
-manipulation of IP Addresses in commonly used notations.
+      my $ip = new NetAddr::IP 'loopback';
 
-In order to install do
+      print "The address is ", $ip->addr, " with mask ", $ip->mask, "\n" ;
 
-$ perl Makefile.PL
-$ make 
-$ make test
-$ make install
+      if ($ip->within(new NetAddr::IP "127.0.0.0", "255.0.0.0")) {
+          print "Is a loopback address\n";
+      }
 
-As usual with most free software, this module is not covered by any
-kind of warranty. You can use at your own risk for anything you wish.
-If included or used in other products, proper credit must be maintained.
+DESCRIPTION
+    This module provides a number of methods useful for handling IPv4
+    addresses ans subnets. Hopefully, its methods are also usable for IPv6
+    addresses.
 
-Module documentation can be found by using the following command
+    Methods so far include:
 
-$ perldoc NetAddr::IP
+    `->new($addr, [ $mask ])'
+        This method creates a new IPv4 address with the supplied address in
+        `$addr' and an optional netmask `$mask', which can be omitted to get
+        a /32 mask.
 
-The Changes file inside the distribution includes details about the
-different revisions of this module.
+        `$addr' can be almost anything that can be resolved to an IP address
+        in all the notations I have seen over time. It can optionally
+        contain the mask in CIDR notation.
 
-If you find bugs/problems with this release, please let me know so
-that I can fix it. You can reach me at lem@cantv.net.
+    `->broadcast()'
+        Returns the broadcast address for a subnet.
 
+    `->network()'
+        Returns the "network" address for a subnet.
 
+    `->addr()'
+        Returns the address part of the object as a dotted-quad.
 
+    `->mask()'
+        Returns the mask as a dotted-quad.
 
+    `->masklen()'
+        Returns the number of one bits in the mask.
 
+    `->cidr()'
+        Returns the address and mask in CIDR notation.
 
+    `$me->contains($other)'
+        Returns true when `$me' completely contains `$other'. False is
+        returned otherwise and `undef' is returned if `$me' and `$other' are
+        of different versions.
 
+    `$me->within($other)'
+        The complement of `->contains()'. Returns true when `$me' is
+        completely con tained within `$other'.
 
+    `->split($bits)'
+        Returns a list of objects, representing subnets of `$bits' mask
+        produced by splitting the original object, which is left unchanged.
+        Note that `$bits' must be longer than the original object's mask in
+        order for it to be splittable.
 
+        Note that `$bits' can be given as an integer (the length of the
+        mask) or as a dotted-quad. If omitted, a host mask is assumed.
 
+    `->splitref($bits)'
+        A (faster) version of `->split()' that returns a reference to a list
+        of objects instead of a real list. This is useful when large numbers
+        of objects are expected.
 
+    `->hostenum()'
+        Returns the list of hosts within a subnet.
 
+    `->hostenumref()'
+        Faster version of `->hostenum()', returning a reference to a list.
 
+    `$me->compact($addr1, $addr2, ...)'
+        Given a list of objects (including `$me'), this method will compact
+        all the addresses and subnets into the largest (ie, least specific)
+        subnets possible that contain exactly all of the given objects.
 
+    `$me->compactref(\@list)'
+        As usual, a faster version of =item `->compact()' that returns a
+        reference to a list. Note that this method takes a reference to a
+        list instead.
 
+    `->first()'
+        Returns a new object representing the first useable IP address
+        within the subnet (ie, the first host address).
 
+    `->last()'
+        Returns a new object representing the last useable IP address within
+        the subnet (ie, one less than the broadcast address).
 
+    `->num()'
+        Returns the number of useable addresses IP addresses within the
+        subnet, not counting the broadcast address.
 
+  EXPORT
 
+    None by default.
 
+HISTORY
+    0.01
+        *   original version; Basic testing and release to CPAN as version
+            0.01. This is considered beta software.
 
+    0.02
+        *   Multiple changes to fix endiannes issues. This code is now
+            moderately tested on Wintel and Sun/Solaris boxes.
 
+    0.03
+        *   Added ->first and ->last methods. Version changed to 0.03.
+
+    1.00
+        *   Implemented ->new_subnet. Version changed to 1.00.
+
+        *   less croak()ing when improper input is fed to the module. A more
+            consistent 'undef' is returned now instead to allow the user to
+            better handle the error.
+
+    1.10
+        *   As per Marnix A. Van Ammers [mav6@ns02.comp.pge.com] suggestion,
+            changed the syntax of the loop in host_enum to be the same of
+            the enum method.
+
+        *   Fixed the MS-DOS ^M at the end-of-line problem. This should make
+            the module easier to use for *nix users.
+
+    1.20
+        *   Implemented ->compact and ->expand methods.
+
+        *   Applying for official name
+
+    1.21
+        *   Added ->addr_number and ->mask_bits. Currently we return normal
+            numbers (not BigInts). Please test this in your platform and
+            report any problems!
+
+    2.00
+        *   Released under the new *official* name of NetAddr::IP
+
+    2.10
+        *   Added support for ->new($min, $max, $bits) form
+
+        *   Added ->to_numeric. This helps serializing objects
+
+    2.20
+        *   Chris Dowling reported that the sort method introduced in v1.20
+            for ->expand and ->compact doesn't always return a number under
+            perl versions < 5.6.0. His fix was applied and redistributed.
+            Thanks Chris!
+
+        *   This module is hopefully released with no CR-LF issues!
+
+        *   Fixed a warning about uninitialized values during make test
+
+    2.21
+        *   Dennis Boylan pointed out a bug under Linux and perhaps other
+            platforms as well causing the error "Sort subroutine didn't
+            return single value at
+            /usr/lib/perl5/site_perl/5.6.0/NetAddr/IP.pm line 299, <> line
+            2." or similar. This was fixed.
+
+    2.22
+        *   Some changes suggested by Jeroen Ruigrok and Anton Berezin were
+            included. Thanks guys!
+
+    2.23
+        *   Bug fix for /XXX.XXX.XXX.XXX netmasks under v5.6.1 suggested by
+            Tim Wuyts. Thanks!
+
+        *   Tested the module under MACHTYPE=hppa1.0-hp-hpux11.00. It is now
+            konwn to work under Linux (Intel/AMD), Digital Unix (Alpha),
+            Solaris (Sun), HP-UX11 (HP-PA-RISC), Windows 9x/NT/2K (using
+            ActiveState on Intel).
+
+    2.24
+        *   A spurious warning when expand()ing with -w under certain
+            circumstances was removed. This involved using /31s, /32s and
+            the same netmask as the input. Thanks to Elie Rosenblum for
+            pointing it out.
+
+        *   Slight change in license terms to ease redistribution as a
+            Debian package.
+
+    3.00
+            This is a major rewrite, supposed to fix a number of issues
+            pointed out in earlier versions.
+
+            The goals for this version include getting rid of BigInts,
+            speeding up and also cleaning up the code, which is written in a
+            modular enough way so as to allow IPv6 functionality in the
+            future, taking benefit from most of the methods.
+
+            Note that no effort has been made to remain backwards compatible
+            with earlier versions. In particular, certain semantics of the
+            earlier versions have been removed in favor of faster
+            performance.
+
+            This version was tested under Win98/2K (ActiveState
+            5.6.0/5.6.1), HP-UX11 on PA-RISC (5.6.0), RedHat Linux 6.2
+            (5.6.0), Digital Unix on Alpha (5.6.0), Solaris on Sparc (5.6.0)
+            and possibly others.
+
+AUTHOR
+    Luis E. Munoz <lem@cantv.net>
+
+WARRANTY
+    This software comes with the same warranty as perl itself (ie, none), so
+    by using it you accept any and all the liability.
+
+LICENSE
+    This software is (c) Luis E. Munoz. It can be used under the terms of
+    the perl artistic license provided that proper credit for the work of
+    the author is preserved in the form of this copyright notice and license
+    for this module.
+
+SEE ALSO
+    perl(1).
 

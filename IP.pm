@@ -1,557 +1,437 @@
-##
-## IP::Address - Help to work with IP addresses and masks
-##
-## lem@cantv.net - 19990712
-##
-## NAME CHANGE to NetAddr::IP (20000628 - lem@cantv.net)
-##
-##############
-##############
+#!/usr/bin/perl -w
 
 package NetAddr::IP;
 
-use strict;
-use integer;
-use vars qw($VERSION @ISA @EXPORT @EXPORT_OK $Use_CIDR_Notation 
-	    $Always_Display_Mask);
+require 5.005_62;
 use Carp;
+use Socket;
+use strict;
+use warnings;
 
-use Math::BigInt;
-
-require Exporter;
-
-@ISA = qw(Exporter);
-# Items to export into callers namespace by default. Note: do not export
-# names by default without a very good reason. Use EXPORT_OK instead.
-# Do not simply export all your public functions/methods/constants.
-@EXPORT_OK = qw( $Use_CIDR_Notation $Always_Display_Mask
-	
-);
-
-$VERSION = '2.24';
-
+our $VERSION = '3.00';
 
 # Preloaded methods go here.
 
-$Use_CIDR_Notation = 1;		# What notation is used to convert
-				# addresses to their string representation
-				# 1 means use CIDR notation (10.0.0.0/24)
-				# 0 means use more traditional notation
-				# like in 10.0.0.0/255.255.255.0
-$Always_Display_Mask = 1;	# Wether to display redundant mask information
-				# or not
-sub _valid_address {
-    my $ip = shift;
-    ($ip =~ /(\d+)\.(\d+)\.(\d+)\.(\d+)/
-     and $1 >= 0 and $1 <= 255
-     and $2 >= 0 and $2 <= 255
-     and $3 >= 0 and $3 <= 255
-     and $4 >= 0 and $4 <= 255);
-}
+				# This is a variant to ->new() that
+				# creates and blesses a new object
+				# without the fancy parsing of
+				# IP formats and shorthands.
 
-sub _pack_address {
-    my $ip = shift;
-    croak "attempt to pack invalid address $ip" 
-	unless _valid_address $ip;
-    my @octet = split(/\./, $ip, 4);
-    my $result = '';
-    my $octet = '';
-    my $i; 
-    my $j;
-    foreach $j (0..3) {
-	vec($octet, 0, 8) = $octet[$j];
-	foreach $i (0 .. 7) {
-	    vec($result, $i + 8 * $j, 1) = vec($octet, $i, 1);
-	}
-    }
-    $result;
-}
-
-sub _unpack_address {
-    my $pack = shift;
-    my $i;
-    my $j;
-    my $result = '';
-    foreach $j (0..3) {
-	my $octet = '';
-	foreach $i (0..7) {
-	    vec($octet, $i, 1) = vec($pack, $i + 8 * $j, 1);
-	}
-	$result .= '.' if length $result;
-	$result .= vec($octet, 0, 8);
-    }
-    $result;
-}
-
-sub _bits_to_mask {
-    my $bits = shift;
-#    croak "Invalid mask len $bits" if $bits < 0 or $bits > 32;
-    my $i;
-    my $j;
-    my $count = 0;
-    my $result = '';
-    foreach $i (0..3) {
-	foreach $j (reverse 0..7) {
-	    vec($result, $i * 8 + $j, 1) = ($count++ < $bits);
-	}
-    }
-    $result;
-}
-
-sub _addr_to_number {
-    my $addr = shift;
-    my @o = split(/\./, $addr, 4);
-
-    $o[0] = new Math::BigInt $o[0];
-    $o[1] = new Math::BigInt $o[1];
-    $o[2] = new Math::BigInt $o[2];
-    $o[3] = new Math::BigInt $o[3];
-
-    return ($o[0] * 2 ** 24 + 
-	    $o[1] * 2 ** 16 + 
-	    $o[2] * 2 ** 8 + 
-	    $o[3]);
-}
-
-sub _number_to_addr {
-    my $number = new Math::BigInt shift;
-    my @o;
-
-    $o[0] = new Math::BigInt($number->bdiv(2**24));
-    $o[1] = new Math::BigInt($number->bdiv(2**16))-$o[0]*2**8;
-    $o[2] = new Math::BigInt($number->bdiv(2**8))-$o[0]*2**16-$o[1]*2**8;
-    $o[3] = new Math::BigInt($number)-$o[0]*2**24-$o[1]*2**16-$o[2]*2**8;
-
-    foreach (@o) { s/[-+]//g; }
-
-    print "_number_to_addr $number is ", join('.', @o), "\n";
-    return join('.', @o);
-
-}
-
-sub _mask_to_bits {
-    my $mask = shift;
-    my $i;
-    my $result = 0;
-    foreach $i (0..31) {
-	my $bit = vec($mask, $i, 1);
-#	croak "non-contiguous mask" if !$bit and $result;
-	$result += $bit;
-    }
-    $result;
-}
-
-sub mask_bits {
-    my $self = shift;
-    return _mask_to_bits $self->{'mask'};
-}
-
-sub _negated_mask {
-    my $mask = shift;
-    my $nmask = '';
-    my $i;
-    my $pack = shift;
-    foreach $i (0..31) {
-	vec($nmask, $i, 1) = !vec($mask, $i, 1);
-    }
-    $nmask;
-}
-
-sub new {
+sub _fnew ($$) {
     my $type	= shift;
     my $class	= ref($type) || $type || "NetAddr::IP";
-    my $ip	= shift;
+    my $r_addr	= shift;
+
+    return 
+	bless { addr => $r_addr->[0],
+		mask => $r_addr->[1],
+		bits => $r_addr->[2] },
+	$class;
+}
+
+				# Returns 2 ** $bits -1 (ie,
+				# $bits one bits)
+sub _ones ($) {
+    my $bits	= shift;
+    return ~vec('', 0, $bits);
+}
+
+sub masklen ($) {
+    my $self	= shift;
+    my $bits	= 0;
+
+    for (my $i = 0;
+	 $i < $self->{bits};
+	 $i ++) 
+    {
+	$bits += vec($self->{mask}, $i, 1);
+    }
+
+    return $bits;
+}
+
+sub _parse_mask ($$) {
     my $mask	= shift;
     my $bits	= shift;
-    
-    if (defined $bits and length $bits) {
-	my $min = $ip;
-	$ip = _number_to_addr($min);
-	$mask = $bits;
-    }
 
-    $ip = "0.0.0.0" unless defined $ip;
-    if ($ip =~ /\/([\d\.]+)$/) {
-#	croak "inconsistent mask. Use only one form of netmask"
-	return undef if defined $mask;
-	my $m = $1;
-	$ip =~ s/\/[\d\.]+$//;
-	$mask = $m;
-    }
-    $mask = "32" unless defined $mask; # Assume a host mask if none is given
-    if ($mask =~ /\./) {
-	$mask = _pack_address $mask;
-    }
-    else {
-	return undef if ($mask < 0 or $mask > 32);
-	$mask = _bits_to_mask $mask;
-    }
-    if (not _valid_address $ip) {
-	return undef;
-#	croak "invalid IP address";
-    }
-    my $self = { 'addr' => _pack_address($ip),
-		 'mask' => $mask
-		 };
+    my $bmask	= '';
 
-    bless $self, $class;
-}
-
-sub to_numeric {
-    my $self = shift;
-    if (wantarray) {
-	return (_addr_to_number(_unpack_address($self->{'addr'})), 
-		_addr_to_number(_unpack_address($self->broadcast->{'addr'})), 
-		_mask_to_bits $self->{'mask'});
+    if ($mask =~ m/^default$/i) {
+	vec($bmask, 0, $bits) = 0x0;
     }
-    else {
-	return _addr_to_number _unpack_address $self->network->{'addr'};
+    elsif ($mask =~ m/^broadcast$/i) {
+	vec($bmask, 0, $bits) = _ones $bits;
     }
-}
-
-sub new_subnet {
-    my $ip = new @_;
-    return undef unless $ip;
-    my $subnet = $ip->network;
-    if ($ip->addr_to_string eq $subnet->addr_to_string) {
-	return $ip;
+    elsif ($mask =~ m/^loopback$/i) {
+	vec($bmask, 0, 8) = 255;
     }
-    else {
-	return undef;
+    elsif ($mask =~ m/^(\d+)\.(\d+)\.(\d+)\.(\d+)$/) {
+	vec($bmask, 0, 8) = $1;
+	vec($bmask, 1, 8) = $2;
+	vec($bmask, 2, 8) = $3;
+	vec($bmask, 3, 8) = $4;
     }
-}
-
-sub to_string {
-    my $self = shift;
-    my $addr = _unpack_address($self->{'addr'});
-    my $mask = $Use_CIDR_Notation ? 
-	_mask_to_bits($self->{'mask'}) 
-	    : _unpack_address($self->{'mask'});
-    my $wmask = _mask_to_bits($self->{'mask'});
-    if (!$Always_Display_Mask and $wmask > 0 and
-	(($wmask == 24 and $addr =~ /\.0$/ and $addr !~ /\.0\.0$/)
-	 or ($wmask == 16 and $addr =~ /\.0\.0$/ and $addr !~ /\.0\.0\.0$/)
-	 or ($wmask == 8 and $addr =~ /\.0\.0\.0$/ and 
-	     $addr !~ /\.0\.0\.0\.0$/)
-	 or ($wmask == 32 and $addr !~ /\.0$/))) {
-	    $addr;
+    elsif ($mask =~ m/^(\d+)$/ and $1 <= 32) {
+	if ($1) {
+	    vec($bmask, 0, $bits) = _ones $bits;
+	    vec($bmask, 0, $bits) <<= ($bits - $1);
+	} else {
+	    vec($bmask, 0, $bits) = 0x0;
 	}
-	else {
-	    $addr . "/" . $mask;
-	}
-}
-
-sub mask_to_string {
-    my $self = shift;
-    $Use_CIDR_Notation ? 
-	_mask_to_bits($self->{'mask'}) 
-	    : _unpack_address($self->{'mask'});
-}
-
-sub addr_to_string {
-    my $self = shift;
-    _unpack_address($self->{'addr'});
-}
-
-sub host_enum {
-    my $self = shift;
-    my $first = vec($self->network->{'addr'}, 0, 32);
-    my $last = vec($self->broadcast->{'addr'}, 0, 32);
-    my $i;
-    my @result;
-    for($i = $first; $i <= $last; ++$i) {
-	my $addr = '';
-	vec($addr, 0, 32) = $i;
-	push @result, $self->new(_unpack_address($addr), "32");
     }
-    @result;
+    elsif ($mask =~ m/^(\d+)$/) {
+        vec($bmask, 0, $bits) = $1;
+    }
+
+    return $bmask;
 }
 
-### XXX - We might need to return BigInts... Let's wait for testing in
-### more platforms.
+sub _v4 ($$) {
+    my $ip	= shift;
+    my $mask	= shift;
 
-sub addr_number {
-    my $self = shift;
-#    return new Math::BigInt(vec($self->{'addr'}, 0, 32));
-    return vec($self->{'addr'}, 0, 32);
+    my $addr = '';
+
+    if ($ip =~ m!^default$!i) {
+	vec($addr, 0, 32) = 0x0;
+    }
+    elsif ($ip =~ m!^broadcast$!i) {
+	vec($addr, 0, 32) = _ones 32;
+    }
+    elsif ($ip =~ m!^loopback$!i) {
+	vec($addr, 0, 8) = 127;
+	vec($addr, 3, 8) = 1;
+    }
+    elsif ($ip =~ m/^(\d+)\.(\d+)\.(\d+)\.(\d+)$/) {
+	vec($addr, 0, 8) = $1;
+	vec($addr, 1, 8) = $2;
+	vec($addr, 2, 8) = $3;
+	vec($addr, 3, 8) = $4;
+    }
+    elsif ($ip =~ m/^(\d+)\.(\d+)$/) {
+	vec($addr, 0, 8) = $1;
+	vec($addr, 1, 8) = 0;
+	vec($addr, 2, 8) = 0;
+	vec($addr, 3, 8) = $2;
+    }
+    elsif ($ip =~ m/^(\d+)\.(\d+)\.(\d+)$/) {
+	vec($addr, 0, 8) = $1;
+	vec($addr, 1, 8) = $2;
+	vec($addr, 2, 8) = 0;
+	vec($addr, 3, 8) = $3;
+    }
+    elsif ($ip =~ m/^([xb\d]+)$/) {
+	vec($addr, 0, 32) = $1;
+    }
+    elsif (my $a = gethostbyname($ip)) {
+	if (inet_ntoa($a) =~ m!^(\d+)\.(\d+)\.(\d+)\.(\d+)$!)  {
+	    vec($addr, 0, 8) = $1;
+	    vec($addr, 1, 8) = $2;
+	    vec($addr, 2, 8) = $3;
+	    vec($addr, 3, 8) = $4;
+	}
+    }
+    else {
+	croak "Cannot obtain an IP address out of $ip";
+    }
+
+    return { addr => $addr, mask => $mask, bits => 32 };
 }
 
-sub _arrange_compact_list {
-    my @addr = @_;
-    @addr = sort { new Math::BigInt(vec($a->{'mask'}, 
-					0, 
-					32))->bcmp(new Math::BigInt(vec($b->{'mask'}, 
-									0, 32)))
-					} @addr;
-    my @result;
-    
-  PROSPECT:
-    foreach my $prospect (@addr) {
-	foreach my $cur (@result) {
-	    if ($cur->contains($prospect)) {
-		next PROSPECT;
+sub new ($$;$) {
+    my $type	= $_[0];
+    my $class	= ref($type) || $type || "NetAddr::IP";
+    my $ip	= $_[1];
+    my $mask;
+
+    if (@_ == 2) {
+	if ($ip =~ m!^(.+)/(.+)$!) {
+	    $ip		= $1;
+	    $mask	= $2;
+	}
+	elsif ($ip =~ m!^(default|broadcast|loopback)$!) {
+	    $mask	= $ip;
+	}
+    }
+
+    if (defined $_[2]) {
+	$mask = _parse_mask $_[2], 32;
+    }
+    elsif (defined $mask) {
+	$mask = _parse_mask $mask, 32;
+    }
+    else {
+	$mask = _parse_mask 32, 32;
+    }
+
+    return bless _v4($ip, $mask), $class;
+}
+
+sub new4 ($$;$) {
+    new($_[0], $_[1], $_[2]);
+}
+
+				# Output a vec() as a dotted-quad
+
+sub _to_quad ($) {
+    my $vec = shift;
+    return vec($vec, 0, 8) . '.' . 
+	vec($vec, 1, 8) . '.' .
+	    vec($vec, 2, 8) . '.' . 
+		vec($vec, 3, 8);
+}
+
+				# Get the network address
+
+sub _network ($) {
+    my $self	= shift;
+    my $a = $self->{addr};
+    my $m = $self->{mask};
+
+    return [ "$a" & "$m", $self->{mask}, $self->{bits} ];
+}
+
+				# Should be obvious
+
+sub _broadcast ($) {
+    my $self	= shift;
+    my $a = $self->{addr};
+    my $m = $self->{mask};
+
+    return [ "$a" | ~ "$m", $self->{mask}, $self->{bits} ];
+}
+
+				# This will become an lvalue later
+
+sub mask ($) {
+    my $self	= shift;
+    _to_quad $self->{mask};
+}
+
+				# idem
+
+sub addr ($) {
+    my $self	= shift;
+    _to_quad $self->{addr};
+}
+
+sub cidr ($) {
+    my $self	= shift;
+    return $self->addr . '/' . $self->masklen;
+}
+
+sub broadcast ($) {
+    my $self	= shift;
+    return $self->_fnew($self->_broadcast);
+}
+
+sub network ($) {
+    my $self	= shift;
+    return $self->_fnew($self->_network);
+}
+
+				# Return the shortest possible subnet
+				# list that completely contains all
+				# the given addresses or subnets.
+
+sub compactref ($) {
+    my @addr = sort 
+    { (vec($a->{addr}, 0, $a->{bits}) <=> vec($b->{addr}, 0, $a->{bits}))
+	  || (vec($a->{mask}, 0, $a->{bits}) 
+	      <=> vec($b->{mask}, 0, $a->{bits}))
+	  } @{$_[0]} or
+	      return [];
+
+    my $bits = $addr[0]->{bits};
+    my $changed;
+
+    do {
+	$changed = 0;
+	for (my $i = 0;
+	     $i <= $#addr - 1;
+	     $i ++)
+	{
+	    my $lip = $addr[$i];
+	    my $hip = $addr[$i + 1];
+	    if (vec($lip->{mask}, 0, $bits) 
+		== vec($hip->{mask}, 0, $bits)) 
+	    {
+		my $la = $lip->{addr};
+		my $ha = $hip->{addr};
+		my $nb = '';
+		my $na = '';
+		my $nm = '';
+
+		vec($nb, 0, $bits) = 
+		    vec($na, 0, $bits) = 
+			vec($la, 0, $bits);
+		vec($nb, 0, $bits) ^= vec($ha, 0, $bits);
+		vec($na, 0, $bits) ^= vec($nb, 0, $bits);
+		vec($nm, 0, $bits) = vec($lip->{mask}, 0, $bits);
+		vec($nm, 0, $bits) <<= 1;
+
+
+#		if ((vec($la, 0, $bits) & vec($nm, 0, $bits))
+#		    == (vec($ha, 0, $bits) & vec($nm, 0, $bits)))
+
+		if (("$la" & "$nm") eq ("$ha" & "$nm"))
+		{
+		    $addr[$i] = ($lip->_fnew([ "$na" & "$nm", 
+					       $nm, $bits ]));
+		    splice(@addr, $i + 1, 1);
+
+#		    print $lip->addr, "/", $lip->mask, " + ", $hip->addr, 
+#		    "/", $hip->mask, " = ", $addr[$i]->addr, "/", 
+#		    $addr[$i]->mask, "\n";
+
+		    -- $i;
+		    ++ $changed;
+		}
 	    }
 	}
-	push @result, $prospect;
-    }
-    
-    sort {
-	my $ba = new Math::BigInt(vec($a->{'addr'}, 0, 32));
-	my $bb = new Math::BigInt(vec($b->{'addr'}, 0, 32));
-	int($ba->bcmp($bb));
-    } @result;
-}
+    } while ($changed);
 
-sub _can_split {
-    my $a = shift;
-    my $bits = shift;
-
-    return ()			# $bits must make sense
-	unless $bits > 0 and $bits <= 32;
-
-    my $m_len = _mask_to_bits($a->{'mask'});
-
-    return ()			# Mask length must be < $bits
-	unless  $m_len < $bits;
-
-    $m_len ++;
-
-    my $a1 = new NetAddr::IP(_unpack_address($a->network->{'addr'}) 
-			     . "/" . $m_len);
-
-    my $a2 = new NetAddr::IP(_unpack_address($a->broadcast->{'addr'}) 
-			     . "/" . $m_len)->network;
-
-    if ($m_len == $bits) {
-	return ($a1, $a2);
-    }
-    
-    return (_can_split($a1, $bits), _can_split($a2, $bits));
-
-}
-
-sub _can_merge {
-    my $a = shift;
-    my $b = shift;
-    my $bits = shift;
-
-    return 0			# Masks must be equal
-	unless vec($a->{'mask'}, 0, 32) == vec($b->{'mask'}, 0, 32);
-
-    return 0			# Mask lenght must be > 0
-	if _mask_to_bits($a->{'mask'}) == 0;
-
-    return 0			# Mask length must be >= $bits
-	if _mask_to_bits($a->{'mask'}) < $bits;
-    
-    my $masklen = _mask_to_bits($a->{'mask'}) - 1;
-    my $container = new NetAddr::IP 
-	_unpack_address($a->{'addr'}) . "/" 
-	    . $masklen;
-
-    return 0			# Both must be contained in the same
-				# supernet
-	unless $container->contains($a)
-	    and $container->contains($b);
-
-    $container;
-}
-
-sub expand {
-    my $bits = shift;
-    my @addr = @_;
-
-    if (@addr == 1 and !ref $addr[0]) {
-	($bits, $addr[0]) = ($addr[0], $bits);
-    }
-
-    @addr = _arrange_compact_list(@addr);
-    my $changes = 1;
-
-    if (_valid_address $bits) {
-	$bits = _mask_to_bits _pack_address $bits;
-    }
-
-    croak "Invalid bit length ($bits)" if $bits < 0 or $bits > 32;
-
-    my $a;
-    my $b;
-
-    while ($changes) {
-	$changes = 0;
-
-	for (my $i = 0; $i <= $#addr; $i++) {
-	    $a = $addr[$i];
-
-	    if (my @subnets = _can_split $a, $bits) {
-
-		@addr = (@addr[0 .. $i - 1], 
-			 @subnets, 
-			 @addr[$i + 1 .. $#addr]);
-
-		$i += $#subnets;
-		next;
-	    } 
-
-	    $b = $addr[$i + 1];
-	    if ($b and my $container = _can_merge $a, $b, $bits) {
-		$addr[$i] = $container;
-		$changes = 1;
-		next;
-	    }
-	}
-	@addr = _arrange_compact_list(@addr) if $changes;
-    }
-    return @addr;
-    
+    return \@addr;
 }
 
 sub compact {
-    my @addr = _arrange_compact_list(@_);
-    my $changes = 1;
-
-    my $a;
-    my $b;
-
-    while ($changes) {
-	$changes = 0;
-	for (my $i = 0; $i < $#addr; $i++) {
-	    $a = $addr[$i];
-	    $b = $addr[$i + 1];
-	    if (my $container = _can_merge $a, $b, 0) {
-		$addr[$i] = $container;
-		$changes = 1;
-		next;
-	    }
-	}
-	@addr = _arrange_compact_list(@addr) if $changes;
-    }
-    return @addr;
+    return @{compactref(\@_)};
 }
 
-sub enum {
-    my $self = shift;
-    my $first = vec($self->network->{'addr'}, 0, 32);
-    my $last = vec($self->broadcast->{'addr'}, 0, 32);
-    my $i;
-    my @result;
-    for($i = $first; $i <= $last; ++$i) {
-	my $addr = '';
-	vec($addr, 0, 32) = $i;
-	push @result, $self->new(_unpack_address($addr), 
-				 _unpack_address($self->{'mask'}));
-    }
-    @result;
-}
+				# Splits the current object in
+				# smaller subnets, of $bits bits
+				# netmask.
 
-sub network {
-    my $self = shift;
-    $self->new (_unpack_address($self->{'addr'} & $self->{'mask'}), 
-		_unpack_address($self->{'mask'}));
-}
+sub splitref ($;$) {
+    my $self	= shift;
+    my $mask	= _parse_mask shift || $self->{bits}, $self->{bits};
 
-sub first {
-    my $self = shift;
-    my $addr = '';
-    return $self if (_mask_to_bits($self->{'mask'}) == 32);
-    my $subnet = $self->new (_unpack_address($self->{'addr'} 
-					     & $self->{'mask'}), 
-		_unpack_address($self->{'mask'}));
-    vec($addr, 0, 32) = vec($subnet->{'addr'}, 0, 32) + 1;
-    $self->new (_unpack_address($addr), 
-		_unpack_address($self->{'mask'}));
-}
+    my $bits	= $self->{bits};
 
-sub broadcast {
-    my $self = shift;
-    $self->new (_unpack_address($self->{'addr'} 
-				| _negated_mask $self->{'mask'}),
-		_unpack_address($self->{'mask'}));
-}
+    my @ret;
 
-sub last {
-    my $self = shift;
-    my $addr = '';
-    return $self if (_mask_to_bits($self->{'mask'}) == 32);
-    my $subnet = $self->new (_unpack_address($self->{'addr'} 
-					     | _negated_mask $self->{'mask'}),
-		_unpack_address($self->{'mask'}));
-    vec($addr, 0, 32) = vec($subnet->{'addr'}, 0, 32) - 1;
-    $self->new (_unpack_address($addr), 
-		_unpack_address($self->{'mask'}));
-}
+    if (vec($self->{mask}, 0, $bits) 
+	<= vec($mask, 0, $bits))
+    {
 
-sub range {
-    my $self = $_[0];
-    my $ip;
-    my $min = $self->new("255.255.255.255");
-    my $max = $self->new("0.0.0.0");
-    $max->set_addr($self);
+	my $delta	= '';
+	my $num		= '';
+	my $v		= '';
 
-    foreach $ip (@_) {
+	vec($num, 0, $bits) = _ones $bits;
+	vec($num, 0, $bits) ^= vec($mask, 0, $bits);
+	vec($num, 0, $bits) ++;
 
-				# This comparison is very tricky in some
-				# architectures, so we might make it in 
-				# BigInts to be safe. - XXXX
+	vec($delta, 0, $bits) = (vec($self->{mask}, 0, $bits) 
+				 ^ vec($mask, 0, $bits));
 
-  	my $bi_ipn = new Math::BigInt vec($ip->network->{'addr'}, 0, 32);
-  	my $bi_ipb = new Math::BigInt vec($ip->broadcast->{'addr'}, 0, 32);
-  	my $bi_min = new Math::BigInt vec($min->{'addr'}, 0, 32);
-  	my $bi_max = new Math::BigInt vec($max->{'addr'}, 0, 32);
+	my $net	= $self->network->{addr}; 
+	$net = "$net" & "$mask";
 
-	if ($bi_ipn - $bi_min < 0) {
-	    $min->set_addr($ip->network);
-	}
-	if ($bi_ipb - $bi_max > 0) {
-	    $max->set_addr($ip->broadcast);
+	my $to = $self->broadcast->{addr}; 
+	$to = "$to" & "$mask";
+
+				# XXX - Note that most likely, 
+				# this loop will NOT work on IPv6... 
+				# $net, $to and $num might very well 
+				# be too large for most integer or 
+				# floating pointrepresentations.
+
+	for (my $i	= vec($net, 0, $bits);
+	     $i 	<= vec($to, 0, $bits);
+	     $i 	+= vec($num, 0, $bits))
+	{
+	    vec($v, 0, $bits) = $i;
+	    push @ret, $self->_fnew([ $v, $mask, $bits ]);
 	}
     }
 
-    my @result;
-    for($ip = vec($min->{'addr'}, 0, 32); 
-	$ip <= vec($max->{'addr'}, 0, 32);
-	++$ip) {
-	my $addr = '';
-	vec($addr, 0, 32) = $ip;
-	push @result, $self->new(_unpack_address($addr), "32");
+    return \@ret;
+}
+
+sub split ($;$) {
+    return @{$_[0]->splitref($_[1])};
+}
+
+sub hostenumref ($) {
+    my $r = $_[0]->splitref(32);
+    if ($_[0]->mask ne '255.255.255.255') {
+	splice(@$r, 0, 1);
+	splice(@$r, scalar @$r - 1, 1);
     }
-    @result;
+    return $r;
 }
 
-sub set_mask {
-    my $self = shift;
-    my $other = shift;
-    if (ref $other) {
-	$self->{'mask'} = $other->{'mask'};
-    }
-    elsif ($other =~ /^\/?(\d+)$/ and $1 >= 1 and $1 <= 32) {
-	$self->{mask} = $1;
-    }
-    $self;
+sub hostenum ($) {
+    return @{$_[0]->hostenumref};
 }
 
-sub set_addr {
-    my $self = shift;
-    my $other = shift;
-    $self->{'addr'} = $other->{'addr'};
-    $self;
+
+				# Returns TRUE if $a completely
+				# contains $b and both are of the
+				# same length (ie, V4 or V6).
+sub contains ($$) {
+    my $a	= shift;
+    my $b	= shift;
+
+    my $bits	= $a->{bits};
+
+    my $mask;
+    
+				# Both must be of the same length...
+    return undef
+	unless $bits == $b->{bits};
+
+				# $a must be less specific than $b...
+    return 0
+	unless ($mask = vec($a->{mask}, 0, $bits))
+	    <= vec($b->{mask}, 0, $bits);
+
+				# A default address always contains
+    return 1 if ($mask == 0x0);
+
+    return 
+	((vec($a->{addr}, 0, $bits) & $mask)
+	 == (vec($b->{addr}, 0, $bits) & $mask));
 }
 
-sub how_many {
-    my $self = shift;
-    vec($self->broadcast->{'addr'}, 0, 32) - 
-	vec($self->network->{'addr'}, 0, 32) + 1;
+sub within ($$) {
+    return contains($_[1], $_[0]);
 }
 
-sub contains {
-    my $self = shift;
-    my $other = shift;
-    my $self_min = new Math::BigInt vec($self->network->{'addr'}, 0, 32);
-    my $self_max = new Math::BigInt vec($self->broadcast->{'addr'}, 0, 32);
-    my $other_min = new Math::BigInt vec($other->network->{'addr'}, 0, 32);
-    my $other_max = new Math::BigInt vec($other->broadcast->{'addr'}, 0, 32);
-    $other_min >= $self_min and $other_min <= $self_max
-	and $other_max >= $self_min and $other_max <= $self_max;
+sub first ($) {
+    my $self	= shift;
+    my $bits 	= $self->{bits};
+    my $a 	= $self->{addr};
+    my $m 	= $self->{mask};
+
+    my $h 	= '';
+    my $addr	= '';
+
+    vec($h, 0, $bits) = 0x1;	# Turn on just the first bit
+
+    return $self->_fnew([ ("$a" & "$m") | "$h", 
+			  $self->{mask}, $bits ]);
+}
+
+sub last ($) {
+    my $self	= shift;
+    my $bits 	= $self->{bits};
+    my $a 	= $self->{addr};
+    my $m 	= $self->{mask};
+
+    my $h 	= '';
+    my $addr	= '';
+
+    vec($h, 0, $bits) = _ones $bits;
+
+    return $self->_fnew([ ("$a" & "$m") | ("$h" & ~"$m"), 
+			  $self->{mask}, $bits ]);
+}
+
+sub num ($) {
+    my $self	= shift;
+    return ~vec($self->{mask}, 0, $self->{bits});
 }
 
 1;
@@ -559,134 +439,406 @@ __END__
 
 =head1 NAME
 
-NetAddr::IP - Manipulate IP Addresses easily
+NetAddr::IP - Manages IPv4 addresses and subnets
 
 =head1 SYNOPSIS
 
-  use NetAddr::IP qw($Use_CIDR_Notation $Always_Display_Mask);
+  use NetAddr::IP;
 
-  # Initialization of NetAddr::IP objects
-  my $ip = new NetAddr::IP "10.0.0.1";
-  my $subnet = new NetAddr::IP("10.0.0.0", "255.255.255.0");
-  my $othersubnet = new NetAddr::IP("10.0.0.0", "24");
-  my $yetanothersubnet = new NetAddr::IP "10.0.0.0/24";
-  my $serialsubnet = new NetAddr::IP($min, $max, $bits);
+  my $ip = new NetAddr::IP 'loopback';
 
-  # A proper subnet (or undef if any host but is set)
-  my $subnet_ok = new_subnet NetAddr::IP("10.0.0.0", "24");
-  my $subnet_undef = new_subnet NetAddr::IP("10.0.0.1", "24");
+  print "The address is ", $ip->addr, " with mask ", $ip->mask, "\n" ;
 
-  # A numeric representation of a subnet/host address
-  my $address = $ip->to_numeric();
-  my ($min, $max, $bits) = $ip->to_numeric();
-
-  # A string representation of an address or subnet
-  print "My ip address is ", $ip->to_string, "\n";
-
-  # Just the string or the mask part...
-  print "My ip address alone is ", $ip->addr_to_string, "\n";
-  print "and my netmask is ", $ip->mask_to_string, "\n";
-
-  # Enumeration of all the addresses within a given subnet, keeping
-  # the original mask
-  my @hosts = $subnet->enum;
-  for $i (@hosts) {
-      print "address ", $i->to_string, 
-      " belongs to subnet ", $subnet->to_string, "\n";
+  if ($ip->within(new NetAddr::IP "127.0.0.0", "255.0.0.0")) {
+      print "Is a loopback address\n";
   }
-
-  # You can also produce the list of host addresses in a given subnet
-  my @hosts = $subnet->host_enum;
-  for $i (@hosts) {
-      print "Host ", $i->to_string, 
-      " is in subnet ", $subnet->to_string, "\n";
-  }
-
-  # This calculates network and broadcast addresses for a subnet
-  my $network = $subnet->network;
-  my $broadcast = $subnet->broadcast;
-  print "Subnet ", $subnet->to_string, " has broadcast address ",
-    $broadcast->to_string, " and network number ", $network->to_string,
-    "\n";
-
-  # Checks to see if a host address or subnet is contained within another
-  # subnet
-  if ($subnet->contains $ip) {
-      print "Host ", $ip->to_string, " is contained in ",
-      $subnet->to_string, "\n";
-  }
-
-  # Masks and address components can be copied from object to object
-  $ip1->set_addr($ip2);
-  $ip1->set_mask($subnet);
-
-  # ...or set directly
-  $ip1->set_mask(25);
-
-  # Ammount of hosts in a subnet can also be easily calculated
-  $max_hosts_in_subnet = $subnet->how_many - 2;
-
-  # A range of IP Addresses
-  @range = $ip->range($final_ip); # From $ip to $final_ip
-  @range = $ip->range(@dont_know_which_is_larger);
-				# From the smallest on the list + $ip to
-				# the largest
-
-  # Usable addresses in a subnet
-  $first_address = $subnet->first;
-  $last_address = $subnet->last;
-
-  # Compact subnets or addresses into the largest possible CIDR block
-  @compact_block = NetAddr::IP::compact(@many_small_ip_address_blocks);
-
-  # Split a set of blocks into smaller (/30) subnets
-  @small_subnets = NetAddr::IP::expand(30, @ip_address_blocks);
-  @more_subnets = NetAddr::IP::expand(30, @block1, @block2);
-
-  # Obtain a numeric representation of an IP address
-  my $number = $ip->addr_number;
-
-  # How many bits are there in the mask?
-  my $masklen = $ip->mask_bits;
 
 =head1 DESCRIPTION
 
-This module provides a simple interface to the tedious bit manipulation
-involved when handling IP address calculations. It also helps by performing
-range comparisons between subnets as well as other frequently used functions.
+This module provides a number of methods useful for handling IPv4
+addresses ans subnets. Hopefully, its methods are also usable for IPv6
+addresses.
 
-Most of the primitive functions return a NetAddr::IP object.
+Methods so far include:
 
-The variables 
-B<$Use_CIDR_Notation>
- and 
-B<$Always_Display_Mask>
- affect how the
-->to_string function will present its result. The names are hopefully 
-intuitive enough. Note that IP addresses are not properly compacted
-(ie, 200.44.0/18 is written as 200.44.0.0/18) because this adapts to 
-the widely adopted but incorrect notation. Perhaps a later version will
-include a variable to change this.
+=over
 
-This code has not been widely tested yet. Endianness problems might very
-well exist. Please email the author if such problems are found.
+=item C<-E<gt>new($addr, [ $mask ])>
+
+This method creates a new IPv4 address with the supplied address in
+C<$addr> and an optional netmask C<$mask>, which can be omitted to get
+a /32 mask.
+
+C<$addr> can be almost anything that can be resolved to an IP address
+in all the notations I have seen over time. It can optionally contain
+the mask in CIDR notation.
+
+=item C<-E<gt>broadcast()>
+
+Returns the broadcast address for a subnet.
+
+=item C<-E<gt>network()>
+
+Returns the "network" address for a subnet.
+
+=item C<-E<gt>addr()>
+
+Returns the address part of the object as a dotted-quad.
+
+=item C<-E<gt>mask()>
+
+Returns the mask as a dotted-quad.
+
+=item C<-E<gt>masklen()>
+
+Returns the number of one bits in the mask.
+
+=item C<-E<gt>cidr()>
+
+Returns the address and mask in CIDR notation.
+
+=item C<$me-E<gt>contains($other)>
+
+Returns true when C<$me> completely contains C<$other>. False is
+returned otherwise and C<undef> is returned if C<$me> and C<$other>
+are of different versions.
+
+=item C<$me-E<gt>within($other)>
+
+The complement of C<-E<gt>contains()>. Returns true when C<$me> is
+completely con tained within C<$other>.
+
+=item C<-E<gt>split($bits)>
+
+Returns a list of objects, representing subnets of C<$bits> mask
+produced by splitting the original object, which is left
+unchanged. Note that C<$bits> must be longer than the original
+object's mask in order for it to be splittable.
+
+Note that C<$bits> can be given as an integer (the length of the mask)
+or as a dotted-quad. If omitted, a host mask is assumed.
+
+=item C<-E<gt>splitref($bits)>
+
+A (faster) version of C<-E<gt>split()> that returns a reference to a
+list of objects instead of a real list. This is useful when large
+numbers of objects are expected.
+
+=item C<-E<gt>hostenum()>
+
+Returns the list of hosts within a subnet.
+
+=item C<-E<gt>hostenumref()>
+
+Faster version of C<-E<gt>hostenum()>, returning a reference to a list.
+
+=item C<$me-E<gt>compact($addr1, $addr2, ...)>
+
+Given a list of objects (including C<$me>), this method will compact
+all the addresses and subnets into the largest (ie, least specific)
+subnets possible that contain exactly all of the given objects.
+
+=item C<$me-E<gt>compactref(\@list)>
+
+As usual, a faster version of =item C<-E<gt>compact()> that returns a
+reference to a list. Note that this method takes a reference to a list
+instead.
+
+=item C<-E<gt>first()>
+
+Returns a new object representing the first useable IP address within
+the subnet (ie, the first host address).
+
+=item C<-E<gt>last()>
+
+Returns a new object representing the last useable IP address within
+the subnet (ie, one less than the broadcast address).
+
+
+=item C<-E<gt>num()>
+
+Returns the number of useable addresses IP addresses within the
+subnet, not counting the broadcast address.
+
+=back
+
+=head2 EXPORT
+
+None by default.
+
+
+=head1 HISTORY
+
+=over
+
+=item 0.01
+
+=over
+
+
+=item *
+
+original  version;  Basic testing  and  release  to CPAN  as
+version 0.01. This is considered beta software.
+
+=back
+
+
+=item 0.02
+
+=over
+
+
+=item *
+
+Multiple changes  to fix endiannes issues. This  code is now
+moderately tested on Wintel and Sun/Solaris boxes.
+
+=back
+
+
+=item 0.03
+
+=over
+
+
+=item *
+
+Added -E<gt>first and -E<gt>last methods. Version changed to 0.03.
+
+=back
+
+
+=item 1.00
+
+=over
+
+
+=item *
+
+Implemented -E<gt>new_subnet. Version changed to 1.00.
+
+=item *
+
+less croak()ing when improper input  is fed to the module. A
+more consistent 'undef' is returned now instead to allow the
+user to better handle the error.
+
+=back
+
+
+=item 1.10
+
+=over
+
+
+=item *
+
+As  per  Marnix   A.   Van  Ammers  [mav6@ns02.comp.pge.com]
+suggestion, changed  the syntax of the loop  in host_enum to
+be the same of the enum method.
+
+=item *
+
+Fixed the MS-DOS ^M  at the end-of-line problem. This should
+make the module easier to use for *nix users.
+
+=back
+
+
+=item 1.20
+
+=over
+
+
+=item *
+
+Implemented -E<gt>compact and -E<gt>expand methods.
+
+=item *
+
+Applying for official name
+
+=back
+
+
+=item 1.21
+
+=over
+
+
+=item *
+
+Added  -E<gt>addr_number and  -E<gt>mask_bits.  Currently  we return
+normal  numbers (not  BigInts).   Please test  this in  your
+platform and report any problems!
+
+=back
+
+
+=item 2.00
+
+=over
+
+
+=item *
+
+Released under the new *official* name of NetAddr::IP
+
+=back
+
+
+=item 2.10
+
+=over
+
+
+=item *
+
+Added support for -E<gt>new($min, $max, $bits) form
+
+=item *
+
+Added -E<gt>to_numeric. This helps serializing objects
+
+=back
+
+
+=item 2.20
+
+=over
+
+
+=item *
+
+Chris Dowling  reported that  the sort method  introduced in
+v1.20  for -E<gt>expand  and -E<gt>compact  doesn't always  return a
+number under perl versions < 5.6.0.  His fix was applied and
+redistributed.  Thanks Chris!
+
+=item *
+
+This module is hopefully released with no CR-LF issues!
+
+=item *
+
+Fixed a warning about uninitialized values during make test
+
+=back
+
+
+=item 2.21
+
+=over
+
+
+=item *
+
+Dennis  Boylan pointed  out a  bug under  Linux  and perhaps
+other platforms  as well causing the  error "Sort subroutine
+didn't         return         single        value         at
+/usr/lib/perl5/site_perl/5.6.0/NetAddr/IP.pm  line  299,  E<lt>E<gt>
+line 2." or similar. This was fixed.
+
+=back
+
+
+=item 2.22
+
+=over
+
+
+=item *
+
+Some changes  suggested by Jeroen Ruigrok  and Anton Berezin
+were included. Thanks guys!
+
+=back
+
+
+=item 2.23
+
+=over
+
+
+=item *
+
+Bug fix for /XXX.XXX.XXX.XXX netmasks under v5.6.1 suggested
+by Tim Wuyts. Thanks!
+
+=item *
+
+Tested the module under MACHTYPE=hppa1.0-hp-hpux11.00. It is
+now  konwn to  work  under Linux  (Intel/AMD), Digital  Unix
+(Alpha),   Solaris  (Sun),  HP-UX11   (HP-PA-RISC),  Windows
+9x/NT/2K (using ActiveState on Intel).
+
+=back
+
+
+=item 2.24
+
+=over
+
+
+=item *
+
+A spurious  warning when  expand()ing with -w  under certain
+circumstances  was removed. This  involved using  /31s, /32s
+and the same netmask as the input.  Thanks to Elie Rosenblum
+for pointing it out.
+
+=item *
+
+Slight change  in license terms to ease  redistribution as a
+Debian package.
+
+=back
+
+
+=item 3.00
+
+=over
+
+This is  a major rewrite, supposed  to fix a number  of issues pointed
+out in earlier versions.
+
+The goals for this version include getting rid of BigInts, speeding up
+and also  cleaning up the code,  which is written in  a modular enough
+way so  as to allow IPv6  functionality in the  future, taking benefit
+from most of the methods.
+
+Note that no effort has  been made to remain backwards compatible with
+earlier versions. In particular, certain semantics of the earlier
+versions have been removed in favor of faster performance.
+
+This  version  was tested  under  Win98/2K (ActiveState  5.6.0/5.6.1),
+HP-UX11 on PA-RISC (5.6.0), RedHat  Linux 6.2 (5.6.0), Digital Unix on
+Alpha (5.6.0), Solaris on Sparc (5.6.0) and possibly others.
+
+=back
+
+=back
+
+
+=head1 AUTHOR
+
+Luis E. Munoz <lem@cantv.net>
+
+=head1 WARRANTY
+
+This software comes with the same warranty as perl itself (ie, none), so
+by using it you accept any and all the liability.
+
+=head1 LICENSE
 
 This software is (c) Luis E. Munoz. It can be used under the terms of
 the perl artistic license provided that proper credit for the work of
 the author is preserved in the form of this copyright notice and
 license for this module.
 
-This software comes with the same warranty as perl itself (ie, none), so
-by using it you accept any and all the liability.
-
-=head1 AUTHOR
-
-Luis E. Munoz <lem@cantv.net>
-
 =head1 SEE ALSO
 
 perl(1).
 
 =cut
-
-    1;
