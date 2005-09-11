@@ -2,7 +2,7 @@ use ExtUtils::MakeMaker;
 # See lib/ExtUtils/MakeMaker.pm for details of how to influence
 # the contents of the Makefile that is written.
 
-# $Id: Makefile.PL,v 1.10 2005/03/24 18:55:10 lem Exp $
+# $Id: Makefile.PL,v 1.11 2005/08/25 15:36:09 lem Exp $
 
 my $checker = 0;
 
@@ -26,6 +26,25 @@ EOF
     ;
 }
 
+$checker = 0;
+
+eval q{ use Pod::Coverage;
+	$checker = 1; };
+
+unless ($checker)
+{
+    print <<EOF;
+
+You might want to install Pod::Coverage, so that coverage of the
+documentation can be properly tested. You can do so by typing the
+following:
+
+    perl -MCPAN -e "install('Pod::Coverage')"
+
+EOF
+    ;
+}
+
 print <<EOF;
 
 ======================================================================
@@ -42,6 +61,14 @@ Which will disable the new hooks and revert back to the old ways.
 
 If you do  not use Storable along NetAddr::IP or  just don't know what
 this all means, most likely you're safe to go along.
+
+Versions before 3.25 recognized by default IP addresses as returned by
+inet_aton. This is no longer the default. To enable this behaviour
+again, the module must be use()d as
+
+    use NetAddr::IP ':aton';
+
+We're still open for feedback on this one...
 
 EOF
     ;

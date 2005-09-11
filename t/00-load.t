@@ -1,6 +1,6 @@
 # Generic load/POD test suite
 
-# $Id: 00-load.t,v 1.4 2004/03/02 20:21:36 lem Exp $
+# $Id: 00-load.t,v 1.5 2005/08/25 15:35:47 lem Exp $
 
 use Test::More;
 
@@ -10,15 +10,20 @@ my @modules = qw/
 
 my @paths = ();
 
-plan tests => 2 * scalar @modules;
+plan tests => 3 * scalar @modules;
 
 use_ok($_) for @modules;
 
 my $checker = 0;
+my $coverage = 0;
 
 eval { require Test::Pod;
      Test::Pod::import();
        $checker = 1; };
+
+eval { require Pod::Coverage;
+     Pod::Coverage::import();
+       $coverage = 1; };
 
 for my $m (@modules)
 {
@@ -27,11 +32,35 @@ for my $m (@modules)
     push @paths, $INC{$p};
 }
 
-END { unlink "./out.$$" };
-
 SKIP: {
     skip "Test::Pod is not available on this host", scalar @paths
 	unless $checker;
     pod_file_ok($_) for @paths;
+
+    skip "Pod::Coverage is not available on this host", scalar @paths
+	unless $coverage;
+
+    for my $m (@modules)
+    {
+	my $pc = Pod::Coverage->new(package => $m,
+				    also_private => [qr/^STORABLE_/,
+						     qr/^new4$/,
+						     qr/^expand_v6$/,
+						     qr/^do_prefix$/,
+						    ],
+				    trustme => [ qr/^Coalesce$|^Compact$/,
+						 qr/^(plus){1,2}$/,
+						 qr/^(minus){1,2}$/
+					       ],
+				   );
+	unless (is($pc->coverage, 1, "Coverage for $m"))
+	{
+#	    diag "Symbols covered:\n", 
+#	    join("\n", map { "  " . $_ } $pc->covered);
+	    diag "Symbols NOT covered:\n", 
+	    join("\n", map { "  " . $_ } $pc->naked);
+	}
+    }
 }
+
 

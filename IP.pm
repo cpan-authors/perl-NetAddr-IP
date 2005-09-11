@@ -1,6 +1,6 @@
 #!/usr/bin/perl -w
 
-# $Id: IP.pm,v 1.30 2005/03/24 21:14:46 lem Exp $
+# $Id: IP.pm,v 1.32 2005/08/25 15:37:29 lem Exp $
 
 package NetAddr::IP;
 
@@ -28,7 +28,7 @@ NetAddr::IP - Manages IPv4 and IPv6 addresses and subnets
 =head1 DESCRIPTION
 
 This module provides an object-oriented abstraction on top of IP
-addresses or IP subnets, that allows for easy manipulations. Many
+addresses or IP subnets, that allows for easy manipulations. Many 
 operations are supported, as described below:
 
 =head2 Overloaded Operators
@@ -48,7 +48,13 @@ our @EXPORT_OK = qw(Compact Coalesce);
 
 our @ISA = qw(Exporter);
 
-our $VERSION = '3.24';
+our $VERSION = '3.25';
+
+# Set to true, to enable recognizing of 4-octet binary notation IP
+# addresses. Thanks to Steve Snodgrass for reporting. This can be done
+# at the time of use-ing the module. See docs for details.
+
+our $Accept_Binary_IP = 0;
 
 				#############################################
 				# These are the overload methods, placed here
@@ -294,6 +300,8 @@ sub plusplus {
     return $ip;
 }
 
+=pod
+
 =item B<Auto-decrement>
 
 Auto-decrementing a NetAddr::IP object performs exactly the opposite
@@ -426,13 +434,13 @@ sub do_prefix ($$$) {
 }
 
 sub _parse_mask ($$) {
-    my $mask	= lc shift;
+    my $mask	= shift;
     my $bits	= shift;
 
     my $bmask	= '';
 
     if ($bits == 128) {
-	if (grep($mask eq $_ , qw(unspecified loopback))) {
+	if (grep(lc $mask eq $_ , qw(unspecified loopback))) {
 	    for (0..3) {
 	    	vec($bmask, $_, 32) = 0xFFFFFFFF;
 	    }
@@ -456,13 +464,13 @@ sub _parse_mask ($$) {
 	}
         return $bmask;
     }
-    elsif ($mask eq 'default' or $mask eq 'any') {
+    elsif (lc $mask eq 'default' or lc $mask eq 'any') {
 	vec($bmask, 0, $bits) = 0x0;
     }
-    elsif ($mask eq 'broadcast' or $mask eq 'host') {
+    elsif (lc $mask eq 'broadcast' or lc $mask eq 'host') {
 	vec($bmask, 0, $bits) = _ones $bits;
     }
-    elsif ($mask eq 'loopback') {
+    elsif (lc $mask eq 'loopback') {
 	vec($bmask, 0, 8) = 255;
 	vec($bmask, 1, 8) = 0;
 	vec($bmask, 2, 8) = 0;
@@ -511,20 +519,20 @@ sub _obits ($$) {
 }
 
 sub _v4 ($$$) {
-    my $ip	= lc shift;
+    my $ip	= shift;
     my $mask	= shift;
     my $present	= shift;
 
     my $addr = '';
     my $a; 
 
-    if ($ip eq 'default' or $ip eq 'any') {
+    if (lc $ip eq 'default' or lc $ip eq 'any') {
 	vec($addr, 0, 32) = 0x0;
     }
-    elsif ($ip eq 'broadcast') {
+    elsif (lc $ip eq 'broadcast') {
 	vec($addr, 0, 32) = _ones 32;
     }
-    elsif ($ip eq 'loopback') {
+    elsif (lc $ip eq 'loopback') {
 	vec($addr, 0, 8) = 127;
 	vec($addr, 3, 8) = 1;
     }
@@ -694,6 +702,23 @@ sub _v4 ($$$) {
 	vec($mask, 1, 8) = _obits $2, $6;
 	vec($mask, 2, 8) = _obits $3, $7;
 	vec($mask, 3, 8) = _obits $4, $8;
+	
+	# Barf on invalid ranges. There can only be one
+	# octet in the netmask that is neither 0 nor 255.
+
+	return 
+	    if grep ({ 
+		vec($mask, $_, 8) != 0 
+		    and vec($mask, $_, 8) != 255 
+		} (0 .. 3)) > 1;
+
+	# Barf on invalid ranges. No octet on the right
+	# can be larger that any octet on the left
+
+	for (0 .. 2)
+	{
+	    return if vec($mask, $_, 8) < vec($mask, $_ + 1, 8);
+	}
     }
     elsif (($a = gethostbyname($ip)) and defined($a)
 	   and ($a ne pack("C4", 0, 0, 0, 0))) {
@@ -704,7 +729,8 @@ sub _v4 ($$$) {
 	    vec($addr, 3, 8) = $4;
 	}
     }
-    elsif (!$present and length($ip) == 4) {
+    elsif ($Accept_Binary_IP 
+	   and !$present and length($ip) == 4) {
 	my @o = unpack("C4", $ip);
 
 	vec($addr, $_, 8) = $o[$_] for 0 .. 3;
@@ -712,7 +738,7 @@ sub _v4 ($$$) {
     }
     else {
 #	croak "Cannot obtain an IP address out of $ip";
-	return undef;
+	return;
     }
 
     return { addr => $addr, mask => $mask, bits => 32 };
@@ -829,7 +855,13 @@ sub import
 	};
     }
 
+    if (grep { $_ eq ':aton' } @_)
+    {
+	$Accept_Binary_IP = 1;
+    }
+
     @_ = grep { $_ ne ':old_storable' } @_;
+    @_ = grep { $_ ne ':aton' } @_;
     NetAddr::IP->export_to_level(1, @_);
 }
 
@@ -853,8 +885,13 @@ B<prefix> notation is understood, with the limitation that the range
 speficied by the prefix must match with a valid subnet.
 
 Addresses in the same format returned by C<inet_aton> or
-C<gethostbyname> are also understood, although no mask can be
-specified for them.
+C<gethostbyname> can also be understood, although no mask can be
+specified for them. The default is to not attempt to recognize this
+format, as it seems to be seldom used.
+
+To accept addresses in that format, invoke the module as in
+
+  use NetAddr::IP ':aton'
 
 If called with no arguments, 'default' is assumed.
 
@@ -866,7 +903,7 @@ compatible IPv6 addresses.
 sub new ($$;$) {
     my $type	= $_[0];
     my $class	= ref($type) || $type || "NetAddr::IP";
-    my $ip	= lc $_[1];
+    my $ip	= $_[1];
     my $hasmask	= 1;
     my $bits;
     my $mask;
@@ -879,7 +916,7 @@ sub new ($$;$) {
 	    $ip		= $1;
 	    $mask	= $2;
 	}
-	elsif (grep { $ip eq $_ } (qw(default any broadcast loopback))) 
+	elsif (grep { lc $ip eq $_ } (qw(default any broadcast loopback))) 
 	{
 	    $mask	= $ip;
 	}
@@ -887,7 +924,7 @@ sub new ($$;$) {
 
     if (defined $_[2]) {
 	if ($_[2] =~ /^ipv6$/i) {
-	    if (grep { $ip eq $_ } (qw(unspecified loopback))) {
+	    if (grep { lc $ip eq $_ } (qw(unspecified loopback))) {
 		$bits	= 128;
 	    	$mask	= _parse_mask $ip, $bits;
 	    }
@@ -1264,7 +1301,7 @@ sub short ($)
     }
 }
 
-*{compact_addr} = \&short;
+# *{compact_addr} = \&short;
 
 =pod
 
@@ -1764,7 +1801,7 @@ None by default.
 
 =head1 HISTORY
 
-$Id: IP.pm,v 1.30 2005/03/24 21:14:46 lem Exp $
+$Id: IP.pm,v 1.32 2005/08/25 15:37:29 lem Exp $
 
 =over
 
@@ -2362,6 +2399,14 @@ suggested by Perullo.
 
 Version bump. Transfer of 3.23 to CPAN ended up in a truncated file
 being uploaded.
+
+=item 3.25
+
+Some IP specs resembling range notations but not depicting actual CIDR
+ranges, were being erroneously recognized. Thanks to Steve Snodgrass
+for reporting a bug with parsing IP addresses in 4-octet binary
+format. Added optional Pod::Coverage tests. compact_addr has been
+commented out, after a long time as deprecated.
 
 =back
 

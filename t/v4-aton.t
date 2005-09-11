@@ -1,8 +1,7 @@
-use Test::More tests => 15;
+use Test::More tests => 18;
 use Socket;
-use NetAddr::IP;
 
-# $Id: v4-aton.t,v 1.2 2002/10/31 13:45:29 lem Exp $
+# $Id: v4-aton.t,v 1.3 2005/08/25 15:38:03 lem Exp $
 
 my @addr = (
 	[ 'localhost', '127.0.0.1' ],
@@ -13,11 +12,29 @@ my @addr = (
 
 );
 
-is(NetAddr::IP->new($_->[0])->aton, inet_aton($_->[1]), "->aton($_->[0])")
-    for @addr;
+# Verify that Accept_Binary_IP works...
 
-ok(defined NetAddr::IP->new(inet_aton($_->[1])), "->new aton($_->[1])")
-    for @addr;
+SKIP:
+{
+    skip "Failed to load NetAddr::IP", 17
+	unless use_ok('NetAddr::IP');
 
-is(NetAddr::IP->new(inet_aton($_->[1]))->addr, $_->[1], "->new aton($_->[1])")
-    for @addr;
+    ok(! defined NetAddr::IP->new("\1\1\1\1"), 
+       "binary unrecognized by default...");
+
+    # This mimicks the actual use with :aton
+    NetAddr::IP::import(':aton');
+
+    ok(defined NetAddr::IP->new("\1\1\1\1"), 
+       "...but can be recognized");
+
+    is(NetAddr::IP->new($_->[0])->aton, inet_aton($_->[1]), "->aton($_->[0])")
+	for @addr;
+
+    ok(defined NetAddr::IP->new(inet_aton($_->[1])), "->new aton($_->[1])")
+	for @addr;
+
+    is(NetAddr::IP->new(inet_aton($_->[1]))->addr, $_->[1], 
+       "->new aton($_->[1])")
+	for @addr;
+}
