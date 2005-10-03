@@ -1,6 +1,6 @@
 #!/usr/bin/perl -w
 
-# $Id: IP.pm,v 1.32 2005/08/25 15:37:29 lem Exp $
+# $Id: IP.pm,v 3.28 2005/09/28 23:56:52 lem Exp $
 
 package NetAddr::IP;
 
@@ -48,7 +48,7 @@ our @EXPORT_OK = qw(Compact Coalesce);
 
 our @ISA = qw(Exporter);
 
-our $VERSION = '3.25';
+our $VERSION = do { sprintf " %d.%03d", (q$Revision: 3.28 $ =~ /\d+/g) };
 
 # Set to true, to enable recognizing of 4-octet binary notation IP
 # addresses. Thanks to Steve Snodgrass for reporting. This can be done
@@ -377,11 +377,15 @@ sub _contiguous ($$)
 
     for my $o (0 .. $octets)
     {
-	return unless grep { vec($mask, $o, 8) == $_ }
-	(255, 254, 252, 248, 240, 224, 192, 128, 0);
+	my $v = vec($mask, $o, 8);
+# 	return unless grep { $v == $_ }
+# 	(255, 254, 252, 248, 240, 224, 192, 128, 0);
+	return unless $v == 255 or $v == 254 or $v == 252 or 
+	    $v == 248 or $v == 240 or $v == 224 or $v == 192 or 
+	    $v == 128 or $v == 0;
     }
 
-    return 1;
+    1;
 }
 
 sub _to_quad ($) {
@@ -462,7 +466,21 @@ sub _parse_mask ($$) {
 	else {
 	     $bmask = undef;
 	}
-        return $bmask;
+    }
+    elsif ($mask eq '32')
+    {
+	# *Very* common case
+	# $bmask = "\xff\xff\xff\xff";
+	vec($bmask, 0, 32) = 0xffffffff;
+    }
+    elsif ($mask =~ m/^(\d+)$/ and $1 <= 32) {
+	# Another very common case
+	if ($1) {
+	    vec($bmask, 0, $bits) = _ones $bits;
+	    vec($bmask, 0, $bits) <<= ($bits - $1);
+	} else {
+	    vec($bmask, 0, $bits) = 0x0;
+	}
     }
     elsif (lc $mask eq 'default' or lc $mask eq 'any') {
 	vec($bmask, 0, $bits) = 0x0;
@@ -495,19 +513,11 @@ sub _parse_mask ($$) {
 	vec($bmask, 2, 8) = $3;
 	vec($bmask, 3, 8) = $4;
     }
-    elsif ($mask =~ m/^(\d+)$/ and $1 <= 32) {
-	if ($1) {
-	    vec($bmask, 0, $bits) = _ones $bits;
-	    vec($bmask, 0, $bits) <<= ($bits - $1);
-	} else {
-	    vec($bmask, 0, $bits) = 0x0;
-	}
-    }
     elsif ($mask =~ m/^(\d+)$/) {
         vec($bmask, 0, $bits) = $1;
     }
 
-    return $bmask;
+    $bmask;
 }
 
 sub _obits ($$) {
@@ -526,22 +536,13 @@ sub _v4 ($$$) {
     my $addr = '';
     my $a; 
 
-    if (lc $ip eq 'default' or lc $ip eq 'any') {
-	vec($addr, 0, 32) = 0x0;
-    }
-    elsif (lc $ip eq 'broadcast') {
-	vec($addr, 0, 32) = _ones 32;
-    }
-    elsif (lc $ip eq 'loopback') {
-	vec($addr, 0, 8) = 127;
-	vec($addr, 3, 8) = 1;
-    }
-    elsif ($ip =~ m/^(\d+)\.(\d+)\.(\d+)\.(\d+)$/
+    if ($ip =~ m/^(\d+)\.(\d+)\.(\d+)\.(\d+)$/
 	   and $1 >= 0 and $1 <= 255
 	   and $2 >= 0 and $2 <= 255
 	   and $3 >= 0 and $3 <= 255
 	   and $4 >= 0 and $4 <= 255)
     {
+	# The most frequent case
 	vec($addr, 0, 8) = $1;
 	vec($addr, 1, 8) = $2;
 	vec($addr, 2, 8) = $3;
@@ -736,12 +737,24 @@ sub _v4 ($$$) {
 	vec($addr, $_, 8) = $o[$_] for 0 .. 3;
 	vec($mask, 0, 32) = 0xFFFFFFFF;
     }
+    elsif (lc $ip eq 'default' or lc $ip eq 'any') {
+	vec($addr, 0, 32) = 0x0;
+    }
+    elsif (lc $ip eq 'broadcast') {
+	vec($addr, 0, 32) = _ones 32;
+    }
+    elsif (lc $ip eq 'loopback') {
+	vec($addr, 0, 8) = 127;
+	vec($addr, 3, 8) = 1;
+    }
     else {
 #	croak "Cannot obtain an IP address out of $ip";
 	return;
     }
 
-    return { addr => $addr, mask => $mask, bits => 32 };
+    # Return the completed hash (no explicit return as this seems to be
+    # faster...)
+    { addr => $addr, mask => $mask, bits => 32 };
 }
 
 sub expand_v6 ($) {
@@ -909,7 +922,7 @@ sub new ($$;$) {
     my $mask;
 
     $ip = 'default' unless defined $ip;
-    $bits = $ip =~ /:/ ? 128 : 32;
+    $bits = index($ip, ':') >= 0 ? 128 : 32;    
 
     if (@_ == 2) {
 	if ($ip =~ m!^(.+)/(.+)$!) {
@@ -1801,7 +1814,7 @@ None by default.
 
 =head1 HISTORY
 
-$Id: IP.pm,v 1.32 2005/08/25 15:37:29 lem Exp $
+$Id: IP.pm,v 3.28 2005/09/28 23:56:52 lem Exp $
 
 =over
 
@@ -2406,9 +2419,16 @@ Some IP specs resembling range notations but not depicting actual CIDR
 ranges, were being erroneously recognized. Thanks to Steve Snodgrass
 for reporting a bug with parsing IP addresses in 4-octet binary
 format. Added optional Pod::Coverage tests. compact_addr has been
-commented out, after a long time as deprecated.
+commented out, after a long time as deprecated. Improved speed of
+-E<gt>new() for the case of a single host IPv4 address, which seems to
+be the most common one.
 
 =back
+
+$Log: IP.pm,v $
+Revision 3.28  2005/09/28 23:56:52  lem
+Each revision will now add the CVS log to the docs automatically.
+
 
 =head1 AUTHOR
 
