@@ -1,6 +1,6 @@
 #!/usr/bin/perl -w
 
-# $Id: IP.pm,v 3.28 2005/09/28 23:56:52 lem Exp $
+# $Id: IP.pm,v 3.32 2006/05/01 17:11:18 lem Exp $
 
 package NetAddr::IP;
 
@@ -48,7 +48,7 @@ our @EXPORT_OK = qw(Compact Coalesce);
 
 our @ISA = qw(Exporter);
 
-our $VERSION = do { sprintf " %d.%03d", (q$Revision: 3.28 $ =~ /\d+/g) };
+our $VERSION = do { sprintf "%d.%02d", (q$Revision: 3.32 $ =~ /\d+/g) };
 
 # Set to true, to enable recognizing of 4-octet binary notation IP
 # addresses. Thanks to Steve Snodgrass for reporting. This can be done
@@ -721,15 +721,6 @@ sub _v4 ($$$) {
 	    return if vec($mask, $_, 8) < vec($mask, $_ + 1, 8);
 	}
     }
-    elsif (($a = gethostbyname($ip)) and defined($a)
-	   and ($a ne pack("C4", 0, 0, 0, 0))) {
-	if ($a and inet_ntoa($a) =~ m!^(\d+)\.(\d+)\.(\d+)\.(\d+)$!)  {
-	    vec($addr, 0, 8) = $1;
-	    vec($addr, 1, 8) = $2;
-	    vec($addr, 2, 8) = $3;
-	    vec($addr, 3, 8) = $4;
-	}
-    }
     elsif ($Accept_Binary_IP 
 	   and !$present and length($ip) == 4) {
 	my @o = unpack("C4", $ip);
@@ -746,6 +737,15 @@ sub _v4 ($$$) {
     elsif (lc $ip eq 'loopback') {
 	vec($addr, 0, 8) = 127;
 	vec($addr, 3, 8) = 1;
+    }
+    elsif (($a = gethostbyname($ip)) and defined($a)
+	   and ($a ne pack("C4", 0, 0, 0, 0))) {
+	if ($a and inet_ntoa($a) =~ m!^(\d+)\.(\d+)\.(\d+)\.(\d+)$!)  {
+	    vec($addr, 0, 8) = $1;
+	    vec($addr, 1, 8) = $2;
+	    vec($addr, 2, 8) = $3;
+	    vec($addr, 3, 8) = $4;
+	}
     }
     else {
 #	croak "Cannot obtain an IP address out of $ip";
@@ -1814,7 +1814,7 @@ None by default.
 
 =head1 HISTORY
 
-$Id: IP.pm,v 3.28 2005/09/28 23:56:52 lem Exp $
+$Id: IP.pm,v 3.32 2006/05/01 17:11:18 lem Exp $
 
 =over
 
@@ -2426,13 +2426,26 @@ be the most common one.
 =back
 
 $Log: IP.pm,v $
+Revision 3.32  2006/05/01 17:11:18  lem
+Force update as upload failed
+
+Revision 3.31  2006/05/01 16:47:15  lem
+Fixed CPAN #16754, version contained a space
+
+Revision 3.30  2006/05/01 15:31:19  lem
+Moved DNS resolution to the last spot in the chain, before special
+keywords, as suggested by Kevin Brintnall - Thanks!
+
+Revision 3.29  2005/10/05 18:01:30  lem
+Change version digits back to previous levels
+
 Revision 3.28  2005/09/28 23:56:52  lem
 Each revision will now add the CVS log to the docs automatically.
 
 
 =head1 AUTHOR
 
-Luis E. MuÒoz <luismunoz@cpan.org>
+Luis E. Mu√±oz <luismunoz@cpan.org>
 
 =head1 WARRANTY
 
@@ -2441,7 +2454,7 @@ so by using it you accept any and all the liability.
 
 =head1 LICENSE
 
-This software is (c) Luis E. MuÒoz.  It can be used under the terms of
+This software is (c) Luis E. Mu√±oz.  It can be used under the terms of
 the perl artistic license provided  that proper credit for the work of
 the  author is  preserved in  the form  of this  copyright  notice and
 license for this module.

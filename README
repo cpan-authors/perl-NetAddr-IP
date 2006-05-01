@@ -4,6 +4,7 @@ Hash: SHA1
 
 
 
+
 NetAddr::IP - Manages IP addresses and subnets
 
      * * * * THIS MODULE REQUIRES PERL 5.6.0 OR NEWER. * * * *
@@ -124,6 +125,14 @@ cases where warnings are generated so that I can fix them.
 
 Report your bugs to me (luismunoz@cpan.org).
 
+DO YOU WANT TO THANK ME?
+
+If  you consider this  a valuable  contribution, there  is a  web page
+where you can express your gratitude. Please see
+
+        http://mipagina.cantv.net/lem/thanks-en.html (English)
+        http://mipagina.cantv.net/lem/thanks-es.html (Spanish)
+
 SECURITY CONSIDERATIONS
 
 I  have  no control  on  the machanisms  involved  in  the storage  or
@@ -152,7 +161,7 @@ individual file.
 
 LICENSE AND WARRANTY
 
-This software is (c) Luis E. Muñoz.  It can be used under the terms of
+This software is (c) Luis E. MuÃ±oz.  It can be used under the terms of
 the perl artistic license provided  that proper credit for the work of
 the  author is  preserved in  the form  of this  copyright  notice and
 license for this module.
@@ -162,7 +171,7 @@ your computer go up in a puff of black smoke.
 -----BEGIN PGP SIGNATURE-----
 Version: GnuPG v1.2.1 (Darwin)
 
-iD8DBQFCQwzJQyDWGRI/hhARAqd9AJ0XLAPEZ/r0laqAs4XhZ26xf00OAQCgzYxk
-IjdkSW+uHhcUXN6nJlo7yqA=
-=9Ztj
+iD8DBQFEVjDeQyDWGRI/hhARAk+FAJ9hlpLFuGsJiGLqPzEA/jO+lCkoSACgjsMV
+arBrKLqsAmyuUGm+JXA1rn0=
+=6Doe
 -----END PGP SIGNATURE-----
