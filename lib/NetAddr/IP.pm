@@ -1,6 +1,6 @@
 #!/usr/bin/perl -w
 
-# $Id: IP.pm,v 3.33 2006/05/11 13:46:47 lem Exp $
+# $Id: IP.pm,v 3.32 2006/05/01 17:11:18 lem Exp $
 
 package NetAddr::IP;
 
@@ -48,7 +48,7 @@ our @EXPORT_OK = qw(Compact Coalesce);
 
 our @ISA = qw(Exporter);
 
-our $VERSION = do { sprintf "%d.%02d", (q$Revision: 3.33 $ =~ /\d+/g) };
+our $VERSION = do { sprintf "%d.%02d", (q$Revision: 3.32 $ =~ /\d+/g) };
 
 # Set to true, to enable recognizing of 4-octet binary notation IP
 # addresses. Thanks to Steve Snodgrass for reporting. This can be done
@@ -1814,7 +1814,7 @@ None by default.
 
 =head1 HISTORY
 
-$Id: IP.pm,v 3.33 2006/05/11 13:46:47 lem Exp $
+$Id: IP.pm,v 3.32 2006/05/01 17:11:18 lem Exp $
 
 =over
 
@@ -2426,9 +2426,6 @@ be the most common one.
 =back
 
 $Log: IP.pm,v $
-Revision 3.33  2006/05/11 13:46:47  lem
-Next release to correct goof with signatures
-
 Revision 3.32  2006/05/01 17:11:18  lem
 Force update as upload failed
 
