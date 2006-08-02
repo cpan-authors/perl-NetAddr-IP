@@ -7,7 +7,7 @@ use Test::More;
 
 $| = 1;
 
-our @badnets = (
+my @badnets = (
     '10.10.10.10/255.255.0.255',
     '10.10.10.10/255.0.255.255',
     '10.10.10.10/0.255.255.255',
@@ -23,7 +23,7 @@ our @badnets = (
     '58.26.0.0-58.27.127.255',	# Taken from APNIC's WHOIS case
 );
 
-our @goodnets = ();
+my @goodnets = ();
 
 push @goodnets, "10.0.0.1/$_" for (0 .. 32);
 push @goodnets, "10.0.0.1/255.255.255.255";

@@ -5,7 +5,7 @@
 # without caring about the order of its arguments. -lem
 
 use strict;
-use warnings;
+#use warnings;
 use Test::More tests => 3;
 use NetAddr::IP qw(Compact);
 

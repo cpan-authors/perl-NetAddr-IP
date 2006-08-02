@@ -1,22 +1,5 @@
 
-$Id: TODO,v 1.7 2006/05/01 16:55:18 lem Exp $
-
 o More tests for IPv6 functionality. This should be thoroughly tested.
 
-o Extend the formats accepted for v6 addresses.
-
 o Add support for other notations (when found).
-
-o Add a way to force the recognition of a v6 IP address when the input
-  is presented numerically. (Suggested by Carlos Vicente)
-
-o As suggested by Geoff Seeley's application, it may be good to have a
-  method that will convert an arbitrary IP range into a list of
-  subnets (a list of NetAddr::IP objects)
-
-o Add simple is_broadcast and is_network utility functions
-
-o Have foreach iteration of NetAddr::IP return objects based in the
-  specified netmask instead of forcing /32s, as suggested by Steve
-  Thompson
 

@@ -1,0 +1,81 @@
+Revision history for Perl extension NetAddr::IP::Lite
+
+1.01  Thu Jul  6 10:46:48 PDT 2006
+	update v4-wnew.t to warn user of possible long wait
+	update Util.pm v0.17 -- see Changes in that distro
+
+1.00  Mon Jun 26 13:34:00 PDT 2006
+	changed behavior of ->nth and ->num
+	to 'exactly' conform to the documentation
+
+	add :old_nth tag to preserve old behavior
+	and update tests to check both
+
+0.12  Sun Jun 25 16:13:00 PDT 2006
+	imported missing 'bcd2bin'
+
+        fixed Util->new() issues with long digit strings 
+	->new('::fffff') and non hex digits ->new('::foo'). 
+        Thanks to Radoslaw Zielinski <radek42@gmail.com>
+        for spotting these 3 bugs
+
+0.11  Wed Jun 14 14:53:21 PDT 2006
+	add 'sub new6' and related functionality to methods
+	that print or return v4/6 information or text.
+
+	add $self->{isv6} flag for hint to ipV6 status
+
+	corrected bug in sub num that miscalcluated the number
+	of IP's in a net for /31 /32
+
+0.10  Tue Jun 13 14:07:46 PDT 2006
+	bring 'sub new' into full compliance with NetAddr::IP,
+	correct compatibility with for ==,>,<,=>,>=,<=>,cmp
+	and update documentation to reflect actual implementation
+
+	add 'copy' function that return a completely new object
+
+	export (Zero Ones V4mask V4net)
+
+	update Util.pm v0.15 so shiftleft returns original
+	argument when the shift count is zero or undefined
+
+0.09  Tue Jun  6 08:37:01 PDT 2006
+	update Util/Makefile.PM to check for link libraries
+	that ExtUtils::MakeMaker does not find properly
+
+	remove 'use warnings' from Lite.pm for backwards 
+	compatibility with older perl versions
+
+0.08  Tue Jun  6 08:33:11 PDT 2006
+	update Util.xs for build on windoze
+
+0.07  Tue Jun  6 08:21:12 PDT 2006
+	update NetAddr::IP::Util to v0.12
+
+0.06  Mon Jun  5 21:34:28 PDT 2006
+	fix Sparc problems in Util v0.11
+    1)	add workaround for OS's that do not have inet_aton
+
+    2)	add workaround for compilers that do not understand
+	#if MACRO1 == MACRO2
+
+0.05  Sun May  7 18:06:43 PDT 2006
+	updated UtilPP.pm v0.06 to remove unnecessary pack(unpack) sequences
+	to speed up ipv6->4, ipv4->6 conversions
+
+0.04  Fri Apr 28 17:36:28 PDT 2006
+	left Util/Makefile.pl out of the top level distro
+
+0.03  Fri Apr 28 17:26:51 PDT 2006
+	oops! left prerequsite Util 0.08 in the Makefile
+	when it is include in this distro
+
+0.02  Fri Apr 28 16:11:00 PDT 2006
+	update Lite.pm to accept ->new('addr/mask')
+	where addr and mask are both in IP address format
+
+	add test for above t/netaddr.t
+
+0.01  Wed Apr 26 19:03:18 PDT 2006
+	initial release

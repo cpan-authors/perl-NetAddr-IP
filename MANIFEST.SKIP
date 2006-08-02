@@ -2,8 +2,8 @@
 ^_build/
 ^blib/
 ^blibdirs
-^Makefile$
-^Makefile\.[a-z]+$
+Makefile$
+Makefile\.[a-z]+$
 ^pm_to_blib
 CVS/.*
 \.cvs
@@ -20,3 +20,4 @@ CVS/.*
 \.tar\.gz$
 \.zip$
 _uu$
+Lite/Util/Util_IS.pm

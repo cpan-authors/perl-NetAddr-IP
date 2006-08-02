@@ -1,6 +1,5 @@
 use NetAddr::IP;
-
-# $Id: over-arr.t,v 1.2 2002/10/31 04:30:35 lem Exp $
+use Test::More;
 
 my @addr = ( [ '10.0.0.0/24', '10.0.0.1/32' ], 
 	     [ '192.168.0.0/24', '192.168.0.1/32' ],
@@ -8,19 +7,14 @@ my @addr = ( [ '10.0.0.0/24', '10.0.0.1/32' ],
 
 $| = 1;
 
-print "1..", 1 * scalar @addr, "\n";
+$tests = @addr;
 
-my $count = 1;
+plan tests => $tests;
 
-for my $a (@addr) {
+SKIP: {
+  skip "overload dereferencing not supported in version $] of Perl", $tests, unless ($overload::ops{dereferencing} && $overload::ops{dereferencing} =~ /\@\{\}/);
+  for my $a (@addr) {
     my $ip = new NetAddr::IP $a->[0];
-    
-    if (@$ip[0]->cidr eq $a->[1]) {
-	print "ok $count\n";
-    }
-    else {
-	print "not ok $count\n";
-    }
-
-    ++$count;
-}
+    ok(@$ip[0]->cidr eq $a->[1],$a->[0]);
+  }
+};

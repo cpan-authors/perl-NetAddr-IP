@@ -1,5 +1,4 @@
 # t/new-store.t - test new Storable related - methods
-# $Id: new-store.t,v 1.1 2004/10/11 15:40:29 lem Exp $
 
 use Test::More;
 
@@ -9,8 +8,8 @@ plan tests => $tests;
 
 SKIP:
 {
-    skip "Failed to use Storable", $tests
-	unless use_ok("Storable", 'freeze', 'thaw');
+    skip "Failed to use Storable, module not found", $tests
+	unless eval {require Storable && use_ok("Storable", 'freeze', 'thaw')};
 
     skip "Failed to use NetAddr::IP", $tests
 	unless use_ok("NetAddr::IP");

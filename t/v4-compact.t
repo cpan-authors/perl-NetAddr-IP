@@ -14,7 +14,7 @@ my @r = (
 $| = 1;
 
 if (defined($ENV{LIGHTERIPTESTS}) and $ENV{LIGHTERIPTESTS} =~ /yes/i) {
-    print "1..0\n";
+    print "1..0 # Skipped: LIGHTERIPTESTS = yes\n";
     exit 0;
 }
 

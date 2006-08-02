@@ -1,0 +1,14 @@
+Revision history for Perl extension NetAddr::IP
+
+4.001  Thu Jul  6 14:09:01 PDT 2006
+	various bug fixes courtesy of Luis Munoz:
+	changes to Lite.pm v1.01, Util.pm v0.17 see Changes in those distros.
+	update t/v6-re.t, addconst called as a scalar, should be called to
+	return the address value ()[1]
+
+4.000  Mon Jun 19 21:51:10 PDT 2006
+	initial release of version 4.000 which includes 
+	full support of ipV6 addresses and drops the requirement
+	for Math::BigInt and will run on older versions of Perl
+	at least back to  5.005_03
+
