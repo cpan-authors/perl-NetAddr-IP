@@ -1,6 +1,6 @@
 use Test::More;
 
-# $Id: short.t,v 1.1 2004/02/22 05:07:51 lem Exp $
+# $Id: short.t,v 1.1.1.1 2006/08/14 15:36:06 lem Exp $
 
 my %cases = 
 (

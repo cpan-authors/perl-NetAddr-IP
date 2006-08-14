@@ -4,7 +4,7 @@ package NetAddr::IP;
 
 use strict;
 #use diagnostics;
-use NetAddr::IP::Lite 1.01 qw(Zero Ones V4mask V4net);
+use NetAddr::IP::Lite 1.02 qw(Zero Ones V4mask V4net);
 use NetAddr::IP::Util qw(
 	sub128
 	inet_aton
@@ -24,7 +24,6 @@ use vars qw(
 	@EXPORT_OK
 	@ISA
 	$VERSION
-	$isV6
 );
 require Exporter;
 
@@ -32,7 +31,7 @@ require Exporter;
 
 @ISA = qw(Exporter NetAddr::IP::Lite);
 
-$VERSION = do { sprintf " %d.%03d", (q$Revision: 4.001 $ =~ /\d+/g) };
+$VERSION = do { sprintf " %d.%03d", (q$Revision: 4.3 $ =~ /\d+/g) };
 
 =pod
 
@@ -51,6 +50,7 @@ NetAddr::IP - Manages IPv4 and IPv6 addresses and subnets
 	V4net
 	:aton
 	:old_storable
+	:old_nth
   );
 
   my $ip = new NetAddr::IP 'loopback';
@@ -1059,7 +1059,7 @@ __END__
 
 =head1 HISTORY
 
-$Id: IP.pm,v 3.28 2005/09/28 23:56:52 lem Exp $
+$Id: IP.pm,v 4.3 2006/08/14 16:24:03 lem Exp $
 
 =over
 
@@ -1695,8 +1695,8 @@ ipV4 notation is used.
 
 =head1 AUTHORS
 
-Luis E. MuÃ±oz <luismunoz@cpan.org>,
-Michael Robinton <michael@bizsystems.com>
+Luis E. Muñoz E<lt>luismunoz@cpan.orgE<gt>,
+Michael Robinton E<lt>michael@bizsystems.comE<gt>
 
 =head1 WARRANTY
 
@@ -1705,7 +1705,7 @@ so by using it you accept any and all the liability.
 
 =head1 LICENSE
 
-This software is (c) Luis E. MuÃ±oz, 1999 - 2005, and (c) Michael Robinton, 2006.
+This software is (c) Luis E. Muñoz, 1999 - 2005, and (c) Michael Robinton, 2006.
 It can be used under the terms of the perl artistic license provided that
 proper credit for the work of the author is preserved in the form of this
 copyright notice and license for this module.

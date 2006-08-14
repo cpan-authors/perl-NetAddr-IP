@@ -1,6 +1,6 @@
 use NetAddr::IP qw(Compact);
 
-# $Id: v4-compact.t,v 1.3 2002/12/27 20:37:55 lem Exp $
+# $Id: v4-compact.t,v 1.1.1.1 2006/08/14 15:36:06 lem Exp $
 
 my @r = (
 	 [ '10.0.0.0', '255.255.255.0'],

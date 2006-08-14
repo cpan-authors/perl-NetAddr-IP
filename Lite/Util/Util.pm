@@ -13,7 +13,7 @@ require Exporter;
 
 @ISA = qw(Exporter DynaLoader);
 
-$VERSION = do { my @r = (q$Revision: 0.17 $ =~ /\d+/g); sprintf "%d."."%02d" x $#r, @r };
+$VERSION = do { my @r = (q$Revision: 1.2 $ =~ /\d+/g); sprintf "%d."."%02d" x $#r, @r };
 
 my @export_ok = qw(
 	inet_aton
@@ -421,7 +421,7 @@ Convert an ipv4 network address into an ipv6 network address.
 
 =item * $ipv6naddr = mask4to6($netaddr);
 
-Convert an ipv4 netowrk address into an ipv6 network mask.
+Convert an ipv4 network address/mask into an ipv6 network mask.
 
   input:	32 bit network/mask address
   returns:	128 bit network/mask address
@@ -710,7 +710,7 @@ Thank you Larry for making PERL possible for all of us.
 
 =head1 COPYRIGHT
 
-Copyright 2003 - 2006, Michael Robinton <michael@bizsystems.com>
+Copyright 2003 - 2006, Michael Robinton E<lt>michael@bizsystems.comE<gt>
 
 LICENSE AND WARRANTY
 

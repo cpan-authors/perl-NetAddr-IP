@@ -1,5 +1,9 @@
 Revision history for Perl extension NetAddr::IP::Util
 
+0.18  Sun Aug  6 10:48:25 PDT 2006
+	correct shiftleft documentation
+	correct mask4to6 documentation
+
 0.17  Thu Jul  6 10:46:48 PDT 2006
 	update 'siteconf line 1608' to fix empty variable in inet_aton test
 	update 'siteconf line 1636' to fix empty variable in inet_pton test

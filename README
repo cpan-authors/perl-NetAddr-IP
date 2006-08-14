@@ -3,6 +3,8 @@ Hash: SHA1
 
 
 
+
+
 NetAddr::IP - Manage IP addresses and subnets
 
 This distribution  is designed as a  help for managing  (ranges of) IP
@@ -185,7 +187,7 @@ individual file.
 
 LICENSE AND WARRANTY
 
-This software is (c) Luis E. MuÃ±oz and Michael A. Robinton.  It can be
+This software is (c) Luis E. Muñoz and Michael A. Robinton.  It can be
 used under the terms of the perl artistic license provided that proper
 credit for the work of the authors is  preserved in  the form  of this 
 copyright  notice and license for this module.
@@ -196,7 +198,7 @@ your computer go up in a puff of black smoke.
 -----BEGIN PGP SIGNATURE-----
 Version: GnuPG v1.2.1 (Darwin)
 
-iD8DBQFEzo9TQyDWGRI/hhARAiDiAJ9QW3va/3+Fjk3IbxXaISUFO9djtwCfamKl
-oml7Sgrp5lEEQEdppKIyI2A=
-=4GL1
+iD8DBQFE4KXRQyDWGRI/hhARAqjSAJ4/MnV9e01zLfrIJ1CtfwfaJiKUDwCePdhb
+djsPkRD3CRKuxz5d+9oX9zc=
+=srrF
 -----END PGP SIGNATURE-----

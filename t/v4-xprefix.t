@@ -1,6 +1,6 @@
 use NetAddr::IP;
 
-# $Id: v4-xprefix.t,v 1.2 2002/10/31 04:30:37 lem Exp $
+# $Id: v4-xprefix.t,v 1.1.1.1 2006/08/14 15:36:06 lem Exp $
 
 my @addr = (
 	    [ '0.0.0.0/1',		'0-127' ],

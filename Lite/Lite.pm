@@ -25,9 +25,9 @@ use NetAddr::IP::Util 0.17 qw(
 	mask4to6
 	ipv4to6
 );
-use vars qw(@ISA @EXPORT_OK $Class $VERSION $isV6 $Accept_Binary_IP $Old_nth);
+use vars qw(@ISA @EXPORT_OK $VERSION $Accept_Binary_IP $Old_nth);
 
-$VERSION = do { my @r = (q$Revision: 1.01 $ =~ /\d+/g); sprintf "%d."."%02d" x $#r, @r };
+$VERSION = do { my @r = (q$Revision: 1.4 $ =~ /\d+/g); sprintf "%d."."%02d" x $#r, @r };
 
 require Exporter;
 
@@ -148,14 +148,13 @@ use overload
     '""'	=> sub { $_[0]->cidr(); },
 
     'eq'	=> sub { 
-	my $a = ref $_[0] eq $Class ? $_[0]->cidr : $_[0];
-	my $b = ref $_[1] eq $Class ? $_[1]->cidr : $_[1];
+	my $a = (UNIVERSAL::isa($_[0],__PACKAGE__)) ? $_[0]->cidr : $_[0];
+	my $b = (UNIVERSAL::isa($_[1],__PACKAGE__)) ? $_[1]->cidr : $_[1];
 	$a eq $b;
     },
 
     '=='	=> sub { 
-	return 0 unless ref $_[0] eq $Class;
-	return 0 unless ref $_[1] eq $Class;
+	return 0 unless UNIVERSAL::isa($_[0],__PACKAGE__) && UNIVERSAL::isa($_[1],__PACKAGE__);
 	$_[0]->cidr eq $_[1]->cidr;
     },
 
@@ -497,18 +496,19 @@ sub _obits ($$) {
 }
 
 sub new($;$$) {
-  $isV6	= 0;
+  unshift @_, 0;
   goto &_xnew;
 }
 
 sub new6($;$$) { 
-  $isV6	= 1;
+  unshift @_, 1;
   goto &_xnew;
 }
 
-sub _xnew($;$$) {
+sub _xnew($$;$$) {
+  my $isV6	= shift;
   my $proto	= shift;
-  $Class = ref $proto || $proto || __PACKAGE__;
+  my $class = ref $proto || $proto || __PACKAGE__;
   my $ip	= lc shift;
   $ip = 'default' unless defined $ip;
   my $hasmask = 1;
@@ -708,7 +708,7 @@ sub _xnew($;$$) {
 	mask	=> $mask,
 	isv6	=> $isV6,
   };
-  return bless $self, $Class;
+  return bless $self, $class;
 }
 
 =item C<-E<gt>broadcast()>
@@ -896,7 +896,6 @@ are not both C<NetAddr::IP::Lite> objects.
 =cut
 
 sub within ($$) {
-  return undef unless ref($_[0]) eq $Class && ref($_[1]) eq $Class;
   return 1 unless hasbits($_[1]->{mask});	# 0x0 contains everything
   my $netme	= $_[0]->{addr} & $_[0]->{mask};
   my $brdme	= $_[0]->{addr} | ~ $_[0]->{mask};
@@ -1038,8 +1037,8 @@ sub import {
 
 =head1 AUTHOR
 
-Luis E. MuÃ±oz <luismunoz@cpan.org>,
-Michael Robinton <michael@bizsystems.com>
+Luis E. Muñoz E<lt>luismunoz@cpan.orgE<gt>,
+Michael Robinton E<lt>michael@bizsystems.comE<gt>
 
 =head1 WARRANTY
 
@@ -1048,7 +1047,7 @@ so by using it you accept any and all the liability.
 
 =head1 LICENSE
 
-This software is (c) Luis E. MuÃ±oz, 1999 - 2005, and (c) Michael Robinton, 2006.
+This software is (c) Luis E. Muñoz, 1999 - 2005, and (c) Michael Robinton, 2006.
 It can be used under the terms of the perl artistic license provided that 
 proper credit for the work of the author is preserved in the form of this 
 copyright notice and license for this module.

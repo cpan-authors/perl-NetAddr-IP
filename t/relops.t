@@ -1,6 +1,6 @@
 use NetAddr::IP;
 
-# $Id: relops.t,v 1.5 2004/02/23 22:20:17 lem Exp $
+# $Id: relops.t,v 1.1.1.1 2006/08/14 15:36:06 lem Exp $
 
 BEGIN {
 @gt = (

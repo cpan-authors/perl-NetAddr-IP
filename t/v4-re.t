@@ -1,6 +1,6 @@
 use Test::More;
 
-# $Id: v4-re.t,v 1.1 2005/03/24 20:41:51 lem Exp $
+# $Id: v4-re.t,v 1.1.1.1 2006/08/14 15:36:06 lem Exp $
 
 my @ips = qw!
     10.11.12.13

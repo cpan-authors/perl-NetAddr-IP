@@ -1,7 +1,7 @@
 use Test::More;
 use NetAddr::IP;
 
-# $Id: v4-split-bulk.t,v 1.3 2003/10/08 06:46:02 lem Exp $
+# $Id: v4-split-bulk.t,v 1.1.1.1 2006/08/14 15:36:06 lem Exp $
 
 my @addr = ( [ '10.0.0.0', 20, 32, 4096 ],
 	     [ '10.0.0.0', 22, 32, 1024 ],

@@ -12,7 +12,7 @@ require Exporter;
 
 @ISA = qw(Exporter);
 
-$VERSION = do { my @r = (q$Revision: 0.07 $ =~ /\d+/g); sprintf "%d."."%02d" x $#r, @r };
+$VERSION = do { my @r = (q$Revision: 1.2 $ =~ /\d+/g); sprintf "%d."."%02d" x $#r, @r };
 
 @EXPORT_OK = qw(
 	hasbits
@@ -154,7 +154,7 @@ sub isIPv4 {
 		number of shifts [optional]
   returns:	bits X n shifts
 
-  NOTE: a single shift is performed 
+  NOTE: input bits are returned
 	if $n is not specified
 
 =cut
@@ -664,7 +664,7 @@ sub simple_pack {
 
 =head1 AUTHOR
 
-Michael Robinton <michael@bizsystems.com>
+Michael Robinton E<lt>michael@bizsystems.comE<gt>
 
 =head1 COPYRIGHT
 

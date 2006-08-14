@@ -1,5 +1,14 @@
 Revision history for Perl extension NetAddr::IP::Lite
 
+1.03  Sun Aug  6 10:48:25 PDT 2006
+	update Util.pm v0.18 documentation
+
+1.02  Fri Aug  4 14:14:16 PDT 2006
+	$isV6 global converted to a lexical variable within sub "_xnew"
+	$Class global removed and replaced by calls to UNIVERSAL::isa
+	Thanks to julian@mehnle.net for spotting problems related to 
+	using the Lite.pm with mod_perl
+
 1.01  Thu Jul  6 10:46:48 PDT 2006
 	update v4-wnew.t to warn user of possible long wait
 	update Util.pm v0.17 -- see Changes in that distro

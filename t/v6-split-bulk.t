@@ -1,7 +1,7 @@
 use Test::More;
 use NetAddr::IP;
 
-# $Id: v6-split-bulk.t,v 1.3 2003/10/10 17:51:32 lem Exp $
+# $Id: v6-split-bulk.t,v 1.1.1.1 2006/08/14 15:36:06 lem Exp $
 
 my @addr = ( 
 	     [ 'dead:beef::1', 126, 127, 2 ],
