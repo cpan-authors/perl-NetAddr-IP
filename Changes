@@ -1,5 +1,8 @@
 Revision history for Perl extension NetAddr::IP
 
+4.004  Wed Aug 16 16:01:54 PDT 2006
+        update to include/exclude files in corrupted distro
+
 4.003  Sun Aug  6 10:48:25 PDT 2006
 	correct SYNOPSIS documentation
 	add :old_nth

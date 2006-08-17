@@ -31,7 +31,7 @@ require Exporter;
 
 @ISA = qw(Exporter NetAddr::IP::Lite);
 
-$VERSION = do { sprintf " %d.%03d", (q$Revision: 4.3 $ =~ /\d+/g) };
+$VERSION = do { sprintf " %d.%03d", (q$Revision: 4.4 $ =~ /\d+/g) };
 
 =pod
 
@@ -1059,7 +1059,7 @@ __END__
 
 =head1 HISTORY
 
-$Id: IP.pm,v 4.3 2006/08/14 16:24:03 lem Exp $
+$Id: IP.pm,v 4.4 2006/08/17 01:00:54 lem Exp $
 
 =over
 

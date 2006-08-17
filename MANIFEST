@@ -1,11 +1,10 @@
 Changes
+docs/rfc1884.txt
 IP.pm
 Lite/Changes
 Lite/Lite.pm
 Lite/Makefile.PL
-Lite/MANIFEST.SKIP
 Lite/META.yml
-Lite/pm_to_blib
 Lite/README
 Lite/t/addr.t
 Lite/t/aton.t
@@ -58,14 +57,9 @@ Lite/t/v6-old-base.t
 Lite/t/version.t
 Lite/t/within.t
 Lite/Util/Changes
-Lite/Util/config.log
-Lite/Util/docs/rfc1884.txt
 Lite/Util/GPL
 Lite/Util/lib/NetAddr/IP/UtilPP.pm
-Lite/Util/localStuff.h
 Lite/Util/Makefile.PL
-Lite/Util/MANIFEST.SKIP
-Lite/Util/pm_to_blib
 Lite/Util/README
 Lite/Util/siteconf
 Lite/Util/t/4to6.t
@@ -93,9 +87,6 @@ Lite/Util/t/simple_pack.t
 Lite/Util/t/sub128.t
 Lite/Util/typemap
 Lite/Util/u_intxx.h
-Lite/Util/Util.bs
-Lite/Util/Util.c
-Lite/Util/Util.o
 Lite/Util/Util.pm
 Lite/Util/Util.xs
 Lite/Util/xs_include/inet_aton.c

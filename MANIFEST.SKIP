@@ -4,7 +4,7 @@
 ^blibdirs
 Makefile$
 Makefile\.[a-z]+$
-^pm_to_blib
+pm_to_blib
 CVS/.*
 \.cvs
 ,v$
@@ -12,6 +12,7 @@ CVS/.*
 \.old$
 \.bak$
 \.tmp$
+\.xsc$
 ~$
 ^#
 \.shar$
@@ -20,4 +21,7 @@ CVS/.*
 \.tar\.gz$
 \.zip$
 _uu$
-Lite/Util/Util_IS.pm
+Util_IS\.pm$
+Util\.(bs|[co])$
+localStuff\.h$
+config\.log$
