@@ -12,7 +12,7 @@ require Exporter;
 
 @ISA = qw(Exporter);
 
-$VERSION = do { my @r = (q$Revision: 1.2 $ =~ /\d+/g); sprintf "%d."."%02d" x $#r, @r };
+$VERSION = do { my @r = (q$Revision: 1.4 $ =~ /\d+/g); sprintf "%d."."%02d" x $#r, @r };
 
 @EXPORT_OK = qw(
 	hasbits
@@ -626,8 +626,8 @@ sub _bcdcheck {
   my $len = length($bcd);
   die "Bad bcd number length $_ ".__PACKAGE__.":simple_pack, should be 1 to 40 digits"
 	if $len > 40 || $len < 1;
-  die "Bad character in decimal input string '$&' for ".__PACKAGE__.":simple_pack"
-	if $bcd =~ /\D/;
+  die "Bad character in decimal input string '$1' for ".__PACKAGE__.":simple_pack"
+	if $bcd =~ /(\D)/;
 }
 
 sub simple_pack {
@@ -668,7 +668,7 @@ Michael Robinton E<lt>michael@bizsystems.comE<gt>
 
 =head1 COPYRIGHT
 
-Copyright 2006, Michael Robinton <michael@bizsystems.com>
+Copyright 2006 - 2007, Michael Robinton <michael@bizsystems.com>
 
 This program is free software; you can redistribute it and/or modify
 it under the terms of the GNU General Public License (except as noted

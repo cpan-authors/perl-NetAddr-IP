@@ -437,7 +437,7 @@ PREINIT:
 	STRLEN len;
 	int i;
 PPCODE:
-	ap = SvPV(s,len);
+	ap = (unsigned char *) SvPV(s,len);
 	if (len != 16) {
 	  if (ix == 2)
 	    strcpy((char *)wa,"ipv6to4");
@@ -449,7 +449,7 @@ PPCODE:
 		"NetAddr::IP::Util::",(char *)wa,len *8,128);
 	}
 	if (ix == 2) {
-	  XPUSHs(sv_2mortal(newSVpvn((unsigned char *)(ap +12),4)));
+	  XPUSHs(sv_2mortal(newSVpvn((char *)(ap +12),4)));
 	  XSRETURN(1);
 	}
 	else if (ix == 1) {
@@ -476,7 +476,7 @@ PPCODE:
 	  memcpy(wa,ap,16);
 	  fastcomp128(wa);
 	}
-	XPUSHs(sv_2mortal(newSVpvn((unsigned char *)wa,16)));
+	XPUSHs(sv_2mortal(newSVpvn((char *)wa,16)));
 	XSRETURN(1);
 
 void
@@ -489,7 +489,7 @@ PREINIT:
 	unsigned char * ap, *bp;
 	STRLEN len;
 PPCODE:
-	ap = SvPV(as,len);
+	ap = (unsigned char *) SvPV(as,len);
 	if (len != 16) {
     Bail:
 	  if (ix == 1)
@@ -500,7 +500,7 @@ PPCODE:
 		"NetAddr::IP::Util::",(char *)wa,len *8,128);
 	}
 
-	bp = SvPV(bs,len);
+	bp = (unsigned char *) SvPV(bs,len);
 	if (len != 16) {
 	  goto Bail;
 	}
@@ -516,7 +516,7 @@ PPCODE:
 	}
 	if (GIMME_V == G_ARRAY) {
 	  netswap(a128.u,4);
-	  XPUSHs(sv_2mortal(newSVpvn(a128.c,16)));
+	  XPUSHs(sv_2mortal(newSVpvn((char *)a128.c,16)));
 	  XSRETURN(2);
 	}
 	XSRETURN(1);
@@ -529,7 +529,7 @@ PREINIT:
 	unsigned char * ap;
 	STRLEN len;
 PPCODE:
-	ap = SvPV(s,len);
+	ap = (unsigned char *) SvPV(s,len);
 	if (len != 16) {
 	  croak("Bad arg length for %s, length is %d, should be %d",
 		"NetAddr::IP::Util::addconst",len *8,128);
@@ -538,7 +538,7 @@ PPCODE:
 	XPUSHs(sv_2mortal(newSViv((I32)addercon(wa,cnst))));
 	if (GIMME_V == G_ARRAY) {
 	  netswap(a128.u,4);
-	  XPUSHs(sv_2mortal(newSVpvn(a128.c,16)));
+	  XPUSHs(sv_2mortal(newSVpvn((char *)a128.c,16)));
 	  XSRETURN(2);
 	}
 	XSRETURN(1);
@@ -552,7 +552,7 @@ PREINIT:
 	unsigned char * bp;
 	STRLEN len;
 CODE:
-	bp = SvPV(s,len);
+	bp = (unsigned char *) SvPV(s,len);
 	if (len != 16) {
 	  if (ix == 1)
 	    strcpy((char *)wa,"isIPv4");
@@ -580,28 +580,28 @@ PREINIT:
 	unsigned char * cp;
 	STRLEN	len;
 PPCODE:
-	cp = SvPV(s,len);
+	cp = (unsigned char *) SvPV(s,len);
 	if (ix == 0) {
 	  if (len != 16) {
 	    croak("Bad arg length for %s, length is %d, should be %d",
 		"NetAddr::IP::Util::bin2bcd",len *8,128);
           }
 	  (void) _bin2bcd(cp);
-	  XPUSHs(sv_2mortal(newSVpvn(n.txt,_bcd2txt((unsigned char *)n.bcd))));
+	  XPUSHs(sv_2mortal(newSVpvn((char *)n.txt,_bcd2txt((unsigned char *)n.bcd))));
 	}
 	else if (ix == 1) {
 	  if (len != 16) {
 	    croak("Bad arg length for %s, length is %d, should be %d",
 		"NetAddr::IP::Util::bin2bcdn",len *8,128);
 	  }
-	  XPUSHs(sv_2mortal(newSVpvn((unsigned char *)n.bcd,_bin2bcd(cp))));
+	  XPUSHs(sv_2mortal(newSVpvn((char *)n.bcd,_bin2bcd(cp))));
 	}
 	else {
 	  if (len > 20) {
 	    croak("Bad arg length for %s, length is %d, should %d digits or less",
 		"NetAddr::IP::Util::bcdn2txt",len *2,40);
 	  }
-	  XPUSHs(sv_2mortal(newSVpvn(n.txt,_bcd2txt(cp))));
+	  XPUSHs(sv_2mortal(newSVpvn((char *)n.txt,_bcd2txt(cp))));
 	}
 	XSRETURN(1);
 
@@ -621,7 +621,7 @@ PREINIT:
 	unsigned char * cp, badc;
 	STRLEN len;
 PPCODE:
-	cp = SvPV(s,len);
+	cp = (unsigned char *) SvPV(s,len);
 	if (len > 40) {
 	  if (ix == 0)
 	    strcpy((char *)wa,"bcd2bin");
@@ -644,7 +644,7 @@ PPCODE:
 	  len = SvIV(ST(1));
 	  _bcdn2bin(cp,(int)len);
 	  netswap(a128.u,4);
-	  XPUSHs(sv_2mortal(newSVpvn(a128.c,16)));
+	  XPUSHs(sv_2mortal(newSVpvn((char *)a128.c,16)));
 	  XSRETURN(1);
 	}
 	
@@ -660,10 +660,10 @@ PPCODE:
 	if (ix == 0) {
 	  _bcdn2bin(n.bcd,40);
 	  netswap(a128.u,4);
-	  XPUSHs(sv_2mortal(newSVpvn(a128.c,16)));
+	  XPUSHs(sv_2mortal(newSVpvn((char *)a128.c,16)));
 	}
 	else {	/*	ix == 1	*/
-	  XPUSHs(sv_2mortal(newSVpvn((unsigned char *)n.bcd,20)));
+	  XPUSHs(sv_2mortal(newSVpvn((char *)n.bcd,20)));
 	}
 	XSRETURN(1);
 
@@ -674,7 +674,7 @@ PREINIT:
 	unsigned char * ap, count;
 	STRLEN len;
 PPCODE:
-	ap = SvPV(s,len);
+	ap = (unsigned char *) SvPV(s,len);
 	if (len != 16) {
 	  croak("Bad arg length for %s, length is %d, should be %d",
 		"NetAddr::IP::Util::countbits",len *8,128);
@@ -697,7 +697,7 @@ PREINIT:
 	unsigned char * ip;
 	STRLEN len;
 PPCODE:
-	ip = SvPV(s,len);
+	ip = (unsigned char *) SvPV(s,len);
 	if (len != 4) {
 	  if (ix == 1)
 	    strcpy((char *)wa,"mask4to6");
@@ -710,7 +710,7 @@ PPCODE:
 	  extendipv4(ip);
 	else
 	  extendmask4(ip);
-	XPUSHs(sv_2mortal(newSVpvn((unsigned char *)wa,16)));
+	XPUSHs(sv_2mortal(newSVpvn((char *)wa,16)));
 	XSRETURN(1);
 
 void
@@ -722,15 +722,15 @@ PREINIT:
 	unsigned char * ip;
 	STRLEN len;
 PPCODE:
-	ip = SvPV(s,len);
+	ip = (unsigned char *) SvPV(s,len);
 	if (len == 16)		/* if already 128 bits, return input	*/
-	  XPUSHs(sv_2mortal(newSVpvn(ip,16)));
+	  XPUSHs(sv_2mortal(newSVpvn((char *)ip,16)));
 	else if (len == 4) {
 	  if (ix == 0)
 	    extendipv4(ip);
 	  else
 	    extendmask4(ip);
-	  XPUSHs(sv_2mortal(newSVpvn((unsigned char *)wa,16)));
+	  XPUSHs(sv_2mortal(newSVpvn((char *)wa,16)));
 	}
 	else {
 	  if (ix == 1)

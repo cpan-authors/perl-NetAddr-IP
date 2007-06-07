@@ -94,7 +94,6 @@ Lite/Util/xs_include/miniSocket.inc
 Makefile.PL
 MANIFEST			This list of files
 MANIFEST.SKIP
-META.yml
 README
 t/imhoff.t
 t/loops.t
@@ -118,3 +117,4 @@ t/v6-re.t
 t/v6-split-bulk.t
 t/wildcard.t
 TODO
+META.yml                                 Module meta-data (added by MakeMaker)

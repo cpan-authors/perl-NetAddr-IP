@@ -1,5 +1,16 @@
 Revision history for Perl extension NetAddr::IP
 
+4.007  Wed Jun  6 16:41:11 VET 2007
+       Update copyright dates
+       Wed Jun  6 21:50:20 VET 2007
+       Added patch from Daryl O'Shea to remove remaining $`. Thanks Daryl.
+
+4.006  Wed Jun  6 15:58:04 VET 2007
+
+       A patch from Michael got rid of $& and $` as reported by Daryl
+       O'Shea and documented at
+       http://issues.apache.org/SpamAssassin/show_bug.cgi?id=5312
+
 4.004  Wed Aug 16 16:01:54 PDT 2006
         update to include/exclude files in corrupted distro
 

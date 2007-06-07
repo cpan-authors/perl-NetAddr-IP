@@ -31,7 +31,7 @@ require Exporter;
 
 @ISA = qw(Exporter NetAddr::IP::Lite);
 
-$VERSION = do { sprintf " %d.%03d", (q$Revision: 4.4 $ =~ /\d+/g) };
+$VERSION = do { sprintf " %d.%03d", (q$Revision: 4.7 $ =~ /\d+/g) };
 
 =pod
 
@@ -1011,16 +1011,16 @@ sub re6($) {
   my @grp;
   do {
     my $grp = join('',splice(@dig,0,4));
-    if ($grp =~ /^0+/) {
-      my $l = length($&);  
+    if ($grp =~ /^(0+)/) {
+      my $l = length($1);  
       if ($l == 4) {
 	$grp = '0{1,4}';
       } else {
-	$grp =~ s/^${&}/0\{0,$l\}/;  
+	$grp =~ s/^${1}/0\{0,$l\}/;  
       }
     }
-    if ($grp =~ /x+$/) {
-      my $l = length($&);
+    if ($grp =~ /(x+)$/) {
+      my $l = length($1);
       if ($l == 4) {
 	$grp = '[0-9a-fA-F]{1,4}';
       } else {
@@ -1059,7 +1059,7 @@ __END__
 
 =head1 HISTORY
 
-$Id: IP.pm,v 4.4 2006/08/17 01:00:54 lem Exp $
+$Id: IP.pm,v 4.7 2007/06/06 20:43:38 luisemunoz Exp $
 
 =over
 
@@ -1695,7 +1695,7 @@ ipV4 notation is used.
 
 =head1 AUTHORS
 
-Luis E. Muñoz E<lt>luismunoz@cpan.orgE<gt>,
+Luis E. MuÃ±oz E<lt>luismunoz@cpan.orgE<gt>,
 Michael Robinton E<lt>michael@bizsystems.comE<gt>
 
 =head1 WARRANTY
@@ -1705,18 +1705,15 @@ so by using it you accept any and all the liability.
 
 =head1 LICENSE
 
-This software is (c) Luis E. Muñoz, 1999 - 2005, and (c) Michael Robinton, 2006.
-It can be used under the terms of the perl artistic license provided that
-proper credit for the work of the author is preserved in the form of this
-copyright notice and license for this module.
+This software is (c) Luis E. MuÃ±oz, 1999 - 2007, and (c) Michael
+Robinton, 2006 - 2007.  It can be used under the terms of the Perl
+artistic license provided that proper credit for the work of the
+authors is preserved in the form of this copyright notice and license
+for this module.
 
 =head1 SEE ALSO
 
-  perl(1)
-
-  L<NetAddr::IP::Lite>
-
-  L<NetAddr::IP::Util>
+  perl(1),NetAddr::IP::Lite, NetAddr::IP::Util.
 
 =cut
 

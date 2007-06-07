@@ -13,7 +13,7 @@ require Exporter;
 
 @ISA = qw(Exporter DynaLoader);
 
-$VERSION = do { my @r = (q$Revision: 1.3 $ =~ /\d+/g); sprintf "%d."."%02d" x $#r, @r };
+$VERSION = do { my @r = (q$Revision: 1.5 $ =~ /\d+/g); sprintf "%d."."%02d" x $#r, @r };
 
 my @export_ok = qw(
 	inet_aton
@@ -263,9 +263,9 @@ and returns a 128 bit binary RDATA string.
 sub ipv6_aton {
   my($ipv6) = @_;
   return undef unless $ipv6;
-  if ($ipv6 =~ /:(\d{1,3})\.(\d{1,3})\.(\d{1,3})\.(\d{1,3})$/) {	# mixed hex, dot-quad
-    return undef if $1 > 255 || $2 > 255 || $3 > 255 || $4 > 255;
-    $ipv6 = sprintf("%s:%X%02X:%X%02X",$`,$1,$2,$3,$4);			# convert to pure hex
+  if ($ipv6 =~ /^(.*):(\d{1,3})\.(\d{1,3})\.(\d{1,3})\.(\d{1,3})$/) {	# mixed hex, dot-quad
+    return undef if $2 > 255 || $3 > 255 || $4 > 255 || $5 > 255;
+    $ipv6 = sprintf("%s:%X%02X:%X%02X",$1,$2,$3,$4,$5);			# convert to pure hex
   }
   my $c;
   return undef if 
@@ -387,8 +387,8 @@ dot-quad IPv4 or a hex notation IPv6 address.
 sub inet_n2dx($) {
   my($nadr) = @_;
   if (isIPv4($nadr)) {
-    ipv6_n2d($nadr) =~ /[^:]+$/;
-    return $&;
+    ipv6_n2d($nadr) =~ /([^:]+)$/;
+    return $1;
   }
   return ipv6_n2x($nadr);
 }
@@ -408,8 +408,8 @@ sub inet_n2ad($) {
   my($nadr) = @_;
   my $addr = ipv6_n2d($nadr);
   return $addr unless isIPv4($nadr);
-  $addr =~ /[^:]+$/;
-  return $&;
+  $addr =~ /([^:]+)$/;
+  return $1;
 }
 
 =item * $ipv6naddr = ipv4to6($netaddr);
@@ -710,7 +710,7 @@ Thank you Larry for making PERL possible for all of us.
 
 =head1 COPYRIGHT
 
-Copyright 2003 - 2006, Michael Robinton E<lt>michael@bizsystems.comE<gt>
+Copyright 2003 - 2007, Michael Robinton E<lt>michael@bizsystems.comE<gt>
 
 LICENSE AND WARRANTY
 
