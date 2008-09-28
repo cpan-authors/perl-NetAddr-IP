@@ -1716,20 +1716,26 @@ echo $ECHO_N "checking for ENDIANness $ECHO_C" >&6
 #include <sys/types.h>
 #include "localStuff.h"
 
-typedef union
-{
-        int16_t i;
-        char c[2];
-} endian;
-
 int
 main()
 {
+  union {
+    short s;
+    char c[sizeof(short)];
+  } e;
 
-  endian e;
-
-  e.i = 1;
-  return - (int)e.c[0];
+  e.s = 0x0102;
+  if (sizeof (short) == 2)
+  {
+    if (e.c[0] == 1 && e.c[1] == 2)
+      return 0;		/* BIG ENDIAN */
+    else
+    {
+      if (e.c[0] == 2 && e.c[1] == 1)
+        return 1;	/* LITTLE ENDIAN */
+    }
+    return -1;		/* UNKNOWN */
+  }
 }
 _ACEOF
 
@@ -1743,7 +1749,7 @@ if { (eval echo "$as_me:$LINENO: \"$ac_link\"") >&5
   (eval $ac_try) 2>&5
   ac_status=$?
   echo "$as_me:$LINENO: \$? = $ac_status" >&5
-  };} && [ $ac_status -ne 1 ]; then
+  };} && ! [ $ac_status -lt 0 ]; then
   if [ $ac_status -eq 0 ]; then
 	cat >>localStuff.h <<\_ACEOF
 #define host_is_BIG_ENDIAN

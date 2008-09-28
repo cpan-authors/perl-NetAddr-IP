@@ -70,7 +70,7 @@
 #include <netdb.h>
 
 void
-inet_aton(host)
+yinet_aton(host)
 	char *	host
 	CODE:
 	{

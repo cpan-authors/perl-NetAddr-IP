@@ -42,10 +42,14 @@ if ($@) {
 
 plan tests => (4 * scalar @a * scalar @m) + 4;
 
-ok(! defined NetAddr::IP::Lite->new('256.1.1.1'), "Invalid IP returns undef");
-ok(! defined NetAddr::IP::Lite->new('256.256.1.1'), "Invalid IP returns undef");
-ok(! defined NetAddr::IP::Lite->new('256.256.256.1'), "Invalid IP returns undef");
-ok(! defined NetAddr::IP::Lite->new('256.256.256.256'), "Invalid IP returns undef");
+foreach my $invalid qw(
+	256.1.1.1
+	256.256.1.1
+	256.256.256.1
+	256.256.256.256
+) {
+  ok (! defined NetAddr::IP::Lite->new($invalid), "Invalid IP $invalid returns undef");
+}
 
 for my $a (@a) {
     for my $m (@m) {
@@ -61,4 +65,3 @@ for my $a (@a) {
 	};
     }
 }
-

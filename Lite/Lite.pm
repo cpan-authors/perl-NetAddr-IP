@@ -6,7 +6,7 @@ use Carp;
 use strict;
 #use diagnostics;
 #use warnings;
-use NetAddr::IP::Util 0.17 qw(
+use NetAddr::IP::Util 1.04 qw(
 	inet_any2n
 	addconst
 	sub128
@@ -25,9 +25,9 @@ use NetAddr::IP::Util 0.17 qw(
 	mask4to6
 	ipv4to6
 );
-use vars qw(@ISA @EXPORT_OK $VERSION $Accept_Binary_IP $Old_nth);
+use vars qw(@ISA @EXPORT_OK $VERSION $Accept_Binary_IP $Old_nth $AUTOLOAD);
 
-$VERSION = do { my @r = (q$Revision: 1.5 $ =~ /\d+/g); sprintf "%d."."%02d" x $#r, @r };
+$VERSION = do { my @r = (q$Revision: 1.8 $ =~ /\d+/g); sprintf "%d."."%02d" x $#r, @r };
 
 require Exporter;
 
@@ -53,11 +53,13 @@ NetAddr::IP::Lite - Manages IPv4 and IPv6 addresses and subnets
 	Ones
 	V4mask
 	V4net
-	:aton
+	:aton		DEPRECATED !
 	:old_nth
   );
 
   my $ip = new NetAddr::IP::Lite '127.0.0.1';
+	or from a packed IPv4 address
+  my $ip = new_from_aton NetAddr::IP::Lite (inet_aton('127.0.0.1'));
 
   print "The address is ", $ip->addr, " with mask ", $ip->mask, "\n" ;
 
@@ -105,6 +107,49 @@ The internal representation of all IP objects is in 128 bit IPv6 notation.
 IPv4 and IPv6 objects may be freely mixed.
 
 The supported operations are described below:
+
+=cut
+
+# in the off chance that NetAddr::IP::Lite objects are created 
+# and the caller later loads NetAddr::IP and expects to use 
+# those objects, let the AUTOLOAD routine find and redirect 
+# NetAddr::IP::Lite method and subroutine calles to NetAddr::IP.
+#
+
+my $parent = 'NetAddr::IP';
+
+# test function
+#
+# input:	subroutine name in NetAddr::IP
+# output:	t/f	if sub name exists in NetAddr::IP namespace
+#
+#sub sub_exists {
+#  my $other = $parent .'::';
+#  return exists ${$other}{$_[0]};
+#}
+
+sub DESTROY {};
+
+sub AUTOLOAD {
+  no strict;
+  my ($pkg,$func) = ($AUTOLOAD =~ /(.*)::([^:]+)$/);
+  my $other = $parent .'::';
+
+  if ($pkg =~ /^$other/o && exists ${$other}{$func}) {
+    $other .= $func;
+    goto &{$other};
+  }
+
+  my @stack = caller(0);
+
+  if ( $pkg eq ref $_[0] ) {
+    $other = qq|Can't locate object method "$func" via|;
+  }
+  else {
+    $other = qq|Undefined subroutine \&$AUTOLOAD not found in|;
+  }
+  die $other . qq| package "$parent" or "$pkg" (did you forgot to load a module?) at $stack[1] line $stack[2].\n|;
+}
 
 =head2 Overloaded Operators
 
@@ -159,19 +204,19 @@ use overload
     },
 
     '>'		=> sub {
-	return &comp_addr > 0 ? 1 : 0;
+	return &comp_addr_mask > 0 ? 1 : 0;
     },
 
     '<'		=> sub {
-	return &comp_addr < 0 ? 1 : 0;
+	return &comp_addr_mask < 0 ? 1 : 0;
     },
 
     '>='	=> sub {
-	return &comp_addr < 0 ? 0 : 1;
+	return &comp_addr_mask < 0 ? 0 : 1;
     },
 
     '<='	=> sub {
-	return &comp_addr > 0 ? 0 : 1;
+	return &comp_addr_mask > 0 ? 0 : 1;
     },
 
     '<=>'	=> \&comp_addr_mask,
@@ -187,11 +232,11 @@ sub comp_addr_mask {
   return hasbits($rv) ? 1 : 0;
 }
 
-sub comp_addr {
-  my($c,$rv) = sub128($_[0]->{addr},$_[1]->{addr});
-  return -1 unless $c;
-  return hasbits($rv) ? 1 : 0;
-}
+#sub comp_addr {
+#  my($c,$rv) = sub128($_[0]->{addr},$_[1]->{addr});
+#  return -1 unless $c;
+#  return hasbits($rv) ? 1 : 0;
+#}
 
 =pod
 
@@ -248,10 +293,19 @@ the operands is equal.
 =item B<Comparison via E<gt>, E<lt>, E<gt>=, E<lt>=, E<lt>=E<gt> and C<cmp>>
 
 Internally, all network objects are represented in 128 bit format.
-The numeric representation of the network is compared through the 
+The numeric representation of the network is compared through the
 corresponding operation. Comparisons are tried first on the address portion
-of the object and if that is equal then the cidr portion of the masks are
-compared.
+of the object and if that is equal then the NUMERIC cidr portion of the
+masks are compared. This leads to the counterintuitive result that
+
+        /24 > /16
+
+Comparision should not be done on netaddr objects with different CIDR as
+this may produce indeterminate - unexpected results,
+rather the determination of which netblock is larger or smaller should be
+done by comparing
+
+        $ip1->masklen <=> $ip2->masklen
 
 =item B<Addition of a constant>
 
@@ -382,9 +436,15 @@ sub _new ($$$) {
 
 =item C<-E<gt>new6([$addr, [ $mask]])>
 
-These methods creates a new address with the supplied address in
+=item C<-E<gt>new_from_aton($netaddr)>
+
+The first two methods create a new address with the supplied address in
 C<$addr> and an optional netmask C<$mask>, which can be omitted to get
 a /32 or /128 netmask for IPv4 / IPv6 addresses respectively
+
+B<new_from_aton> takes a packed IPv4 address and assumes a /32 mask. This
+function replaces the DEPRECATED :aton functionality which is fundamentally
+broken.
 
 C<-E<gt>new6> marks the address as being in ipV6 address space even if the
 format would suggest otherwise.
@@ -410,9 +470,12 @@ C<gethostbyname> can also be understood, although no mask can be
 specified for them. The default is to not attempt to recognize this
 format, as it seems to be seldom used.
 
+###### DEPRECATED, will be remove in version 5 ############
 To accept addresses in that format, invoke the module as in
 
   use NetAddr::IP::Lite ':aton'
+
+###### USE new_from_aton instead ##########################
 
 If called with no arguments, 'default' is assumed.
 
@@ -498,6 +561,21 @@ sub _obits ($$) {
 sub new($;$$) {
   unshift @_, 0;
   goto &_xnew;
+}
+
+sub new_from_aton($$) {
+  my $proto     = shift;
+  my $class = ref $proto || $proto || __PACKAGE__;
+  my $ip = shift;
+  return undef unless defined $ip;
+  my $addrlen = length($ip);
+  return undef unless $addrlen == 4;
+  my $self = {
+	addr    => ipv4to6($ip),
+	mask    => &Ones,
+	isv6    => 0,
+  };
+  return bless $self, $class;
 }
 
 sub new6($;$$) { 
@@ -1032,7 +1110,7 @@ sub import {
 	Ones
 	V4mask
 	V4net
-	:aton
+	:aton		DEPRECATED
 	:old_nth
 
 =head1 AUTHOR
@@ -1047,7 +1125,9 @@ so by using it you accept any and all the liability.
 
 =head1 LICENSE
 
-This software is (c) Luis E. Muñoz, 1999 - 2005, and (c) Michael Robinton, 2006.
+ This software is (c) Luis E. Muñoz, 1999 - 2005 
+ and (c) Michael Robinton, 2006 - 2008.
+
 It can be used under the terms of the perl artistic license provided that 
 proper credit for the work of the author is preserved in the form of this 
 copyright notice and license for this module.

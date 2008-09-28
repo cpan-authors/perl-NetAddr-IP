@@ -13,7 +13,7 @@ require Exporter;
 
 @ISA = qw(Exporter DynaLoader);
 
-$VERSION = do { my @r = (q$Revision: 1.5 $ =~ /\d+/g); sprintf "%d."."%02d" x $#r, @r };
+$VERSION = do { my @r = (q$Revision: 1.9 $ =~ /\d+/g); sprintf "%d."."%02d" x $#r, @r };
 
 my @export_ok = qw(
 	inet_aton
@@ -104,14 +104,31 @@ if (NetAddr::IP::Util_IS->pure || $@) {	## load the pure perl version if 'C' lib
   require NetAddr::IP::UtilPP;
   import NetAddr::IP::UtilPP qw( :all );
   require Socket;
-  import Socket qw(inet_ntoa inet_aton);
+  import Socket qw(inet_ntoa);
+  *yinet_aton = \&Socket::inet_aton;
   $Mode = 'Pure Perl';
 }
 else {
   $Mode = 'CC XS';
 }
 
+# if Socket lib is broken in some way, check for overange values
+#
+my $overange = yinet_aton('256.1') ? 1:0;
+
 sub mode() { $Mode };
+
+sub inet_aton {
+  if (! $overange || $_[0] =~ /[^0-9\.]/) {	# hostname
+    return &yinet_aton;
+  }
+  my @dq = split(/\./,$_[0]);
+  foreach (@dq) {
+    return undef if $_ > 255;
+  }
+  return &yinet_aton;
+}
+
 sub DESTROY {};
 
 1;
@@ -263,9 +280,9 @@ and returns a 128 bit binary RDATA string.
 sub ipv6_aton {
   my($ipv6) = @_;
   return undef unless $ipv6;
-  if ($ipv6 =~ /^(.*):(\d{1,3})\.(\d{1,3})\.(\d{1,3})\.(\d{1,3})$/) {	# mixed hex, dot-quad
-    return undef if $2 > 255 || $3 > 255 || $4 > 255 || $5 > 255;
-    $ipv6 = sprintf("%s:%X%02X:%X%02X",$1,$2,$3,$4,$5);			# convert to pure hex
+  if ($ipv6 =~ /:(\d{1,3})\.(\d{1,3})\.(\d{1,3})\.(\d{1,3})$/) {	# mixed hex, dot-quad
+    return undef if $1 > 255 || $2 > 255 || $3 > 255 || $4 > 255;
+    $ipv6 = sprintf("%s:%X%02X:%X%02X",$`,$1,$2,$3,$4);			# convert to pure hex
   }
   my $c;
   return undef if 

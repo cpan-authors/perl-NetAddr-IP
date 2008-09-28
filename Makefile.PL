@@ -75,6 +75,12 @@ again, the module must be use()d as
 
     use NetAddr::IP ':aton';
 
+Versions before 4.08 recognized the above syntax. This behavior is
+fundamentally broken, is DEPRECATED and WILL BE REMOVED in version 5.0
+Use this method to create new objects from 'aton's
+
+    \$ip = new_from_aton NetAddr::IP(inet_aton('1.2.3.4'))
+
 EOF
     ;
 

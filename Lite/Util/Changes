@@ -1,5 +1,12 @@
 Revision history for Perl extension NetAddr::IP::Util
 
+0.19  Sat Sep 27 13:36:58 PDT 2008
+	updated test for ENDIANess in siteconf
+
+	add test in inet_aton to detect overange IP dot quad values
+	missed by some broken Socket implementations
+	i.e. 256.1.1.1
+
 0.18  Sun Aug  6 10:48:25 PDT 2006
 	correct shiftleft documentation
 	correct mask4to6 documentation

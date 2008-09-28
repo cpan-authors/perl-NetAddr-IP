@@ -42,6 +42,7 @@ Lite/t/v4-cnew.t
 Lite/t/v4-contains.t
 Lite/t/v4-last.t
 Lite/t/v4-new-first.t
+Lite/t/v4-new_from_aton.t
 Lite/t/v4-new.t
 Lite/t/v4-num.t
 Lite/t/v4-numeric.t
@@ -95,6 +96,8 @@ Makefile.PL
 MANIFEST			This list of files
 MANIFEST.SKIP
 README
+t/full.t
+t/full6.t
 t/imhoff.t
 t/loops.t
 t/masklen.t

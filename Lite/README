@@ -7,11 +7,13 @@ SYNOPSIS
             Ones
             V4mask
             V4net
-            :aton
+            :aton           DEPRECATED !
             :old_nth
       );
 
       my $ip = new NetAddr::IP::Lite '127.0.0.1';
+            or from a packed IPv4 address
+      my $ip = new_from_aton NetAddr::IP::Lite (inet_aton('127.0.0.1'));
 
       print "The address is ", $ip->addr, " with mask ", $ip->mask, "\n" ;
 
@@ -59,6 +61,7 @@ DESCRIPTION
     The supported operations are described below:
 
   Overloaded Operators
+
     Assignment ("=")
         Has been optimized to copy one NetAddr::IP::Lite object to another
         very quickly.
@@ -66,7 +69,8 @@ DESCRIPTION
     "->copy()"
         The assignment ("=") operation is only put in to operation when the
         copied object is further mutated by another overloaded operation.
-        See overload SPECIAL SYMBOLS FOR "use overload" for details.
+        See the overload manpage SPECIAL SYMBOLS FOR "use overload" for
+        details.
 
         "->copy()" actually creates a new object when called.
 
@@ -104,8 +108,18 @@ DESCRIPTION
         Internally, all network objects are represented in 128 bit format.
         The numeric representation of the network is compared through the
         corresponding operation. Comparisons are tried first on the address
-        portion of the object and if that is equal then the cidr portion of
-        the masks are compared.
+        portion of the object and if that is equal then the NUMERIC cidr
+        portion of the masks are compared. This leads to the
+        counterintuitive result that
+
+                /24 > /16
+
+        Comparision should not be done on netaddr objects with different
+        CIDR as this may produce indeterminate - unexpected results, rather
+        the determination of which netblock is larger or smaller should be
+        done by comparing
+
+                $ip1->masklen <=> $ip2->masklen
 
     Addition of a constant
         Adding a constant to a NetAddr::IP::Lite object changes its address
@@ -135,11 +149,17 @@ DESCRIPTION
         opposite of auto-incrementing it, as you would expect.
 
   Methods
+
     "->new([$addr, [ $mask|IPv6 ]])"
     "->new6([$addr, [ $mask]])"
-        These methods creates a new address with the supplied address in
-        $addr and an optional netmask $mask, which can be omitted to get a
-        /32 or /128 netmask for IPv4 / IPv6 addresses respectively
+    "->new_from_aton($netaddr)"
+        The first two methods create a new address with the supplied address
+        in "$addr" and an optional netmask "$mask", which can be omitted to
+        get a /32 or /128 netmask for IPv4 / IPv6 addresses respectively
+
+        new_from_aton takes a packed IPv4 address and assumes a /32 mask.
+        This function replaces the DEPRECATED :aton functionality which is
+        fundamentally broken.
 
         "->new6" marks the address as being in ipV6 address space even if
         the format would suggest otherwise.
@@ -153,7 +173,7 @@ DESCRIPTION
 
           See "STRINGIFICATION" below.
 
-        $addr can be almost anything that can be resolved to an IP address
+        "$addr" can be almost anything that can be resolved to an IP address
         in all the notations I have seen over time. It can optionally
         contain the mask in CIDR notation.
 
@@ -165,13 +185,16 @@ DESCRIPTION
         specified for them. The default is to not attempt to recognize this
         format, as it seems to be seldom used.
 
-        To accept addresses in that format, invoke the module as in
+        ###### DEPRECATED, will be remove in version 5 ############ To
+        accept addresses in that format, invoke the module as in
 
           use NetAddr::IP::Lite ':aton'
 
+        ###### USE new_from_aton instead ##########################
+
         If called with no arguments, 'default' is assumed.
 
-        $addr can be any of the following and possibly more...
+        "$addr" can be any of the following and possibly more...
 
           n.n
           n.n/mm
@@ -265,14 +288,14 @@ DESCRIPTION
         subnet.
 
     "$me->contains($other)"
-        Returns true when $me completely contains $other. False is returned
-        otherwise and "undef" is returned if $me and $other are not both
-        "NetAddr::IP::Lite" objects.
+        Returns true when "$me" completely contains "$other". False is
+        returned otherwise and "undef" is returned if "$me" and "$other" are
+        not both "NetAddr::IP::Lite" objects.
 
     "$me->within($other)"
-        The complement of "->contains()". Returns true when $me is
-        completely contained within $other, undef if $me and $other are not
-        both "NetAddr::IP::Lite" objects.
+        The complement of "->contains()". Returns true when "$me" is
+        completely contained within "$other", undef if "$me" and "$other"
+        are not both "NetAddr::IP::Lite" objects.
 
     "->first()"
         Returns a new object representing the first usable IP address within
@@ -285,7 +308,7 @@ DESCRIPTION
     "->nth($index)"
         Returns a new object representing the *n*-th usable IP address
         within the subnet (ie, the *n*-th host address). If no address is
-        available (for example, when the network is too small for $index
+        available (for example, when the network is too small for "$index"
         hosts), "undef" is returned.
 
         Version 4.00 of NetAddr::IP and version 1.00 of NetAddr::IP::Lite
@@ -340,7 +363,7 @@ EXPORT_OK
             Ones
             V4mask
             V4net
-            :aton
+            :aton           DEPRECATED
             :old_nth
 
 AUTHOR
@@ -352,11 +375,12 @@ WARRANTY
     by using it you accept any and all the liability.
 
 LICENSE
-    This software is (c) Luis E. Muñoz, 1999 - 2005, and (c) Michael
-    Robinton, 2006. It can be used under the terms of the perl artistic
-    license provided that proper credit for the work of the author is
-    preserved in the form of this copyright notice and license for this
-    module.
+     This software is (c) Luis E. Muñoz, 1999 - 2005 
+     and (c) Michael Robinton, 2006 - 2008.
+
+    It can be used under the terms of the perl artistic license provided
+    that proper credit for the work of the author is preserved in the form
+    of this copyright notice and license for this module.
 
 SEE ALSO
     perl(1), NetAddr::IP(3), NetAddr::IP::Util(3)
