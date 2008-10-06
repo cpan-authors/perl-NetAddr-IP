@@ -3,9 +3,12 @@ use ExtUtils::MakeMaker qw(
 	prompt
 );
 use Config;
+use Cwd;
 use Getopt::Long qw(
 	GetOptions
 );
+
+my $pwd = getcwd();
 
 unlink 'Makefile';		# remove Makefile to stabalize CC test
 
@@ -87,7 +90,7 @@ config  :: localStuff.h
 # siteconf CCname Cfile_ext OBJext EXEext "Cflags" "LDflags" "LDLOADLIBS"
 #
 localStuff.h :
-	./siteconf "$(CC)" ".c" "$(OBJ_EXT)" "$(EXE_EXT)" "$(CCFLAGS)" "$(LDflags)" "$(LDLOADLIBS)"
+	|. $pwd .q|/siteconf "$(CC)" ".c" "$(OBJ_EXT)" "$(EXE_EXT)" "$(CCFLAGS)" "$(LDflags)" "$(LDLOADLIBS)"
 |;
 }
 

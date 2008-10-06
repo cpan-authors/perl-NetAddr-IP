@@ -1,5 +1,8 @@
 Revision history for Perl extension NetAddr::IP::Util
 
+0.20  Mon Oct  6 13:07:34 PDT 2008
+	clear build bug for Win32
+
 0.19  Sat Sep 27 13:36:58 PDT 2008
 	updated test for ENDIANess in siteconf
 
