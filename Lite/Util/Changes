@@ -1,5 +1,10 @@
 Revision history for Perl extension NetAddr::IP::Util
 
+1.21  Thu Oct 16 19:35:33 PDT 2008
+	again... clear build bug for Win32
+	and lets get the version number right since it appears
+	that it was up-rev'd at some point to 1.xx
+
 0.20  Mon Oct  6 13:07:34 PDT 2008
 	clear build bug for Win32
 

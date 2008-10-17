@@ -1,5 +1,8 @@
 Revision history for Perl extension NetAddr::IP::Lite
 
+1.09  Thu Oct 16 19:35:33 PDT 2008
+        again... clear build bug for Win32 in Util.pm v 1.21
+	
 1.08  Sat Sep 27 12:27:28 PDT 2008
     in Util v0.19
 	updated test for ENDIANess in siteconf

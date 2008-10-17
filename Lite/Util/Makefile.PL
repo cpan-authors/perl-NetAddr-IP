@@ -90,7 +90,7 @@ config  :: localStuff.h
 # siteconf CCname Cfile_ext OBJext EXEext "Cflags" "LDflags" "LDLOADLIBS"
 #
 localStuff.h :
-	|. $pwd .q|/siteconf "$(CC)" ".c" "$(OBJ_EXT)" "$(EXE_EXT)" "$(CCFLAGS)" "$(LDflags)" "$(LDLOADLIBS)"
+	$(SHELL) ./siteconf "$(CC)" ".c" "$(OBJ_EXT)" "$(EXE_EXT)" "$(CCFLAGS)" "$(LDflags)" "$(LDLOADLIBS)"
 |;
 }
 

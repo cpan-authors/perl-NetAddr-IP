@@ -1,6 +1,11 @@
 Revision history for Perl extension NetAddr::IP
 
 
+4.012  Thu Oct 16 19:35:33 PDT 2008
+	clear build bug for Win32 in Util.pm v 1.21
+
+4.011  released Oct 6 13:10
+
 4.010  Sat Sep 27 17:00:28 PDT 2008
     in NetAddr::IP::Util v0.19
 	updated test for ENDIANess in siteconf
