@@ -24,6 +24,10 @@ GetOptions(
 	},
 );
 
+if ($^O eq 'MSWin32') { 
+  $useXS = 0;		# force NOXS mode for windows
+}
+
 my $pkg = 'NetAddr::IP::Util';
 $pkg =~ /[^:]+$/;
 my $module = $& .'.pm';
@@ -32,14 +36,14 @@ my $cfile = $& .'.c';
 my %makeparms = (
     NAME		=> $pkg,
     VERSION_FROM	=> $module,	# finds $VERSION
-    depend		=> {$cfile => q[xs_include/miniSocket.inc localStuff.h],
+    depend		=> {$cfile => q[xs_include/miniSocket.inc localconf.h config.h],
 			},
 #    PREREQ_PM		=> {Test::More	=> 0,
 #			},
     LIBS		=> [],
     XS			=> {},
     C			=> [],
-    clean		=> { FILES    => "*.bs *.o *.c *~ tmp* Util_IS.pm localStuff.h config.log"},
+    clean		=> { FILES    => "*.bs *.o *.c *~ tmp* Util_IS.pm config.log config.h config.status auto*"},
     dist		=> {COMPRESS=>'gzip', SUFFIX=>'gz'}
 
 );
@@ -84,13 +88,11 @@ if ($useXS) {
   chop $link;
   $makeparms{LIBS} = [$link];
   $begin = q|
-config  :: localStuff.h
+config  :: config.h
 	@$(NOOP)
 
-# siteconf CCname Cfile_ext OBJext EXEext "Cflags" "LDflags" "LDLOADLIBS"
-#
-localStuff.h :
-	$(SHELL) ./siteconf "$(CC)" ".c" "$(OBJ_EXT)" "$(EXE_EXT)" "$(CCFLAGS)" "$(LDflags)" "$(LDLOADLIBS)"
+config.h :
+	$(SHELL) configure
 |;
 }
 

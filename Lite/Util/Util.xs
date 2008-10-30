@@ -33,8 +33,8 @@ extern "C" {
 #include <Win32-Extensions.h>
 #endif
 
-/*	take care of missing u_int32_t definitions windoze/sun		*/
-#include "u_intxx.h"
+#include "config.h"
+#include "localconf.h"
 
 /*	needed for testing with 'printf'
 #include <stdio.h>

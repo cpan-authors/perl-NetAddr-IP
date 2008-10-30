@@ -1,5 +1,14 @@
 Revision history for Perl extension NetAddr::IP::Util
 
+1.22  Wed Oct 22 14:54:12 PDT 2008
+	eliminated dependance on PL_sawampersand
+	thanks to Mark Martinec <Mark.Martinec@ijs.si> 
+	for spotting this and submitting a patch.
+
+	force -noxs mode for Win32
+
+	use autoconf to configure 'C' build
+
 1.21  Thu Oct 16 19:35:33 PDT 2008
 	again... clear build bug for Win32
 	and lets get the version number right since it appears

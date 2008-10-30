@@ -31,7 +31,7 @@ require Exporter;
 
 @ISA = qw(Exporter NetAddr::IP::Lite);
 
-$VERSION = do { sprintf " %d.%03d", (q$Revision: 4.12 $ =~ /\d+/g) };
+$VERSION = do { sprintf " %d.%03d", (q$Revision: 4.13 $ =~ /\d+/g) };
 
 =pod
 
@@ -53,9 +53,11 @@ NetAddr::IP - Manages IPv4 and IPv6 addresses and subnets
 	:old_nth
   );
 
-  my $ip = new NetAddr::IP 'loopback';
-	or
+  my $ip = new NetAddr::IP::Lite '127.0.0.1';
+	or from a packed IPv4 address
   my $ip = new_from_aton NetAddr::IP::Lite (inet_aton('127.0.0.1'));
+	or from an octal filtered IPv4 address
+  my $ip = new_no NetAddr::IP::Lite '127.012.0.0';
 
   print "The address is ", $ip->addr, " with mask ", $ip->mask, "\n" ;
 
@@ -357,6 +359,8 @@ sub do_prefix ($$$) {
 
 =item C<-E<gt>new6([$addr, [ $mask]])>
 
+=item C<-E<gt>new_no([$addr, [ $mask]])>
+
 =item C<-E<gt>new_from_aton($netaddr)>
 
 The first two methods create a new address with the supplied address in
@@ -366,6 +370,11 @@ a /32 or /128 netmask for IPv4 / IPv6 addresses respectively
 B<new_from_aton> takes a packed IPv4 address and assumes a /32 mask. This
 function replaces the DEPRECATED :aton functionality which is fundamentally
 broken.
+
+The third method C<new_no> is exclusively for IPv4 addresses and filters
+improperly formated
+dot quad strings for leading 0's that would normally be interpreted as octal
+format by NetAddr per the specifications for inet_aton.
 
 C<-E<gt>new6> marks the address as being in ipV6 address space even if the
 format would suggest otherwise.

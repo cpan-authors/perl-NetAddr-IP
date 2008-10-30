@@ -13,7 +13,7 @@ require Exporter;
 
 @ISA = qw(Exporter DynaLoader);
 
-$VERSION = do { my @r = (q$Revision: 1.21 $ =~ /\d+/g); sprintf "%d."."%02d" x $#r, @r };
+$VERSION = do { my @r = (q$Revision: 1.22 $ =~ /\d+/g); sprintf "%d."."%02d" x $#r, @r };
 
 my @export_ok = qw(
 	inet_aton
@@ -280,9 +280,10 @@ and returns a 128 bit binary RDATA string.
 sub ipv6_aton {
   my($ipv6) = @_;
   return undef unless $ipv6;
-  if ($ipv6 =~ /:(\d{1,3})\.(\d{1,3})\.(\d{1,3})\.(\d{1,3})$/) {	# mixed hex, dot-quad
-    return undef if $1 > 255 || $2 > 255 || $3 > 255 || $4 > 255;
-    $ipv6 = sprintf("%s:%X%02X:%X%02X",$`,$1,$2,$3,$4);			# convert to pure hex
+  local($1,$2,$3,$4,$5);
+  if ($ipv6 =~ /^(.*:)(\d{1,3})\.(\d{1,3})\.(\d{1,3})\.(\d{1,3})$/) {	# mixed hex, dot-quad
+    return undef if $2 > 255 || $3 > 255 || $4 > 255 || $5 > 255;
+    $ipv6 = sprintf("%s%X%02X:%X%02X",$1,$2,$3,$4,$5);			# convert to pure hex
   }
   my $c;
   return undef if 

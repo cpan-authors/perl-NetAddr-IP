@@ -35,4 +35,4 @@ SKIP:
     is(NetAddr::IP::Lite->new(inet_aton($_->[1]))->addr, $_->[1], 
        "->new aton($_->[1])")
 	for @addr;
-}
+};

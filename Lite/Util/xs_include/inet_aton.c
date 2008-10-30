@@ -1,6 +1,6 @@
 /*	inet_aton.c
  *
- * Copyright 2006, Michael Robinton <michael@bizsystems.com>
+ * Copyright 2006 - 2008, Michael Robinton <michael@bizsystems.com>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -17,7 +17,7 @@
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 */
 
-#ifndef LOCAL_HAVE_inet_aton
+#ifndef HAVE_INET_ATON
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <netinet/in.h>
@@ -26,10 +26,10 @@
 int
 my_inet_aton(const char *cp, struct in_addr *inp)
 {
-# ifdef LOCAL_HAVE_inet_pton
+# ifdef HAVE_INET_PTON
   return inet_pton(AF_INET,cp,inp);
 # else
-#  ifdef LOCAL_HAVE_inet_addr
+#  ifdef HAVE_INET_ADDR
   inp->s_addr = inet_addr(cp);
   if (inp->s_addr == -1) {
     if (strncmp("255.255.255.255",cp,15) == 0)

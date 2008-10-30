@@ -6,7 +6,7 @@ use Carp;
 use strict;
 #use diagnostics;
 #use warnings;
-use NetAddr::IP::Util 1.04 qw(
+use NetAddr::IP::Util qw(
 	inet_any2n
 	addconst
 	sub128
@@ -27,7 +27,7 @@ use NetAddr::IP::Util 1.04 qw(
 );
 use vars qw(@ISA @EXPORT_OK $VERSION $Accept_Binary_IP $Old_nth $AUTOLOAD);
 
-$VERSION = do { my @r = (q$Revision: 1.9 $ =~ /\d+/g); sprintf "%d."."%02d" x $#r, @r };
+$VERSION = do { my @r = (q$Revision: 1.10 $ =~ /\d+/g); sprintf "%d."."%02d" x $#r, @r };
 
 require Exporter;
 
@@ -60,6 +60,8 @@ NetAddr::IP::Lite - Manages IPv4 and IPv6 addresses and subnets
   my $ip = new NetAddr::IP::Lite '127.0.0.1';
 	or from a packed IPv4 address
   my $ip = new_from_aton NetAddr::IP::Lite (inet_aton('127.0.0.1'));
+	or from an octal filtered IPv4 address
+  my $ip = new_no NetAddr::IP::Lite '127.012.0.0';
 
   print "The address is ", $ip->addr, " with mask ", $ip->mask, "\n" ;
 
@@ -436,11 +438,20 @@ sub _new ($$$) {
 
 =item C<-E<gt>new6([$addr, [ $mask]])>
 
+=item C<-E<gt>new_no([$addr, [ $mask]])>
+
 =item C<-E<gt>new_from_aton($netaddr)>
+
+=item C<-E<gt>new_no([$addr, [ $mask]])>
 
 The first two methods create a new address with the supplied address in
 C<$addr> and an optional netmask C<$mask>, which can be omitted to get
-a /32 or /128 netmask for IPv4 / IPv6 addresses respectively
+a /32 or /128 netmask for IPv4 / IPv6 addresses respectively. 
+
+The third method C<new_no> is exclusively for IPv4 addresses and filters
+improperly formated
+dot quad strings for leading 0's that would normally be interpreted as octal
+format by NetAddr per the specifications for inet_aton.
 
 B<new_from_aton> takes a packed IPv4 address and assumes a /32 mask. This
 function replaces the DEPRECATED :aton functionality which is fundamentally
@@ -558,6 +569,11 @@ sub _obits ($$) {
     return (~ ($hi ^ $lo)) & 0xFF;
 }
 
+sub new_no($;$$) {
+  unshift @_, -1;
+  goto &_xnew;
+}
+
 sub new($;$$) {
   unshift @_, 0;
   goto &_xnew;
@@ -583,10 +599,20 @@ sub new6($;$$) {
   goto &_xnew;
 }
 
+sub _no_octal {
+  $_[0] =~ m/^(\d+)\.(\d+)\.(\d+)\.(\d+)$/;
+  return sprintf("%d.%d.%d.%d",$1,$2,$3,$4);
+}
+
 sub _xnew($$;$$) {
+  my $noctal	= 0;
   my $isV6	= shift;
+  if ($isV6 < 0) {		# flag for no octal?
+    $isV6	= 0;
+    $noctal	= 1;
+  }
   my $proto	= shift;
-  my $class = ref $proto || $proto || __PACKAGE__;
+  my $class	= ref $proto || $proto || __PACKAGE__;
   my $ip	= lc shift;
   $ip = 'default' unless defined $ip;
   my $hasmask = 1;
@@ -649,7 +675,8 @@ sub _xnew($$;$$) {
 	  $mask = bcd2bin($1);
 	}
       }
-    } elsif ($mask =~ m/^(\d+)\.(\d+)\.(\d+)\.(\d+)$/) { # ipv4 form of mask
+    } elsif ($mask =~ m/^\d+\.\d+\.\d+\.\d+$/) { # ipv4 form of mask
+      $mask = _no_octal($mask) if $noctal;	# filter for octal
       return undef unless defined ($mask = inet_aton($mask));
       $mask = mask4to6($mask);
     } elsif (grep($mask eq $_,qw(default any broadcast loopback unspecified host))) {
@@ -733,8 +760,13 @@ sub _xnew($$;$$) {
       }
       elsif ($ip =~ m/^(\d+\.\d+\.\d+\.\d+)
 		\s*-\s*(\d+\.\d+\.\d+\.\d+)$/x) {
-	return undef unless ($ip = inet_aton($1));
-	return undef unless ($tmp = inet_aton($2));
+	if ($noctal) {
+	  return undef unless ($ip = inet_aton(_no_octal($1)));
+	  return undef unless ($tmp = inet_aton(_no_octal($2)));
+	} else {
+	  return undef unless ($ip = inet_aton($1));
+	  return undef unless ($tmp = inet_aton($2));
+	}
 # check for left side greater than right side
 # save numeric difference in $mask
 	return undef if ($tmp = unpack('N',$tmp) - unpack('N',$ip)) < 0;

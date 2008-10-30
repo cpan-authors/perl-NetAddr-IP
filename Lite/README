@@ -14,6 +14,8 @@ SYNOPSIS
       my $ip = new NetAddr::IP::Lite '127.0.0.1';
             or from a packed IPv4 address
       my $ip = new_from_aton NetAddr::IP::Lite (inet_aton('127.0.0.1'));
+            or from an octal filtered IPv4 address
+      my $ip = new_no NetAddr::IP::Lite '127.012.0.0';
 
       print "The address is ", $ip->addr, " with mask ", $ip->mask, "\n" ;
 
@@ -152,10 +154,17 @@ DESCRIPTION
 
     "->new([$addr, [ $mask|IPv6 ]])"
     "->new6([$addr, [ $mask]])"
+    "->new_no([$addr, [ $mask]])"
     "->new_from_aton($netaddr)"
+    "->new_no([$addr, [ $mask]])"
         The first two methods create a new address with the supplied address
         in "$addr" and an optional netmask "$mask", which can be omitted to
-        get a /32 or /128 netmask for IPv4 / IPv6 addresses respectively
+        get a /32 or /128 netmask for IPv4 / IPv6 addresses respectively.
+
+        The third method "new_no" is exclusively for IPv4 addresses and
+        filters improperly formated dot quad strings for leading 0's that
+        would normally be interpreted as octal format by NetAddr per the
+        specifications for inet_aton.
 
         new_from_aton takes a packed IPv4 address and assumes a /32 mask.
         This function replaces the DEPRECATED :aton functionality which is

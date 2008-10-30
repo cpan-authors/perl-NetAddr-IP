@@ -44,6 +44,7 @@ Lite/t/v4-last.t
 Lite/t/v4-new-first.t
 Lite/t/v4-new_from_aton.t
 Lite/t/v4-new.t
+Lite/t/v4-no_octal.t
 Lite/t/v4-num.t
 Lite/t/v4-numeric.t
 Lite/t/v4-old-first.t
@@ -58,11 +59,14 @@ Lite/t/v6-old-base.t
 Lite/t/version.t
 Lite/t/within.t
 Lite/Util/Changes
+Lite/Util/configure
+Lite/Util/configure.ac
+Lite/Util/config.h.in
 Lite/Util/GPL
 Lite/Util/lib/NetAddr/IP/UtilPP.pm
+Lite/Util/localconf.h
 Lite/Util/Makefile.PL
 Lite/Util/README
-Lite/Util/siteconf
 Lite/Util/t/4to6.t
 Lite/Util/t/add128.t
 Lite/Util/t/addconst.t
@@ -87,7 +91,6 @@ Lite/Util/t/notcontiguous.t
 Lite/Util/t/simple_pack.t
 Lite/Util/t/sub128.t
 Lite/Util/typemap
-Lite/Util/u_intxx.h
 Lite/Util/Util.pm
 Lite/Util/Util.xs
 Lite/Util/xs_include/inet_aton.c

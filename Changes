@@ -1,5 +1,16 @@
 Revision history for Perl extension NetAddr::IP
 
+4.013  Wed Oct 22 15:04:49 PDT 2008
+	In Lite.pm v1.10, add new no octal method for 
+	improperly formatted ipV4 addresses
+
+	In Util.pm v1.22, eliminated dependance on PL_sawampersand
+	thanks to Mark Martinec <Mark.Martinec@ijs.si>
+	for spotting this and submitting a patch.
+
+	In Util.pm v1.22, force -noxs mode for Win32
+
+	In Util.pm v1.22, use autoconf to configure 'C' build
 
 4.012  Thu Oct 16 19:35:33 PDT 2008
 	clear build bug for Win32 in Util.pm v 1.21
@@ -10,9 +21,9 @@ Revision history for Perl extension NetAddr::IP
     in NetAddr::IP::Util v0.19
 	updated test for ENDIANess in siteconf
 
-        add test in inet_aton to detect overange IP dot quad values
-        missed by some broken Socket implementations
-        i.e. 256.1.1.1 would fail to return undef
+	add test in inet_aton to detect overange IP dot quad values
+	missed by some broken Socket implementations
+	i.e. 256.1.1.1 would fail to return undef
 
 NOTE: 	Versions 4.008 and 4.009 had limited release to tester only
 	and were not uploaded to CPAN. All of the v4.008, 4.009
