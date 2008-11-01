@@ -4,7 +4,7 @@ use NetAddr::IP::Util qw(
 );
 use NetAddr::IP::Lite;
 use Test::More;
-use diagnostics;
+#use diagnostics;
 
 plan tests => 12 + 3;
 

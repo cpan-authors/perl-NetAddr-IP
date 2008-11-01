@@ -1,5 +1,12 @@
 Revision history for Perl extension NetAddr::IP::Lite
 
+1.11  Sat Nov  1 15:13:48 PST 2008
+	add test for characters not allowed by rfc952before 
+	the call to gethostbyname in sub new() for those people 
+	that insist on using deprecated functionality :aton
+	and OS's that fail to notice calls to gethostbyname
+	with binary arguments
+
 1.10  Wed Oct 22 14:54:12 PDT 2008
 	add new no octal method for improperly formatted ipV4 addresses
 

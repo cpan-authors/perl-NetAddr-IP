@@ -27,7 +27,7 @@ use NetAddr::IP::Util qw(
 );
 use vars qw(@ISA @EXPORT_OK $VERSION $Accept_Binary_IP $Old_nth $AUTOLOAD);
 
-$VERSION = do { my @r = (q$Revision: 1.10 $ =~ /\d+/g); sprintf "%d."."%02d" x $#r, @r };
+$VERSION = do { my @r = (q$Revision: 1.11 $ =~ /\d+/g); sprintf "%d."."%02d" x $#r, @r };
 
 require Exporter;
 
@@ -157,6 +157,10 @@ sub AUTOLOAD {
 
 =cut
 
+# these really should be packed in Network Long order but since they are
+# symetrical, that extra internal processing can be skipped
+
+my $_v4zero = pack('L',0);
 my $_zero = pack('L4',0,0,0,0);
 my $_ones = ~$_zero;
 my $_v4mask = pack('L4',0xffffffff,0xffffffff,0xffffffff,0);
@@ -778,7 +782,7 @@ sub _xnew($$;$$) {
 	return undef if hasbits($ip & $tmp);
 	last;
       }
-      elsif (($tmp = gethostbyname($ip)) && $tmp ne pack('L',0) ) {
+      elsif ($ip !~ /[^a-zA-Z0-9\.-]/ && ($tmp = gethostbyname($ip)) && $tmp ne $_v4zero && $tmp ne $_zero ) {
 	$ip = ipv4to6($tmp);
 	last;
       }
