@@ -3,16 +3,16 @@
 /* Define to 1 if you have the <arpa/inet.h> header file. */
 #undef HAVE_ARPA_INET_H
 
-/* Define to 1 if you have the `gethostbyname' function. */
+/* Define to 1 if function 'gethostbyname' is present' */
 #undef HAVE_GETHOSTBYNAME
 
-/* Define to 1 if you have the `inet_addr' function. */
+/* Define to 1 if function 'inet_addr' is present' */
 #undef HAVE_INET_ADDR
 
-/* Define to 1 if you have the `inet_aton' function. */
+/* Define to 1 if function 'inet_aton' is present' */
 #undef HAVE_INET_ATON
 
-/* Define to 1 if you have the `inet_pton' function. */
+/* Define to 1 if function 'inet_pton' is present' */
 #undef HAVE_INET_PTON
 
 /* Define to 1 if you have the <inttypes.h> header file. */
@@ -20,9 +20,6 @@
 
 /* Define to 1 if you have the <memory.h> header file. */
 #undef HAVE_MEMORY_H
-
-/* Define to 1 if you have the `memset' function. */
-#undef HAVE_MEMSET
 
 /* Define to 1 if you have the <netdb.h> header file. */
 #undef HAVE_NETDB_H
@@ -68,6 +65,15 @@
 
 /* Define to the version of this package. */
 #undef PACKAGE_VERSION
+
+/* The size of `uint16_t', as computed by sizeof. */
+#undef SIZEOF_UINT16_T
+
+/* The size of `uint32_t', as computed by sizeof. */
+#undef SIZEOF_UINT32_T
+
+/* The size of `uint8_t', as computed by sizeof. */
+#undef SIZEOF_UINT8_T
 
 /* The size of `u_int16_t', as computed by sizeof. */
 #undef SIZEOF_U_INT16_T

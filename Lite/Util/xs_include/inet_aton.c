@@ -18,11 +18,7 @@
 */
 
 #ifndef HAVE_INET_ATON
-#include <sys/types.h>
-#include <sys/socket.h>
-#include <netinet/in.h>
-#include <arpa/inet.h>
-                       
+
 int
 my_inet_aton(const char *cp, struct in_addr *inp)
 {

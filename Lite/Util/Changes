@@ -1,5 +1,9 @@
 Revision history for Perl extension NetAddr::IP::Util
 
+1.23  Sun Nov  2 10:10:38 PST 2008
+	add missing headers in configure and localconf.h for Solaris inet_xton
+	thanks to Karl Bunch <karl@digilink.net> for spotting the bug.
+
 1.22  Wed Oct 22 14:54:12 PDT 2008
 	eliminated dependance on PL_sawampersand
 	thanks to Mark Martinec <Mark.Martinec@ijs.si> 

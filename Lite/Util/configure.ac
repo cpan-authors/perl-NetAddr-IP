@@ -6,8 +6,8 @@ AC_CONFIG_HEADER([config.h])
 AC_PROG_CC
 
 # Checks for header files.
-AC_CHECK_HEADERS([arpa/inet.h netdb.h netinet/in.h stdint.h sys/socket.h])
-
+AC_HEADER_STDC
+AC_CHECK_HEADERS([sys/socket.h netinet/in.h arpa/inet.h netdb.h])
 
 # Checks for typedefs, structures, and compiler characteristics.
 AC_C_CONST
@@ -17,12 +17,28 @@ AC_TYPE_UINT32_T
 AC_TYPE_UINT8_T
 
 # Checks for library functions.
-AC_HEADER_STDC
 AC_PROG_GCC_TRADITIONAL
-AC_CHECK_FUNCS([gethostbyname memset inet_addr inet_aton inet_pton])
+AH_TEMPLATE([HAVE_GETHOSTBYNAME],[Define to 1 if function 'gethostbyname' is present'])
+AC_SEARCH_LIBS([gethostbyname],[nsl],[
+	AC_DEFINE([HAVE_GETHOSTBYNAME])])
+
+AH_TEMPLATE([HAVE_INET_ATON],[Define to 1 if function 'inet_aton' is present'])
+AC_SEARCH_LIBS([inet_aton],[socket],[
+	AC_DEFINE([HAVE_INET_ATON])])
+
+AH_TEMPLATE([HAVE_INET_PTON],[Define to 1 if function 'inet_pton' is present'])
+AC_SEARCH_LIBS([inet_pton],[socket],[
+	AC_DEFINE([HAVE_INET_PTON])])
+
+AH_TEMPLATE([HAVE_INET_ADDR],[Define to 1 if function 'inet_addr' is present'])
+AC_SEARCH_LIBS([inet_addr],[socket],[
+	AC_DEFINE([HAVE_INET_ADDR])])
 
 # my additions
 AC_C_BIGENDIAN
+AC_CHECK_SIZEOF([uint8_t])
+AC_CHECK_SIZEOF([uint16_t])
+AC_CHECK_SIZEOF([uint32_t])
 AC_CHECK_SIZEOF([u_int8_t])
 AC_CHECK_SIZEOF([u_int16_t])
 AC_CHECK_SIZEOF([u_int32_t])

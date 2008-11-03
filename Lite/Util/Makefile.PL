@@ -80,7 +80,7 @@ if ($useXS) {
   delete $makeparms{'XS'};
   delete $makeparms{'C'};
   my $link = '';
-  foreach(qw(-lsocket -lnsl)) {
+  foreach(qw(-lnsl -lsocket)) {
     if ($Config{libs} =~ /$_\b/) {
       $link .= $_ .' ';
     }
@@ -168,13 +168,13 @@ EOF
   
   close(F) or return;
 
-  my $rv = system("$Config{'make'} compile$Config{obj_ext}");
+  my $rv = system("$Config{'ccname'} compile.c -o compile$Config{obj_ext}");
  
   foreach my $file (glob('compile*')) {
     unlink($file) || warn "Could not delete $file: $!\n";
   }
 
-  return ($ret == 0);
+  return ($rv == 0);
 }
 
 sub MY::top_targets {

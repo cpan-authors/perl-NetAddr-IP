@@ -5,9 +5,10 @@ use ExtUtils::MakeMaker;
 my $checker = 0;
 
 print qq{
-This build requires a C compiler by default - A slower, pure Perl
-version that does not require compilation of XS code can be used
-instead, by invoking this as
+This build requires a C compiler by default except on Windows
+where the Pure Perl version is mandatory. The Pure Perl
+version does not require compilation of XS code can be used 
+by invoking this as:
 
   perl Makefile.PL -noxs
 

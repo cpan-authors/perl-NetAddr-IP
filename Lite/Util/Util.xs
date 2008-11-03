@@ -29,16 +29,16 @@ extern "C" {
 #include "perl.h"
 #include "XSUB.h"
 
+/*	needed for testing with 'printf'
+#include <stdio.h>
+ */
+
 #ifdef _CYGWIN
 #include <Win32-Extensions.h>
 #endif
 
 #include "config.h"
 #include "localconf.h"
-
-/*	needed for testing with 'printf'
-#include <stdio.h>
- */
 
 #ifdef __cplusplus
 }
