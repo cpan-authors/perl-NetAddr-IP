@@ -26,6 +26,7 @@ SYNOPSIS
             bin2bcd
             bcd2bin
             mode
+            threads
       );
 
       use NetAddr::IP::Util qw(:all :inet :ipv4 :ipv6 :math)
@@ -73,6 +74,7 @@ SYNOPSIS
       $bcdtext = bin2bcd($bits128);
       $bits128 = bcd2bin($bcdtxt);
       $modetext = mode;
+      $threadtxt = threads;
 
 INSTALLATION
     Un-tar the distribution in an appropriate directory and type:
@@ -100,6 +102,7 @@ DESCRIPTION
             and     &
             or      |
             xor     ^
+                    ~       compliment
 
     in the same manner as 'vec' strings.
 
@@ -297,6 +300,21 @@ DESCRIPTION
                 returns:        "Pure Perl"
                            or   "CC XS"
 
+    * $threadtxt = threads
+        Returns the build flags for various thread options as a comma
+        seperated string.
+
+                input:          none
+                returns:        empty string
+                  or some combination of the following:
+
+          HAVE_PTHREAD_H        perl built with <pthread.h>
+          HAVE_THREAD_H         perl built with <thread.h>
+          LOCAL_PERL_WANTS_PTHREAD_H    $Config{i_pthread}
+          LOCAL_PERL_USE_THREADS        $Config{usethreads}
+          LOCAL_PERL_USE_I_THREADS      $Config{useithreads}
+          LOCAL_PERL_USE_5005_THREADS   $Config{use5005threads}
+
 EXAMPLES
       # convert any textual IP address into a 128 bit vector
       #
@@ -411,6 +429,7 @@ EXPORT_OK
             bin2bcd
             bcd2bin
             mode
+            threads
 
 AUTHOR
     Michael Robinton <michael@bizsystems.com>

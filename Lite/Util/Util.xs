@@ -37,7 +37,6 @@ extern "C" {
 #include <Win32-Extensions.h>
 #endif
 
-#include "config.h"
 #include "localconf.h"
 
 #ifdef __cplusplus
@@ -47,6 +46,11 @@ extern "C" {
 /*	workaround for OS's without inet_aton			*/
 #include "xs_include/inet_aton.c"
 
+/* if kernel threading is in use, provide mutex locks for global variables */
+#ifdef LOCAL_USE_THREADS
+lcl_mutx_init m_lock = DEFAULT_MUTEX_INIT;
+#endif
+
 typedef union
 {
   u_int32_t     u[4];
@@ -54,6 +58,8 @@ typedef union
 } n128;
 
 n128 c128, a128;
+
+char errorbuffer[256], *eb = errorbuffer;	/* error buff	*/
 
 u_int32_t wa[4], wb[4];		/*	working registers	*/
 
@@ -172,7 +178,7 @@ netswap_copy(void * dest, void * src, int len)
   for (/* -- */;len>0;len--) {
 #ifdef host_is_LITTLE_ENDIAN
     *d++ =  (((*s & 0xff000000) >> 24) | ((*s & 0x00ff0000) >>  8) | \
-             ((*s & 0x0000ff00) <<  8) | ((*s & 0x000000ff) << 24));
+	     ((*s & 0x0000ff00) <<  8) | ((*s & 0x000000ff) << 24));
 #else
 # ifdef host_is_BIG_ENDIAN
     *d++ = *s;
@@ -193,7 +199,7 @@ netswap(void * ap, int len)
   register u_int32_t * a = ap;
   for (/* -- */;len >0;len--) {
     *a++ =  (((*a & 0xff000000) >> 24) | ((*a & 0x00ff0000) >>  8) | \
-             ((*a & 0x0000ff00) <<  8) | ((*a & 0x000000ff) << 24));
+	     ((*a & 0x0000ff00) <<  8) | ((*a & 0x000000ff) << 24));
   }
 #endif
 }
@@ -321,28 +327,28 @@ _bcdn2bin(void * bp, int len)
     c = *cp++;
     for (lo=0;lo<2;lo+=1) {
       if (lo) {
-        if (hasdigits)			/*	suppress leading zero multiplications	*/
-          _128x10plusbcd(a128.u,c128.u, c & 0xF);
-        else {
+	if (hasdigits)			/*	suppress leading zero multiplications	*/
+	  _128x10plusbcd(a128.u,c128.u, c & 0xF);
+	else {
 	  if (c & 0xF) {
-            hasdigits = 1;
+	    hasdigits = 1;
 	    a128.u[3] = c & 0xF;
-          }
-        }
+	  }
+	}
       }
       else {
-        if (hasdigits)			/*	suppress leading zero multiplications	*/
-          _128x10plusbcd(a128.u,c128.u, c >> 4);
-        else {
-          if (c & 0XF0) {
-            hasdigits = 1;
+	if (hasdigits)			/*	suppress leading zero multiplications	*/
+	  _128x10plusbcd(a128.u,c128.u, c >> 4);
+	else {
+	  if (c & 0XF0) {
+	    hasdigits = 1;
 	    a128.u[3] = c >> 4;
 	  }
-        }
+	}
       }
       i++;
       if (i >= len)
-        break;
+	break;
     }
   }
 }
@@ -374,18 +380,18 @@ _bin2bcd (unsigned char * binary)
 	add3 = 3;
 	msk8 = 8;
 	
-        for (j=0;j<8;j++) {		/*	prep bcd digits for X2	*/
-          tmp = bcd8 + add3;
-          if (tmp & msk8)
-            bcd8 = tmp;
-          add3 <<= 4;
-          msk8 <<= 4;
-        }
-        tmp = bcd8 & 0x80000000;	/*	propagated carry	*/
+	for (j=0;j<8;j++) {		/*	prep bcd digits for X2	*/
+	  tmp = bcd8 + add3;
+	  if (tmp & msk8)
+	    bcd8 = tmp;
+	  add3 <<= 4;
+	  msk8 <<= 4;
+	}
+	tmp = bcd8 & 0x80000000;	/*	propagated carry	*/
 	bcd8 <<= 1;			/*	x 2			*/
 	if (carry)
-          bcd8 += 1;
-        n.bcd[i] = bcd8;
+	  bcd8 += 1;
+	n.bcd[i] = bcd8;
 	carry = tmp;
       }
     }
@@ -437,19 +443,28 @@ PREINIT:
 	STRLEN len;
 	int i;
 PPCODE:
+#ifdef LOCAL_USE_THREADS
+	lcl_mutx_lck(&m_lock);
+#endif
 	ap = (unsigned char *) SvPV(s,len);
 	if (len != 16) {
 	  if (ix == 2)
-	    strcpy((char *)wa,"ipv6to4");
+	    strcpy(eb,"ipv6to4");
 	  else if (ix == 1)
-	    strcpy((char *)wa,"shiftleft");
+	    strcpy(eb,"shiftleft");
 	  else
-	    strcpy((char *)wa,"comp128");
+	    strcpy(eb,"comp128");
+#ifdef LOCAL_USE_THREADS
+	  lcl_mutx_ulck(&m_lock);
+#endif
 	  croak("Bad arg length for %s%s, length is %d, should be %d",
-		"NetAddr::IP::Util::",(char *)wa,len *8,128);
+		"NetAddr::IP::Util::",eb,len *8,128);
 	}
 	if (ix == 2) {
 	  XPUSHs(sv_2mortal(newSVpvn((char *)(ap +12),4)));
+#ifdef LOCAL_USE_THREADS
+	  lcl_mutx_ulck(&m_lock);
+#endif
 	  XSRETURN(1);
 	}
 	else if (ix == 1) {
@@ -460,6 +475,9 @@ PPCODE:
 	    memcpy(wa,ap,16);
 	  }
 	  else if (i < 0 || i > 128) {
+#ifdef LOCAL_USE_THREADS
+	    lcl_mutx_ulck(&m_lock);
+#endif
 	    croak("Bad arg value for %s, is %d, should be 0 thru 128",
 		"NetAddr::IP::Util::shiftleft",i);
 	  }
@@ -477,6 +495,9 @@ PPCODE:
 	  fastcomp128(wa);
 	}
 	XPUSHs(sv_2mortal(newSVpvn((char *)wa,16)));
+#ifdef LOCAL_USE_THREADS
+	lcl_mutx_ulck(&m_lock);
+#endif
 	XSRETURN(1);
 
 void
@@ -489,22 +510,27 @@ PREINIT:
 	unsigned char * ap, *bp;
 	STRLEN len;
 PPCODE:
+#ifdef LOCAL_USE_THREADS   
+	lcl_mutx_lck(&m_lock);    
+#endif   
 	ap = (unsigned char *) SvPV(as,len);
 	if (len != 16) {
     Bail:
 	  if (ix == 1)
-	    strcpy((char *)wa,"sub128");
+	    strcpy(eb,"sub128");
 	  else
-	    strcpy((char *)wa,"add128");
+	    strcpy(eb,"add128");
+#ifdef LOCAL_USE_THREADS
+	  lcl_mutx_ulck(&m_lock);
+#endif
 	  croak("Bad arg length for %s%s, length is %d, should be %d",
-		"NetAddr::IP::Util::",(char *)wa,len *8,128);
+		"NetAddr::IP::Util::",eb,len *8,128);
 	}
 
 	bp = (unsigned char *) SvPV(bs,len);
 	if (len != 16) {
 	  goto Bail;
 	}
-
 	netswap_copy(wa,ap,4);
 	netswap_copy(wb,bp,4);
 	if (ix == 1) {
@@ -517,8 +543,14 @@ PPCODE:
 	if (GIMME_V == G_ARRAY) {
 	  netswap(a128.u,4);
 	  XPUSHs(sv_2mortal(newSVpvn((char *)a128.c,16)));
+#ifdef LOCAL_USE_THREADS
+	  lcl_mutx_ulck(&m_lock);
+#endif
 	  XSRETURN(2);
 	}
+#ifdef LOCAL_USE_THREADS
+	lcl_mutx_ulck(&m_lock);
+#endif
 	XSRETURN(1);
 
 void
@@ -529,18 +561,30 @@ PREINIT:
 	unsigned char * ap;
 	STRLEN len;
 PPCODE:
+#ifdef LOCAL_USE_THREADS
+	lcl_mutx_lck(&m_lock);   
+#endif   
 	ap = (unsigned char *) SvPV(s,len);
 	if (len != 16) {
+#ifdef LOCAL_USE_THREADS
+	  lcl_mutx_ulck(&m_lock);
+#endif
 	  croak("Bad arg length for %s, length is %d, should be %d",
 		"NetAddr::IP::Util::addconst",len *8,128);
-        }
+	}
 	netswap_copy(wa,ap,4);
 	XPUSHs(sv_2mortal(newSViv((I32)addercon(wa,cnst))));
 	if (GIMME_V == G_ARRAY) {
 	  netswap(a128.u,4);
 	  XPUSHs(sv_2mortal(newSVpvn((char *)a128.c,16)));
+#ifdef LOCAL_USE_THREADS
+	  lcl_mutx_ulck(&m_lock);
+#endif
 	  XSRETURN(2);
 	}
+#ifdef LOCAL_USE_THREADS
+	lcl_mutx_ulck(&m_lock);
+#endif
 	XSRETURN(1);
 
 int
@@ -552,14 +596,20 @@ PREINIT:
 	unsigned char * bp;
 	STRLEN len;
 CODE:
+#ifdef LOCAL_USE_THREADS
+	lcl_mutx_lck(&m_lock);   
+#endif   
 	bp = (unsigned char *) SvPV(s,len);
 	if (len != 16) {
 	  if (ix == 1)
-	    strcpy((char *)wa,"isIPv4");
+	    strcpy(eb,"isIPv4");
 	  else
-	    strcpy((char *)wa,"hasbits");
+	    strcpy(eb,"hasbits");
+#ifdef LOCAL_USE_THREADS
+	  lcl_mutx_ulck(&m_lock);  
+#endif
 	  croak("Bad arg length for %s%s, length is %d, should be %d",
-		"NetAddr::IP::Util::",(char *)wa,len *8,128);
+		"NetAddr::IP::Util::",eb,len *8,128);
 	}
 	if (ix == 1) {
 	  RETVAL = _isipv4(bp);
@@ -567,6 +617,9 @@ CODE:
 	else {
 	  RETVAL = have128(bp);
 	}
+#ifdef LOCAL_USE_THREADS
+	lcl_mutx_ulck(&m_lock);  
+#endif
 OUTPUT:
 	RETVAL
 
@@ -580,17 +633,26 @@ PREINIT:
 	unsigned char * cp;
 	STRLEN	len;
 PPCODE:
+#ifdef LOCAL_USE_THREADS
+	lcl_mutx_lck(&m_lock);
+#endif   
 	cp = (unsigned char *) SvPV(s,len);
 	if (ix == 0) {
 	  if (len != 16) {
+#ifdef LOCAL_USE_THREADS
+	    lcl_mutx_ulck(&m_lock);
+#endif
 	    croak("Bad arg length for %s, length is %d, should be %d",
 		"NetAddr::IP::Util::bin2bcd",len *8,128);
-          }
+	  }
 	  (void) _bin2bcd(cp);
 	  XPUSHs(sv_2mortal(newSVpvn((char *)n.txt,_bcd2txt((unsigned char *)n.bcd))));
 	}
 	else if (ix == 1) {
 	  if (len != 16) {
+#ifdef LOCAL_USE_THREADS
+	    lcl_mutx_ulck(&m_lock);
+#endif
 	    croak("Bad arg length for %s, length is %d, should be %d",
 		"NetAddr::IP::Util::bin2bcdn",len *8,128);
 	  }
@@ -598,11 +660,17 @@ PPCODE:
 	}
 	else {
 	  if (len > 20) {
+#ifdef LOCAL_USE_THREADS
+	    lcl_mutx_ulck(&m_lock);
+#endif
 	    croak("Bad arg length for %s, length is %d, should %d digits or less",
 		"NetAddr::IP::Util::bcdn2txt",len *2,40);
 	  }
 	  XPUSHs(sv_2mortal(newSVpvn((char *)n.txt,_bcd2txt(cp))));
 	}
+#ifdef LOCAL_USE_THREADS
+	lcl_mutx_ulck(&m_lock);
+#endif
 	XSRETURN(1);
 
 #*
@@ -621,23 +689,32 @@ PREINIT:
 	unsigned char * cp, badc;
 	STRLEN len;
 PPCODE:
+#ifdef LOCAL_USE_THREADS
+	lcl_mutx_lck(&m_lock);
+#endif   
 	cp = (unsigned char *) SvPV(s,len);
 	if (len > 40) {
 	  if (ix == 0)
-	    strcpy((char *)wa,"bcd2bin");
+	    strcpy(eb,"bcd2bin");
 	  else if (ix ==1)
-	    strcpy((char *)wa,"simple_pack");
+	    strcpy(eb,"simple_pack");
     Badigits:
+#ifdef LOCAL_USE_THREADS
+	  lcl_mutx_ulck(&m_lock);
+#endif
 	  croak("Bad arg length for %s%s, length is %d, should be %d digits or less",
-		"NetAddr::IP::Util::",(char *)wa,len,40);
+		"NetAddr::IP::Util::",eb,len,40);
 	}
 	if (ix == 2) {
 	  if (len > 20) {
 	    len <<= 1;		/*	times 2	*/
-	    strcpy((char *)wa,"bcdn2bin");
+	    strcpy(eb,"bcdn2bin");
 	    goto Badigits;
 	  }
 	  if (items < 2) {
+#ifdef LOCAL_USE_THREADS
+	    lcl_mutx_ulck(&m_lock);
+#endif
 	    croak("Bad usage, should have %s('packedbcd,length)",
 		"NetAddr::IP::Util::bcdn2bin");
 	  }
@@ -645,17 +722,22 @@ PPCODE:
 	  _bcdn2bin(cp,(int)len);
 	  netswap(a128.u,4);
 	  XPUSHs(sv_2mortal(newSVpvn((char *)a128.c,16)));
+#ifdef LOCAL_USE_THREADS
+	  lcl_mutx_ulck(&m_lock);
+#endif
 	  XSRETURN(1);
 	}
-	
 	badc = _simple_pack(cp,(int)len);
 	if (badc) {
 	  if (ix == 1)
-	    strcpy((char *)wa,"simple_pack");
+	    strcpy(eb,"simple_pack");
 	  else
-	    strcpy((char *)wa,"bcd2bin");
-	    croak("Bad char in string for %s%s, character is '%c', allowed are 0-9",
-		"NetAddr::IP::Util::",(char *)wa,badc);
+	    strcpy(eb,"bcd2bin");
+#ifdef LOCAL_USE_THREADS
+	  lcl_mutx_ulck(&m_lock);
+#endif
+	  croak("Bad char in string for %s%s, character is '%c', allowed are 0-9",
+		"NetAddr::IP::Util::",eb,badc);
 	}
 	if (ix == 0) {
 	  _bcdn2bin(n.bcd,40);
@@ -665,6 +747,9 @@ PPCODE:
 	else {	/*	ix == 1	*/
 	  XPUSHs(sv_2mortal(newSVpvn((char *)n.bcd,20)));
 	}
+#ifdef LOCAL_USE_THREADS
+	lcl_mutx_ulck(&m_lock);
+#endif
 	XSRETURN(1);
 
 void
@@ -674,18 +759,30 @@ PREINIT:
 	unsigned char * ap, count;
 	STRLEN len;
 PPCODE:
+#ifdef LOCAL_USE_THREADS
+	lcl_mutx_lck(&m_lock);  
+#endif
 	ap = (unsigned char *) SvPV(s,len);
 	if (len != 16) {
+#ifdef LOCAL_USE_THREADS
+	  lcl_mutx_ulck(&m_lock);
+#endif
 	  croak("Bad arg length for %s, length is %d, should be %d",
 		"NetAddr::IP::Util::countbits",len *8,128);
-        }
+	}
 	netswap_copy(wa,ap,4);
 	count = _countbits(wa);
 	XPUSHs(sv_2mortal(newSViv((I32)have128(wa))));
 	if (GIMME_V == G_ARRAY) {
 	  XPUSHs(sv_2mortal(newSViv((I32)count)));
+#ifdef LOCAL_USE_THREADS
+	  lcl_mutx_ulck(&m_lock);
+#endif
 	  XSRETURN(2);
 	}
+#ifdef LOCAL_USE_THREADS
+	lcl_mutx_ulck(&m_lock);
+#endif
 	XSRETURN(1);
 
 void
@@ -697,20 +794,29 @@ PREINIT:
 	unsigned char * ip;
 	STRLEN len;
 PPCODE:
+#ifdef LOCAL_USE_THREADS
+	lcl_mutx_lck(&m_lock);
+#endif
 	ip = (unsigned char *) SvPV(s,len);
 	if (len != 4) {
 	  if (ix == 1)
-	    strcpy((char *)wa,"mask4to6");
+	    strcpy(eb,"mask4to6");
 	  else
-	    strcpy((char *)wa,"ipv4to6");
+	    strcpy(eb,"ipv4to6");
+#ifdef LOCAL_USE_THREADS
+	  lcl_mutx_ulck(&m_lock);
+#endif
 	  croak("Bad arg length for %s%s, length is %d, should be 32",
-		"NetAddr::IP::Util::",(char *)wa,len *8);
+		"NetAddr::IP::Util::",eb,len *8);
 	}
 	if (ix == 0)
 	  extendipv4(ip);
 	else
 	  extendmask4(ip);
 	XPUSHs(sv_2mortal(newSVpvn((char *)wa,16)));
+#ifdef LOCAL_USE_THREADS
+	lcl_mutx_ulck(&m_lock);
+#endif
 	XSRETURN(1);
 
 void
@@ -722,6 +828,9 @@ PREINIT:
 	unsigned char * ip;
 	STRLEN len;
 PPCODE:
+#ifdef LOCAL_USE_THREADS
+	lcl_mutx_lck(&m_lock);
+#endif
 	ip = (unsigned char *) SvPV(s,len);
 	if (len == 16)		/* if already 128 bits, return input	*/
 	  XPUSHs(sv_2mortal(newSVpvn((char *)ip,16)));
@@ -734,10 +843,56 @@ PPCODE:
 	}
 	else {
 	  if (ix == 1)
-	    strcpy((char *)wa,"maskanyto6");
+	    strcpy(eb,"maskanyto6");
 	  else
-	    strcpy((char *)wa,"ipanyto6");
+	    strcpy(eb,"ipanyto6");
+#ifdef LOCAL_USE_THREADS
+	  lcl_mutx_ulck(&m_lock);
+#endif
 	  croak("Bad arg length for %s%s, length is %d, should be 32 or 128",
-		"NetAddr::IP::Util::",(char *)wa,len *8);
+		"NetAddr::IP::Util::",eb,len *8);
 	}
+#ifdef LOCAL_USE_THREADS
+	lcl_mutx_ulck(&m_lock);
+#endif
 	XSRETURN(1);
+
+void
+threads()
+    PPCODE:
+#ifdef LOCAL_USE_THREADS
+	lcl_mutx_lck(&m_lock);
+# ifdef HAVE_PTHREAD_H
+	strcpy(eb,"HAVE_PTHREAD_H");
+# else
+#   ifdef HAVE_THREAD_H
+	strcpy(eb,"HAVE_THREAD_H");	/* gotta have one of them	*/
+#   else
+#	strcpy(eb,"thread error, look at code");
+#   endif
+# endif
+# ifdef xLOCAL_PERL_WANTS_PTHREAD_H
+	strcat(eb,",LOCAL_PERL_WANTS_PTHREAD_H");
+# endif
+# ifdef xLOCAL_PERL_USE_THREADS
+	strcat(eb,",LOCAL_PERL_USE_THREADS");
+# endif
+# ifdef xLOCAL_PERL_USE_I_THREADS
+	strcat(eb,",LOCAL_PERL_USE_I_THREADS");
+# endif
+# ifdef xLOCAL_PERL_USE_5005_THREADS
+	strcat(eb,",LOCAL_PERL_USE_5005_THREADS");
+# endif
+	XPUSHs(sv_2mortal(newSVpv(eb,0)));
+	lcl_mutx_ulck(&m_lock);
+#else
+	XPUSHs(sv_2mortal(newSVpv("",0)));
+#endif
+	XSRETURN(1);
+
+void
+DESTROY()
+  CODE:
+#ifdef LOCAL_USE_THREADS
+	lcl_mutx_dsty(&m_lock);
+#endif

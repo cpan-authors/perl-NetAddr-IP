@@ -12,7 +12,7 @@ require Exporter;
 
 @ISA = qw(Exporter);
 
-$VERSION = do { my @r = (q$Revision: 1.4 $ =~ /\d+/g); sprintf "%d."."%02d" x $#r, @r };
+$VERSION = do { my @r = (q$Revision: 1.5 $ =~ /\d+/g); sprintf "%d."."%02d" x $#r, @r };
 
 @EXPORT_OK = qw(
 	hasbits
@@ -34,6 +34,7 @@ $VERSION = do { my @r = (q$Revision: 1.4 $ =~ /\d+/g); sprintf "%d."."%02d" x $#
 	bcdn2txt
 	bcdn2bin
 	simple_pack
+	threads
 );
 
 %EXPORT_TAGS = (
@@ -66,6 +67,7 @@ NetAddr::IP::UtilPP -- pure Perl functions for NetAddr::IP::Util
 	ipv6to4
 	bin2bcd
 	bcd2bin
+	threads
   );
 
   use NetAddr::IP::UtilPP qw(:all)
@@ -87,6 +89,7 @@ NetAddr::IP::UtilPP -- pure Perl functions for NetAddr::IP::Util
   $netaddr = ipv6to4($pv6naddr);
   $bcdtext = bin2bcd($bits128);
   $bits128 = bcd2bin($bcdtxt);
+  $threadtxt = threads();
 
 =head1 DESCRIPTION
 
@@ -310,7 +313,7 @@ sub sub128 {
   goto &slowadd128;
 }
 
-=item * ($cidr,$spurious) = notcontiguous($mask128);
+=item * ($spurious,$cidr) = notcontiguous($mask128);
 
 This function counts the bit positions remaining in the mask when the
 rightmost '0's are removed.
@@ -465,6 +468,17 @@ Convert a bcd text string to 128 bit string variable
 sub bcd2bin {
   &_bcdcheck;
   goto &_bcd2bin;
+}
+
+=item * $threadtxt = threads();
+
+Returns an empty string in Pure Perl mode. See the description for XS mode
+for more detail.
+
+=cut
+
+sub threads {
+  return '';
 }
 
 =back
@@ -661,6 +675,7 @@ sub simple_pack {
 	bcdn2txt
 	bcdn2bin
 	simple_pack
+	threads
 
 =head1 AUTHOR
 
@@ -668,7 +683,7 @@ Michael Robinton E<lt>michael@bizsystems.comE<gt>
 
 =head1 COPYRIGHT
 
-Copyright 2006 - 2007, Michael Robinton <michael@bizsystems.com>
+Copyright 2006 - 2008, Michael Robinton <michael@bizsystems.com>
 
 This program is free software; you can redistribute it and/or modify
 it under the terms of the GNU General Public License (except as noted

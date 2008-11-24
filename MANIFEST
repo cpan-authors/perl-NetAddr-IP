@@ -11,6 +11,7 @@ Lite/t/aton.t
 Lite/t/bits.t
 Lite/t/broadcast.t
 Lite/t/cidr.t
+Lite/t/constants.t
 Lite/t/contains.t
 Lite/t/copy.t
 Lite/t/firstlast.t
@@ -30,6 +31,7 @@ Lite/t/over_comp.t
 Lite/t/over_copy.t
 Lite/t/over_equal.t
 Lite/t/over_math.t
+Lite/t/overminus.t
 Lite/t/pathological.t
 Lite/t/range.t
 Lite/t/relops.t
@@ -99,6 +101,7 @@ Makefile.PL
 MANIFEST			This list of files
 MANIFEST.SKIP
 README
+t/constants.t
 t/full.t
 t/full6.t
 t/imhoff.t
@@ -110,6 +113,7 @@ t/over-arr.t
 t/over-qq.t
 t/relops.t
 t/short.t
+t/splitref.t
 t/v4-coalesce.t
 t/v4-compact.t
 t/v4-compplus.t
@@ -117,10 +121,12 @@ t/v4-hostenum.t
 t/v4-re.t
 t/v4-split-bulk.t
 t/v4-split-list.t
+t/v4-splitplan.t
 t/v4-sprefix.t
 t/v4-xprefix.t
 t/v6-re.t
 t/v6-split-bulk.t
+t/v6-splitplan.t
 t/wildcard.t
 TODO
 META.yml                                 Module meta-data (added by MakeMaker)

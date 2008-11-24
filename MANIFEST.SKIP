@@ -25,3 +25,6 @@ Util_IS\.pm$
 Util\.(bs|[co])$
 localStuff\.h$
 config\.log$
+config\.h$
+config\.status
+localperl\.h

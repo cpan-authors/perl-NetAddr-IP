@@ -29,7 +29,7 @@ SYNOPSIS
       The following four functions return ipV6 representations of:
 
       ::                                       = Zeros();
-      FFFF:FFFF:FFFF:FFFF:FFFF:FFFF:FFFF:FFFF: = Ones();
+      FFFF:FFFF:FFFF:FFFF:FFFF:FFFF:FFFF:FFFF  = Ones();
       FFFF:FFFF:FFFF:FFFF:FFFF:FFFF::          = V4mask();
       ::FFFF:FFFF                              = V4net();
 
@@ -123,10 +123,11 @@ DESCRIPTION
 
                 $ip1->masklen <=> $ip2->masklen
 
-    Addition of a constant
-        Adding a constant to a NetAddr::IP::Lite object changes its address
-        part to point to the one so many hosts above the start address. For
-        instance, this code:
+    Addition of a constant ("+")
+        Add a 32 bit signed constant to the address part of a NetAddr
+        object. This operation changes the address part to point so many
+        hosts above the current objects start address. For instance, this
+        code:
 
             print NetAddr::IP::Lite->new('127.0.0.1') + 5;
 
@@ -137,8 +138,19 @@ DESCRIPTION
 
         outputs 10.0.0.0/24.
 
-    Substraction of a constant
+        Returns the the unchanged object when the conastant is missing or
+        out of range.
+
+            2147483647 <= constant >= -2147483648
+
+    Substraction of a constant ("+")
         The complement of the addition of a constant.
+
+    Difference ("-")
+        Returns the difference between the address parts of two
+        NetAddr::IP::Lite objects address parts as a 32 bit signed number.
+
+        Returns undef if the difference is out of range.
 
     Auto-increment
         Auto-incrementing a NetAddr::IP::Lite object causes the address part
@@ -156,7 +168,6 @@ DESCRIPTION
     "->new6([$addr, [ $mask]])"
     "->new_no([$addr, [ $mask]])"
     "->new_from_aton($netaddr)"
-    "->new_no([$addr, [ $mask]])"
         The first two methods create a new address with the supplied address
         in "$addr" and an optional netmask "$mask", which can be omitted to
         get a /32 or /128 netmask for IPv4 / IPv6 addresses respectively.
@@ -368,7 +379,7 @@ DESCRIPTION
           use NetAddr::IP::Lite qw(:old_nth);
 
 EXPORT_OK
-            Zero
+            Zeros
             Ones
             V4mask
             V4net

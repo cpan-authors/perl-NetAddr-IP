@@ -15,10 +15,11 @@ unlink 'Makefile';		# remove Makefile to stabalize CC test
 #
 # get any command line arguments
 #
-my ($useXS);
+my($withthreads,$useXS);
 GetOptions(
-	'xs!'	=> \$useXS,
-	'pm'	=> sub {
+	'with-threads'	=> \$withthreads,
+	'xs!'		=> \$useXS,
+	'pm'		=> sub {
 		warn "\n\t".'WARNING: Use of "--pm" is deprecated, use "-noxs" instead'."\n\n";
 		$useXS = 0;
 	},
@@ -36,14 +37,14 @@ my $cfile = $& .'.c';
 my %makeparms = (
     NAME		=> $pkg,
     VERSION_FROM	=> $module,	# finds $VERSION
-    depend		=> {$cfile => q[xs_include/miniSocket.inc localconf.h config.h],
+    depend		=> {$cfile => q[xs_include/miniSocket.inc localconf.h config.h localperl.h],
 			},
 #    PREREQ_PM		=> {Test::More	=> 0,
 #			},
     LIBS		=> [],
     XS			=> {},
     C			=> [],
-    clean		=> { FILES    => "*.bs *.o *.c *~ tmp* Util_IS.pm config.log config.h config.status auto*"},
+    clean		=> { FILES    => "*.bs *.o *.c *~ tmp* Util_IS.pm config.log config.h config.status localperl.h auto*"},
     dist		=> {COMPRESS=>'gzip', SUFFIX=>'gz'}
 
 );
@@ -55,6 +56,7 @@ unless (defined $useXS) {
   if (test_cc()) {  
     print "You have a working compiler.\n";
     $useXS = 1;
+    $withthreads = 1 if $withthreads;
 #    $makeparms{'MYEXTLIB'} = 'netdns$(LIB_EXT)',
 
   } else {
@@ -79,14 +81,50 @@ if ($useXS) {
   # turn the XS bits on.
   delete $makeparms{'XS'};
   delete $makeparms{'C'};
+  
+  unless (-e './config.h') {
+    system('./configure');
+  }
+  my @LIBS;
+  open(F,'config.h') or die "could not open config.h\n";
+  foreach(<F>) {
+    if ($_ =~ /^#define LIBS([ a-zA-Z-]+)/) {
+      @LIBS = ($1 =~ /[a-zA-Z0-9-]+/g);
+
+      $makeparms{LIBS} = [$1];
+      last;
+    }
+  }
+  close F;
   my $link = '';
-  foreach(qw(-lnsl -lsocket)) {
+  foreach(@libs) {
     if ($Config{libs} =~ /$_\b/) {
       $link .= $_ .' ';
     }
   }
   chop $link;
   $makeparms{LIBS} = [$link];
+
+  open(F,'>localperl.h') or die "could not open localperl.h for write\n";
+  print F q|
+/*	Written by Makefile.PL
+ *
+ *	Do not modify this file, modify Makefile.PL instead
+ *
+ */
+|;
+  print F q|#define I_REALLY_WANT_ALPHA_THREADS 1
+| if $withthreads;
+  print F q|#define LOCAL_PERL_WANTS_PTHREAD_H 1
+| if $Config{i_pthread} eq 'define';
+  print F q|#define LOCAL_PERL_USE_THREADS 1
+| if $Config{usethreads} eq 'define';
+  print F q|#define LOCAL_PERL_USE_I_THREADS 1
+| if $Config{useithreads} eq 'define';
+  print F q|#define LOCAL_PERL_USE_5005THREADS 1
+| if $Config{use5005threads} eq 'define';
+  close F;
+
   $begin = q|
 config  :: config.h
 	@$(NOOP)

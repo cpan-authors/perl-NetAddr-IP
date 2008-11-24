@@ -8,7 +8,10 @@
 BEGIN { $| = 1; print "1..2\n"; }
 END {print "not ok 1\n" unless $loaded;}
 
-use NetAddr::IP::Util qw(mode);
+use NetAddr::IP::Util qw(
+	mode
+	threads
+);
 
 $loaded = 1;
 print "ok 1\n";
@@ -18,5 +21,9 @@ print "ok 1\n";
 # (correspondingly "not ok 13") depending on the success of chunk 13
 # of the test code):
 
-print STDERR "\t\toperating mode ", mode, "\n";
+my $mode = mode();
+my $thrd = threads();
+my $txt = "\tmode $mode";
+$txt .= " => $thrd" if $thrd;
+print STDERR $txt,"\n";
 print "ok 2\n";

@@ -13,9 +13,9 @@ require Exporter;
 
 @ISA = qw(Exporter DynaLoader);
 
-$VERSION = do { my @r = (q$Revision: 1.22 $ =~ /\d+/g); sprintf "%d."."%02d" x $#r, @r };
+$VERSION = do { my @r = (q$Revision: 1.25 $ =~ /\d+/g); sprintf "%d."."%02d" x $#r, @r };
 
-my @export_ok = qw(
+@EXPORT_OK = qw(
 	inet_aton
 	inet_ntoa
 	ipv6_aton
@@ -39,17 +39,16 @@ my @export_ok = qw(
 	ipanyto6
 	maskanyto6
 	ipv6to4
-);
-@EXPORT_OK = (@export_ok,qw(
-	comp128
 	bin2bcdn
 	bcdn2txt
 	bcdn2bin
 	simple_pack
-));
+	comp128
+	threads
+);
 
 %EXPORT_TAGS = (
-	all     => [@export_ok],
+	all     => [@EXPORT_OK],
 	inet	=> [qw(
 		inet_aton
 		inet_ntoa
@@ -129,7 +128,7 @@ sub inet_aton {
   return &yinet_aton;
 }
 
-sub DESTROY {};
+# sub DESTROY {};	is in the XS file
 
 1;
 __END__
@@ -164,6 +163,7 @@ NetAddr::IP::Util -- IPv4/6 and 128 bit number utilities
 	bin2bcd
 	bcd2bin
 	mode
+	threads
   );
 
   use NetAddr::IP::Util qw(:all :inet :ipv4 :ipv6 :math)
@@ -211,6 +211,7 @@ NetAddr::IP::Util -- IPv4/6 and 128 bit number utilities
   $bcdtext = bin2bcd($bits128);
   $bits128 = bcd2bin($bcdtxt);
   $modetext = mode;
+  $threadtxt = threads;
 
 =head1 INSTALLATION
 
@@ -240,6 +241,7 @@ text. The strings can be manipulated with Perl's logical operators:
 	and	&
 	or	|
 	xor	^
+		~	compliment
 
 in the same manner as 'vec' strings.
 
@@ -588,6 +590,22 @@ Returns the operating mode of this module.
 	returns:	"Pure Perl"
 		   or	"CC XS"
 
+=item * $threadtxt = threads
+
+Returns the build flags for various thread options
+as a comma seperated string.
+
+	input:		none
+	returns:	empty string
+	  or some combination of the following:
+
+  HAVE_PTHREAD_H	perl built with <pthread.h>
+  HAVE_THREAD_H		perl built with <thread.h>
+  LOCAL_PERL_WANTS_PTHREAD_H	$Config{i_pthread}
+  LOCAL_PERL_USE_THREADS	$Config{usethreads}
+  LOCAL_PERL_USE_I_THREADS	$Config{useithreads}
+  LOCAL_PERL_USE_5005_THREADS	$Config{use5005threads}
+
 =back
 
 =head1 EXAMPLES
@@ -708,6 +726,7 @@ Returns the operating mode of this module.
 	bin2bcd
 	bcd2bin
 	mode
+	threads
 
 =head1 AUTHOR
 

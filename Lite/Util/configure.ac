@@ -18,23 +18,36 @@ AC_TYPE_UINT8_T
 
 # Checks for library functions.
 AC_PROG_GCC_TRADITIONAL
-AH_TEMPLATE([HAVE_GETHOSTBYNAME],[Define to 1 if function 'gethostbyname' is present'])
+AH_TEMPLATE([LIBS],[Extra libraries needed for this build])
+AH_TEMPLATE([HAVE_LIBNSL],[Define if library library 'nsl' is present])
+
+AH_TEMPLATE([HAVE_GETHOSTBYNAME],[Define to 1 if function 'gethostbyname' is present])
 AC_SEARCH_LIBS([gethostbyname],[nsl],[
 	AC_DEFINE([HAVE_GETHOSTBYNAME])])
 
-AH_TEMPLATE([HAVE_INET_ATON],[Define to 1 if function 'inet_aton' is present'])
+AH_TEMPLATE([HAVE_INET_ATON],[Define to 1 if function 'inet_aton' is present])
 AC_SEARCH_LIBS([inet_aton],[socket],[
 	AC_DEFINE([HAVE_INET_ATON])])
 
-AH_TEMPLATE([HAVE_INET_PTON],[Define to 1 if function 'inet_pton' is present'])
+AH_TEMPLATE([HAVE_INET_PTON],[Define to 1 if function 'inet_pton' is present])
 AC_SEARCH_LIBS([inet_pton],[socket],[
 	AC_DEFINE([HAVE_INET_PTON])])
 
-AH_TEMPLATE([HAVE_INET_ADDR],[Define to 1 if function 'inet_addr' is present'])
+AH_TEMPLATE([HAVE_INET_ADDR],[Define to 1 if function 'inet_addr' is present])
 AC_SEARCH_LIBS([inet_addr],[socket],[
 	AC_DEFINE([HAVE_INET_ADDR])])
 
-# my additions
+
+AC_CHECK_HEADER([pthread.h],[
+	AC_DEFINE([HAVE_PTHREAD_H],[1],[Define to 1 if you have <pthread.h>.])
+	AC_SEARCH_LIBS([pthread_mutex_init],[pthreads],[],[])
+	AC_MSG_NOTICE([...have pthreads, do not check for thread.h])],[
+	AC_CHECK_HEADER([thread.h],[
+	AC_DEFINE([HAVE_THREAD_H],[1],[Define to 1 if you have <thread.h>.])
+	AC_SEARCH_LIBS([mutex_init],[thread],[],[])]
+	)
+])
+
 AC_C_BIGENDIAN
 AC_CHECK_SIZEOF([uint8_t])
 AC_CHECK_SIZEOF([uint16_t])
@@ -42,5 +55,11 @@ AC_CHECK_SIZEOF([uint32_t])
 AC_CHECK_SIZEOF([u_int8_t])
 AC_CHECK_SIZEOF([u_int16_t])
 AC_CHECK_SIZEOF([u_int32_t])
+
+AC_CONFIG_COMMANDS_PRE([
+	if test "$LIBS" != ""; then
+	AC_DEFINE_UNQUOTED([LIBS],[$LIBS],[Extra libraries])
+	fi
+])
 
 AC_OUTPUT

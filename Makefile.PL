@@ -2,9 +2,15 @@ use ExtUtils::MakeMaker;
 # See lib/ExtUtils/MakeMaker.pm for details of how to influence
 # the contents of the Makefile that is written.
 
-my $checker = 0;
+my $check0 = 0;
+my $check1 = 0;
+my $now = time;
+my $then = (stat('./Makefile.old'))[9];
+# set number of seconds to view
+my $view = $then +86400 < $now ? 5:0;
 
-print qq{
+unless (grep { m/-noxs/ } @ARGV) {
+  print q{
 This build requires a C compiler by default except on Windows
 where the Pure Perl version is mandatory. The Pure Perl
 version does not require compilation of XS code can be used 
@@ -12,12 +18,34 @@ by invoking this as:
 
   perl Makefile.PL -noxs
 
-} unless grep { m/-noxs/ } @ARGV;
+};
+  sleep $view if $view;
+}
+
+unless (grep { m/with-threads/ } @ARGV) {
+  print q{
+This version of NetAddr::IP incorporates ALPHA support for THREADS 
+on the underlying platform (not perl threads).  If  perl was built 
+with <pthreads.h> or <threads.h> then this module can be linked to 
+those libraries if desired. Documentation about perl suggests this 
+might be a good idea maybe??? The additional thread code is designed 
+to make the XS library thread safe via serialization with mutex locks.
+However, there is no assurance that the present NetAddr::IP threads 
+code works as expected or improves anything at all. I confess I 
+don't know that much about threads.
+
+Use at your own risk as follows:
+
+  perl Makefile.PL --with-threads
+
+};
+  sleep $view if $view;
+}
 
 eval q{ use Test::Pod;
-	$checker = 1; };
+	$check0 = 1; };
 
-unless ($checker)
+unless ($check0)
 {
     print <<EOF;
 
@@ -34,12 +62,10 @@ EOF
     ;
 }
 
-$checker = 0;
-
 eval q{ use Pod::Coverage;
-	$checker = 1; };
+	$check1 = 1; };
 
-unless ($checker)
+unless ($check1)
 {
     print <<EOF;
 
@@ -52,6 +78,8 @@ following:
 EOF
     ;
 }
+
+sleep $view if $view && ($check0 || $check1);
 
 print <<EOF;
 
@@ -84,6 +112,7 @@ Use this method to create new objects from 'aton's
 
 EOF
     ;
+sleep $view if $view;
 
 my %makeparms = (
 #	      (MM->can('signature_target') ? (SIGN => 1) : ()),    

@@ -3,20 +3,23 @@
 /* Define to 1 if you have the <arpa/inet.h> header file. */
 #undef HAVE_ARPA_INET_H
 
-/* Define to 1 if function 'gethostbyname' is present' */
+/* Define to 1 if function 'gethostbyname' is present */
 #undef HAVE_GETHOSTBYNAME
 
-/* Define to 1 if function 'inet_addr' is present' */
+/* Define to 1 if function 'inet_addr' is present */
 #undef HAVE_INET_ADDR
 
-/* Define to 1 if function 'inet_aton' is present' */
+/* Define to 1 if function 'inet_aton' is present */
 #undef HAVE_INET_ATON
 
-/* Define to 1 if function 'inet_pton' is present' */
+/* Define to 1 if function 'inet_pton' is present */
 #undef HAVE_INET_PTON
 
 /* Define to 1 if you have the <inttypes.h> header file. */
 #undef HAVE_INTTYPES_H
+
+/* Define if library library 'nsl' is present */
+#undef HAVE_LIBNSL
 
 /* Define to 1 if you have the <memory.h> header file. */
 #undef HAVE_MEMORY_H
@@ -26,6 +29,9 @@
 
 /* Define to 1 if you have the <netinet/in.h> header file. */
 #undef HAVE_NETINET_IN_H
+
+/* Define to 1 if you have <pthread.h>. */
+#undef HAVE_PTHREAD_H
 
 /* Define to 1 if you have the <stdint.h> header file. */
 #undef HAVE_STDINT_H
@@ -48,8 +54,14 @@
 /* Define to 1 if you have the <sys/types.h> header file. */
 #undef HAVE_SYS_TYPES_H
 
+/* Define to 1 if you have <thread.h>. */
+#undef HAVE_THREAD_H
+
 /* Define to 1 if you have the <unistd.h> header file. */
 #undef HAVE_UNISTD_H
+
+/* Extra libraries */
+#undef LIBS
 
 /* Define to the address where bug reports for this package should be sent. */
 #undef PACKAGE_BUGREPORT

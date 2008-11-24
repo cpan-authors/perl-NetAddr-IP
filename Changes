@@ -1,9 +1,50 @@
 Revision history for Perl extension NetAddr::IP
 
+4.017  Sun Nov 23 19:32:59 PST 2008
+	Extended the capability of 'splitref' to allow splitting of
+	objects into multiple pieces with differing CIDR masks.
+	Returned object list can be split from bottom to top
+	or from top to bottom depending on which method is called
+
+		split, rsplit, splitref, rsplitref
+
+	Thanks to kashmish <kashmish@gmail.com> for the idea on
+	improving functionality of 'split'.
+
+	Thanks to Rob Riepel <riepel@networking.Stanford.EDU>
+	for a faster and more accurate _compV6 function.
+
+  in Util_PP v1.5
+	correct documentation error
+	add threads reporting (empty string)
+
+  in Util v1.25
+	add threads reporting that returns a comma separated
+	string of build headers.
+
+	added what is hopefully thread safe operation via
+	serializaton. Must be invoked by "--with-threads"
+
+  in Lite v1.12
+	corrected missing Zeros subroutine
+	Zeros and Zero both will work
+
+  in Lite v1.12
+	added minus (-) overloading to allow the subtraction
+	of two NetAddr::IP objects to get the difference between
+	the object->{addr}'s as a numeric value
+	Thanks to Rob Riepel <riepel@networking.Stanford.EDU>
+	for the initial code and inspiration for this enhancement
+
+4.016  Wed Nov  5 18:13:20 PST 2008
+	in Util/ version 1.24
+	Clean up Makefile.PL to check actual required link
+	libraries against the perl build for consistency
+
 4.015  Sun Nov  2 10:10:38 PST 2008
-        in Util v1.23 add missing headers in configure and localconf.h 
+	in Util v1.23 add missing headers in configure and localconf.h 
 	for Solaris inet_xton
-        thanks to Karl Bunch <karl@digilink.net> for spotting the bug.
+	thanks to Karl Bunch <karl@digilink.net> for spotting the bug.
 
 4.014  Sat Nov  1 15:13:48 PST 2008
 	in Lite.pm v1.11, add test for characters not allowed by 

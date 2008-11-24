@@ -1,7 +1,16 @@
 Revision history for Perl extension NetAddr::IP::Lite
 
+1.12  Sun Nov 23 19:32:59 PST 2008
+	repaired missing sub Zeros
+
+	added minus (-) overloading to allow the subtraction
+	of two NetAddr::IP objects to get the difference between
+	the object->{addr}'s as a numeric value
+	Thanks to Rob Riepel <riepel@networking.Stanford.EDU>
+	for the initial code and inspiration for this enhancement
+
 1.11  Sat Nov  1 15:13:48 PST 2008
-	add test for characters not allowed by rfc952before 
+	add test for characters not allowed by rfc952 before 
 	the call to gethostbyname in sub new() for those people 
 	that insist on using deprecated functionality :aton
 	and OS's that fail to notice calls to gethostbyname

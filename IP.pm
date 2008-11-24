@@ -4,8 +4,8 @@ package NetAddr::IP;
 
 use strict;
 #use diagnostics;
-use NetAddr::IP::Lite 1.11 qw(Zero Ones V4mask V4net);
-use NetAddr::IP::Util 1.22 qw(
+use NetAddr::IP::Lite 1.12 qw(Zero Zeros Ones V4mask V4net);
+use NetAddr::IP::Util 1.25 qw(
 	sub128
 	inet_aton
 	inet_any2n
@@ -22,16 +22,19 @@ use AutoLoader qw(AUTOLOAD);
 
 use vars qw(
 	@EXPORT_OK
+	@EXPORT_FAIL
 	@ISA
 	$VERSION
+	$_netlimit
 );
 require Exporter;
 
-@EXPORT_OK = qw(Compact Coalesce Zero Ones V4mask V4net);
+@EXPORT_OK = qw(Compact Coalesce Zero Zeros Ones V4mask V4net netlimit);
+@EXPORT_FAIL = qw($_netlimit);
 
 @ISA = qw(Exporter NetAddr::IP::Lite);
 
-$VERSION = do { sprintf " %d.%03d", (q$Revision: 4.15 $ =~ /\d+/g) };
+$VERSION = do { sprintf " %d.%03d", (q$Revision: 4.17 $ =~ /\d+/g) };
 
 =pod
 
@@ -44,10 +47,11 @@ NetAddr::IP - Manages IPv4 and IPv6 addresses and subnets
   use NetAddr::IP qw(
 	Compact
 	Coalesce
-	Zero
+	Zeros
 	Ones
 	V4mask
 	V4net
+	netlimit
 	:aton		DEPRECATED
 	:old_storable
 	:old_nth
@@ -71,7 +75,7 @@ NetAddr::IP - Manages IPv4 and IPv6 addresses and subnets
 * The following four functions return ipV6 representations of:
 
   ::                                       = Zeros();
-  FFFF:FFFF:FFFF:FFFF:FFFF:FFFF:FFFF:FFFF: = Ones();
+  FFFF:FFFF:FFFF:FFFF:FFFF:FFFF:FFFF:FFFF  = Ones();
   FFFF:FFFF:FFFF:FFFF:FFFF:FFFF::          = V4mask();
   ::FFFF:FFFF                              = V4net();
 
@@ -90,7 +94,7 @@ objects stored using the L<Storable> module.
 
   use NetAddr::IP qw(:old_storable);  
 
-* To compact many smaller subnets (see: C<$me-E<gt>compact($addr1, $addr2,...)>
+* To compact many smaller subnets (see: C<$me-E<gt>compact($addr1,$addr2,...)>
 
   @compacted_object_list = Compact(@object_list)
 
@@ -99,6 +103,33 @@ C<$masklen> mask length, when C<$number> or more addresses from
 C<@list_of_subnets> are found to be contained in said subnet.
 
   $arrayref = Coalesce($masklen, $number, @list_of_subnets)
+
+* To set a limit on the size of B<nets> processed or returned by
+NetAddr::IP.
+Set the maximum number of nets beyond which NetAddr::IP will return and
+error as a power of 2 (default 16 or 65536 nets). Each 2**16 consumes approximately 4 megs of
+memory. A 2**20 consumes 64 megs of memory, A 2**24 consumes 1 gigabyte of
+memory.
+
+  use NetAddr::IP qw(netlimit);
+  netlimit 20;
+
+The maximum B<netlimit> allowed is a 2**24. Attempts to set limits below the
+default of 16 or above the maximum of 24 are ignored.
+
+Returns true on success otherwise undef.
+
+=cut
+
+$_netlimit = 2 ** 16;			# default
+
+sub netlimit($) {
+  return undef unless $_[0];
+  return undef if $_[0] =~ /\D/;
+  return undef if $_[0] < 16;
+  return undef if $_[0] > 24;
+  $_netlimit = 2 ** $_[0];
+};
 
 =head1 INSTALLATION
 
@@ -167,7 +198,7 @@ B<C<-E<gt>copy()>> actually creates a new object when called.
 An object can be used just as a string. For instance, the following code
 
 	my $ip = new NetAddr::IP '192.168.1.123';
-        print "$ip\n";
+	print "$ip\n";
 
 Will print the string 192.168.1.123/32.
 
@@ -195,7 +226,7 @@ corresponding operation. Comparisons are tried first on the address portion
 of the object and if that is equal then the NUMERIC cidr portion of the
 masks are compared. This leads to the counterintuitive result that
 
-        /24 > /16
+	/24 > /16
 
 Comparision should not be done on netaddr objects with different CIDR as
 this may produce indeterminate - unexpected results,
@@ -204,24 +235,38 @@ done by comparing
 
 	$ip1->masklen <=> $ip2->masklen
 
-=item B<Addition of a constant>
+=item B<Addition of a constant (C<+>)>
 
-Adding a constant to a NetAddr::IP object changes its address part to
-point to the one so many hosts above the start address. For instance,
-this code:
+Add a 32 bit signed constant to the address part of a NetAddr object.
+This operation changes the address part to point so many hosts above the
+current objects start address. For instance, this code:
 
-    print NetAddr::IP->new('127.0.0.1') + 5;
+    print NetAddr::IP::Lite->new('127.0.0.1') + 5;
 
 will output 127.0.0.6/8. The address will wrap around at the broadcast
 back to the network address. This code:
 
-    print NetAddr::IP->new('10.0.0.1/24') + 255;
+    print NetAddr::IP::Lite->new('10.0.0.1/24') + 255;
 
-outputs 10.0.0.0/24.
+    outputs 10.0.0.0/24.
 
-=item B<Substraction of a constant>
+Returns the the unchanged object when the conastant is missing or out of
+range.
+
+    2147483647 <= constant >= -2147483648
+
+=item B<Substraction of a constant (C<+>)>
 
 The complement of the addition of a constant.
+
+=item B<Difference (C<->)>
+
+Returns the difference between the address parts of two NetAddr::IP::Lite
+objects address parts as a 32 bit signed number.
+
+Returns B<undef> if the difference is out of range. 
+
+(See range restrictions on Addition above)
 
 =item B<Auto-increment>
 
@@ -263,7 +308,7 @@ objects stored using the L<Storable> module.
 sub import
 {
     if (grep { $_ eq ':old_storable' } @_) {
-        @_ = grep { $_ ne ':old_storable' } @_;
+	@_ = grep { $_ ne ':old_storable' } @_;
     } else {
 	*{STORABLE_freeze} = sub 
 	{
@@ -308,12 +353,34 @@ sub Coalesce {
 }
 
 sub hostenumref($) {
-  my $r = $_[0]->splitref();
+  my $r = _splitref(0,$_[0]);
   unless ((notcontiguous($_[0]->{mask}))[1] == 128) {
     splice(@$r, 0, 1);
     splice(@$r, scalar @$r - 1, 1);
   }
   return $r;
+}
+
+sub splitref {
+  unshift @_, 0;	# mark as no reverse
+  goto &_splitref;
+}
+
+sub rsplitref {
+  unshift @_, 1;	# mark as reversed
+  goto &_splitref;
+}
+
+sub split {
+  unshift @_, 0;	# mark as no reverse
+  my $rv = &_splitref;
+  return $rv ? @$rv : ();
+}
+
+sub rsplit {
+  unshift @_, 1;	# mark as reversed
+  my $rv = &_splitref;
+  return $rv ? @$rv : ();
 }
 
 sub DESTROY {};
@@ -327,25 +394,25 @@ sub do_prefix ($$$) {
     my $laddr	= shift;
 
     if ($mask > 24) {
-        return "$faddr->[0].$faddr->[1].$faddr->[2].$faddr->[3]-$laddr->[3]";
+	return "$faddr->[0].$faddr->[1].$faddr->[2].$faddr->[3]-$laddr->[3]";
     }
     elsif ($mask == 24) {
-        return "$faddr->[0].$faddr->[1].$faddr->[2].";
+	return "$faddr->[0].$faddr->[1].$faddr->[2].";
     }
     elsif ($mask > 16) {
-        return "$faddr->[0].$faddr->[1].$faddr->[2]-$laddr->[2].";
+	return "$faddr->[0].$faddr->[1].$faddr->[2]-$laddr->[2].";
     }
     elsif ($mask == 16) {
-        return "$faddr->[0].$faddr->[1].";
+	return "$faddr->[0].$faddr->[1].";
     }
     elsif ($mask > 8) {
-        return "$faddr->[0].$faddr->[1]-$laddr->[1].";
+	return "$faddr->[0].$faddr->[1]-$laddr->[1].";
     }
     elsif ($mask == 8) {
-        return "$faddr->[0].";
+	return "$faddr->[0].";
     }
     else {
-        return "$faddr->[0]-$laddr->[0]";
+	return "$faddr->[0]-$laddr->[0]";
     }
 }
 
@@ -620,25 +687,35 @@ sub _compact_v6 ($) {
 }
 
 
-sub _compV6 {
-  my @addr = split(':',shift);
-  my $found = 0;
-  my $v;
-  foreach(0..$#addr) {
-    ($v = $addr[$_]) =~ s/^0+//;
-    $addr[$_] = $v || 0;
-  }
-  @_ = reverse(1..$#addr);
-  foreach(@_) {
-    if ($addr[$_] || $addr[$_ -1]) {
-      last if $found;
-      next;
-    }
-    $addr[$_] = $addr[$_ -1] = '';
-    $found = '1';
-  }
-  (my $rv = join(':',@addr)) =~ s/:+:/::/;
-  return $rv;
+#sub _old_compV6 {
+#  my @addr = split(':',shift);
+#  my $found = 0;
+#  my $v;
+#  foreach(0..$#addr) {
+#    ($v = $addr[$_]) =~ s/^0+//;
+#    $addr[$_] = $v || 0;
+#  }
+#  @_ = reverse(1..$#addr);
+#  foreach(@_) {
+#    if ($addr[$_] || $addr[$_ -1]) {
+#      last if $found;
+#      next;
+#    }
+#    $addr[$_] = $addr[$_ -1] = '';
+#    $found = '1';
+#  }
+#  (my $rv = join(':',@addr)) =~ s/:+:/::/;
+#  return $rv;
+#}
+
+# thanks to Rob Riepel <riepel@networking.Stanford.EDU>
+# for this faster and more compact solution 11-17-08
+sub _compV6 ($) {
+    my $ip = shift;
+    return $ip unless my @candidates = $ip =~ /((?:^|:)0(?::0)+(?::|$))/g;
+    my $longest = (sort { length($b) <=> length($a) } @candidates)[0];
+    $ip =~ s/$longest/::/;
+    return $ip;
 }
 
 sub short($) {
@@ -701,56 +778,198 @@ completely con tained within C<$other>.
 
 Note that C<$me> and C<$other> must be C<NetAddr::IP> objects.
 
-=item C<-E<gt>split($bits)>
+=item C<-E<gt>splitref($bits,[optional $bits1,$bits2,...])>
 
-Returns a list of objects, representing subnets of C<$bits> mask
+Returns a reference to a list of objects, representing subnets of C<bits> mask
 produced by splitting the original object, which is left
 unchanged. Note that C<$bits> must be longer than the original
 mask in order for it to be splittable.
 
-Note that C<$bits> can be given as an integer (the length of the mask)
-or as a dotted-quad. If omitted, a host mask is assumed.
+ERROR conditions: 
+
+  ->splitref will DIE with the message 'netlimit exceeded' 
+    if the number of return objects exceeds 'netlimit'.
+    See function 'netlimit' above (default 2**16 or 65536 nets).
+
+  ->splitref returns undef when C<bits> or the (bits list) 
+    will not fit within the original object.
+
+  ->splitref returns undef if a supplied ipV4, ipV6, or NetAddr 
+    mask in inappropriately formated,
+  
+B<bits> may be a CIDR mask, a dot quad or ipV6 string or a NetAddr::IP object.
+If C<bits> is missing, the object is split for into all available addresses
+within the ipV4 or ipV6 object ( auto-mask of CIDR 32, 128 respectively ).
+
+With optional additional C<bits> list, the original object is split into
+parts sized based on the list. NOTE: a short list will replicate the last
+item. If the last item is too large to for what remains of the object after
+splitting off the first parts of the list, a "best fits" list of remaining
+objects will be returned based on an increasing sort of the CIDR values of
+the C<bits> list.
+
+  i.e.	my $ip = new NetAddr::IP('192.168.0.0');
+	my $objptr = $ip->split(28, 29, 28, 29, 26);
+
+   has split plan 28 29 28 29 26 26 26 28
+   and returns this list of objects
+
+	192.168.0.0/28
+	192.168.0.16/29
+	192.168.0.24/28
+	192.168.0.40/29
+	192.168.0.48/26
+	192.168.0.112/26
+	192.168.0.176/26
+	192.168.0.240/28
+
+NOTE: that /26 replicates twice beyond the original request and /28 fills
+the remaining return object requirement.
+
+=item C<-E<gt>rsplitref($bits,[optional $bits1,$bits2,...])>
+
+C<-E<gt>rsplitref> is the same as C<-E<gt>splitref> above except that the split plan is
+applided to the original object in reverse order.
+
+  i.e.	my $ip = new NetAddr::IP('192.168.0.0');
+	my @objects = $ip->split(28, 29, 28, 29, 26);
+
+   has split plan 28 26 26 26 29 28 29 28
+   and returns this list of objects
+
+	192.168.0.0/28
+	192.168.0.16/26
+	192.168.0.80/26
+	192.168.0.144/26
+	192.168.0.208/29
+	192.168.0.216/28
+	192.168.0.232/29
+	192.168.0.240/28
+
+=item C<-E<gt>split($bits,[optional $bits1,$bits2,...])>
+
+Similar to C<-E<gt>splitref> above but returns the list rather than a list
+reference. You may not want to use this if a large numnber of objects is
+expected.
+
+=item C<-E<gt>rsplit($bits,[optional $bits1,$bits2,...])>
+
+Similar to C<-E<gt>rsplitref> above but returns the list rather than a list
+reference. You may not want to use this if a large numnber of objects is  
+expected.
 
 =cut
 
-sub split ($;$) {
-    return @{$_[0]->splitref($_[1])};
+# input:	$naip,
+#		@bits,		 list of masks for splits
+#
+#  returns:	empty array request will not fit in submitted net
+#		(\@bits,undef)	 if there is just one plan item i.e. return original net
+#		(\@bits,\%masks) for a real plan
+#
+sub _splitplan {
+  my($ip,@bits) = @_;
+  my $addr = $ip->addr();
+  my $isV6 = $ip->{isv6};
+  unless (@bits) {
+    $bits[0] = $isV6 ? 128 : 32;
+  }
+  my $basem = $ip->masklen();
+
+  my(%nets,$dif);
+  my $denom = 0;
+
+  my($x,$maddr);
+  foreach(@bits) {
+    if (ref $_) {	# is a NetAddr::IP
+      $x = $_->{isv6} ? $_->{addr} : $_->{addr} | V4mask;
+      ($x,$maddr) = notcontiguous($x);
+      return () if $x;	# spurious bits
+      $_ = $isV6 ? $maddr : $maddr - 96;
+    }
+    elsif ( $_ =~ /^d+$/ ) {		# is a negative number of the form -nnnn
+	;
+    }
+    elsif ($_ = NetAddr::IP->new($addr,$_,$isV6)) { # will be undefined if bad mask and will fall into oops!
+      $_ = $_->masklen();
+    }
+    else {
+      return ();	# oops!
+    }
+    $dif = $_ - $basem;			# for normalization
+    return () if $dif < 0;		# overange nets not allowed
+    return (\@bits,undef) unless ($dif || $#bits);	# return if original net = mask alone
+    $denom = $dif if $dif > $denom;
+    next if exists $nets{$_};
+    $nets{$_} = $_ - $basem;		# for normalization
+  }
+
+# $denom is the normalization denominator, since these are all exponents
+# normalization can use add/subtract to accomplish normalization
+#
+# keys of %nets are the masks used by this split
+# values of %nets are the normalized weighting for 
+# calculating when the split is "full" or complete
+# %masks values contain the actual masks for each split subnet
+# @bits contains the masks in the order the user actually wants them
+#
+  my %masks;					# calculate masks
+  my $maskbase = $isV6 ? 128 : 32;
+  foreach( keys %nets ) {
+    $nets{$_} = 2 ** ($denom - $nets{$_});
+    $masks{$_} = shiftleft(Ones, $maskbase - $_);
+  }
+
+  my @plan;
+  my $idx = 0;
+  $denom = 2 ** $denom;
+  PLAN:
+  while ($denom > 0) {				# make a net plan
+    my $nexmask = ($idx < $#bits) ? $bits[$idx] : $bits[$#bits];
+    ++$idx;
+    unless (($denom -= $nets{$nexmask}) < 0) {
+      return () if (push @plan, $nexmask) > $_netlimit;
+      next;
+    }
+# a fractional net is needed that is not in the mask list or the replicant
+    $denom += $nets{$nexmask};			# restore mistake
+  TRY:
+    foreach (sort { $a <=> $b } keys %nets) {
+      next TRY if $nexmask > $_;
+      do {
+	next TRY if $denom - $nets{$_} < 0;
+	return () if (push @plan, $_) > $_netlimit;
+	$denom -= $nets{$_};
+      } while $denom;
+    }
+    die 'ERROR: miscalculated weights' if $denom;
+  }
+  return () if $idx < @bits;			# overrange original subnet request
+  return (\@plan,\%masks);
 }
 
-=pod
+# input:	$rev,	# t/f
+#		$naip,
+#		@bits	# list of masks for split
+#
+sub _splitref {
+  my $rev = shift;
+  my($plan,$masks) = &_splitplan;
+  return undef unless $plan;
+  my $net = $_[0]->network();
+  return [$net] unless $masks;
+  my $addr = $net->{addr};
+  my $isV6 = $net->{isv6};
+  my @plan = $rev ? reverse @$plan : @$plan;
+# print "plan @plan\n";
 
-=item C<-E<gt>splitref($bits)>
-
-A (faster) version of C<-E<gt>split()> that returns a reference to a
-list of objects instead of a real list. This is useful when large
-numbers of objects are expected.
-
-Return undef if the number of subnets > 2 ** 32
-
-=cut
-
-sub splitref($;$) {
-  my $net = $_[0]->network;
-  my $mask = $_[1] || '';
-  if ($mask) {
-    return undef unless ($mask = NetAddr::IP->new($net->addr,$mask)->{mask});
-  } else {
-    $mask = Ones();
-  }
-  my $scidr = (notcontiguous($mask))[1];
-  my $nnets = $scidr - (notcontiguous($net->{mask}))[1];
-  return undef if $nnets < 0 || $nnets > 32;
-  return [$net] if $nnets == 0;
-  $nnets = 2 ** $nnets;			# number of nets
-  my $nsize = (sub128(Zero,$mask))[1];
-  my @ret = unpack('L3N',$nsize);
-  return undef if $ret[0] || $ret[1] || $ret[2];
-  $nsize = $ret[3];
-  @ret = ();
-  
-  while ($nnets-- > 0) {
-    push @ret, $net->_new($net->{addr},$mask);
-    $net->{addr} = (addconst($net->{addr},$nsize))[1];
+# create splits
+  my @ret;
+  while ($_ = shift @plan) {
+    my $mask = $masks->{$_};
+    push @ret, $net->_new($addr,$mask,$isV6);
+    last unless @plan;
+    $addr = (sub128($addr,$mask))[1];
   }
   return \@ret;
 }
@@ -760,6 +979,12 @@ sub splitref($;$) {
 =item C<-E<gt>hostenum()>
 
 Returns the list of hosts within a subnet.
+
+ERROR conditions: 
+
+  ->hostenum will DIE with the message 'netlimit exceeded' 
+    if the number of return objects exceeds 'netlimit'.
+    See function 'netlimit' above (default 2**16 or 65536 nets).
 
 =cut
 
@@ -977,39 +1202,39 @@ sub re ($)
 
     if ($mlen != 32)
     {
-        if ($mlen > 24)
-        {
-             $d	= 2 ** (32 - $mlen) - 1; 
+	if ($mlen > 24)
+	{
+	     $d	= 2 ** (32 - $mlen) - 1; 
 	     $r[3] = '(?:' . join('|', ($o[3]..$o[3] + $d)) . ')';
-        }
-        else
-        {
-            $r[3] = $octet;
-            if ($mlen > 16)
-            {
-                $d = 2 ** (24 - $mlen) - 1; 
+	}
+	else
+	{
+	    $r[3] = $octet;
+	    if ($mlen > 16)
+	    {
+		$d = 2 ** (24 - $mlen) - 1; 
 		$r[2] = '(?:' . join('|', ($o[2]..$o[2] + $d)) . ')';
-            }
-            else
-            {
-                $r[2] = $octet;
-                if ($mlen > 8)
-                {
-                    $d = 2 ** (16 - $mlen) - 1; 
+	    }
+	    else
+	    {
+		$r[2] = $octet;
+		if ($mlen > 8)
+		{
+		    $d = 2 ** (16 - $mlen) - 1; 
 		    $r[1] = '(?:' . join('|', ($o[1]..$o[1] + $d)) . ')';
-                }
-                else
-                {
-                    $r[1] = $octet;
-                    if ($mlen > 0)
-                    {
-                        $d = 2 ** (8 - $mlen) - 1;
+		}
+		else
+		{
+		    $r[1] = $octet;
+		    if ($mlen > 0)
+		    {
+			$d = 2 ** (8 - $mlen) - 1;
 			$r[0] = '(?:' . join('|', ($o[0] .. $o[0] + $d)) . ')';
-                    }
-                    else { $r[0] = $octet; }
-                }
-            }
-        }
+		    }
+		    else { $r[0] = $octet; }
+		}
+	    }
+	}
     }
 
     ### no digit before nor after (look-behind, look-ahead)
@@ -1122,10 +1347,11 @@ __END__
 
 	Compact
 	Coalesce
-	Zero
+	Zeros
 	Ones
 	V4mask
-	V4net 
+	V4net
+	netlimit
 
 =head1 HISTORY
 
@@ -1770,23 +1996,62 @@ THE FOLLOWING CHANGES MAY BREAK SOME CODE !
 
       Inherited methods from Lite.pm updated as follows:
 
-        comparisons of the form <, >, <=, >=  
+	comparisons of the form <, >, <=, >=  
 
-                10.0.0.0/24 {operator} 10.0.0.0/16
+		10.0.0.0/24 {operator} 10.0.0.0/16
 
-        return now return the comparision of the cidr value
-        when the address portion is equal.   
-        Thanks to Peter DeVries for spotting this bug.
+	return now return the comparision of the cidr value
+	when the address portion is equal.   
+	Thanks to Peter DeVries for spotting this bug.
 
-        ... and leading us to discover that this next fix is required
+	... and leading us to discover that this next fix is required
 
-        comparisons of the form <=>, cmp
-        now return the correct value 1, or -1
-        when the address portion is equal and the CIDR value is not
-        i.e.    where /16 is > /24, etc...
+	comparisons of the form <=>, cmp
+	now return the correct value 1, or -1
+	when the address portion is equal and the CIDR value is not
+	i.e.    where /16 is > /24, etc...
 
 	This is the OPPOSITE of the previous return values for
 	comparison of the CIDR portion of the address object
+
+=item 4.08
+
+	added method ->new_from_aton to supplement broken
+	:aton functionality which is now DEPRECATED and
+	will eventually go away.
+
+=item 4.13
+
+	added 'no octal' method ->new_no
+
+=item 4.17
+
+	add support for PTHREADS in the event that perl is
+	built with <pthreads.h>. This must be invoked at build
+	time with the switch --with-threads
+
+	WARNING: --with-threads is not tested in a threads
+	environment. Reports welcome and solicited.
+
+	update _compV6 which runs faster and produces more
+	compact ipV6 addresses.
+	....and
+	added minus (-) overloading to allow the subtraction
+	of two NetAddr::IP objects to get the difference between
+	the object->{addr}'s as a numeric value
+
+	Thanks to Rob Riepel <riepel@networking.Stanford.EDU> for
+	the _compV6 code and the inspiration for (-) overloading.
+
+	Extended the capability of 'splitref' to allow splitting of
+	objects into multiple pieces with differing CIDR masks.
+	Returned object list can be split from bottom to top
+	or from top to bottom depending on which routine is called
+
+		split, rsplit, splitref, rsplitref
+
+	Thanks to kashmish <kashmish@gmail.com> for the idea on
+	improving functionality of 'split'.
 
 =back
 
@@ -1814,3 +2079,4 @@ for this module.
 
 =cut
 
+1;

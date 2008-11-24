@@ -1,5 +1,17 @@
 Revision history for Perl extension NetAddr::IP::Util
 
+1.25  Tue Nov 18 19:08:56 PST 2008
+	correct documentation error in Util_PP v1.5
+
+	add threads reporting to Util.xs and Util_PP
+
+	added what is hopefully thread safe operation via
+	serializaton. Must be invoked by "--with-threads"
+
+1.24  Wed Nov  5 18:13:20 PST 2008
+	Clean up Makefile.PL to check actual required link 
+	libraries against the perl build for consistency
+
 1.23  Sun Nov  2 10:10:38 PST 2008
 	add missing headers in configure and localconf.h for Solaris inet_xton
 	thanks to Karl Bunch <karl@digilink.net> for spotting the bug.

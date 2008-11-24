@@ -25,15 +25,15 @@ use NetAddr::IP::Util qw(
 	mask4to6
 	ipv4to6
 );
-use vars qw(@ISA @EXPORT_OK $VERSION $Accept_Binary_IP $Old_nth $AUTOLOAD);
+use vars qw(@ISA @EXPORT_OK $VERSION $Accept_Binary_IP $Old_nth $AUTOLOAD *Zero);
 
-$VERSION = do { my @r = (q$Revision: 1.11 $ =~ /\d+/g); sprintf "%d."."%02d" x $#r, @r };
+$VERSION = do { my @r = (q$Revision: 1.12 $ =~ /\d+/g); sprintf "%d."."%02d" x $#r, @r };
 
 require Exporter;
 
 @ISA = qw(Exporter);
 
-@EXPORT_OK = qw(Zero Ones V4mask V4net);
+@EXPORT_OK = qw(Zeros Zero Ones V4mask V4net);
 
 # Set to true, to enable recognizing of ipV4 && ipV6 binary notation IP
 # addresses. Thanks to Steve Snodgrass for reporting. This can be done
@@ -41,6 +41,7 @@ require Exporter;
 
 $Accept_Binary_IP = 0;
 $Old_nth = 0;
+*Zero = \&Zeros;
 
 =head1 NAME
 
@@ -75,7 +76,7 @@ NetAddr::IP::Lite - Manages IPv4 and IPv6 addresses and subnets
   The following four functions return ipV6 representations of:
 
   ::					   = Zeros();
-  FFFF:FFFF:FFFF:FFFF:FFFF:FFFF:FFFF:FFFF: = Ones();
+  FFFF:FFFF:FFFF:FFFF:FFFF:FFFF:FFFF:FFFF  = Ones();
   FFFF:FFFF:FFFF:FFFF:FFFF:FFFF::	   = V4mask();
   ::FFFF:FFFF				   = V4net();
 
@@ -166,7 +167,7 @@ my $_ones = ~$_zero;
 my $_v4mask = pack('L4',0xffffffff,0xffffffff,0xffffffff,0);
 my $_v4net = ~ $_v4mask;
 
-sub Zero() {
+sub Zeros() {
   return $_zero;
 }
 sub Ones() {
@@ -313,11 +314,11 @@ done by comparing
 
         $ip1->masklen <=> $ip2->masklen
 
-=item B<Addition of a constant>
+=item B<Addition of a constant (C<+>)>
 
-Adding a constant to a NetAddr::IP::Lite object changes its address part to
-point to the one so many hosts above the start address. For instance,
-this code:
+Add a 32 bit signed constant to the address part of a NetAddr object.
+This operation changes the address part to point so many hosts above the
+current objects start address. For instance, this code:
 
     print NetAddr::IP::Lite->new('127.0.0.1') + 5;
 
@@ -328,13 +329,19 @@ back to the network address. This code:
 
 outputs 10.0.0.0/24.
 
+Returns the the unchanged object when the conastant is missing or out of range.
+
+    2147483647 <= constant >= -2147483648
+
 =cut
 
 sub plus {
     my $ip	= shift;
     my $const	= shift;
 
-    return $ip unless $const;
+    return $ip unless $const &&
+		$const < 2147483648 &&
+		$const > -2147483649;
 
     my $a = $ip->{addr};
     my $m = $ip->{mask};
@@ -347,17 +354,35 @@ sub plus {
     return _new($ip,$new,$m);
 }
 
-=item B<Substraction of a constant>
+=item B<Substraction of a constant (C<+>)>
 
 The complement of the addition of a constant.
 
+=item B<Difference (C<->)>
+
+Returns the difference between the address parts of two NetAddr::IP::Lite
+objects address parts as a 32 bit signed number.
+
+Returns B<undef> if the difference is out of range.
+
 =cut
+
+my $_smsk = pack('L3N',0xffffffff,0xffffffff,0xffffffff,0x80000000);
 
 sub minus {
     my $ip	= shift;
-    my $const	= shift;
-
-    return plus($ip, -$const);
+    my $arg	= shift;
+    unless (ref $arg) {
+	return plus($ip, -$arg);
+    }
+    my($carry,$dif) = sub128($ip->{addr},$arg->{addr});
+    if ($carry) {					# value is positive
+	return undef if hasbits($dif & $_smsk);		# all sign bits should be 0's
+	return (unpack('L3N',$dif))[3];
+    } else {
+	return undef if hasbits(($dif & $_smsk) ^ $_smsk);	# sign is 1's
+	return (unpack('L3N',$dif))[3] - 4294967296;
+    }
 }
 
 				# Auto-increment an object
@@ -446,8 +471,6 @@ sub _new ($$$) {
 
 =item C<-E<gt>new_from_aton($netaddr)>
 
-=item C<-E<gt>new_no([$addr, [ $mask]])>
-
 The first two methods create a new address with the supplied address in
 C<$addr> and an optional netmask C<$mask>, which can be omitted to get
 a /32 or /128 netmask for IPv4 / IPv6 addresses respectively. 
@@ -530,15 +553,15 @@ If called with no arguments, 'default' is assumed.
 =cut
 
 my %fip4 = (
-        default         => Zero,
-        any             => Zero,
+        default         => Zeros,
+        any             => Zeros,
         broadcast       => inet_any2n('255.255.255.255'),
         loopback        => inet_any2n('127.0.0.1'),
 	unspecified	=> undef,
 );
 my %fip4m = (
-        default         => Zero,
-        any             => Zero,
+        default         => Zeros,
+        any             => Zeros,
         broadcast       => Ones,
         loopback        => mask4to6(inet_aton('255.0.0.0')),
 	unspecified	=> undef,	# not applicable for ipV4
@@ -546,16 +569,16 @@ my %fip4m = (
 );
 
 my %fip6 = (
-	default         => Zero,
-	any             => Zero,
+	default         => Zeros,
+	any             => Zeros,
 	broadcast       => undef,	# not applicable for ipV6
 	loopback        => inet_any2n('::1'),
-	unspecified     => Zero,
+	unspecified     => Zeros,
 );
 
 my %fip6m = (
-	default         => Zero,
-	any             => Zero,
+	default         => Zeros,
+	any             => Zeros,
 	broadcast       => undef,	# not applicable for ipV6
 	loopback        => Ones,
 	unspecified     => Ones,
@@ -1142,7 +1165,7 @@ sub import {
 
 =head1 EXPORT_OK
 
-	Zero
+	Zeros
 	Ones
 	V4mask
 	V4net
