@@ -66,6 +66,7 @@ Lite/Util/configure.ac
 Lite/Util/config.h.in
 Lite/Util/GPL
 Lite/Util/lib/NetAddr/IP/UtilPP.pm
+Lite/Util/tlib/NetAddr/IP/Util_IS.pm
 Lite/Util/localconf.h
 Lite/Util/Makefile.PL
 Lite/Util/README

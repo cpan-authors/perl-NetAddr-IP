@@ -34,7 +34,7 @@ require Exporter;
 
 @ISA = qw(Exporter NetAddr::IP::Lite);
 
-$VERSION = do { sprintf " %d.%03d", (q$Revision: 4.18 $ =~ /\d+/g) };
+$VERSION = do { sprintf " %d.%03d", (q$Revision: 4.19 $ =~ /\d+/g) };
 
 =pod
 
@@ -2052,6 +2052,14 @@ THE FOLLOWING CHANGES MAY BREAK SOME CODE !
 
 	Thanks to kashmish <kashmish@gmail.com> for the idea on
 	improving functionality of 'split'.
+
+=item 4.018
+
+	removed --with-threads, PTHREADS support, and all
+	the mutex locking - unlocking
+
+	updated Util.xs to be fully re-entrant and thus 
+	fully thread safe.
 
 =back
 

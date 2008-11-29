@@ -1,5 +1,8 @@
 Revision history for Perl extension NetAddr::IP
 
+4.019  Sat Nov 29 15:15:30 PST 2008
+	in Lite/Util, add pure perl testing to XS build
+
 4.018  Fri Nov 28 23:19:01 PST 2008
 	revised XS code to be full re-entrant, thread safe in Util.xs v1.26
 	removed all traces of mutex locks in Util.xs v1.26
