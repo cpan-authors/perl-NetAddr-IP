@@ -22,26 +22,6 @@ by invoking this as:
   sleep $view if $view;
 }
 
-unless (grep { m/with-threads/ } @ARGV) {
-  print q{
-This version of NetAddr::IP incorporates ALPHA support for THREADS 
-on the underlying platform (not perl threads).  If  perl was built 
-with <pthreads.h> or <threads.h> then this module can be linked to 
-those libraries if desired. Documentation about perl suggests this 
-might be a good idea maybe??? The additional thread code is designed 
-to make the XS library thread safe via serialization with mutex locks.
-However, there is no assurance that the present NetAddr::IP threads 
-code works as expected or improves anything at all. I confess I 
-don't know that much about threads.
-
-Use at your own risk as follows:
-
-  perl Makefile.PL --with-threads
-
-};
-  sleep $view if $view;
-}
-
 eval q{ use Test::Pod;
 	$check0 = 1; };
 

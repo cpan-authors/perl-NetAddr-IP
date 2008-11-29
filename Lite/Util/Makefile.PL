@@ -17,7 +17,6 @@ unlink 'Makefile';		# remove Makefile to stabalize CC test
 #
 my($withthreads,$useXS);
 GetOptions(
-	'with-threads'	=> \$withthreads,
 	'xs!'		=> \$useXS,
 	'pm'		=> sub {
 		warn "\n\t".'WARNING: Use of "--pm" is deprecated, use "-noxs" instead'."\n\n";
@@ -56,7 +55,6 @@ unless (defined $useXS) {
   if (test_cc()) {  
     print "You have a working compiler.\n";
     $useXS = 1;
-    $withthreads = 1 if $withthreads;
 #    $makeparms{'MYEXTLIB'} = 'netdns$(LIB_EXT)',
 
   } else {
@@ -113,16 +111,6 @@ if ($useXS) {
  *
  */
 |;
-  print F q|#define I_REALLY_WANT_ALPHA_THREADS 1
-| if $withthreads;
-  print F q|#define LOCAL_PERL_WANTS_PTHREAD_H 1
-| if $Config{i_pthread} eq 'define';
-  print F q|#define LOCAL_PERL_USE_THREADS 1
-| if $Config{usethreads} eq 'define';
-  print F q|#define LOCAL_PERL_USE_I_THREADS 1
-| if $Config{useithreads} eq 'define';
-  print F q|#define LOCAL_PERL_USE_5005THREADS 1
-| if $Config{use5005threads} eq 'define';
   close F;
 
   $begin = q|

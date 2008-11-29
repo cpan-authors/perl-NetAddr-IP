@@ -37,17 +37,6 @@ AH_TEMPLATE([HAVE_INET_ADDR],[Define to 1 if function 'inet_addr' is present])
 AC_SEARCH_LIBS([inet_addr],[socket],[
 	AC_DEFINE([HAVE_INET_ADDR])])
 
-
-AC_CHECK_HEADER([pthread.h],[
-	AC_DEFINE([HAVE_PTHREAD_H],[1],[Define to 1 if you have <pthread.h>.])
-	AC_SEARCH_LIBS([pthread_mutex_init],[pthreads],[],[])
-	AC_MSG_NOTICE([...have pthreads, do not check for thread.h])],[
-	AC_CHECK_HEADER([thread.h],[
-	AC_DEFINE([HAVE_THREAD_H],[1],[Define to 1 if you have <thread.h>.])
-	AC_SEARCH_LIBS([mutex_init],[thread],[],[])]
-	)
-])
-
 AC_C_BIGENDIAN
 AC_CHECK_SIZEOF([uint8_t])
 AC_CHECK_SIZEOF([uint16_t])

@@ -1,9 +1,14 @@
 Revision history for Perl extension NetAddr::IP::Util
 
+1.26  Fri Nov 28 23:19:01 PST 2008
+	revised XS code to be full re-entrant... thread safe.
+	removed all traces of mutex locks
+	removed function 'threads' here an in UtilPP v1.6
+
 1.25  Tue Nov 18 19:08:56 PST 2008
 	correct documentation error in Util_PP v1.5
 
-	add threads reporting to Util.xs and Util_PP
+	add threads reporting to Util.xs and UtilPP
 
 	added what is hopefully thread safe operation via
 	serializaton. Must be invoked by "--with-threads"

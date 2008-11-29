@@ -13,7 +13,7 @@ require Exporter;
 
 @ISA = qw(Exporter DynaLoader);
 
-$VERSION = do { my @r = (q$Revision: 1.25 $ =~ /\d+/g); sprintf "%d."."%02d" x $#r, @r };
+$VERSION = do { my @r = (q$Revision: 1.26 $ =~ /\d+/g); sprintf "%d."."%02d" x $#r, @r };
 
 @EXPORT_OK = qw(
 	inet_aton
@@ -44,7 +44,6 @@ $VERSION = do { my @r = (q$Revision: 1.25 $ =~ /\d+/g); sprintf "%d."."%02d" x $
 	bcdn2bin
 	simple_pack
 	comp128
-	threads
 );
 
 %EXPORT_TAGS = (
@@ -128,7 +127,7 @@ sub inet_aton {
   return &yinet_aton;
 }
 
-# sub DESTROY {};	is in the XS file
+sub DESTROY {};
 
 1;
 __END__
@@ -163,7 +162,6 @@ NetAddr::IP::Util -- IPv4/6 and 128 bit number utilities
 	bin2bcd
 	bcd2bin
 	mode
-	threads
   );
 
   use NetAddr::IP::Util qw(:all :inet :ipv4 :ipv6 :math)
@@ -211,7 +209,6 @@ NetAddr::IP::Util -- IPv4/6 and 128 bit number utilities
   $bcdtext = bin2bcd($bits128);
   $bits128 = bcd2bin($bcdtxt);
   $modetext = mode;
-  $threadtxt = threads;
 
 =head1 INSTALLATION
 
@@ -590,22 +587,6 @@ Returns the operating mode of this module.
 	returns:	"Pure Perl"
 		   or	"CC XS"
 
-=item * $threadtxt = threads
-
-Returns the build flags for various thread options
-as a comma seperated string.
-
-	input:		none
-	returns:	empty string
-	  or some combination of the following:
-
-  HAVE_PTHREAD_H	perl built with <pthread.h>
-  HAVE_THREAD_H		perl built with <thread.h>
-  LOCAL_PERL_WANTS_PTHREAD_H	$Config{i_pthread}
-  LOCAL_PERL_USE_THREADS	$Config{usethreads}
-  LOCAL_PERL_USE_I_THREADS	$Config{useithreads}
-  LOCAL_PERL_USE_5005_THREADS	$Config{use5005threads}
-
 =back
 
 =head1 EXAMPLES
@@ -726,7 +707,6 @@ as a comma seperated string.
 	bin2bcd
 	bcd2bin
 	mode
-	threads
 
 =head1 AUTHOR
 

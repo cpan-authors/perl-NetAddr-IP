@@ -1,5 +1,10 @@
 Revision history for Perl extension NetAddr::IP
 
+4.018  Fri Nov 28 23:19:01 PST 2008
+	revised XS code to be full re-entrant, thread safe in Util.xs v1.26
+	removed all traces of mutex locks in Util.xs v1.26
+	removed function 'threads' here an in UtilPP v1.6
+
 4.017  Sun Nov 23 19:32:59 PST 2008
 	Extended the capability of 'splitref' to allow splitting of
 	objects into multiple pieces with differing CIDR masks.
@@ -14,7 +19,7 @@ Revision history for Perl extension NetAddr::IP
 	Thanks to Rob Riepel <riepel@networking.Stanford.EDU>
 	for a faster and more accurate _compV6 function.
 
-  in Util_PP v1.5
+  in UtitPP v1.5
 	correct documentation error
 	add threads reporting (empty string)
 

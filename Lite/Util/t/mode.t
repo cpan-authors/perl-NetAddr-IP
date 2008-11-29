@@ -10,7 +10,6 @@ END {print "not ok 1\n" unless $loaded;}
 
 use NetAddr::IP::Util qw(
 	mode
-	threads
 );
 
 $loaded = 1;
@@ -22,8 +21,6 @@ print "ok 1\n";
 # of the test code):
 
 my $mode = mode();
-my $thrd = threads();
 my $txt = "\tmode $mode";
-$txt .= " => $thrd" if $thrd;
 print STDERR $txt,"\n";
 print "ok 2\n";

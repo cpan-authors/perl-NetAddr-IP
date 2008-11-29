@@ -12,7 +12,7 @@ require Exporter;
 
 @ISA = qw(Exporter);
 
-$VERSION = do { my @r = (q$Revision: 1.5 $ =~ /\d+/g); sprintf "%d."."%02d" x $#r, @r };
+$VERSION = do { my @r = (q$Revision: 1.6 $ =~ /\d+/g); sprintf "%d."."%02d" x $#r, @r };
 
 @EXPORT_OK = qw(
 	hasbits
@@ -34,7 +34,6 @@ $VERSION = do { my @r = (q$Revision: 1.5 $ =~ /\d+/g); sprintf "%d."."%02d" x $#
 	bcdn2txt
 	bcdn2bin
 	simple_pack
-	threads
 );
 
 %EXPORT_TAGS = (
@@ -67,7 +66,6 @@ NetAddr::IP::UtilPP -- pure Perl functions for NetAddr::IP::Util
 	ipv6to4
 	bin2bcd
 	bcd2bin
-	threads
   );
 
   use NetAddr::IP::UtilPP qw(:all)
@@ -89,7 +87,6 @@ NetAddr::IP::UtilPP -- pure Perl functions for NetAddr::IP::Util
   $netaddr = ipv6to4($pv6naddr);
   $bcdtext = bin2bcd($bits128);
   $bits128 = bcd2bin($bcdtxt);
-  $threadtxt = threads();
 
 =head1 DESCRIPTION
 
@@ -470,16 +467,7 @@ sub bcd2bin {
   goto &_bcd2bin;
 }
 
-=item * $threadtxt = threads();
-
-Returns an empty string in Pure Perl mode. See the description for XS mode
-for more detail.
-
-=cut
-
-sub threads {
-  return '';
-}
+=pod
 
 =back
 
