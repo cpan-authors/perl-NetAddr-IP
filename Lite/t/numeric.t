@@ -23,7 +23,7 @@ for (my $i=0;$i < @tval;$i+=3) {
   print "got: $sclr\nexp: $tval[$i+1]\nnot "
 	unless $sclr .'x' eq $tval[$i+1] .'x';
   &ok;
-  
+
 ## test array return
   my($addr,$mask) = $nip->numeric;
   print "got: $addr\nexp: $tval[$i+1]\nnot "

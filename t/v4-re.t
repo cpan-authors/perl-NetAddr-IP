@@ -25,7 +25,7 @@ for my $a (@addrs)
     diag "Compilation of the resulting regular expression failed: $@"
 	unless ok(!$@, "Compilation of the resulting regular expression");
 
-    for (my $ip = $a->network; 
+    for (my $ip = $a->network;
 	 $ip < $a->broadcast && $a->masklen != 32;
 	 $ip ++)
     {

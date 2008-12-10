@@ -19,7 +19,7 @@ for my $a (@addr) {
     my $ip = new NetAddr::IP $a->[0];
 
 #    print "$a->[0] is ", $ip->prefix, "\n";
-    
+
     if ($ip->prefix eq $a->[1]) {
 	print "ok $count\n";
     }

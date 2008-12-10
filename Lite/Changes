@@ -1,5 +1,16 @@
 Revision history for Perl extension NetAddr::IP::Lite
 
+1.13  Tue Dec  9 16:00:35 PST 2008
+	added missing regexp to classify arguments as BCD numbers,
+	apparently this has been missing from NetAddr::IP::Lite 
+	since the first release. 
+	Thanks to Carlos Vicente cvicente@cpan.org for reporting this bug.
+
+	revised UtilPP v1.7 to work around perl 5.8.4
+	failures with certain @_ operations of goto &sub...
+	see perl bug [ 23429]. Unfortunately, perl-5.8.4 is
+	the distribution of choice for many solaris boxes
+
 1.12  Sun Nov 23 19:32:59 PST 2008
 	repaired missing sub Zeros
 
@@ -10,8 +21,8 @@ Revision history for Perl extension NetAddr::IP::Lite
 	for the initial code and inspiration for this enhancement
 
 1.11  Sat Nov  1 15:13:48 PST 2008
-	add test for characters not allowed by rfc952 before 
-	the call to gethostbyname in sub new() for those people 
+	add test for characters not allowed by rfc952 before
+	the call to gethostbyname in sub new() for those people
 	that insist on using deprecated functionality :aton
 	and OS's that fail to notice calls to gethostbyname
 	with binary arguments
@@ -19,8 +30,8 @@ Revision history for Perl extension NetAddr::IP::Lite
 1.10  Wed Oct 22 14:54:12 PDT 2008
 	add new no octal method for improperly formatted ipV4 addresses
 
-	In Util.pm v1.22, eliminated dependance on PL_sawampersand
-	thanks to Mark Martinec <Mark.Martinec@ijs.si> 
+	In Util.pm v1.22, eliminated dependence on PL_sawampersand
+	thanks to Mark Martinec <Mark.Martinec@ijs.si>
 	for spotting this and submitting a patch.
 
 	In Util.pm v1.22, force -noxs mode for Win32
@@ -29,41 +40,41 @@ Revision history for Perl extension NetAddr::IP::Lite
 
 1.09  Thu Oct 16 19:35:33 PDT 2008
 	again... clear build bug for Win32 in Util.pm v 1.21
-	
+
 1.08  Sat Sep 27 12:27:28 PDT 2008
     in Util v0.19
 	updated test for ENDIANess in siteconf
-	
+
 	add test in inet_aton to detect overange IP dot quad values
 	missed by some broken Socket implementations
 	i.e. 256.1.1.1
 
 1.07  Tue Sep  2 19:09:57 PDT 2008
 	in the off chance that NetAddr::IP::Lite objects are created
-	and the caller later loads NetAddr::IP and expects to use   
-	those objects, let the AUTOLOAD routine find and redirect   
-	NetAddr::IP::Lite method and subroutine calles to NetAddr::IP.
+	and the caller later loads NetAddr::IP and expects to use
+	those objects, let the AUTOLOAD routine find and redirect
+	NetAddr::IP::Lite method and subroutine calls to NetAddr::IP.
 
-	updated t/v4-wnew.t so that non-existent 
+	updated t/v4-wnew.t so that non-existent
 	domains are "really" not there
 
 1.06  Sat Jun  7 12:57:18 PDT 2008
 	add method "new_from_aton" and related documentation
 
-	comparisons of the form <, >, <=, >=  
+	comparisons of the form <, >, <=, >=
 		10.0.0.0/24 {operator} 10.0.0.0/16
-	return now return the comparision of the cidr value
-	when the address portion is equal. 
+	return now return the comparison of the cidr value
+	when the address portion is equal.
 NOTE:	this comparison returns the comparison of the NUMERIC
 	value of the CIDR. This produces the counter intuitive result
 	that /24 > /16. There is logic to this, really! For proper
 	operation of commands like "Compact" and "Coalesce", lists of
 	netaddr objects must sort in ascending order. However, this
 	conflicts with the requirement for larger netblocks to sort
-	FIRST so as to include smaller ones. This logic extends to 
+	FIRST so as to include smaller ones. This logic extends to
 	any requirement for a sort of netaddr objects. It should be
-	further noted that the mixing of netaddr objects with varying 
-	IP addresses and CIDR allocations can lead to unexpected 
+	further noted that the mixing of netaddr objects with varying
+	IP addresses and CIDR allocations can lead to unexpected
 	results since the comparisons done first on the IP portion
 	and then on the CIDR portion. The documentation has been
 	updated appropriately.
@@ -78,7 +89,7 @@ NOTE:	this comparison returns the comparison of the NUMERIC
 1.02  Fri Aug  4 14:14:16 PDT 2006
 	$isV6 global converted to a lexical variable within sub "_xnew"
 	$Class global removed and replaced by calls to UNIVERSAL::isa
-	Thanks to julian@mehnle.net for spotting problems related to 
+	Thanks to julian@mehnle.net for spotting problems related to
 	using the Lite.pm with mod_perl
 
 1.01  Thu Jul  6 10:46:48 PDT 2006
@@ -95,8 +106,8 @@ NOTE:	this comparison returns the comparison of the NUMERIC
 0.12  Sun Jun 25 16:13:00 PDT 2006
 	imported missing 'bcd2bin'
 
-	fixed Util->new() issues with long digit strings 
-	->new('::fffff') and non hex digits ->new('::foo'). 
+	fixed Util->new() issues with long digit strings
+	->new('::fffff') and non hex digits ->new('::foo').
 	Thanks to Radoslaw Zielinski <radek42@gmail.com>
 	for spotting these 3 bugs
 
@@ -106,7 +117,7 @@ NOTE:	this comparison returns the comparison of the NUMERIC
 
 	add $self->{isv6} flag for hint to ipV6 status
 
-	corrected bug in sub num that miscalcluated the number
+	corrected bug in sub num that miscalculated the number
 	of IP's in a net for /31 /32
 
 0.10  Tue Jun 13 14:07:46 PDT 2006
@@ -125,7 +136,7 @@ NOTE:	this comparison returns the comparison of the NUMERIC
 	update Util/Makefile.PM to check for link libraries
 	that ExtUtils::MakeMaker does not find properly
 
-	remove 'use warnings' from Lite.pm for backwards 
+	remove 'use warnings' from Lite.pm for backwards
 	compatibility with older perl versions
 
 0.08  Tue Jun  6 08:33:11 PDT 2006
@@ -149,7 +160,7 @@ NOTE:	this comparison returns the comparison of the NUMERIC
 	left Util/Makefile.pl out of the top level distro
 
 0.03  Fri Apr 28 17:26:51 PDT 2006
-	oops! left prerequsite Util 0.08 in the Makefile
+	oops! left prerequisite Util 0.08 in the Makefile
 	when it is include in this distro
 
 0.02  Fri Apr 28 16:11:00 PDT 2006

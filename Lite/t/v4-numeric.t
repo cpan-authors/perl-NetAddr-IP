@@ -24,13 +24,13 @@ for my $a (keys %$nets) {
     print '', ($nip and $nip->cidr eq $ip->cidr) ? '' : 'not ',
     'ok ', $count ++, "\n";
 
-    print '', (($addr != $nets->{$a}->[0] ?  'not ' : ''), 
+    print '', (($addr != $nets->{$a}->[0] ?  'not ' : ''),
 	   "ok ", $count++, "\n");
 
-    print '', (($mask != $nets->{$a}->[1] ?  'not ' : ''), 
+    print '', (($mask != $nets->{$a}->[1] ?  'not ' : ''),
 	   "ok ", $count++, "\n");
 
-	
+
 }
 
 

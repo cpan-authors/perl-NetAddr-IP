@@ -27,7 +27,7 @@ use NetAddr::IP::Util qw(
 );
 use vars qw(@ISA @EXPORT_OK $VERSION $Accept_Binary_IP $Old_nth $AUTOLOAD *Zero);
 
-$VERSION = do { my @r = (q$Revision: 1.12 $ =~ /\d+/g); sprintf "%d."."%02d" x $#r, @r };
+$VERSION = do { my @r = (q$Revision: 1.13 $ =~ /\d+/g); sprintf "%d."."%02d" x $#r, @r };
 
 require Exporter;
 
@@ -113,10 +113,10 @@ The supported operations are described below:
 
 =cut
 
-# in the off chance that NetAddr::IP::Lite objects are created 
-# and the caller later loads NetAddr::IP and expects to use 
-# those objects, let the AUTOLOAD routine find and redirect 
-# NetAddr::IP::Lite method and subroutine calles to NetAddr::IP.
+# in the off chance that NetAddr::IP::Lite objects are created
+# and the caller later loads NetAddr::IP and expects to use
+# those objects, let the AUTOLOAD routine find and redirect
+# NetAddr::IP::Lite method and subroutine calls to NetAddr::IP.
 #
 
 my $parent = 'NetAddr::IP';
@@ -159,7 +159,7 @@ sub AUTOLOAD {
 =cut
 
 # these really should be packed in Network Long order but since they are
-# symetrical, that extra internal processing can be skipped
+# symmetrical, that extra internal processing can be skipped
 
 my $_v4zero = pack('L',0);
 my $_zero = pack('L4',0,0,0,0);
@@ -199,13 +199,13 @@ use overload
 
     '""'	=> sub { $_[0]->cidr(); },
 
-    'eq'	=> sub { 
+    'eq'	=> sub {
 	my $a = (UNIVERSAL::isa($_[0],__PACKAGE__)) ? $_[0]->cidr : $_[0];
 	my $b = (UNIVERSAL::isa($_[1],__PACKAGE__)) ? $_[1]->cidr : $_[1];
 	$a eq $b;
     },
 
-    '=='	=> sub { 
+    '=='	=> sub {
 	return 0 unless UNIVERSAL::isa($_[0],__PACKAGE__) && UNIVERSAL::isa($_[1],__PACKAGE__);
 	$_[0]->cidr eq $_[1]->cidr;
     },
@@ -279,7 +279,7 @@ Will print the string 192.168.1.123/32.
 	my $ip = new6 NetAddr::IP::Lite '192.168.1.123';
 	print "$ip\n";
 
-Will print the string 
+Will print the string
 
 =item B<Equality>
 
@@ -287,7 +287,7 @@ You can test for equality with either C<eq> or C<==>. C<eq> allows the
 comparison with arbitrary strings as well as NetAddr::IP::Lite objects. The
 following example:
 
-    if (NetAddr::IP::Lite->new('127.0.0.1','255.0.0.0') eq '127.0.0.1/8') 
+    if (NetAddr::IP::Lite->new('127.0.0.1','255.0.0.0') eq '127.0.0.1/8')
        { print "Yes\n"; }
 
 Will print out "Yes".
@@ -307,7 +307,7 @@ masks are compared. This leads to the counterintuitive result that
 
         /24 > /16
 
-Comparision should not be done on netaddr objects with different CIDR as
+Comparison should not be done on netaddr objects with different CIDR as
 this may produce indeterminate - unexpected results,
 rather the determination of which netblock is larger or smaller should be
 done by comparing
@@ -329,7 +329,7 @@ back to the network address. This code:
 
 outputs 10.0.0.0/24.
 
-Returns the the unchanged object when the conastant is missing or out of range.
+Returns the the unchanged object when the constant is missing or out of range.
 
     2147483647 <= constant >= -2147483648
 
@@ -345,7 +345,7 @@ sub plus {
 
     my $a = $ip->{addr};
     my $m = $ip->{mask};
-    
+
     my $lo = $a & ~$m;
     my $hi = $a & $m;
 
@@ -354,7 +354,7 @@ sub plus {
     return _new($ip,$new,$m);
 }
 
-=item B<Substraction of a constant (C<+>)>
+=item B<Subtraction of a constant (C<->)>
 
 The complement of the addition of a constant.
 
@@ -402,7 +402,7 @@ sub plusplus {
     my $m = $ip->{mask};
 
     my $lo = $a & ~ $m;
-    my $hi = $a & $m; 
+    my $hi = $a & $m;
 
     $ip->{addr} = ((addconst($lo,1))[1] & ~ $m) | $hi;
     return $ip;
@@ -422,7 +422,7 @@ sub minusminus {
     my $m = $ip->{mask};
 
     my $lo = $a & ~$m;
-    my $hi = $a & $m; 
+    my $hi = $a & $m;
 
     $ip->{addr} = ((addconst($lo,-1))[1] & ~$m) | $hi;
     return $ip;
@@ -473,10 +473,10 @@ sub _new ($$$) {
 
 The first two methods create a new address with the supplied address in
 C<$addr> and an optional netmask C<$mask>, which can be omitted to get
-a /32 or /128 netmask for IPv4 / IPv6 addresses respectively. 
+a /32 or /128 netmask for IPv4 / IPv6 addresses respectively.
 
 The third method C<new_no> is exclusively for IPv4 addresses and filters
-improperly formated
+improperly formatted
 dot quad strings for leading 0's that would normally be interpreted as octal
 format by NetAddr per the specifications for inet_aton.
 
@@ -501,7 +501,7 @@ in all the notations I have seen over time. It can optionally contain
 the mask in CIDR notation.
 
 B<prefix> notation is understood, with the limitation that the range
-speficied by the prefix must match with a valid subnet.
+specified by the prefix must match with a valid subnet.
 
 Addresses in the same format returned by C<inet_aton> or
 C<gethostbyname> can also be understood, although no mask can be
@@ -528,7 +528,7 @@ C<$addr> can be any of the following and possibly more...
   n.n.n.n/m.m.m.m
   loopback, localhost, broadcast, any, default
   x.x.x.x/host
-  0xABCDEF, 0b111111000101011110, (a bcd number)
+  0xABCDEF, 0b111111000101011110, (or a bcd number)
   a netaddr as returned by 'inet_aton'
 
 
@@ -621,7 +621,7 @@ sub new_from_aton($$) {
   return bless $self, $class;
 }
 
-sub new6($;$$) { 
+sub new6($;$$) {
   unshift @_, 1;
   goto &_xnew;
 }
@@ -739,6 +739,10 @@ sub _xnew($$;$$) {
       elsif ($ip =~ /^(\d+)$/ && $hasmask && $1 >= 0 and $1 < 256) { # pure numeric
 	$ip = sprintf("%d.0.0.0",$1);
       }
+      elsif ($ip =~ /^\d+$/ && !$hasmask) {	# a big integer
+	$ip = bcd2bin($ip);
+	last;
+      }
       elsif ($ip =~ /^0[xb]\d+$/ && $hasmask &&
 		(($tmp = eval "$ip") || 1) &&
 		$tmp >= 0 && $tmp < 256) {
@@ -839,7 +843,7 @@ sub _xnew($$;$$) {
   } # end while (1)
 
   return undef if notcontiguous($mask);			# invalid if not contiguous
-  
+
   my $self = {
 	addr	=> $ip,
 	mask	=> $mask,
@@ -850,7 +854,7 @@ sub _xnew($$;$$) {
 
 =item C<-E<gt>broadcast()>
 
-Returns a new object refering to the broadcast address of a given
+Returns a new object referring to the broadcast address of a given
 subnet. The broadcast address has all ones in all the bit positions
 where the netmask has zero bits. This is normally used to address all
 the hosts in a given subnet.
@@ -865,7 +869,7 @@ sub broadcast ($) {
 
 =item C<-E<gt>network()>
 
-Returns a new object refering to the network address of a given
+Returns a new object referring to the network address of a given
 subnet. A network address has all zero bits where the bits of the
 netmask are zero. Normally this is used to refer to a subnet.
 
@@ -1071,8 +1075,8 @@ the subnet (ie, the I<n>-th host address).  If no address is available
 (for example, when the network is too small for C<$index> hosts),
 C<undef> is returned.
 
-Version 4.00 of NetAddr::IP and version 1.00 of NetAddr::IP::Lite implements 
-C<-E<gt>nth($index)> and C<-E<gt>num()> exactly as the documentation states. 
+Version 4.00 of NetAddr::IP and version 1.00 of NetAddr::IP::Lite implements
+C<-E<gt>nth($index)> and C<-E<gt>num()> exactly as the documentation states.
 Previous versions behaved slightly differently and not in a consistent
 manner.
 
@@ -1083,9 +1087,9 @@ To use the old behavior for C<-E<gt>nth($index)> and C<-E<gt>num()>:
   old behavior:
   NetAddr::IP->new('10/32')->nth(0) == undef
   NetAddr::IP->new('10/32')->nth(1) == undef
-  NetAddr::IP->new('10/31')->nth(0) == undef  
+  NetAddr::IP->new('10/31')->nth(0) == undef
   NetAddr::IP->new('10/31')->nth(1) == 10.0.0.1/31
-  NetAddr::IP->new('10/30')->nth(0) == undef  
+  NetAddr::IP->new('10/30')->nth(0) == undef
   NetAddr::IP->new('10/30')->nth(1) == 10.0.0.1/30
   NetAddr::IP->new('10/30')->nth(2) == 10.0.0.2/30
   NetAddr::IP->new('10/30')->nth(3) == 10.0.0.3/30
@@ -1096,7 +1100,7 @@ output set and that the 'zero'th index is alway undef.
   new behavior:
   NetAddr::IP->new('10/32')->nth(0)  == 10.0.0.0/32
   NetAddr::IP->new('10.1/32'->nth(0) == 10.0.0.1/32
-  NetAddr::IP->new('10/31')->nth(0)  == undef  
+  NetAddr::IP->new('10/31')->nth(0)  == undef
   NetAddr::IP->new('10/31')->nth(1)  == undef
   NetAddr::IP->new('10/30')->nth(0) == 10.0.0.1/30
   NetAddr::IP->new('10/30')->nth(1) == 10.0.0.2/30
@@ -1184,11 +1188,11 @@ so by using it you accept any and all the liability.
 
 =head1 LICENSE
 
- This software is (c) Luis E. Muñoz, 1999 - 2005 
+ This software is (c) Luis E. Muñoz, 1999 - 2005
  and (c) Michael Robinton, 2006 - 2008.
 
-It can be used under the terms of the perl artistic license provided that 
-proper credit for the work of the author is preserved in the form of this 
+It can be used under the terms of the perl artistic license provided that
+proper credit for the work of the author is preserved in the form of this
 copyright notice and license for this module.
 
 =head1 SEE ALSO

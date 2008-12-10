@@ -23,7 +23,7 @@ my @try = qw(
 print '1..', (@try/2) +2, "\n";
 
 $test = 1;
-	
+
 for (my $i=0;$i<@try;$i+=2) {
   my $rv = $ip4->nth($try[$i]);
   $rv = defined $rv

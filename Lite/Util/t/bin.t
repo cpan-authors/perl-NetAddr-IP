@@ -43,7 +43,7 @@ sub numnum {
   my($ar,$i) = @_;
   return sprintf("%.0f",$ar->[$i +1]);
 }
-  
+
 sub numstr {
   my($ar,$i) = @_;
   return $ar->[$i+1];

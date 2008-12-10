@@ -10,7 +10,7 @@ use Getopt::Long qw(
 
 my $pwd = getcwd();
 
-unlink 'Makefile';		# remove Makefile to stabalize CC test
+unlink 'Makefile';		# remove Makefile to stabilize CC test
 
 #
 # get any command line arguments
@@ -24,7 +24,7 @@ GetOptions(
 	},
 );
 
-if ($^O eq 'MSWin32') { 
+if ($^O eq 'MSWin32') {
   $useXS = 0;		# force NOXS mode for windows
 }
 
@@ -52,7 +52,7 @@ my %makeparms = (
 # Check if we have a C compiler
 
 unless (defined $useXS) {
-  if (test_cc()) {  
+  if (test_cc()) {
     print "You have a working compiler.\n";
     $useXS = 1;
 #    $makeparms{'MYEXTLIB'} = 'netdns$(LIB_EXT)',
@@ -63,7 +63,7 @@ unless (defined $useXS) {
 
 I cannot determine if you have a C compiler. I will install the
 perl-only implementation.
-        
+
 You can force installation of the XS version with:
 
         perl Makefile.PL --xs
@@ -79,7 +79,7 @@ if ($useXS) {
   # turn the XS bits on.
   delete $makeparms{'XS'};
   delete $makeparms{'C'};
-  
+
   unless (-e './config.h') {
     system('./configure');
   }
@@ -182,7 +182,7 @@ sub test_cc {
   # Scalar-List-Utils distribution.
   #
   print "Testing if you have a C compiler and the needed header files....\n";
- 
+
   unless (open(F, ">compile.c")) {
       warn "Cannot write compile.c, skipping test compilation and installing pure Perl version.\n";
     return;
@@ -191,11 +191,11 @@ sub test_cc {
   print F <<'EOF';
 int main() { return 0; }
 EOF
-  
+
   close(F) or return;
 
   my $rv = system("$Config{'ccname'} compile.c -o compile$Config{obj_ext}");
- 
+
   foreach my $file (glob('compile*')) {
     unlink($file) || warn "Could not delete $file: $!\n";
   }
@@ -241,9 +241,9 @@ sub MY::test {
 
 sub MY::post_constants {
   my $post_constants = q|
-MY_POD2TEXT = |. $Config{scriptdirexp} .'/pod2text' .q|   
+MY_POD2TEXT = |. $Config{scriptdirexp} .'/pod2text' .q|
 |;
-} 
+}
 
 sub MY::postamble {
   package MY;

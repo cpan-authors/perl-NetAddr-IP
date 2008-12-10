@@ -1,5 +1,15 @@
 Revision history for Perl extension NetAddr::IP
 
+4.020  Tue Dec  9 16:25:46 PST 2008
+	cleaned up various typo's with good patch from
+	Rob Riepel <riepel@networking.Stanford.EDU>
+	thanks Rob.
+
+        revised UtilPP v1.7 to work around perl 5.8.4
+        failures with certain @_ operations of goto &sub...
+        see perl bug [ 23429]. Unfortunately, perl-5.8.4 is
+        the distribution of choice for many solaris boxes  
+
 4.019  Sat Nov 29 15:15:30 PST 2008
 	in Lite/Util, add pure perl testing to XS build
 
@@ -31,7 +41,7 @@ Revision history for Perl extension NetAddr::IP
 	string of build headers.
 
 	added what is hopefully thread safe operation via
-	serializaton. Must be invoked by "--with-threads"
+	serialization. Must be invoked by "--with-threads"
 
   in Lite v1.12
 	corrected missing Zeros subroutine
@@ -50,22 +60,22 @@ Revision history for Perl extension NetAddr::IP
 	libraries against the perl build for consistency
 
 4.015  Sun Nov  2 10:10:38 PST 2008
-	in Util v1.23 add missing headers in configure and localconf.h 
+	in Util v1.23 add missing headers in configure and localconf.h
 	for Solaris inet_xton
 	thanks to Karl Bunch <karl@digilink.net> for spotting the bug.
 
 4.014  Sat Nov  1 15:13:48 PST 2008
-	in Lite.pm v1.11, add test for characters not allowed by 
-	rfc952 before the call to gethostbyname in sub new() for those 
+	in Lite.pm v1.11, add test for characters not allowed by
+	rfc952 before the call to gethostbyname in sub new() for those
 	people that insist on using deprecated functionality :aton
 	and OS's that fail to notice calls to gethostbyname with
 	binary arguments.
 
 4.013  Wed Oct 22 15:04:49 PDT 2008
-	In Lite.pm v1.10, add new no octal method for 
+	In Lite.pm v1.10, add new no octal method for
 	improperly formatted ipV4 addresses
 
-	In Util.pm v1.22, eliminated dependance on PL_sawampersand
+	In Util.pm v1.22, eliminated dependence on PL_sawampersand
 	thanks to Mark Martinec <Mark.Martinec@ijs.si>
 	for spotting this and submitting a patch.
 
@@ -93,11 +103,11 @@ NOTE: 	Versions 4.008 and 4.009 had limited release to tester only
 4.009  Tue Sep  2 19:09:57 PDT 2008
 	In NetAddr::IP::Lite v1.07,
 	in the off chance that NetAddr::IP::Lite objects are created
-	and the caller later loads NetAddr::IP and expects to use   
-	those objects, let the AUTOLOAD routine find and redirect   
-	NetAddr::IP::Lite method and subroutine calles to NetAddr::IP.
+	and the caller later loads NetAddr::IP and expects to use
+	those objects, let the AUTOLOAD routine find and redirect
+	NetAddr::IP::Lite method and subroutine calls to NetAddr::IP.
 
-	updated Lite/t/v4-wnew.t so that non-existent 
+	updated Lite/t/v4-wnew.t so that non-existent
 	domains are "really" not there
 
 4.008  Sat Jun  7 14:01:55 PDT 2008
@@ -105,21 +115,21 @@ NOTE: 	Versions 4.008 and 4.009 had limited release to tester only
 	add related documentation
 
       Inherited methods from Lite.pm updated as follows:
-	
-	comparisons of the form <, >, <=, >=  
+
+	comparisons of the form <, >, <=, >=
 		10.0.0.0/24 {operator} 10.0.0.0/16
-	return now return the comparision of the cidr value
-	when the address portion is equal. 
+	return now return the comparison of the cidr value
+	when the address portion is equal.
 NOTE:	this comparison returns the comparison of the NUMERIC
 	value of the CIDR. This produces the counter intuitive result
 	that /24 > /16. There is logic to this, really! For proper
 	operation of commands like "Compact" and "Coalesce", lists of
 	netaddr objects must sort in ascending order. However, this
 	conflicts with the requirement for larger netblocks to sort
-	FIRST so as to include smaller ones. This logic extends to 
+	FIRST so as to include smaller ones. This logic extends to
 	any requirement for a sort of netaddr objects. It should be
-	further noted that the mixing of netaddr objects with varying 
-	IP addresses and CIDR allocations can lead to unexpected 
+	further noted that the mixing of netaddr objects with varying
+	IP addresses and CIDR allocations can lead to unexpected
 	results since the comparisons done first on the IP portion
 	and then on the CIDR portion. The documentation has been
 	updated appropriately.
@@ -154,7 +164,7 @@ NOTE:	this comparison returns the comparison of the NUMERIC
 	update Lite.pm to v1.02
 	$isV6 global converted to a lexical variable within sub "_xnew"
 	$Class global removed and replaced by calls to UNIVERSAL::isa
-	Thanks to julian@mehnle.net for spotting problems related to 
+	Thanks to julian@mehnle.net for spotting problems related to
 	using the Lite.pm with mod_perl
 
 4.001  Thu Jul  6 14:09:01 PDT 2006
@@ -164,7 +174,7 @@ NOTE:	this comparison returns the comparison of the NUMERIC
 	return the address value ()[1]
 
 4.000  Mon Jun 19 21:51:10 PDT 2006
-	initial release of version 4.000 which includes 
+	initial release of version 4.000 which includes
 	full support of ipV6 addresses and drops the requirement
 	for Math::BigInt and will run on older versions of Perl
 	at least back to  5.005_03

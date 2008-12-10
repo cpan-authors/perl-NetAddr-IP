@@ -27,7 +27,7 @@ my @try = qw(
 	FF::87		1
 	FF::88		0
 );
- 
+
 for (my $i=0;$i<@try;$i+=2) {
   my $ip = NetAddr::IP::Lite->new($try[$i]);
   my $rv = ($try[$i] =~ /:/)

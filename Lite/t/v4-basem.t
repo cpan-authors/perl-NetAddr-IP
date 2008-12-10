@@ -13,11 +13,11 @@ my $count = 1;
 
 for my $a (keys %$nets) {
     my $ip = new NetAddr::IP::Lite $a, $nets->{$a}->[0];
-    print '', (($ip->broadcast->addr	ne $nets->{$a}->[1] ? 
-	    'not ' : ''), 
+    print '', (($ip->broadcast->addr	ne $nets->{$a}->[1] ?
+	    'not ' : ''),
 	   "ok ", $count++, "\n");
-    print '', (($ip->network->addr		ne $nets->{$a}->[2] ? 
-	    'not ' : ''), 
+    print '', (($ip->network->addr		ne $nets->{$a}->[2] ?
+	    'not ' : ''),
 	   "ok ", $count++, "\n");
 }
 

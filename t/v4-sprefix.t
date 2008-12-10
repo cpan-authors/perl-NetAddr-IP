@@ -16,7 +16,7 @@ my $count = 1;
 
 for my $a (@addr) {
     my $ip = new NetAddr::IP $a->[0];
-    
+
     if ($ip->cidr eq $a->[1]) {
 	print "ok $count\n";
     }

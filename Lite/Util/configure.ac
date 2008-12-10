@@ -11,7 +11,7 @@ AC_CHECK_HEADERS([sys/socket.h netinet/in.h arpa/inet.h netdb.h])
 
 # Checks for typedefs, structures, and compiler characteristics.
 AC_C_CONST
-AC_TYPE_INT32_T 
+AC_TYPE_INT32_T
 AC_TYPE_UINT16_T
 AC_TYPE_UINT32_T
 AC_TYPE_UINT8_T

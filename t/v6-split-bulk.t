@@ -3,7 +3,7 @@ use NetAddr::IP;
 
 # $Id: v6-split-bulk.t,v 1.1.1.1 2006/08/14 15:36:06 lem Exp $
 
-my @addr = ( 
+my @addr = (
 	     [ 'dead:beef::1', 126, 127, 2 ],
 	     [ 'dead:beef::1', 127, 127, 1 ],
 	     [ 'dead:beef::1', 127, 128, 2 ],

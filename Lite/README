@@ -95,7 +95,7 @@ DESCRIPTION
         comparison with arbitrary strings as well as NetAddr::IP::Lite
         objects. The following example:
 
-            if (NetAddr::IP::Lite->new('127.0.0.1','255.0.0.0') eq '127.0.0.1/8') 
+            if (NetAddr::IP::Lite->new('127.0.0.1','255.0.0.0') eq '127.0.0.1/8')
                { print "Yes\n"; }
 
         Will print out "Yes".
@@ -116,10 +116,10 @@ DESCRIPTION
 
                 /24 > /16
 
-        Comparision should not be done on netaddr objects with different
-        CIDR as this may produce indeterminate - unexpected results, rather
-        the determination of which netblock is larger or smaller should be
-        done by comparing
+        Comparison should not be done on netaddr objects with different CIDR
+        as this may produce indeterminate - unexpected results, rather the
+        determination of which netblock is larger or smaller should be done
+        by comparing
 
                 $ip1->masklen <=> $ip2->masklen
 
@@ -138,12 +138,12 @@ DESCRIPTION
 
         outputs 10.0.0.0/24.
 
-        Returns the the unchanged object when the conastant is missing or
-        out of range.
+        Returns the the unchanged object when the constant is missing or out
+        of range.
 
             2147483647 <= constant >= -2147483648
 
-    Substraction of a constant ("+")
+    Subtraction of a constant ("-")
         The complement of the addition of a constant.
 
     Difference ("-")
@@ -173,7 +173,7 @@ DESCRIPTION
         get a /32 or /128 netmask for IPv4 / IPv6 addresses respectively.
 
         The third method "new_no" is exclusively for IPv4 addresses and
-        filters improperly formated dot quad strings for leading 0's that
+        filters improperly formatted dot quad strings for leading 0's that
         would normally be interpreted as octal format by NetAddr per the
         specifications for inet_aton.
 
@@ -198,7 +198,7 @@ DESCRIPTION
         contain the mask in CIDR notation.
 
         prefix notation is understood, with the limitation that the range
-        speficied by the prefix must match with a valid subnet.
+        specified by the prefix must match with a valid subnet.
 
         Addresses in the same format returned by "inet_aton" or
         "gethostbyname" can also be understood, although no mask can be
@@ -225,7 +225,7 @@ DESCRIPTION
           n.n.n.n/m.m.m.m
           loopback, localhost, broadcast, any, default
           x.x.x.x/host
-          0xABCDEF, 0b111111000101011110, (a bcd number)
+          0xABCDEF, 0b111111000101011110, (or a bcd number)
           a netaddr as returned by 'inet_aton'
 
         Any RFC1884 notation
@@ -247,13 +247,13 @@ DESCRIPTION
         If called with no arguments, 'default' is assumed.
 
     "->broadcast()"
-        Returns a new object refering to the broadcast address of a given
+        Returns a new object referring to the broadcast address of a given
         subnet. The broadcast address has all ones in all the bit positions
         where the netmask has zero bits. This is normally used to address
         all the hosts in a given subnet.
 
     "->network()"
-        Returns a new object refering to the network address of a given
+        Returns a new object referring to the network address of a given
         subnet. A network address has all zero bits where the bits of the
         netmask are zero. Normally this is used to refer to a subnet.
 
@@ -343,9 +343,9 @@ DESCRIPTION
           old behavior:
           NetAddr::IP->new('10/32')->nth(0) == undef
           NetAddr::IP->new('10/32')->nth(1) == undef
-          NetAddr::IP->new('10/31')->nth(0) == undef  
+          NetAddr::IP->new('10/31')->nth(0) == undef
           NetAddr::IP->new('10/31')->nth(1) == 10.0.0.1/31
-          NetAddr::IP->new('10/30')->nth(0) == undef  
+          NetAddr::IP->new('10/30')->nth(0) == undef
           NetAddr::IP->new('10/30')->nth(1) == 10.0.0.1/30
           NetAddr::IP->new('10/30')->nth(2) == 10.0.0.2/30
           NetAddr::IP->new('10/30')->nth(3) == 10.0.0.3/30
@@ -356,7 +356,7 @@ DESCRIPTION
           new behavior:
           NetAddr::IP->new('10/32')->nth(0)  == 10.0.0.0/32
           NetAddr::IP->new('10.1/32'->nth(0) == 10.0.0.1/32
-          NetAddr::IP->new('10/31')->nth(0)  == undef  
+          NetAddr::IP->new('10/31')->nth(0)  == undef
           NetAddr::IP->new('10/31')->nth(1)  == undef
           NetAddr::IP->new('10/30')->nth(0) == 10.0.0.1/30
           NetAddr::IP->new('10/30')->nth(1) == 10.0.0.2/30
@@ -395,7 +395,7 @@ WARRANTY
     by using it you accept any and all the liability.
 
 LICENSE
-     This software is (c) Luis E. Muñoz, 1999 - 2005 
+     This software is (c) Luis E. Muñoz, 1999 - 2005
      and (c) Michael Robinton, 2006 - 2008.
 
     It can be used under the terms of the perl artistic license provided

@@ -31,7 +31,7 @@ my @no_pairs =
 my $tests = 6 * @yes_pairs + 1;
 plan tests => $tests;
 
-ok(NetAddr::IP::Lite->new('::')->contains(NetAddr::IP::Lite->new('::')), 
+ok(NetAddr::IP::Lite->new('::')->contains(NetAddr::IP::Lite->new('::')),
    ":: contains itself");
 
 for my $p (@yes_pairs)

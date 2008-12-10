@@ -65,8 +65,6 @@ typedef struct bcdstuff
   u_int32_t	bcd[5];		/*	20 bytes, 40 digits		*/
 } BCD;
 
-BCD xn;
-
 #define zero ('0' & 0x7f)
 
 void
@@ -268,7 +266,7 @@ _128x10(n128 * ap128, n128 * tp128)
 
 /*	multiply 128 bit number by 10, add bcd digit to result
  */
-void  
+void
 _128x10plusbcd(n128 * ap128, n128 * tp128, char digit)
 {
   register u_int32_t * ap = ap128->u, * tp = tp128->u;
@@ -363,7 +361,7 @@ _bin2bcd (unsigned char * binary, BCD * n)
   u_int32_t word;
   unsigned char binmsk = 0;
   int c = 0,i, j, p;
-  
+
   memset (n->bcd, 0, 20);
 
   for (p=0;p<128;p++) {			/*	bit pointer	*/
@@ -379,7 +377,7 @@ _bin2bcd (unsigned char * binary, BCD * n)
       if (carry | bcd8) {		/* if something to do		*/
 	add3 = 3;
 	msk8 = 8;
-	
+
 	for (j=0;j<8;j++) {		/*	prep bcd digits for X2	*/
 	  tmp = bcd8 + add3;
 	  if (tmp & msk8)
@@ -621,7 +619,7 @@ PPCODE:
 	XSRETURN(1);
 
 #*
-#* the second argument 'len' is the number of bcd digits for 
+#* the second argument 'len' is the number of bcd digits for
 #* the bcdn2bin conversion. Pack looses track of the number
 #* digits so this is needed to do the "right thing".
 #* NOTE: that simple_pack always returns 40 digits

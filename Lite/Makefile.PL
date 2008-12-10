@@ -26,9 +26,9 @@ sub MY::top_targets {
 
 sub MY::post_constants {
   my $post_constants = q|
-MY_POD2TEXT = |. $Config{scriptdirexp} .'/pod2text' .q|   
+MY_POD2TEXT = |. $Config{scriptdirexp} .'/pod2text' .q|
 |;
-} 
+}
 
 sub MY::postamble {
   package MY;

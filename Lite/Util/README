@@ -31,7 +31,7 @@ SYNOPSIS
       use NetAddr::IP::Util qw(:all :inet :ipv4 :ipv6 :math)
 
       :inet   =>    inet_aton, inet_ntoa, ipv6_aton,
-                    ipv6_n2x, ipv6_n2d, inet_any2n, 
+                    ipv6_n2x, ipv6_n2d, inet_any2n,
                     inet_n2dx, inet_n2ad, ipv4to6,
                     mask4to6, ipanyto6, maskanyto6,
                     ipv6to4
@@ -234,7 +234,7 @@ DESCRIPTION
                         number of shifts [optional]
           returns:      bits X n shifts
 
-          NOTE: a single shift is performed 
+          NOTE: a single shift is performed
                 if $n is not specified
 
     * addconst($ipv6naddr,$signed_32con);
@@ -260,7 +260,7 @@ DESCRIPTION
                         128 bit string var2
           returns:  scalar      carry
                     array       (carry, result)
-    
+
         Note: The carry from this operation is the result of adding the
         one's complement of ARG2 +1 to the ARG1. It is logically NOT borrow.
 
@@ -367,8 +367,8 @@ EXAMPLES
             ? 1 : 0;
       }
 
-      # add a constant, wrapping at netblock boundries
-      # to subtract the constant, negate it before calling 
+      # add a constant, wrapping at netblock boundaries
+      # to subtract the constant, negate it before calling
       # 'addwrap' since 'addconst' will extend the sign bits
       #
       sub addwrap {
@@ -386,8 +386,8 @@ EXAMPLES
         };
         # bless $newip as appropriate
         return $newip;
-      }     
-    
+      }
+
 EXPORT_OK
             inet_aton
             inet_ntoa
@@ -416,7 +416,7 @@ EXPORT_OK
 AUTHOR
     Michael Robinton <michael@bizsystems.com>
 
-ACKNOWLEDGEMENTS
+ACKNOWLEDGMENTS
     The following functions are used in whole or in part as include files to
     Util.xs. The copyright is include in the file.
 

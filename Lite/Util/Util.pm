@@ -13,7 +13,7 @@ require Exporter;
 
 @ISA = qw(Exporter DynaLoader);
 
-$VERSION = do { my @r = (q$Revision: 1.26 $ =~ /\d+/g); sprintf "%d."."%02d" x $#r, @r };
+$VERSION = do { my @r = (q$Revision: 1.27 $ =~ /\d+/g); sprintf "%d."."%02d" x $#r, @r };
 
 @EXPORT_OK = qw(
 	inet_aton
@@ -167,7 +167,7 @@ NetAddr::IP::Util -- IPv4/6 and 128 bit number utilities
   use NetAddr::IP::Util qw(:all :inet :ipv4 :ipv6 :math)
 
   :inet	  =>	inet_aton, inet_ntoa, ipv6_aton,
-		ipv6_n2x, ipv6_n2d, inet_any2n, 
+		ipv6_n2x, ipv6_n2d, inet_any2n,
 		inet_n2dx, inet_n2ad, ipv4to6,
 		mask4to6, ipanyto6, maskanyto6,
 		ipv6to4
@@ -252,7 +252,7 @@ The IPv6 functions support all rfc1884 formats.
 
 =over 4
 
-=item * $dotquad = inet_ntoa($netaddr); 
+=item * $dotquad = inet_ntoa($netaddr);
 
 Convert a packed IPv4 network address to a dot-quad IP address.
 
@@ -285,7 +285,7 @@ sub ipv6_aton {
     $ipv6 = sprintf("%s%X%02X:%X%02X",$1,$2,$3,$4,$5);			# convert to pure hex
   }
   my $c;
-  return undef if 
+  return undef if
 	$ipv6 =~ /[^:0-9a-fA-F]/ ||			# non-hex character
 	(($c = $ipv6) =~ s/::/x/ && $c =~ /(?:x|:):/) ||	# double :: ::?
 	$ipv6 =~ /[0-9a-fA-F]{5,}/;			# more than 4 digits
@@ -463,7 +463,7 @@ netmask and always returns a 128 bit IPv6 netmask.
 
 =item * $netaddr = ipv6to4($pv6naddr);
 
-Truncate the upper 96 bits of a 128 bit address and return the lower 
+Truncate the upper 96 bits of a 128 bit address and return the lower
 32 bits. Returns an IPv4 address as returned by inet_aton.
 
   input:	128 bit network address
@@ -475,7 +475,7 @@ Truncate the upper 96 bits of a 128 bit address and return the lower
 		number of shifts [optional]
   returns:	bits X n shifts
 
-  NOTE: a single shift is performed 
+  NOTE: a single shift is performed
 	if $n is not specified
 
 =item * addconst($ipv6naddr,$signed_32con);
@@ -504,10 +504,10 @@ Subtract two 128 bit string variables.
 		128 bit string var2
   returns:  scalar	carry
 	    array	(carry, result)
-    
+
 Note: The carry from this operation is the result of adding the one's
 complement of ARG2 +1 to the ARG1. It is logically
-B<NOT borrow>. 
+B<NOT borrow>.
 
 	i.e. 	if ARG1 >= ARG2 then carry = 1
 	or	if ARG1  < ARG2 then carry = 0
@@ -566,7 +566,7 @@ Convert a bcd text string to 128 bit string variable
 #This function is not exported.
 #
 #  input:	string of packed decimal digits
-#  returns:	hexdecimal digits
+#  returns:	hexadecimal digits
 #
 #Similar to unpack("H*", $bcd);
 #
@@ -661,8 +661,8 @@ Returns the operating mode of this module.
 	? 1 : 0;
   }
 
-  # add a constant, wrapping at netblock boundries
-  # to subtract the constant, negate it before calling 
+  # add a constant, wrapping at netblock boundaries
+  # to subtract the constant, negate it before calling
   # 'addwrap' since 'addconst' will extend the sign bits
   #
   sub addwrap {
@@ -680,8 +680,8 @@ Returns the operating mode of this module.
     };
     # bless $newip as appropriate
     return $newip;
-  }	
-    
+  }
+
 =head1 EXPORT_OK
 
 	inet_aton
@@ -712,7 +712,7 @@ Returns the operating mode of this module.
 
 Michael Robinton <michael@bizsystems.com>
 
-=head1 ACKNOWLEDGEMENTS
+=head1 ACKNOWLEDGMENTS
 
 The following functions are used in whole or in part as include files to
 Util.xs. The copyright is include in the file.
@@ -736,7 +736,7 @@ the perl artistic license provided  that proper credit for the work of
 the  author is  preserved in  the form  of this  copyright  notice and
 license for this module.
 
-No warranty of any kind is  expressed or implied, by using it 
+No warranty of any kind is  expressed or implied, by using it
 you accept any and all the liability.
 
 

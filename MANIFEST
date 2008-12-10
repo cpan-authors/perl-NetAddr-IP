@@ -8,6 +8,7 @@ Lite/META.yml
 Lite/README
 Lite/t/addr.t
 Lite/t/aton.t
+Lite/t/bigints.t
 Lite/t/bits.t
 Lite/t/broadcast.t
 Lite/t/cidr.t

@@ -35,13 +35,13 @@ SKIP:
     skip "Failed to load NetAddr::IP::Lite", 17
 	unless use_ok('NetAddr::IP::Lite');
 
-    ok(! defined NetAddr::IP::Lite->new("\1\1\1\1"), 
+    ok(! defined NetAddr::IP::Lite->new("\1\1\1\1"),
        "binary unrecognized by default ". ($x ? $x->addr :''));
 
     # This mimicks the actual use with :aton
     NetAddr::IP::Lite::import(':aton');
 
-    ok(defined ($x = NetAddr::IP::Lite->new("\1\1\1\1")), 
+    ok(defined ($x = NetAddr::IP::Lite->new("\1\1\1\1")),
        "...but can be recognized ". $x->addr);
 
     ok(!defined ($x = NetAddr::IP::Lite->new('bad rfc-952 characters')),
@@ -53,7 +53,7 @@ SKIP:
     ok(defined NetAddr::IP::Lite->new(l_inet_aton($_->[1])), "->new aton($_->[1])")
 	for @addr;
 
-    is(NetAddr::IP::Lite->new(l_inet_aton($_->[1]))->addr, $_->[1], 
+    is(NetAddr::IP::Lite->new(l_inet_aton($_->[1]))->addr, $_->[1],
        "->new aton($_->[1])")
 	for @addr;
 };

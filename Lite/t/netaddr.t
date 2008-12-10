@@ -46,7 +46,7 @@ The NAobject array is filled with NetAddr::IP::Lite object references.
 
 sub list2NetAddr {
   my($inref,$outref) = @_;
-  return undef 
+  return undef
 	unless ref $inref eq 'ARRAY'
 	&& ref $outref eq 'ARRAY';
   unless ($SKIP_NetAddrIP) {
@@ -91,7 +91,7 @@ Check if an IP address appears in a list of NetAddr objects.
 
 =cut
 
-sub matchNetAddr { 
+sub matchNetAddr {
   my($ip,$naref) = @_;
   return 0 unless $ip && $ip =~ /\d+\.\d+\.\d+\.\d+/;
   $ip =~ s/\s//g;
@@ -105,7 +105,7 @@ sub matchNetAddr {
     } else {
       return 1 if $ip->within($beg);
     }
-  }  
+  }
   return 0;
 }
 
@@ -122,7 +122,7 @@ sub ok {
 #
 # A multi-formated array of IP address that will never be tarpitted.
 #
-# WARNING: if you are using a private network, then you should include the 
+# WARNING: if you are using a private network, then you should include the
 # address description for the net/subnets that you are using or you might
 # find your DMZ or internal mail servers blocked since many DNSBLS list the
 # private network addresses as BLACKLISTED
@@ -179,7 +179,7 @@ print "accepted short ip segment\nnot "
 
 ## test 6-35	bracket NA objects
 #
-my @chkary =	# 5 x 6 tests 
+my @chkary =	# 5 x 6 tests
     #	out left	in left		middle		in right	out right
 qw(	11.22.33.43	11.22.33.44	11.22.33.44	11.22.33.44	11.22.33.45
 	22.33.44.54	22.33.44.55	22.33.44.60	22.33.44.65	22.33.44.66

@@ -15,7 +15,7 @@ for (my $ip = new NetAddr::IP::Lite '10.0.0.1/28';
     my $o = $ip->addr;
 
     $o =~ s/^.+\.(\d+)$/$1/;
-    
+
     if ($o == $count) {
 	print "ok $count\n";
     }

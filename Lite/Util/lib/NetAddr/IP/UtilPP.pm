@@ -12,7 +12,7 @@ require Exporter;
 
 @ISA = qw(Exporter);
 
-$VERSION = do { my @r = (q$Revision: 1.6 $ =~ /\d+/g); sprintf "%d."."%02d" x $#r, @r };
+$VERSION = do { my @r = (q$Revision: 1.7 $ =~ /\d+/g); sprintf "%d."."%02d" x $#r, @r };
 
 @EXPORT_OK = qw(
 	hasbits
@@ -163,10 +163,10 @@ sub isIPv4 {
 #
 sub _128x2 {
   my $inp = shift;
-  $$inp[0] = ($$inp[0] << 1 & 0xffffffff) + (($$inp[1] & 0x80000000) ? 1:0);  
-  $$inp[1] = ($$inp[1] << 1 & 0xffffffff) + (($$inp[2] & 0x80000000) ? 1:0);  
-  $$inp[2] = ($$inp[2] << 1 & 0xffffffff) + (($$inp[3] & 0x80000000) ? 1:0);  
-  $$inp[3] = $$inp[3] << 1 & 0xffffffff;  
+  $$inp[0] = ($$inp[0] << 1 & 0xffffffff) + (($$inp[1] & 0x80000000) ? 1:0);
+  $$inp[1] = ($$inp[1] << 1 & 0xffffffff) + (($$inp[2] & 0x80000000) ? 1:0);
+  $$inp[2] = ($$inp[2] << 1 & 0xffffffff) + (($$inp[3] & 0x80000000) ? 1:0);
+  $$inp[3] = $$inp[3] << 1 & 0xffffffff;
 }
 
 # multiply x 10
@@ -257,7 +257,9 @@ sub addconst {
   my $sign = ($const < 0) ? 0xffffffff : 0;
   my $b128 = pack('N4',$sign,$sign,$sign,$const);
   @_ = ($a128,$b128,0);
-  goto &slowadd128;
+# perl 5.8.4 fails with this operation. see perl bug [ 23429]
+#  goto &slowadd128;
+  slowadd128(@_);
 }
 
 =item * add128($ipv6naddr1,$ipv6naddr2);
@@ -278,7 +280,9 @@ sub add128 {
   _deadlen(length($b128))
 	if length($b128) != 16;
   @_ = ($a128,$b128,0);
-  goto &slowadd128;
+# perl 5.8.4 fails with this operation. see perl bug [ 23429]
+#  goto &slowadd128;
+  slowadd128(@_);
 }
 
 =item * sub128($ipv6naddr1,$ipv6naddr2);
@@ -289,10 +293,10 @@ Subtract two 128 bit string variables.
 		128 bit string var2
   returns:  scalar	carry
 	    array	(carry, result)
-    
+
 Note: The carry from this operation is the result of adding the one's
 complement of ARG2 +1 to the ARG1. It is logically
-B<NOT borrow>. 
+B<NOT borrow>.
 
 	i.e. 	if ARG1 >= ARG2 then carry = 1
 	or	if ARG1  < ARG2 then carry = 0
@@ -307,7 +311,9 @@ sub sub128 {
   my $a128 = $_[0];
   my $b128 = ~$_[1];
   @_ = ($a128,$b128,1);
-  goto &slowadd128;
+# perl 5.8.4 fails with this operation. see perl bug [ 23429]
+#  goto &slowadd128;
+  slowadd128(@_);
 }
 
 =item * ($spurious,$cidr) = notcontiguous($mask128);
@@ -339,7 +345,7 @@ sub notcontiguous {
 	$ua[1] |= 0x80000000 if $ua[0] & 1;
 	$ua[0] >>= 1;
   }
-  
+
   my $spurious = $ua[0] | $ua[1] | $ua[2] | $ua[3];
   return $spurious unless wantarray;
   return ($spurious,$count);
@@ -361,7 +367,7 @@ sub ipv4to6 {
   return pack('L3a4',0,0,0,$_[0]);
 }
 
-=item * $ipv6naddr = mask4to6($netaddr);   
+=item * $ipv6naddr = mask4to6($netaddr);
 
 Convert an ipv4 netowrk address into an ipv6 network mask.
 
@@ -421,7 +427,7 @@ sub maskanyto6 {
 
 =item * $netaddr = ipv6to4($pv6naddr);
 
-Truncate the upper 96 bits of a 128 bit address and return the lower 
+Truncate the upper 96 bits of a 128 bit address and return the lower
 32 bits. Returns an IPv4 address as returned by inet_aton.
 
   input:	128 bit network address
@@ -464,7 +470,9 @@ Convert a bcd text string to 128 bit string variable
 
 sub bcd2bin {
   &_bcdcheck;
-  goto &_bcd2bin;
+# perl 5.8.4 fails with this operation. see perl bug [ 23429]
+#  goto &_bcd2bin;
+  &_bcd2bin;
 }
 
 =pod
@@ -480,7 +488,7 @@ sub bcd2bin {
 #module testing purposes because it is used internally in the B<sub128> routine. The
 #function is very fast, but calling if from perl directly is very slow. It is almost
 #33% faster to use B<sub128> than to do a 1's comp with perl and then call
-#B<add128>. In the PurePerl version, it is a call to 
+#B<add128>. In the PurePerl version, it is a call to
 #
 #  sub {return ~ $_[0]};
 #
@@ -507,7 +515,9 @@ sub comp128 {
 sub bin2bcdn {
   _deadlen(length($_[0]))
 	if length($_[0]) != 16;
-  goto &_bin2bcdn;
+# perl 5.8.4 fails with this operation. see perl bug [ 23429]
+#  goto &_bin2bcdn;
+  &_bin2bcdn;
 }
 
 sub _bin2bcdn {
@@ -676,12 +686,12 @@ Copyright 2006 - 2008, Michael Robinton <michael@bizsystems.com>
 This program is free software; you can redistribute it and/or modify
 it under the terms of the GNU General Public License (except as noted
 otherwise in individuals sub modules)  published by
-the Free Software Foundation; either version 2 of the License, or 
+the Free Software Foundation; either version 2 of the License, or
 (at your option) any later version.
 
 This program is distributed in the hope that it will be useful,
-but WITHOUT ANY WARRANTY; without even the implied warranty of 
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the  
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 GNU General Public License for more details.
 
 You should have received a copy of the GNU General Public License

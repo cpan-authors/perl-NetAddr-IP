@@ -4,7 +4,7 @@ my @masks = 0 .. 32;
 
 $| = 1;
 
-print '1..', scalar @masks, "\n"; 
+print '1..', scalar @masks, "\n";
 
 my $count = 1;
 

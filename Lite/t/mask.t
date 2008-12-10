@@ -36,7 +36,7 @@ print "got: $mask, exp: $exp\nnot "
 	unless $mask eq $exp && ! ref $mask;
 &ok;
 
-## test mask dot quad  
+## test mask dot quad
 $exp = '255.255.255.0';
 $mask = $dqip->mask;
 print "got: $mask, exp: $exp\nnot "

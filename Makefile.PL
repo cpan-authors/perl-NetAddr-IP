@@ -9,11 +9,28 @@ my $then = (stat('./Makefile.old'))[9];
 # set number of seconds to view
 my $view = $then +86400 < $now ? 5:0;
 
+my $pv = sprintf "%vd", $^V;
+unless (0 && $pv lt '5.8.0' || $pv gt '5.8.5') {
+  print
+qq(
+#################################################################
+######################### WARNING ###############################
+#								#
+#        YOUR VERSION OF PERL = $pv HAS SERIOUS BUGS		#
+#								#
+# Early versions of perl 5.8.x contain bugs that cause certain 	#
+# \@_ operations to fail. Please upgrade to at least perl 5.8.6 	#
+#                                                              	# 
+################################################################# 
+);
+  sleep $view if $view;
+}
+
 unless (grep { m/-noxs/ } @ARGV) {
   print q{
 This build requires a C compiler by default except on Windows
 where the Pure Perl version is mandatory. The Pure Perl
-version does not require compilation of XS code can be used 
+version does not require compilation of XS code can be used
 by invoking this as:
 
   perl Makefile.PL -noxs
@@ -79,7 +96,7 @@ If you do  not use Storable along NetAddr::IP or  just don't know what
 this all means, most likely you're safe to go along.
 
 Versions before 3.25 recognized by default IP addresses as returned by
-inet_aton. This is no longer the default. To enable this behaviour
+inet_aton. This is no longer the default. To enable this behavior
 again, the module must be use()d as
 
     use NetAddr::IP ':aton';
@@ -95,7 +112,7 @@ EOF
 sleep $view if $view;
 
 my %makeparms = (
-#	      (MM->can('signature_target') ? (SIGN => 1) : ()),    
+#	      (MM->can('signature_target') ? (SIGN => 1) : ()),
 	      'NAME'		=> 'NetAddr::IP',
 	      'VERSION_FROM'	=> 'IP.pm', # finds $VERSION
 	      'PREREQ_PM'		=> {

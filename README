@@ -13,7 +13,7 @@ done  to subnets or  ranges of  IP addresses,  namely verifying  if an
 address is within a subnet, comparing, looping, splitting subnets into
 longer prefixes, compacting addresses to the shortest prefixes, etc.
 
-The general idea, is that you should be able to do 
+The general idea, is that you should be able to do
 
   use NetAddr::IP;
 
@@ -34,7 +34,7 @@ like:
 
   for (my $ip = new NetAddr::IP '10.0.0.1/28';
        $ip < $ip->broadcast;
-       $ip ++) 
+       $ip ++)
   {
     print "$ip\n";
   }
@@ -60,7 +60,7 @@ The lastest version of this module should be preferred. You can obtain
 it on the  nearest CPAN mirror. Please find a mirror  near you to help
 spread the load.
 
-Version 4 works with earlier versions of perl at least back to 5.00503 
+Version 4 works with earlier versions of perl at least back to 5.00503
 however overloaded iterative arrays and binary bit strings 0b101010101
 are not supported in versions of perl prior to 5.6.0.
 
@@ -71,9 +71,9 @@ To use the old behavior for ->nth($index) and ->num():
   old behavior:
   NetAddr::IP->new('10/32')->nth(0) == undef
   NetAddr::IP->new('10/32')->nth(1) == undef
-  NetAddr::IP->new('10/31')->nth(0) == undef  
+  NetAddr::IP->new('10/31')->nth(0) == undef
   NetAddr::IP->new('10/31')->nth(1) == 10.0.0.1/31
-  NetAddr::IP->new('10/30')->nth(0) == undef  
+  NetAddr::IP->new('10/30')->nth(0) == undef
   NetAddr::IP->new('10/30')->nth(1) == 10.0.0.1/30
   NetAddr::IP->new('10/30')->nth(2) == 10.0.0.2/30
   NetAddr::IP->new('10/30')->nth(3) == 10.0.0.3/30
@@ -84,7 +84,7 @@ output set and that the 'zero'th index is alway undef.
   new behavior:
   NetAddr::IP->new('10/32')->nth(0)  == 10.0.0.0/32
   NetAddr::IP->new('10.1/32'->nth(0) == 10.0.0.1/32
-  NetAddr::IP->new('10/31')->nth(0)  == undef  
+  NetAddr::IP->new('10/31')->nth(0)  == undef
   NetAddr::IP->new('10/31')->nth(1)  == undef
   NetAddr::IP->new('10/30')->nth(0) == 10.0.0.1/30
   NetAddr::IP->new('10/30')->nth(1) == 10.0.0.2/30
@@ -189,7 +189,7 @@ LICENSE AND WARRANTY
 
 This software is (c) Luis E. Muñoz and Michael A. Robinton.  It can be
 used under the terms of the perl artistic license provided that proper
-credit for the work of the authors is  preserved in  the form  of this 
+credit for the work of the authors is  preserved in  the form  of this
 copyright  notice and license for this module.
 
 No warranty of any kind is  expressed or implied. This code might make

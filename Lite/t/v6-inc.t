@@ -3,8 +3,8 @@ use NetAddr::IP::Lite;
 
 # Test ++ in IPv6 addresses (Bug rt.cpan.org #7070 by a guest)
 
-@ip = (NetAddr::IP::Lite->new('2001:468:ff:fffe::2/64'), 
-       NetAddr::IP::Lite->new('2001:468:ff:fffe::2/64'), 
+@ip = (NetAddr::IP::Lite->new('2001:468:ff:fffe::2/64'),
+       NetAddr::IP::Lite->new('2001:468:ff:fffe::2/64'),
        NetAddr::IP::Lite->new('2001:468:ff:fffe::2/64'));
 
 $ip[1] ++;

@@ -9,7 +9,7 @@ my $bad = scalar @bad;
 
 diag <<EOF;
 
-\tThe following $bad tests involve resolving (hopefully) 
+\tThe following $bad tests involve resolving (hopefully)
 \tnon-existant names. This may take a while.
 EOF
 

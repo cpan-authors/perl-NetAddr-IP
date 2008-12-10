@@ -33,10 +33,10 @@ die "# Cannot continue without NetAddr::IP::Lite\n"
 
 my $count = 1;
 
-ok(! defined NetAddr::IP::Lite->new($_), "new $_ should fail") 
+ok(! defined NetAddr::IP::Lite->new($_), "new $_ should fail")
     for @badnets;
 
-ok(defined NetAddr::IP::Lite->new($_), "new $_ should work") 
+ok(defined NetAddr::IP::Lite->new($_), "new $_ should work")
     for @goodnets;
 
 

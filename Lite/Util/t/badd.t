@@ -19,7 +19,7 @@ sub ok {
   ++$test;
 }
 
-my @addr = 
+my @addr =
 qw(	::			0:0:0:0:0:0:0:0
 	:::			undef
 	foo			undef

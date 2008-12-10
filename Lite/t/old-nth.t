@@ -24,7 +24,7 @@ my @try = qw(
 	7	1.2.3.15
 	8	undef
 );
-	
+
 for (my $i=0;$i<@try;$i+=2) {
   my $rv = $ip4->nth($try[$i]);
   $rv = defined $rv

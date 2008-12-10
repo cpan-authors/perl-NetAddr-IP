@@ -53,7 +53,7 @@ qw(
 	eFFF:FFFF:FFFF:FFFF:FFFF:FFFF:FFFF:0		112	1
 	FFFF:FeFF:FFFF:FFFF:FFFF:FFFF:FFF0:0		108	1
 	F000::						4	0
-	A000::						3	1	
+	A000::						3	1
 );
 
 for (my $i=0;$i < @num;$i+=3) {

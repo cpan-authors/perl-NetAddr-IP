@@ -1,5 +1,11 @@
 Revision history for Perl extension NetAddr::IP::Util
 
+1.27  Tue Dec  9 12:00:08 PST 2008
+	revised UtilPP v1.7 to work around perl 5.8.4 
+	failures with certain @_ operations of goto &sub...
+	see perl bug [ 23429]. Unfortunately, perl-5.8.4 is
+	the distribution of choice for many solaris boxes
+
 1.26  Fri Nov 28 23:19:01 PST 2008
 	revised XS code to be full re-entrant... thread safe.
 	removed all traces of mutex locks
@@ -11,10 +17,10 @@ Revision history for Perl extension NetAddr::IP::Util
 	add threads reporting to Util.xs and UtilPP
 
 	added what is hopefully thread safe operation via
-	serializaton. Must be invoked by "--with-threads"
+	serialization. Must be invoked by "--with-threads"
 
 1.24  Wed Nov  5 18:13:20 PST 2008
-	Clean up Makefile.PL to check actual required link 
+	Clean up Makefile.PL to check actual required link
 	libraries against the perl build for consistency
 
 1.23  Sun Nov  2 10:10:38 PST 2008
@@ -22,8 +28,8 @@ Revision history for Perl extension NetAddr::IP::Util
 	thanks to Karl Bunch <karl@digilink.net> for spotting the bug.
 
 1.22  Wed Oct 22 14:54:12 PDT 2008
-	eliminated dependance on PL_sawampersand
-	thanks to Mark Martinec <Mark.Martinec@ijs.si> 
+	eliminated dependence on PL_sawampersand
+	thanks to Mark Martinec <Mark.Martinec@ijs.si>
 	for spotting this and submitting a patch.
 
 	force -noxs mode for Win32
@@ -56,13 +62,13 @@ Revision history for Perl extension NetAddr::IP::Util
 
 0.16  Sun Jun 25 16:13:00 PDT 2006
 	fixed ->new() issues with long digit strings ->new('::fffff')
-	and non hex digits ->new('::foo'). 
+	and non hex digits ->new('::foo').
 	Thanks to Radoslaw Zielinski <radek42@gmail.com>
 	for spotting those bugs
 
 0.15  Tue Jun 13 14:42:34 PDT 2006
-	UtilPP.pm v0.07 & Util.xs 'shiftleft' so that the orignal
-	agrument is returned when the shift count is '0' or missing
+	UtilPP.pm v0.07 & Util.xs 'shiftleft' so that the original
+	argument is returned when the shift count is '0' or missing
 
 0.14  Tue Jun  6 08:37:01 PDT 2006
 	add logic to check LIBS => [-lfiles]
@@ -108,17 +114,17 @@ Revision history for Perl extension NetAddr::IP::Util
 	add ipv4to6, mask4to6 to Util.pm and UtilPP.pm v0.03
 
 0.05  Sat Apr 15 15:48:17 PDT 2006
-	Fixed some typo's in Makefile.PL that 
+	Fixed some typo's in Makefile.PL that
 	failed to update README during build
 
 0.04  Wed Apr 12 15:43:33 PDT 2006
-	add Util_IS.pm to guarantee that the XS lib is not 
+	add Util_IS.pm to guarantee that the XS lib is not
 	loaded if a previous incarnation of the same version
 	has previously been installed on the system and the
 	module is built with -noxs
 
 0.03  Tue Apr  4 21:55:35 PDT 2006
-	udate minisocket to perl-5.9.3, add header 
+	update minisocket to perl-5.9.3, add header
 	file for backwards compatibility
 
 	add function 'notcontiguous' to return cidr size
@@ -127,7 +133,7 @@ Revision history for Perl extension NetAddr::IP::Util
 0.02  Fri Mar 31 12:44:15 PST 2006
 	added test for illegal characters to ipv6_aton
 
-	added UtilPP for Pure Perl functionality for the 
+	added UtilPP for Pure Perl functionality for the
 	WinTel folks that don't have gcc on their systems
 
 0.01  Tue Mar 28 16:42:44 PST 2006

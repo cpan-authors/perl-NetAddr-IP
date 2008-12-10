@@ -14,16 +14,16 @@ my $count = 1;
 
 for my $a (keys %$nets) {
     my $ip = new NetAddr::IP::Lite $a, $nets->{$a}->[0];
-    print '', (($ip->first->addr	ne $nets->{$a}->[1] ? 
-	    'not ' : ''), 
+    print '', (($ip->first->addr	ne $nets->{$a}->[1] ?
+	    'not ' : ''),
 	   "ok ", $count++, "\n");
-    print '', (($ip->last->addr		ne $nets->{$a}->[2] ? 
-	    'not ' : ''), 
+    print '', (($ip->last->addr		ne $nets->{$a}->[2] ?
+	    'not ' : ''),
 	   "ok ", $count++, "\n");
 
     my $new = $ip->nth(10);
-    print '', (((defined $new ? $new->addr : 'undef') ne $nets->{$a}->[3] ? 
-	    'not ' : ''), 
+    print '', (((defined $new ? $new->addr : 'undef') ne $nets->{$a}->[3] ?
+	    'not ' : ''),
 	   "ok ", $count++, "\n");
 }
 

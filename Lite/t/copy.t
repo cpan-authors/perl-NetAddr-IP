@@ -26,7 +26,7 @@ print "orig... got: $txto, exp: $ip24\nnot "
 	unless $txto eq $ip24;
 &ok;
 
-## test 2	
+## test 2
 print "copy... got: $txtc, exp: $ip24\nnot "
 	unless $txtc eq $ip24;
 &ok;
@@ -45,7 +45,7 @@ print "orig... got: $txto, exp: $ip24\nnot "
 	unless $txto eq $ip24;
 &ok;
 
-## test 4	
+## test 4
 print "copy... got: $txtc, exp: $ip28\nnot "
 	unless $txtc eq $ip28;
 &ok;

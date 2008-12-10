@@ -34,7 +34,7 @@ require Exporter;
 
 @ISA = qw(Exporter NetAddr::IP::Lite);
 
-$VERSION = do { sprintf " %d.%03d", (q$Revision: 4.19 $ =~ /\d+/g) };
+$VERSION = do { sprintf " %d.%03d", (q$Revision: 4.20 $ =~ /\d+/g) };
 
 =pod
 
@@ -82,7 +82,7 @@ NetAddr::IP - Manages IPv4 and IPv6 addresses and subnets
 
 ###### DEPRECATED, will be remove in version 5 ############
 
-  * To accept addresses in the format as returned by 
+  * To accept addresses in the format as returned by
   inet_aton, invoke the module as:
 
   use NetAddr::IP qw(:aton);
@@ -92,7 +92,7 @@ NetAddr::IP - Manages IPv4 and IPv6 addresses and subnets
 * To enable usage of legacy data files containing NetAddr::IP
 objects stored using the L<Storable> module.
 
-  use NetAddr::IP qw(:old_storable);  
+  use NetAddr::IP qw(:old_storable);
 
 * To compact many smaller subnets (see: C<$me-E<gt>compact($addr1,$addr2,...)>
 
@@ -153,7 +153,7 @@ reason, then type:
 =head1 DESCRIPTION
 
 This module provides an object-oriented abstraction on top of IP
-addresses or IP subnets, that allows for easy manipulations. 
+addresses or IP subnets, that allows for easy manipulations.
 Version 4.xx of NetAdder::IP will will work older
 versions of Perl and does B<not> use Math::BigInt as in previous versions.
 
@@ -173,8 +173,8 @@ Many operators have been overloaded, as described below:
 
 use overload
 
-    '@{}'	=> sub { 
-	return [ $_[0]->hostenum ]; 
+    '@{}'	=> sub {
+	return [ $_[0]->hostenum ];
     };
 
 =pod
@@ -208,7 +208,7 @@ You can test for equality with either C<eq> or C<==>. C<eq> allows the
 comparison with arbitrary strings as well as NetAddr::IP objects. The
 following example:
 
-    if (NetAddr::IP->new('127.0.0.1','255.0.0.0') eq '127.0.0.1/8') 
+    if (NetAddr::IP->new('127.0.0.1','255.0.0.0') eq '127.0.0.1/8')
        { print "Yes\n"; }
 
 Will print out "Yes".
@@ -228,10 +228,10 @@ masks are compared. This leads to the counterintuitive result that
 
 	/24 > /16
 
-Comparision should not be done on netaddr objects with different CIDR as
+Comparison should not be done on netaddr objects with different CIDR as
 this may produce indeterminate - unexpected results,
 rather the determination of which netblock is larger or smaller should be
-done by comparing 
+done by comparing
 
 	$ip1->masklen <=> $ip2->masklen
 
@@ -250,12 +250,12 @@ back to the network address. This code:
 
     outputs 10.0.0.0/24.
 
-Returns the the unchanged object when the conastant is missing or out of
+Returns the the unchanged object when the constant is missing or out of
 range.
 
     2147483647 <= constant >= -2147483648
 
-=item B<Substraction of a constant (C<+>)>
+=item B<Subtraction of a constant (C<->)>
 
 The complement of the addition of a constant.
 
@@ -264,7 +264,7 @@ The complement of the addition of a constant.
 Returns the difference between the address parts of two NetAddr::IP::Lite
 objects address parts as a 32 bit signed number.
 
-Returns B<undef> if the difference is out of range. 
+Returns B<undef> if the difference is out of range.
 
 (See range restrictions on Addition above)
 
@@ -310,17 +310,17 @@ sub import
     if (grep { $_ eq ':old_storable' } @_) {
 	@_ = grep { $_ ne ':old_storable' } @_;
     } else {
-	*{STORABLE_freeze} = sub 
+	*{STORABLE_freeze} = sub
 	{
 	    my $self = shift;
 	    return $self->cidr();	# use stringification
 	};
-	*{STORABLE_thaw} = sub 
+	*{STORABLE_thaw} = sub
 	{
 	    my $self	= shift;
 	    my $cloning	= shift;	# Not used
 	    my $serial	= shift;
-	    
+
 	    my $ip = new NetAddr::IP $serial;
 	    $self->{addr} = $ip->{addr};
 	    $self->{mask} = $ip->{mask};
@@ -363,12 +363,16 @@ sub hostenumref($) {
 
 sub splitref {
   unshift @_, 0;	# mark as no reverse
-  goto &_splitref;
+# perl 5.8.4 fails with this operation. see perl bug [ 23429]
+#  goto &_splitref;
+  &_splitref;
 }
 
 sub rsplitref {
   unshift @_, 1;	# mark as reversed
-  goto &_splitref;
+# perl 5.8.4 fails with this operation. see perl bug [ 23429]
+#  goto &_splitref;
+  &_splitref;
 }
 
 sub split {
@@ -439,7 +443,7 @@ function replaces the DEPRECATED :aton functionality which is fundamentally
 broken.
 
 The third method C<new_no> is exclusively for IPv4 addresses and filters
-improperly formated
+improperly formatted
 dot quad strings for leading 0's that would normally be interpreted as octal
 format by NetAddr per the specifications for inet_aton.
 
@@ -460,7 +464,7 @@ in all the notations I have seen over time. It can optionally contain
 the mask in CIDR notation.
 
 B<prefix> notation is understood, with the limitation that the range
-speficied by the prefix must match with a valid subnet.
+specified by the prefix must match with a valid subnet.
 
 Addresses in the same format returned by C<inet_aton> or
 C<gethostbyname> can also be understood, although no mask can be
@@ -508,14 +512,14 @@ If called with no arguments, 'default' is assumed.
 
 =item C<-E<gt>broadcast()>
 
-Returns a new object refering to the broadcast address of a given
+Returns a new object referring to the broadcast address of a given
 subnet. The broadcast address has all ones in all the bit positions
 where the netmask has zero bits. This is normally used to address all
 the hosts in a given subnet.
 
 =item C<-E<gt>network()>
 
-Returns a new object refering to the network address of a given
+Returns a new object referring to the network address of a given
 subnet. A network address has all zero bits where the bits of the
 netmask are zero. Normally this is used to refer to a subnet.
 
@@ -555,8 +559,8 @@ NetAddr::IP object I<stringifies> to the result of this function.
 =item C<-E<gt>aton()>
 
 Returns the address part of the NetAddr::IP object in the same format
-as the C<inet_aton()> or C<ipv6_aton> function respectively. If the object 
-was created using ->new6($ip), the address returned will always be in ipV6 
+as the C<inet_aton()> or C<ipv6_aton> function respectively. If the object
+was created using ->new6($ip), the address returned will always be in ipV6
 format, even for addresses in ipV4 address space.
 
 =item C<-E<gt>range()>
@@ -639,9 +643,9 @@ sub wildcard($) {
 
 =item C<-E<gt>short()>
 
-Returns the address part in a short or compact notation. 
+Returns the address part in a short or compact notation.
 
-  (ie, 127.0.0.1 becomes 127.1). 
+  (ie, 127.0.0.1 becomes 127.1).
 
 Works with both, V4 and V6.
 
@@ -730,7 +734,7 @@ sub short($) {
 
 =item C<-E<gt>full()>
 
-Returns the address part in FULL notation for 
+Returns the address part in FULL notation for
 ipV4 and ipV6 respectively.
 
   i.e. for ipV4
@@ -774,7 +778,7 @@ are not both C<NetAddr::IP> objects.
 =item C<$me-E<gt>within($other)>
 
 The complement of C<-E<gt>contains()>. Returns true when C<$me> is
-completely con tained within C<$other>.
+completely contained within C<$other>.
 
 Note that C<$me> and C<$other> must be C<NetAddr::IP> objects.
 
@@ -785,18 +789,18 @@ produced by splitting the original object, which is left
 unchanged. Note that C<$bits> must be longer than the original
 mask in order for it to be splittable.
 
-ERROR conditions: 
+ERROR conditions:
 
-  ->splitref will DIE with the message 'netlimit exceeded' 
+  ->splitref will DIE with the message 'netlimit exceeded'
     if the number of return objects exceeds 'netlimit'.
     See function 'netlimit' above (default 2**16 or 65536 nets).
 
-  ->splitref returns undef when C<bits> or the (bits list) 
+  ->splitref returns undef when C<bits> or the (bits list)
     will not fit within the original object.
 
-  ->splitref returns undef if a supplied ipV4, ipV6, or NetAddr 
-    mask in inappropriately formated,
-  
+  ->splitref returns undef if a supplied ipV4, ipV6, or NetAddr
+    mask in inappropriately formatted,
+
 B<bits> may be a CIDR mask, a dot quad or ipV6 string or a NetAddr::IP object.
 If C<bits> is missing, the object is split for into all available addresses
 within the ipV4 or ipV6 object ( auto-mask of CIDR 32, 128 respectively ).
@@ -829,7 +833,7 @@ the remaining return object requirement.
 =item C<-E<gt>rsplitref($bits,[optional $bits1,$bits2,...])>
 
 C<-E<gt>rsplitref> is the same as C<-E<gt>splitref> above except that the split plan is
-applided to the original object in reverse order.
+applied to the original object in reverse order.
 
   i.e.	my $ip = new NetAddr::IP('192.168.0.0');
 	my @objects = $ip->split(28, 29, 28, 29, 26);
@@ -849,13 +853,13 @@ applided to the original object in reverse order.
 =item C<-E<gt>split($bits,[optional $bits1,$bits2,...])>
 
 Similar to C<-E<gt>splitref> above but returns the list rather than a list
-reference. You may not want to use this if a large numnber of objects is
+reference. You may not want to use this if a large number of objects is
 expected.
 
 =item C<-E<gt>rsplit($bits,[optional $bits1,$bits2,...])>
 
 Similar to C<-E<gt>rsplitref> above but returns the list rather than a list
-reference. You may not want to use this if a large numnber of objects is  
+reference. You may not want to use this if a large number of objects is
 expected.
 
 =cut
@@ -908,7 +912,7 @@ sub _splitplan {
 # normalization can use add/subtract to accomplish normalization
 #
 # keys of %nets are the masks used by this split
-# values of %nets are the normalized weighting for 
+# values of %nets are the normalized weighting for
 # calculating when the split is "full" or complete
 # %masks values contain the actual masks for each split subnet
 # @bits contains the masks in the order the user actually wants them
@@ -980,9 +984,9 @@ sub _splitref {
 
 Returns the list of hosts within a subnet.
 
-ERROR conditions: 
+ERROR conditions:
 
-  ->hostenum will DIE with the message 'netlimit exceeded' 
+  ->hostenum will DIE with the message 'netlimit exceeded'
     if the number of return objects exceeds 'netlimit'.
     See function 'netlimit' above (default 2**16 or 65536 nets).
 
@@ -1003,10 +1007,10 @@ Faster version of C<-E<gt>hostenum()>, returning a reference to a list.
 =item C<@compacted_object_list = Compact(@object_list)>
 
 Given a list of objects (including C<$me>), this method will compact
-all the addresses and subnets into the largest (ie, least specific) 
+all the addresses and subnets into the largest (ie, least specific)
 subnets possible that contain exactly all of the given objects.
 
-Note that in versions prior to 3.02, if fed with the same IP subnets 
+Note that in versions prior to 3.02, if fed with the same IP subnets
 multiple times, these subnets would be returned. From 3.02 on, a more
 "correct" approach has been adopted and only one address would be
 returned.
@@ -1118,7 +1122,7 @@ sub coalesce
     my @ret = ();
 
     # Add to @ret any arguments with netmasks longer than our argument
-    for my $c (sort { $a->masklen <=> $b->masklen } 
+    for my $c (sort { $a->masklen <=> $b->masklen }
 	       grep { $_->masklen <= $masklen } @_)
     {
 	next if grep { $_->contains($c) } @ret;
@@ -1126,8 +1130,8 @@ sub coalesce
     }
 
     # Now add to @ret all the subnets with more than $number hits
-    for my $c (map { new NetAddr::IP $_ } 
-	       grep { $ret{$_} >= $number } 
+    for my $c (map { new NetAddr::IP $_ }
+	       grep { $ret{$_} >= $number }
 	       keys %ret)
     {
 	next if grep { $_->contains($c) } @ret;
@@ -1156,8 +1160,8 @@ the subnet (ie, the I<n>-th host address).  If no address is available
 (for example, when the network is too small for C<$index> hosts),
 C<undef> is returned.
 
-Version 4.00 of NetAddr::IP and version 1.00 of NetAddr::IP::Lite implements 
-C<-E<gt>nth($index)> and C<-E<gt>num()> exactly as the documentation states. 
+Version 4.00 of NetAddr::IP and version 1.00 of NetAddr::IP::Lite implements
+C<-E<gt>nth($index)> and C<-E<gt>num()> exactly as the documentation states.
 Previous versions behaved slightly differently and not in a consistent
 manner. See the README file for details.
 
@@ -1186,11 +1190,11 @@ if the address in not in ipV4 space.
 
 sub re ($)
 {
-    goto &re6 unless isIPv4($_[0]->{addr});
+    return &re6 unless isIPv4($_[0]->{addr});
     my $self = shift->network;	# Insure a "zero" host part
     my ($addr, $mlen) = ($self->addr, $self->masklen);
     my @o = split('\.', $addr, 4);
-    
+
     my $octet= '(?:[0-9]|[1-9][0-9]|1[0-9][0-9]|2[0-4][0-9]|25[0-5])';
     my @r = @o;
     my $d;
@@ -1204,7 +1208,7 @@ sub re ($)
     {
 	if ($mlen > 24)
 	{
-	     $d	= 2 ** (32 - $mlen) - 1; 
+	     $d	= 2 ** (32 - $mlen) - 1;
 	     $r[3] = '(?:' . join('|', ($o[3]..$o[3] + $d)) . ')';
 	}
 	else
@@ -1212,7 +1216,7 @@ sub re ($)
 	    $r[3] = $octet;
 	    if ($mlen > 16)
 	    {
-		$d = 2 ** (24 - $mlen) - 1; 
+		$d = 2 ** (24 - $mlen) - 1;
 		$r[2] = '(?:' . join('|', ($o[2]..$o[2] + $d)) . ')';
 	    }
 	    else
@@ -1220,7 +1224,7 @@ sub re ($)
 		$r[2] = $octet;
 		if ($mlen > 8)
 		{
-		    $d = 2 ** (16 - $mlen) - 1; 
+		    $d = 2 ** (16 - $mlen) - 1;
 		    $r[1] = '(?:' . join('|', ($o[1]..$o[1] + $d)) . ')';
 		}
 		else
@@ -1307,11 +1311,11 @@ sub re6($) {
   do {
     my $grp = join('',splice(@dig,0,4));
     if ($grp =~ /^(0+)/) {
-      my $l = length($1);  
+      my $l = length($1);
       if ($l == 4) {
 	$grp = '0{1,4}';
       } else {
-	$grp =~ s/^${1}/0\{0,$l\}/;  
+	$grp =~ s/^${1}/0\{0,$l\}/;
       }
     }
     if ($grp =~ /(x+)$/) {
@@ -1353,620 +1357,21 @@ __END__
 	V4net
 	netlimit
 
+=head1 NOTES / BUGS ... FEATURES
+
+NetAddr::IP only runs in Pure Perl mode on Windows boxes because I don't
+have the resources or know how to get the "configure" stuff working in the
+Windows environment. Volunteers WELCOME to port the "C" portion of this
+module to Windows.
+
 =head1 HISTORY
 
-$Id: IP.pm,v 4.8 2008/06/07 20:43:38 luisemunoz Exp $
-
-=over
-
-=item 0.01
-
-=over
-
-
-=item *
-
-original  version;  Basic testing  and  release  to CPAN  as
-version 0.01. This is considered beta software.
-
-=back
-
-
-=item 0.02
-
-=over
-
-
-=item *
-
-Multiple changes  to fix endiannes issues. This  code is now
-moderately tested on Wintel and Sun/Solaris boxes.
-
-=back
-
-
-=item 0.03
-
-=over
-
-
-=item *
-
-Added -E<gt>first and -E<gt>last methods. Version changed to 0.03.
-
-=back
-
-
-=item 1.00
-
-=over
-
-
-=item *
-
-Implemented -E<gt>new_subnet. Version changed to 1.00.
-
-=item *
-
-less croak()ing when improper input  is fed to the module. A
-more consistent 'undef' is returned now instead to allow the
-user to better handle the error.
-
-=back
-
-
-=item 1.10
-
-=over
-
-
-=item *
-
-As  per  Marnix   A.   Van  Ammers  [mav6@ns02.comp.pge.com]
-suggestion, changed  the syntax of the loop  in host_enum to
-be the same of the enum method.
-
-=item *
-
-Fixed the MS-DOS ^M  at the end-of-line problem. This should
-make the module easier to use for *nix users.
-
-=back
-
-
-=item 1.20
-
-=over
-
-
-=item *
-
-Implemented -E<gt>compact and -E<gt>expand methods.
-
-=item *
-
-Applying for official name
-
-=back
-
-
-=item 1.21
-
-=over
-
-
-=item *
-
-Added  -E<gt>addr_number and  -E<gt>mask_bits.  Currently  we return
-normal  numbers (not  BigInts).   Please test  this in  your
-platform and report any problems!
-
-=back
-
-
-=item 2.00
-
-=over
-
-
-=item *
-
-Released under the new *official* name of NetAddr::IP
-
-=back
-
-
-=item 2.10
-
-=over
-
-
-=item *
-
-Added support for -E<gt>new($min, $max, $bits) form
-
-=item *
-
-Added -E<gt>to_numeric. This helps serializing objects
-
-=back
-
-
-=item 2.20
-
-=over
-
-
-=item *
-
-Chris Dowling  reported that  the sort method  introduced in
-v1.20  for -E<gt>expand  and -E<gt>compact  doesn't always  return a
-number under perl versions < 5.6.0.  His fix was applied and
-redistributed.  Thanks Chris!
-
-=item *
-
-This module is hopefully released with no CR-LF issues!
-
-=item *
-
-Fixed a warning about uninitialized values during make test
-
-=back
-
-
-=item 2.21
-
-=over
-
-
-=item *
-
-Dennis  Boylan pointed  out a  bug under  Linux  and perhaps
-other platforms  as well causing the  error "Sort subroutine
-didn't         return         single        value         at
-/usr/lib/perl5/site_perl/5.6.0/NetAddr/IP.pm  line  299,  E<lt>E<gt>
-line 2." or similar. This was fixed.
-
-=back
-
-
-=item 2.22
-
-=over
-
-
-=item *
-
-Some changes  suggested by Jeroen Ruigrok  and Anton Berezin
-were included. Thanks guys!
-
-=back
-
-
-=item 2.23
-
-=over
-
-
-=item *
-
-Bug fix for /XXX.XXX.XXX.XXX netmasks under v5.6.1 suggested
-by Tim Wuyts. Thanks!
-
-=item *
-
-Tested the module under MACHTYPE=hppa1.0-hp-hpux11.00. It is
-now  konwn to  work  under Linux  (Intel/AMD), Digital  Unix
-(Alpha),   Solaris  (Sun),  HP-UX11   (HP-PA-RISC),  Windows
-9x/NT/2K (using ActiveState on Intel).
-
-=back
-
-
-=item 2.24
-
-=over
-
-
-=item *
-
-A spurious  warning when  expand()ing with C<-w>  under certain
-circumstances  was removed. This  involved using  /31s, /32s
-and the same netmask as the input.  Thanks to Elie Rosenblum
-for pointing it out.
-
-=item *
-
-Slight change  in license terms to ease  redistribution as a
-Debian package.
-
-=back
-
-
-=item 3.00
-
-This is  a major rewrite, supposed  to fix a number  of issues pointed
-out in earlier versions.
-
-The goals for this version include getting rid of BigInts, speeding up
-and also  cleaning up the code,  which is written in  a modular enough
-way so  as to allow IPv6  functionality in the  future, taking benefit
-from most of the methods.
-
-Note that no effort has  been made to remain backwards compatible with
-earlier versions. In particular, certain semantics of the earlier
-versions have been removed in favor of faster performance.
-
-This  version  was tested  under  Win98/2K (ActiveState  5.6.0/5.6.1),
-HP-UX11 on PA-RISC (5.6.0), RedHat  Linux 6.2 (5.6.0), Digital Unix on
-Alpha (5.6.0), Solaris on Sparc (5.6.0) and possibly others.
-
-=item 3.01
-
-=over
-
-=item * 
-
-Added C<-E<gt>numeric()>.
-
-=item *
-
-C<-E<gt>new()> called with no parameters creates a B<default>
-NetAddr::IP object.
-
-=back
-
-=item 3.02
-
-=over
-
-=item *
-
-Fxed C<-E<gt>compact()> for cases of equal subnets or
-mutually-contained IP addresses as pointed out by Peter Wirdemo. Note
-that now only distinct IP addresses will be returned by this method.
-
-=item *
-
-Fixed the docs as suggested by Thomas Linden.
-
-=item *
-
-Introduced overloading to ease certain common operations.
-
-=item *
-
-    Fixed compatibility issue with C<-E<gt>num()> on 64-bit processors.
-
-=back
-
-=item 3.03
-
-=over
-
-=item *
-
-Added more comparison operators.
-
-=item *
-
-As per Peter Wirdemo's suggestion, added C<-E<gt>wildcard()> for
-producing subnets in wildcard format.
-
-=item *
-
-Added C<++> and C<+> to provide for efficient iteration operations
-over all the hosts of a subnet without C<-E<gt>expand()>ing it.
-
-=back
-
-=item 3.04
-
-=over
-
-=item *
-
-Got rid of C<croak()> when invalid input was fed to C<-E<gt>new()>.
-
-=item *
-
-As suggested by Andrew Gaskill, added support for prefix
-notation. Thanks for the code of the initial C<-E<gt>prefix()>
-function.
-
-=back
-
-=item 3.05
-
-=over
-
-=item *
-
-Added support for range notation, where base and broadcast addresses
-are given as arguments to C<-E<gt>new()>.
-
-=back
-
-=item 3.06
-
-=over
-
-=item *
-
-Andrew Ruthven pointed out a bug related to proper interpretation of
-"compact" CIDR blocks. This was fixed. Thanks!
-
-=back
-
-=item 3.07
-
-=over
-
-=item *
-
-Sami Pohto pointed out a bug with C<-E<gt>last()>. This was fixed.
-
-=item *
-
-A small bug related to parsing of 'localhost' was fixed.
-
-=back
-
-=item 3.08
-
-=over
-
-=item *
-
-By popular request, C<-E<gt>new()> now checks the sanity of the netmasks
-it receives. If the netmask is invalid, C<undef> will be returned.
-
-=back
-
-=item 3.09
-
-=over
-
-=item *
-
-Fixed typo that invalidated otherwise correct masks. This bug appeared in 3.08.
-
-=back
-
-=item 3.10
-
-=over
-
-=item *
-
-Fixed relops. Semantics where adjusted to remove the netmask from the
-comparison. (ie, it does not make sense to say that 10.0.0.0/24 is >
-10.0.0.0/16 or viceversa).
-
-=back
-
-=item 3.11
-
-=over
-
-=item *
-
-Thanks to David D. Zuhn for contributing the C<-E<gt>nth()> method.
-
-=item *
-
-tutorial.htm now included in the  distribution. I hope this helps some
-people to better  understand what kind of stuff can  be done with this
-module.
-
-=item *
-
-C<'any'> can be used as a synonim of C<'default'>. Also, C<'host'> is
-now a valid (/32) netmask.
-
-=back
-
-=item 3.12
-
-=over
-
-=item *
-
-Added CVS control files, though this is of no relevance to the community.
-
-=item *
-
-Thanks to Steve Snodgrass for pointing out a bug in the processing of
-the special names such as default, any, etc. A fix was produced and
-adequate tests were added to the code.
-
-=item *
-
-First steps towards "regexp free" parsing.
-
-=item *
-
-Documentation revisited and reorganized within the file, so that it
-helps document the code.
-
-=item *
-
-Added C<-E<gt>aton()> and support for this format in
-C<-E<gt>new()>. This makes the code helpful to interface with
-old-style socket code.
-
-=back
-
-=item 3.13
-
-=over
-
-=item *
-
-Fixes a warning related to 'wrapping', introduced in 3.12 in
-C<pack()>/C<unpack()> for the new support for C<-E<gt>aton()>.
-
-=back
-
-=item 3.14
-
-=over
-
-=item *
-
-C<Socket::gethostbyaddr> in Solaris seems to behave a bit different
-from other OSes. Reversed change in 3.13 and added code around this
-difference.
-
-=back
-
-=item 3.14_1
-
-This is an interim release just to incorporate the v6 patches
-contributed.  No extensive testing has been done with this support
-yet. More tests are needed.
-
-=over
-
-=item *
-
-Preliminary support for IPv6 contributed by Kadlecsik Jozsi
-E<lt>kadlec at sunserv.kfki.huE<gt>. Thanks a lot!
-
-=item *
-
-IP.pm and other files are enconded in ISO-8859-1 (Latin1) so that I
-can spell my name properly.
-
-=item *
-
-Tested under Perl 5.8.0, no surprises found.
-
-=back
-
-=item 3.14_2
-
-Minor development release.
-
-=over
-
-=item *
-
-Added C<-E<gt>version> and C<-E<gt>bits>, including testing.
-
-=item *
-
-C<Compact> can now be exported if the user so requests.
-
-=item *
-
-Fixed a bug when octets in a dotted quad were > 256 (ie, were not
-octets). Thanks to Anton Berezin for pointing this out.
-
-=back
-
-=item 3.14_3
-
-Fixed a bug pointed out by Brent Imhoff related to the implicit
-comparison that happens within C<Compact()>. The netmask was being
-ignored in the comparison (ie, 10/8 was considered the same as
-10.0/16). Since some people have requested that 10.0/16 was considered
-larger than 10/8, I added this change, which makes the bug go
-away. This will be the last '_' release, pending new bugs.
-
-Regarding the comparison of subnets, I'm still open to debate so as to
-wether 10.0/16 > 10/8. Certainly 255.255.0.0 > 255.0.0.0, but 2 ** 24
-are more hosts than 2 ** 16. I think we might use gt & friends for
-this semantic and make everyone happy, but I won't do anything else
-here without (significant) feedback.
-
-=item 3.14_4
-
-As noted by Michael, 127/8 should be 127.0.0.0/8 and not
-0.0.0.128/8. Also, improved docs on the usage of contains() and
-friends.
-
-=item 3.15
-
-Finally. Added POD tests (and fixed minor doc bug in IP.pm). As
-reported by Anand Vijay, negative numbers are assumed to be signed
-ints and converted accordingly to a v4 address. split() and nth() now
-work with IPv6 addresses (Thanks to Venkata Pingali for
-reporting). Tests were added for v6 base functionality and
-splitting. Also tests for bitwise aritmethic with long integers has
-been added. I'm afraid Math::BigInt is now required.
-
-Note that IPv6 might not be as solid as I would like. Be careful...
-
-=item 3.16
-
-Fixed a couple of (minor) bugs in shipped tests in the last
-version. Also, fixed a small pod typo that caused code to show up in
-the documentation.
-
-=item 3.17
-
-Fixed IP.pm so that all test could pass in Solaris machines. Thanks to
-all who reported this.
-
-=item 3.18
-
-Fixed some bugs pointed out by David Lloyd, having to do with the
-module packaging and version requirements. Thanks David!
-
-=item 3.19
-
-Fixed a bug pointed out by Andrew D. Clark, regarding proper parsing
-of IP ranges with non-contiguous masks. Thanks Andrew!
-
-=item 3.20
-
-Suggestion by Reuland Olivier gave birth to C<short()>, which provides
-for a compact representation of the IP address. Rewrote C<_compact> to
-find the longest sequence of zeros to compact. Reuland also pointed
-out a flaw in contains() and within(), which was fixed. Thanks
-Reuland!
-
-Fixed rt bug #5478 in t/00-load.t.
-
-=item 3.21
-
-Fixed minor v-string problem pointed out by Steve Snodgrass (Thanks
-Steve!). NetAddr::IP can now collaborate with Storable to serialize
-itself.
-
-=item 3.22
-
-Fixed bug rt.cpan.org #7070 reported by Grover Browning (auto-inc/dec
-on v6 fails). Thanks Grover. Ruben van Staveren pointed out a bug in
-v6 canonicalization, as well as providing a patch that was
-applied. Thanks Ruben.
-
-=item 3.23
-
-Included support for Module::Signature. Added -E<gt>re() as
-contributed by Laurent Facq (Thanks Laurent!). Added Coalesce() as
-suggested by Perullo.
-
-=item 3.24
-
-Version bump. Transfer of 3.23 to CPAN ended up in a truncated file
-being uploaded.
-
-=item 3.25
-
-Some IP specs resembling range notations but not depicting actual CIDR
-ranges, were being erroneously recognized. Thanks to Steve Snodgrass
-for reporting a bug with parsing IP addresses in 4-octet binary
-format. Added optional Pod::Coverage tests. compact_addr has been
-commented out, after a long time as deprecated. Improved speed of
--E<gt>new() for the case of a single host IPv4 address, which seems to
-be the most common one.
+=over 4
 
 =item 4.00
 
-Dependence on Math::BigInt removed, works with earlier versions of Perl.
+Dependence on Math::BigInt in earlier version is removed in this release
+4.00. NetAddr::IP now works with earlier versions of Perl.
 The module was partitioned into three logical pieces as follows:
 
 Util.pm		Math and logic operation on bit strings and number
@@ -1974,17 +1379,17 @@ Util.pm		Math and logic operation on bit strings and number
 		between various number formats. Implemented in
 		C_XS for speed and PURE PERL of transportability.
 
-Lite.pm		Operations, simple conversions and comparisons of 
+Lite.pm		Operations, simple conversions and comparisons of
 		IP addresses, notations and formats.
 
-IP.pm		Complex operations and conversions of IP address 
+IP.pm		Complex operations and conversions of IP address
 		notation, nets, subnets, and ranges.
 
 The internal representation of addresses was changed to 128 bit binary
 strings as returned by inet_pton (ipv6_aton in this module). Both
-ipV4 and ipV6 notations can be freely mixed and matched. 
+ipV4 and ipV6 notations can be freely mixed and matched.
 
-Additional methods added to force operations into ipV6 space even when 
+Additional methods added to force operations into ipV6 space even when
 ipV4 notation is used.
 
 =item 4.05
@@ -1996,12 +1401,12 @@ THE FOLLOWING CHANGES MAY BREAK SOME CODE !
 
       Inherited methods from Lite.pm updated as follows:
 
-	comparisons of the form <, >, <=, >=  
+	comparisons of the form <, >, <=, >=
 
 		10.0.0.0/24 {operator} 10.0.0.0/16
 
-	return now return the comparision of the cidr value
-	when the address portion is equal.   
+	return now return the comparison of the cidr value
+	when the address portion is equal.
 	Thanks to Peter DeVries for spotting this bug.
 
 	... and leading us to discover that this next fix is required
@@ -2058,8 +1463,18 @@ THE FOLLOWING CHANGES MAY BREAK SOME CODE !
 	removed --with-threads, PTHREADS support, and all
 	the mutex locking - unlocking
 
-	updated Util.xs to be fully re-entrant and thus 
+	updated Util.xs to be fully re-entrant and thus
 	fully thread safe.
+
+=item 4.020
+
+	Fixed core dump due to bug in perl 5.8.4 handling of
+	@_ in goto &sub operations. Unfortunately this version
+	of perl is standard on Solaris -- it should be upgraded!
+
+	Included missing code to parse BCD numbers as argument
+	to sub new(bcdnum). Thanks to Carlos Vicente cvicente@cpan.org
+	for reporting this bug.
 
 =back
 

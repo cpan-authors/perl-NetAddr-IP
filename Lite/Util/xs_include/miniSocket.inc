@@ -1,8 +1,8 @@
 
- # This file is excerpeted from perl-5.8.0/ext/Socket/Socket.xs and
+ # This file is excerpted from perl-5.8.0/ext/Socket/Socket.xs and
  # modified slightly so that it compiles on older versions of perl/gcc
  #
- # 3/28/06	verson 1.78 of Socket.xs, included in perl 5.9.3
+ # 3/28/06	version 1.78 of Socket.xs, included in perl 5.9.3
  #		is 100% compatible with this version
  #
  # Copyright 2003 - 2006, Michael Robinton <michael@bizsystems.com
@@ -39,8 +39,8 @@
  #   Kit, in the file named "Artistic".  If not, I'll be glad to provide one.
  #
  #   You should also have received a copy of the GNU General Public License
- #   along with this program in the file named "Copying". If not, write to the 
- #   Free Software Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 
+ #   along with this program in the file named "Copying". If not, write to the
+ #   Free Software Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
  #   02111-1307, USA or visit their web page on the internet at
  #   http://www.gnu.org/copyleft/gpl.html.
  #
