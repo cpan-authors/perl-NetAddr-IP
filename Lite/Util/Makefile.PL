@@ -43,7 +43,8 @@ my %makeparms = (
     LIBS		=> [],
     XS			=> {},
     C			=> [],
-    clean		=> { FILES    => "*.bs *.o *.c *~ tmp* Util_IS.pm config.log config.h config.status localperl.h auto*"},
+    clean		=> { FILES    => "*.bs *.o *.c *~ tmp* Util_IS.pm localperl.h auto*"},
+    realclean		=> { FILES    => "config.h config.log config.status"},
     dist		=> {COMPRESS=>'gzip', SUFFIX=>'gz'}
 
 );

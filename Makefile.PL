@@ -10,7 +10,7 @@ my $then = (stat('./Makefile.old'))[9];
 my $view = $then +86400 < $now ? 5:0;
 
 my $pv = sprintf "%vd", $^V;
-unless (0 && $pv lt '5.8.0' || $pv gt '5.8.5') {
+unless ($pv lt '5.8.0' || $pv gt '5.8.5') {
   print
 qq(
 #################################################################
@@ -19,7 +19,8 @@ qq(
 #        YOUR VERSION OF PERL = $pv HAS SERIOUS BUGS		#
 #								#
 # Early versions of perl 5.8.x contain bugs that cause certain 	#
-# \@_ operations to fail. Please upgrade to at least perl 5.8.6 	#
+# \@_ operations to fail. 	See perl bug [ 23429]			#
+#	Please upgrade to at least perl 5.8.6			#
 #                                                              	# 
 ################################################################# 
 );

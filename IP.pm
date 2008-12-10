@@ -4,8 +4,8 @@ package NetAddr::IP;
 
 use strict;
 #use diagnostics;
-use NetAddr::IP::Lite 1.12 qw(Zero Zeros Ones V4mask V4net);
-use NetAddr::IP::Util 1.25 qw(
+use NetAddr::IP::Lite 1.13 qw(Zero Zeros Ones V4mask V4net);
+use NetAddr::IP::Util 1.27 qw(
 	sub128
 	inet_aton
 	inet_any2n
@@ -34,7 +34,7 @@ require Exporter;
 
 @ISA = qw(Exporter NetAddr::IP::Lite);
 
-$VERSION = do { sprintf " %d.%03d", (q$Revision: 4.20 $ =~ /\d+/g) };
+$VERSION = do { sprintf " %d.%03d", (q$Revision: 4.21 $ =~ /\d+/g) };
 
 =pod
 
@@ -1470,7 +1470,10 @@ THE FOLLOWING CHANGES MAY BREAK SOME CODE !
 
 	Fixed core dump due to bug in perl 5.8.4 handling of
 	@_ in goto &sub operations. Unfortunately this version
-	of perl is standard on Solaris -- it should be upgraded!
+	of perl is standard on Solaris, 5.85 on RedHat and I'm
+	sure other distributions. -- all should be upgraded!
+	Similar behavior exists in perl versions 5.80 - 5.85
+	See perl bug [ 23429].
 
 	Included missing code to parse BCD numbers as argument
 	to sub new(bcdnum). Thanks to Carlos Vicente cvicente@cpan.org

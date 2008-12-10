@@ -1,5 +1,10 @@
 Revision history for Perl extension NetAddr::IP
 
+4.021  Wed Dec 10 11:09:36 PST 2008
+	Removed test code that produces a warning about all perl versions, 
+	OOPS!! instead of just the buggy 5.8.0 - 5.8.5 versions.
+	Thanks to paul@city-fan.org for reporting this.
+
 4.020  Tue Dec  9 16:25:46 PST 2008
 	cleaned up various typo's with good patch from
 	Rob Riepel <riepel@networking.Stanford.EDU>
