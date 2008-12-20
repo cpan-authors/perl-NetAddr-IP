@@ -67,6 +67,50 @@ typedef struct bcdstuff
 
 #define zero ('0' & 0x7f)
 
+/*	useful for debug, prints the 128 bits of 8, 16 bit registers	*/
+void
+printb128(char * b)
+{
+  int c;
+  for(c=0;c<16;c++) {
+    if (b[c] &0x80)
+      printf("1");
+    else
+      printf("0");
+    if (b[c] &0x40)
+      printf("1");
+    else
+      printf("0");
+    if (b[c] &0x20)
+      printf("1");
+    else
+      printf("0");
+    if (b[c] &0x10)
+      printf("1");
+    else
+      printf("0");
+    if (b[c] &0x8)
+      printf("1");
+    else
+      printf("0");
+    if (b[c] &0x4)
+      printf("1");
+    else
+      printf("0");
+    if (b[c] &0x2)
+      printf("1");
+    else
+      printf("0");
+    if (b[c] &0x1)
+      printf("1");
+    else
+      printf("0");
+    if (c == 3 || c == 7 || c == 11)
+      printf("\n");
+  }
+  printf("\n\n");
+}
+
 void
 extendipv4(void * aa, void * ux)
 {
@@ -90,8 +134,7 @@ extendmask4(void * aa, void * ux)
 void
 fastcomp128(void * aa)
 {
-  register u_int32_t * a;
-  a = aa;
+  register u_int32_t * a = aa;
 
   *a++ ^= 0xffffffff;
   *a++ ^= 0xffffffff;
@@ -357,7 +400,7 @@ _bcdn2bin(void * bp, n128 * ap128, n128 * cp128, int len)
 int
 _bin2bcd (unsigned char * binary, BCD * n)
 {
-   register u_int32_t tmp, add3, msk8, bcd8, carry;
+   register u_int32_t tmp, add3, msk8, bcd8, carry = 0;
   u_int32_t word;
   unsigned char binmsk = 0;
   int c = 0,i, j, p;

@@ -211,35 +211,6 @@ sub MY::top_targets {
   $begin . $inherited;
 }
 
-sub MY::test {
-  package MY;
-  my $inherited = shift->SUPER::test(@_);
-  return $inherited unless $useXS;
-  my @orig = split(/\n/,$inherited);
-  my @txt = @orig;
-  my @lines;
-
-  foreach(@orig) {
-    if ($_ !~ /^(?:test|testdb)_\w+/ && $_ =~ /^(test[^\s]*)\s+:/) {
-      my $new = ' pp'.$1;
-      $_ .= $new;
-    }
-  }
-
-  foreach(@txt) {
-    $_ =~ s/TEST_TYPE/MTEST_TYPE/g;
-    next if $_ =~ /^#/ || /^TEST/;
-    $_ =~ s/subdirs/ppsubdirs/g;
-    $_ =~ s/test_/pptest_/g
-	unless $_ =~ /harness/;
-    $_ =~ s/testdb_/pptestdb_/g;
-    $_ =~ s/^test/pptest/;
-    $_ =~ s/([^\s]+)\$\(INST_LIB\)([^\s]+)/${1}tlib$2 $&/;
-    push @lines, $_;
-  }
-  my $line = join("\n",@orig,@lines);
-}
-
 sub MY::post_constants {
   my $post_constants = q|
 MY_POD2TEXT = |. $Config{scriptdirexp} .'/pod2text' .q|

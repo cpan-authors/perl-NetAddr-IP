@@ -1,5 +1,13 @@
 Revision history for Perl extension NetAddr::IP
 
+4.022
+  In Util.xs 1.28
+        set uninitialized "carry" in XS bin2bcd to zero
+
+	This insidious bug only showed up on 64 bit hosts running perl 5.6.2
+	Thanks to Oliver Paukstadt <pstadt@sourcentral.org> for taking the 
+	time to do the testing for me on his s390 system.
+
 4.021  Wed Dec 10 11:09:36 PST 2008
 	Removed test code that produces a warning about all perl versions, 
 	OOPS!! instead of just the buggy 5.8.0 - 5.8.5 versions.
