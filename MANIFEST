@@ -108,6 +108,7 @@ t/full.t
 t/full6.t
 t/imhoff.t
 t/loops.t
+t/lower.t
 t/masklen.t
 t/new-store.t
 t/old-store.t

@@ -74,6 +74,9 @@ SYNOPSIS
       $bits128 = bcd2bin($bcdtxt);
       $modetext = mode;
 
+      NetAddr::IP::Util::lower();
+      NetAddr::IP::Util::upper();
+
 INSTALLATION
     Un-tar the distribution in an appropriate directory and type:
 
@@ -297,6 +300,12 @@ DESCRIPTION
                 input:          none
                 returns:        "Pure Perl"
                            or   "CC XS"
+
+    * NetAddr::IP::Util::lower();
+        Return IPv6 strings in lowercase.
+
+    * NetAddr::IP::Util::upper();
+        Return IPv6 strings in uppercase. This is the default.
 
 EXAMPLES
       # convert any textual IP address into a 128 bit vector

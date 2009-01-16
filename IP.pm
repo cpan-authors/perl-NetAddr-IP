@@ -34,7 +34,7 @@ require Exporter;
 
 @ISA = qw(Exporter NetAddr::IP::Lite);
 
-$VERSION = do { sprintf " %d.%03d", (q$Revision: 4.22 $ =~ /\d+/g) };
+$VERSION = do { sprintf " %d.%03d", (q$Revision: 4.23 $ =~ /\d+/g) };
 
 =pod
 
@@ -53,6 +53,8 @@ NetAddr::IP - Manages IPv4 and IPv6 addresses and subnets
 	V4net
 	netlimit
 	:aton		DEPRECATED
+	:lower
+	:upper
 	:old_storable
 	:old_nth
   );
@@ -103,6 +105,15 @@ C<$masklen> mask length, when C<$number> or more addresses from
 C<@list_of_subnets> are found to be contained in said subnet.
 
   $arrayref = Coalesce($masklen, $number, @list_of_subnets)
+
+* By default B<NetAddr::IP> functions and methods return string IPv6
+addresses in uppercase.  To change that to lowercase:
+
+  use NetAddr::IP qw(:lower);
+
+* To ensure the current IPv6 string case behavior even if the default changes:
+
+  use NetAddr::IP qw(:upper);
 
 * To set a limit on the size of B<nets> processed or returned by
 NetAddr::IP.
@@ -307,6 +318,9 @@ objects stored using the L<Storable> module.
 
 sub import
 {
+    our $full_format = "%04X:%04X:%04X:%04X:%04X:%04X:%D.%D.%D.%D";
+    our $full6_format = "%04X:%04X:%04X:%04X:%04X:%04X:%04X:%04X";
+
     if (grep { $_ eq ':old_storable' } @_) {
 	@_ = grep { $_ ne ':old_storable' } @_;
     } else {
@@ -338,6 +352,20 @@ sub import
     {
 	$NetAddr::IP::Lite::Old_nth = 1;
 	@_ = grep { $_ ne ':old_nth' } @_;
+    }
+    if (grep { $_ eq ':lower' } @_)
+    {
+        $full_format = lc($full_format);
+        $full6_format = lc($full6_format);
+        NetAddr::IP::Util::lower();
+	@_ = grep { $_ ne ':lower' } @_;
+    }
+    if (grep { $_ eq ':upper' } @_)
+    {
+        $full_format = uc($full_format);
+        $full6_format = uc($full6_format);
+        NetAddr::IP::Util::upper();
+	@_ = grep { $_ ne ':upper' } @_;
     }
     NetAddr::IP->export_to_level(1, @_);
 }
@@ -758,7 +786,7 @@ sub full($) {
     $hex[8] = $hex[7] >> 8;
     $hex[7] = $hex[6] & 0xff;
     $hex[6] >>= 8;
-    return sprintf("%04X:%04X:%04X:%04X:%04X:%04X:%d.%d.%d.%d",@hex);
+    return sprintf($full_format,@hex);
   } else {
     &full6;
   }
@@ -766,7 +794,7 @@ sub full($) {
 
 sub full6($) {
   my @hex = (unpack("n8",$_[0]->{addr}));
-  return sprintf("%04X:%04X:%04X:%04X:%04X:%04X:%04X:%04X",@hex);
+  return sprintf($full6_format,@hex);
 }
 
 =item C<$me-E<gt>contains($other)>

@@ -110,6 +110,14 @@ else {
   $Mode = 'CC XS';
 }
 
+# allow user to choose upper or lower case
+
+our $n2x_format = "%X:%X:%X:%X:%X:%X:%X:%X";
+our $n2d_format = "%X:%X:%X:%X:%X:%X:%D.%D.%D.%D";
+
+sub upper { $n2x_format = uc($n2x_format); $n2d_format = uc($n2d_format); }
+sub lower { $n2x_format = lc($n2x_format); $n2d_format = lc($n2d_format); }
+
 # if Socket lib is broken in some way, check for overange values
 #
 my $overange = yinet_aton('256.1') ? 1:0;
@@ -209,6 +217,9 @@ NetAddr::IP::Util -- IPv4/6 and 128 bit number utilities
   $bcdtext = bin2bcd($bits128);
   $bits128 = bcd2bin($bcdtxt);
   $modetext = mode;
+
+  NetAddr::IP::Util::lower();
+  NetAddr::IP::Util::upper();
 
 =head1 INSTALLATION
 
@@ -320,7 +331,7 @@ Takes an IPv6 RDATA string and returns an 8 segment IPv6 hex address
 sub ipv6_n2x {
   die "Bad arg length for 'ipv6_n2x', length is ". length($_[0]) ." should be 16"
 	unless length($_[0]) == 16;
-  return sprintf("%X:%X:%X:%X:%X:%X:%X:%X",unpack("n8",$_[0]));
+  return sprintf($n2x_format,unpack("n8",$_[0]));
 }
 
 =item * $dec_text = ipv6_n2d($ipv6addr);
@@ -342,7 +353,7 @@ sub ipv6_n2d {
   $hex[8] = $hex[7] >> 8;
   $hex[7] = $hex[6] & 0xff;
   $hex[6] >>= 8;
-  return sprintf("%X:%X:%X:%X:%X:%X:%d.%d.%d.%d",@hex);
+  return sprintf($n2d_format,@hex);
 }
 
 =item * $ipv6naddr = inet_any2n($dotquad or $ipv6_text);
@@ -586,6 +597,14 @@ Returns the operating mode of this module.
 	input:		none
 	returns:	"Pure Perl"
 		   or	"CC XS"
+
+=item * NetAddr::IP::Util::lower();
+
+Return IPv6 strings in lowercase.
+
+=item * NetAddr::IP::Util::upper();
+
+Return IPv6 strings in uppercase.  This is the default.
 
 =back
 
