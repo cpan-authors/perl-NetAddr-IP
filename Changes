@@ -1,5 +1,8 @@
 Revision history for Perl extension NetAddr::IP
 
+4.024  Mon Jan 26 00:27:32 PST 2009
+	documentation update
+
 4.023  Fri Jan 16 14:30:40 PST 2009
 	added the capability to set the CASE of ipV6 text return
 	values to either upper or lower. Thanks to 

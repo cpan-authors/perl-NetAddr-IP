@@ -34,7 +34,7 @@ require Exporter;
 
 @ISA = qw(Exporter NetAddr::IP::Lite);
 
-$VERSION = do { sprintf " %d.%03d", (q$Revision: 4.23 $ =~ /\d+/g) };
+$VERSION = do { sprintf " %d.%03d", (q$Revision: 4.24 $ =~ /\d+/g) };
 
 =pod
 
@@ -58,6 +58,15 @@ NetAddr::IP - Manages IPv4 and IPv6 addresses and subnets
 	:old_storable
 	:old_nth
   );
+
+  NOTE: NetAddr::IP::Util has a full complement of network address
+	utilites to convert back and from from binary to text.
+
+	inet_aton, inet_ntoa, ipv6_aton, ipv6_n2x, ipv6_n2d
+	inet_any2d, inet_n2dx, inet_n2ad, inetanyto6, ipv6to4
+
+See L<NetAddr::IP::Util>
+
 
   my $ip = new NetAddr::IP::Lite '127.0.0.1';
 	or from a packed IPv4 address
