@@ -1,5 +1,9 @@
 Revision history for Perl extension NetAddr::IP
 
+4.026  Sat Mar  7 16:35:33 PST 2009
+        make the compiler test check the environment for
+        CC before using Perl's default compiler
+
 4.025  Sat Mar  7 16:15:18 PST 2009
 	revised compiler test in Makefile.PL for Util v1.29
 	to accomodate picky Solaris "cc"

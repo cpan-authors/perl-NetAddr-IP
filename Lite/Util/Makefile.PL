@@ -189,7 +189,8 @@ sub test_cc {
     return;
   }
 
-  my $command = qq|$Config{ccname} compile.c -o compile.output|;
+  my $CC = $ENV{CC} || $Config{ccname};
+  my $command = qq|$CC compile.c -o compile.output|;
 
   print F <<'EOF';
 int main() { return 0; }
