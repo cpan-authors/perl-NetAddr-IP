@@ -179,8 +179,8 @@ Returns true if NOT PurePerl mode, else false
 
 sub test_cc {
   #
-  # The perl/C check borrowed from Graham Barr's
-  # Scalar-List-Utils distribution.
+  # The perl/C check borrowed and modified from 
+  # Graham Barr's Scalar-List-Utils distribution.
   #
   print "Testing if you have a C compiler and the needed header files....\n";
 
@@ -189,13 +189,17 @@ sub test_cc {
     return;
   }
 
+  my $command = qq|$Config{ccname} compile.c -o compile.output|;
+
   print F <<'EOF';
 int main() { return 0; }
 EOF
 
   close(F) or return;
 
-  my $rv = system("$Config{'ccname'} compile.c -o compile$Config{obj_ext}");
+  print STDERR $command,"\n";
+
+  my $rv = system($command);
 
   foreach my $file (glob('compile*')) {
     unlink($file) || warn "Could not delete $file: $!\n";

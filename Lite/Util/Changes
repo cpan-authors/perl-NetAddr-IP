@@ -1,5 +1,9 @@
 Revision history for Perl extension NetAddr::IP::Util
 
+1.29  Sat Mar  7 16:15:18 PST 2009
+	revised compiler test in Makefile.PL for Util v1.29
+	to accomodate picky Solaris "cc"
+
 1.28  Wed Dec 17 14:14:06 PST 2008
 	set uninitialized "carry" in XS bin2bcd to zero
 

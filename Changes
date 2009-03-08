@@ -1,5 +1,9 @@
 Revision history for Perl extension NetAddr::IP
 
+4.025  Sat Mar  7 16:15:18 PST 2009
+	revised compiler test in Makefile.PL for Util v1.29
+	to accomodate picky Solaris "cc"
+
 4.024  Mon Jan 26 00:27:32 PST 2009
 	documentation update
 
@@ -11,7 +15,7 @@ Revision history for Perl extension NetAddr::IP
 
 4.022  Sat Dec 20 13:05:01 PST 2008
   In Util.xs 1.28
-        set uninitialized "carry" in XS bin2bcd to zero
+	set uninitialized "carry" in XS bin2bcd to zero
 
 	This insidious bug only showed up on 64 bit hosts running perl 5.6.2
 	Thanks to Oliver Paukstadt <pstadt@sourcentral.org> for taking the 
@@ -27,10 +31,10 @@ Revision history for Perl extension NetAddr::IP
 	Rob Riepel <riepel@networking.Stanford.EDU>
 	thanks Rob.
 
-        revised UtilPP v1.7 to work around perl 5.8.4
-        failures with certain @_ operations of goto &sub...
-        see perl bug [ 23429]. Unfortunately, perl-5.8.4 is
-        the distribution of choice for many solaris boxes  
+	revised UtilPP v1.7 to work around perl 5.8.4
+	failures with certain @_ operations of goto &sub...
+	see perl bug [ 23429]. Unfortunately, perl-5.8.4 is
+	the distribution of choice for many solaris boxes  
 
 4.019  Sat Nov 29 15:15:30 PST 2008
 	in Lite/Util, add pure perl testing to XS build
