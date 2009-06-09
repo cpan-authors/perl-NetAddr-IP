@@ -82,7 +82,7 @@ if ($useXS) {
   delete $makeparms{'C'};
 
   unless (-e './config.h') {
-    system('./configure');
+    system $Config{sh}, 'configure';
   }
   my @LIBS;
   open(F,'config.h') or die "could not open config.h\n";

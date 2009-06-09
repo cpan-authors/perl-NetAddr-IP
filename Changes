@@ -1,5 +1,11 @@
 Revision history for Perl extension NetAddr::IP
 
+4.027  Tue Jun  9 10:31:11 PDT 2009
+	In NetAddr::IP::Util v1.31,
+        ferret out shell value for Makefile.PL when calling
+        ./configure for systems where the 'x' bit gets lost
+        due to bug in Archive::Tar
+
 4.026  Sat Mar  7 16:35:33 PST 2009
         make the compiler test check the environment for
         CC before using Perl's default compiler
