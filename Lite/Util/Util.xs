@@ -1,6 +1,6 @@
 
 /*
- * Copyright 2006, Michael Robinton <michael@bizsystems.com>
+ * Copyright 2006 - 2010, Michael Robinton <michael@bizsystems.com>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -237,8 +237,9 @@ netswap(void * ap, int len)
 #ifdef host_is_LITTLE_ENDIAN
   register u_int32_t * a = ap;
   for (/* -- */;len >0;len--) {
-    *a++ =  (((*a & 0xff000000) >> 24) | ((*a & 0x00ff0000) >>  8) | \
+    *a =  (((*a & 0xff000000) >> 24) | ((*a & 0x00ff0000) >>  8) | \
 	     ((*a & 0x0000ff00) <<  8) | ((*a & 0x000000ff) << 24));
+    a++;
   }
 #endif
 }
@@ -292,7 +293,7 @@ _128x2(u_int32_t * ap)
 
 /*	multiply 128 bit number X10
  */
-int
+void
 _128x10(n128 * ap128, n128 * tp128)
 {
   register u_int32_t * ap = ap128->u, * tp = tp128->u;

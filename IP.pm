@@ -5,7 +5,7 @@ package NetAddr::IP;
 use strict;
 #use diagnostics;
 use NetAddr::IP::Lite 1.13 qw(Zero Zeros Ones V4mask V4net);
-use NetAddr::IP::Util 1.30 qw(
+use NetAddr::IP::Util 1.32 qw(
 	sub128
 	inet_aton
 	inet_any2n
@@ -34,7 +34,7 @@ require Exporter;
 
 @ISA = qw(Exporter NetAddr::IP::Lite);
 
-$VERSION = do { sprintf " %d.%03d", (q$Revision: 4.27 $ =~ /\d+/g) };
+$VERSION = do { sprintf " %d.%03d", (q$Revision: 4.28 $ =~ /\d+/g) };
 
 =pod
 
@@ -1531,7 +1531,7 @@ so by using it you accept any and all the liability.
 =head1 LICENSE
 
 This software is (c) Luis E. Muñoz, 1999 - 2007, and (c) Michael
-Robinton, 2006 - 2008.  It can be used under the terms of the Perl
+Robinton, 2006 - 2010.  It can be used under the terms of the Perl
 artistic license provided that proper credit for the work of the
 authors is preserved in the form of this copyright notice and license
 for this module.

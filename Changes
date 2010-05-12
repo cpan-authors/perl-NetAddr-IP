@@ -1,5 +1,15 @@
 Revision history for Perl extension NetAddr::IP
 
+4.028  Wed May 12 14:18:20 PDT 2010
+	In /Lite/Util/Util.xs v1.32,
+	changed netswap() to postincrement 
+	*a++ = to *a and added increment after save to mollify some
+	picky compilers that return possible undefined behavior.
+
+	changed type of _128x10 to 'void'
+
+	Thanks to David Bolt <dbolt@davjam.org> for the above two patches
+
 4.027  Tue Jun  9 10:31:11 PDT 2009
 	In NetAddr::IP::Util v1.31,
         ferret out shell value for Makefile.PL when calling

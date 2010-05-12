@@ -13,7 +13,7 @@ require Exporter;
 
 @ISA = qw(Exporter DynaLoader);
 
-$VERSION = do { my @r = (q$Revision: 1.31 $ =~ /\d+/g); sprintf "%d."."%02d" x $#r, @r };
+$VERSION = do { my @r = (q$Revision: 1.32 $ =~ /\d+/g); sprintf "%d."."%02d" x $#r, @r };
 
 @EXPORT_OK = qw(
 	inet_aton
@@ -746,7 +746,7 @@ Thank you Larry for making PERL possible for all of us.
 
 =head1 COPYRIGHT
 
-Copyright 2003 - 2008, Michael Robinton E<lt>michael@bizsystems.comE<gt>
+Copyright 2003 - 2010, Michael Robinton E<lt>michael@bizsystems.comE<gt>
 
 LICENSE AND WARRANTY
 
