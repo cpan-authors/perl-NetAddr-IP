@@ -195,7 +195,9 @@ DESCRIPTION
 
         "$addr" can be almost anything that can be resolved to an IP address
         in all the notations I have seen over time. It can optionally
-        contain the mask in CIDR notation.
+        contain the mask in CIDR notation. If the OPTIONAL perl module
+        Socket6 is available in the local library it will autoload and ipV6
+        host6 names will be resolved as well as ipV4 hostnames.
 
         prefix notation is understood, with the limitation that the range
         specified by the prefix must match with a valid subnet.

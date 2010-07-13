@@ -1,5 +1,13 @@
 Revision history for Perl extension NetAddr::IP
 
+4.029  Thu Jul  8 18:17:38 PDT 2010
+	In NetAddr::IP::Lite,
+        added support for the sub "new" to resolve host6 names
+        if the OPTIONAL perl Socket6 module is available
+
+	Thanks to "Mabe, Dusty" <Dusty.Mabe@tekelec.com> for spotting 
+	this and suggesting a fix.
+
 4.028  Wed May 12 14:18:20 PDT 2010
 	In /Lite/Util/Util.xs v1.32,
 	changed netswap() to postincrement 

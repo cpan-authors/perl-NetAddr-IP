@@ -1,5 +1,9 @@
 Revision history for Perl extension NetAddr::IP::Lite
 
+1.14  Thu Jul  8 18:17:38 PDT 2010
+	added support for the sub "new" to resolve host6 names
+	if the OPTIONAL perl Socket6 module is available
+
 1.13  Tue Dec  9 16:00:35 PST 2008
 	added missing regexp to classify arguments as BCD numbers,
 	apparently this has been missing from NetAddr::IP::Lite 

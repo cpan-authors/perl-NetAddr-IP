@@ -4,7 +4,7 @@ package NetAddr::IP;
 
 use strict;
 #use diagnostics;
-use NetAddr::IP::Lite 1.13 qw(Zero Zeros Ones V4mask V4net);
+use NetAddr::IP::Lite 1.14 qw(Zero Zeros Ones V4mask V4net);
 use NetAddr::IP::Util 1.32 qw(
 	sub128
 	inet_aton
@@ -34,7 +34,7 @@ require Exporter;
 
 @ISA = qw(Exporter NetAddr::IP::Lite);
 
-$VERSION = do { sprintf " %d.%03d", (q$Revision: 4.28 $ =~ /\d+/g) };
+$VERSION = do { sprintf " %d.%03d", (q$Revision: 4.29 $ =~ /\d+/g) };
 
 =pod
 
@@ -1405,116 +1405,7 @@ module to Windows.
 
 =over 4
 
-=item 4.00
-
-Dependence on Math::BigInt in earlier version is removed in this release
-4.00. NetAddr::IP now works with earlier versions of Perl.
-The module was partitioned into three logical pieces as follows:
-
-Util.pm		Math and logic operation on bit strings and number
-		that represent IP addresses and masks. Conversions
-		between various number formats. Implemented in
-		C_XS for speed and PURE PERL of transportability.
-
-Lite.pm		Operations, simple conversions and comparisons of
-		IP addresses, notations and formats.
-
-IP.pm		Complex operations and conversions of IP address
-		notation, nets, subnets, and ranges.
-
-The internal representation of addresses was changed to 128 bit binary
-strings as returned by inet_pton (ipv6_aton in this module). Both
-ipV4 and ipV6 notations can be freely mixed and matched.
-
-Additional methods added to force operations into ipV6 space even when
-ipV4 notation is used.
-
-=item 4.05
-
-	NetAddr::IP :aton	DEPRECATED !
-	new method "new_from_aton"
-
-THE FOLLOWING CHANGES MAY BREAK SOME CODE !
-
-      Inherited methods from Lite.pm updated as follows:
-
-	comparisons of the form <, >, <=, >=
-
-		10.0.0.0/24 {operator} 10.0.0.0/16
-
-	return now return the comparison of the cidr value
-	when the address portion is equal.
-	Thanks to Peter DeVries for spotting this bug.
-
-	... and leading us to discover that this next fix is required
-
-	comparisons of the form <=>, cmp
-	now return the correct value 1, or -1
-	when the address portion is equal and the CIDR value is not
-	i.e.    where /16 is > /24, etc...
-
-	This is the OPPOSITE of the previous return values for
-	comparison of the CIDR portion of the address object
-
-=item 4.08
-
-	added method ->new_from_aton to supplement broken
-	:aton functionality which is now DEPRECATED and
-	will eventually go away.
-
-=item 4.13
-
-	added 'no octal' method ->new_no
-
-=item 4.17
-
-	add support for PTHREADS in the event that perl is
-	built with <pthreads.h>. This must be invoked at build
-	time with the switch --with-threads
-
-	WARNING: --with-threads is not tested in a threads
-	environment. Reports welcome and solicited.
-
-	update _compV6 which runs faster and produces more
-	compact ipV6 addresses.
-	....and
-	added minus (-) overloading to allow the subtraction
-	of two NetAddr::IP objects to get the difference between
-	the object->{addr}'s as a numeric value
-
-	Thanks to Rob Riepel <riepel@networking.Stanford.EDU> for
-	the _compV6 code and the inspiration for (-) overloading.
-
-	Extended the capability of 'splitref' to allow splitting of
-	objects into multiple pieces with differing CIDR masks.
-	Returned object list can be split from bottom to top
-	or from top to bottom depending on which routine is called
-
-		split, rsplit, splitref, rsplitref
-
-	Thanks to kashmish <kashmish@gmail.com> for the idea on
-	improving functionality of 'split'.
-
-=item 4.018
-
-	removed --with-threads, PTHREADS support, and all
-	the mutex locking - unlocking
-
-	updated Util.xs to be fully re-entrant and thus
-	fully thread safe.
-
-=item 4.020
-
-	Fixed core dump due to bug in perl 5.8.4 handling of
-	@_ in goto &sub operations. Unfortunately this version
-	of perl is standard on Solaris, 5.85 on RedHat and I'm
-	sure other distributions. -- all should be upgraded!
-	Similar behavior exists in perl versions 5.80 - 5.85
-	See perl bug [ 23429].
-
-	Included missing code to parse BCD numbers as argument
-	to sub new(bcdnum). Thanks to Carlos Vicente cvicente@cpan.org
-	for reporting this bug.
+See the Changes file
 
 =back
 

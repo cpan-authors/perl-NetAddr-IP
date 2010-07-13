@@ -27,7 +27,7 @@ use NetAddr::IP::Util qw(
 );
 use vars qw(@ISA @EXPORT_OK $VERSION $Accept_Binary_IP $Old_nth $AUTOLOAD *Zero);
 
-$VERSION = do { my @r = (q$Revision: 1.13 $ =~ /\d+/g); sprintf "%d."."%02d" x $#r, @r };
+$VERSION = do { my @r = (q$Revision: 1.14 $ =~ /\d+/g); sprintf "%d."."%02d" x $#r, @r };
 
 require Exporter;
 
@@ -179,6 +179,48 @@ sub V4mask() {
 sub V4net() {
   return $_v4net;
 }
+
+# invoke replacement subroutine for Perl's "gethostbyname"
+# if Socket6 is available.
+#
+# used only in 'sub _xnew' below
+#
+sub _end_gethostbyname {
+  my $tip = $_[0];
+  return 0 unless $tip && $tip ne $_v4zero && $tip ne $_zero;
+  my $len = length($tip);
+  if ($len == 4) {
+    return ipv4to6($tip);
+  }
+  elsif ($len == 16) {
+    return $tip;
+  }
+  return 0;
+}
+
+my $_gethostbyname;
+unless (eval { require Socket6 }) {
+  $_gethostbyname = sub {
+	my $tip = gethostbyname($_[0]);
+ 	return &_end_gethostbyname($tip);
+  };
+} else {
+  require Socket;
+  my $_AF_INET6 = (defined eval { &Socket::AF_INET6 })
+	? \&Socket::AF_INET6
+	: \&Socket6::AF_INET6;
+  $_AF_INET6 = $_AF_INET6->();
+
+  import Socket6 qw( gethostbyname2 );
+  my $tip;
+  $_gethostbyname = sub {
+	unless ($tip = gethostbyname2($_[0],$_AF_INET6)) {
+	  $tip = gethostbyname($_[0]);
+	}
+	return &_end_gethostbyname($tip);
+  };
+}
+
 
 				#############################################
 				# These are the overload methods, placed here
@@ -498,7 +540,9 @@ format would suggest otherwise.
 
 C<$addr> can be almost anything that can be resolved to an IP address
 in all the notations I have seen over time. It can optionally contain
-the mask in CIDR notation.
+the mask in CIDR notation. If the OPTIONAL perl module Socket6 is
+available in the local library it will autoload and ipV6 host6 
+names will be resolved as well as ipV4 hostnames.
 
 B<prefix> notation is understood, with the limitation that the range
 specified by the prefix must match with a valid subnet.
@@ -809,8 +853,10 @@ sub _xnew($$;$$) {
 	return undef if hasbits($ip & $tmp);
 	last;
       }
-      elsif ($ip !~ /[^a-zA-Z0-9\.-]/ && ($tmp = gethostbyname($ip)) && $tmp ne $_v4zero && $tmp ne $_zero ) {
-	$ip = ipv4to6($tmp);
+      elsif ($ip !~ /[^a-zA-Z0-9\.-]/ && ($tmp = $_gethostbyname->($ip))) {
+	$ip = $tmp;
+#      elsif ($ip !~ /[^a-zA-Z0-9\.-]/ && ($tmp = gethostbyname($ip)) && $tmp ne $_v4zero && $tmp ne $_zero ) {
+#	$ip = ipv4to6($tmp);
 	last;
       }
       elsif ($Accept_Binary_IP && ! $hasmask) {
