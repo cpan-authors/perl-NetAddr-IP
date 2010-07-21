@@ -34,7 +34,7 @@ require Exporter;
 
 @ISA = qw(Exporter NetAddr::IP::Lite);
 
-$VERSION = do { sprintf " %d.%03d", (q$Revision: 4.29 $ =~ /\d+/g) };
+$VERSION = do { sprintf " %d.%03d", (q$Revision: 4.30 $ =~ /\d+/g) };
 
 =pod
 

@@ -27,7 +27,7 @@ use NetAddr::IP::Util qw(
 );
 use vars qw(@ISA @EXPORT_OK $VERSION $Accept_Binary_IP $Old_nth $AUTOLOAD *Zero);
 
-$VERSION = do { my @r = (q$Revision: 1.14 $ =~ /\d+/g); sprintf "%d."."%02d" x $#r, @r };
+$VERSION = do { my @r = (q$Revision: 1.15 $ =~ /\d+/g); sprintf "%d."."%02d" x $#r, @r };
 
 require Exporter;
 
@@ -853,10 +853,15 @@ sub _xnew($$;$$) {
 	return undef if hasbits($ip & $tmp);
 	last;
       }
+# check for resolvable IPv4 hosts
+      elsif ($ip !~ /[^a-zA-Z0-9\.-]/ && ($tmp = gethostbyname($ip)) && $tmp ne $_v4zero && $tmp ne $_zero ) {
+	$ip = ipv4to6($tmp);
+	last;
+      }
+# check for resolvable IPv6 hosts
       elsif ($ip !~ /[^a-zA-Z0-9\.-]/ && ($tmp = $_gethostbyname->($ip))) {
 	$ip = $tmp;
-#      elsif ($ip !~ /[^a-zA-Z0-9\.-]/ && ($tmp = gethostbyname($ip)) && $tmp ne $_v4zero && $tmp ne $_zero ) {
-#	$ip = ipv4to6($tmp);
+	$isV6 = 1;
 	last;
       }
       elsif ($Accept_Binary_IP && ! $hasmask) {

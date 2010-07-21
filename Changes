@@ -1,5 +1,11 @@
 Revision history for Perl extension NetAddr::IP
 
+4.030  Tue Jul 20 15:32:23 PDT 2010
+        Resolve named hosts in Lite.pm using gethostbyname, followed by 
+	gethostbyname6 to determine whether to set ipV6 flag
+
+        Thanks to Dusty Mabe <Dusty.Mabe@tekelec.com> for spotting this bug
+
 4.029  Thu Jul  8 18:17:38 PDT 2010
 	In NetAddr::IP::Lite,
         added support for the sub "new" to resolve host6 names
