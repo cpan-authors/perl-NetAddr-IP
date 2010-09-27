@@ -1,5 +1,9 @@
 Revision history for Perl extension NetAddr::IP::Util
 
+1.33  Tue Sep 21 17:50:50 PDT 2010
+	Add UtilPolluted namespace to contain name space pollution
+	created by "use Socket" when invoking Socket6.
+
 1.32  Wed May 12 14:18:20 PDT 2010
 	In Util.xs, 
 	changed netswap() to postincrement 

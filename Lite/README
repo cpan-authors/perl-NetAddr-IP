@@ -91,20 +91,17 @@ DESCRIPTION
         Will print the string
 
     Equality
-        You can test for equality with either "eq" or "==". "eq" allows the
-        comparison with arbitrary strings as well as NetAddr::IP::Lite
-        objects. The following example:
+        You can test for equality with either "eq", "ne", "==" or "!=".
+        "eq", "ne" allows the comparison with arbitrary strings as well as
+        NetAddr::IP::Lite objects. The following example:
 
             if (NetAddr::IP::Lite->new('127.0.0.1','255.0.0.0') eq '127.0.0.1/8')
                { print "Yes\n"; }
 
         Will print out "Yes".
 
-        Comparison with "==" requires both operands to be NetAddr::IP::Lite
-        objects.
-
-        In both cases, a true value is returned if the CIDR representation
-        of the operands is equal.
+        Comparison with "==" and "!=" requires both operands to be
+        NetAddr::IP::Lite objects.
 
     Comparison via >, <, >=, <=, <=> and "cmp"
         Internally, all network objects are represented in 128 bit format.

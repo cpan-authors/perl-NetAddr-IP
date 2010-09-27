@@ -24,10 +24,12 @@ use NetAddr::IP::Util qw(
 	ipv6_n2x
 	mask4to6
 	ipv4to6
+	naip_gethostbyname
 );
+
 use vars qw(@ISA @EXPORT_OK $VERSION $Accept_Binary_IP $Old_nth $AUTOLOAD *Zero);
 
-$VERSION = do { my @r = (q$Revision: 1.15 $ =~ /\d+/g); sprintf "%d."."%02d" x $#r, @r };
+$VERSION = do { my @r = (q$Revision: 1.18 $ =~ /\d+/g); sprintf "%d."."%02d" x $#r, @r };
 
 require Exporter;
 
@@ -180,48 +182,6 @@ sub V4net() {
   return $_v4net;
 }
 
-# invoke replacement subroutine for Perl's "gethostbyname"
-# if Socket6 is available.
-#
-# used only in 'sub _xnew' below
-#
-sub _end_gethostbyname {
-  my $tip = $_[0];
-  return 0 unless $tip && $tip ne $_v4zero && $tip ne $_zero;
-  my $len = length($tip);
-  if ($len == 4) {
-    return ipv4to6($tip);
-  }
-  elsif ($len == 16) {
-    return $tip;
-  }
-  return 0;
-}
-
-my $_gethostbyname;
-unless (eval { require Socket6 }) {
-  $_gethostbyname = sub {
-	my $tip = gethostbyname($_[0]);
- 	return &_end_gethostbyname($tip);
-  };
-} else {
-  require Socket;
-  my $_AF_INET6 = (defined eval { &Socket::AF_INET6 })
-	? \&Socket::AF_INET6
-	: \&Socket6::AF_INET6;
-  $_AF_INET6 = $_AF_INET6->();
-
-  import Socket6 qw( gethostbyname2 );
-  my $tip;
-  $_gethostbyname = sub {
-	unless ($tip = gethostbyname2($_[0],$_AF_INET6)) {
-	  $tip = gethostbyname($_[0]);
-	}
-	return &_end_gethostbyname($tip);
-  };
-}
-
-
 				#############################################
 				# These are the overload methods, placed here
 				# for convenience.
@@ -247,9 +207,20 @@ use overload
 	$a eq $b;
     },
 
+    'ne'	=> sub {
+	my $a = (UNIVERSAL::isa($_[0],__PACKAGE__)) ? $_[0]->cidr : $_[0];
+	my $b = (UNIVERSAL::isa($_[1],__PACKAGE__)) ? $_[1]->cidr : $_[1];
+	$a ne $b;
+    },
+
     '=='	=> sub {
 	return 0 unless UNIVERSAL::isa($_[0],__PACKAGE__) && UNIVERSAL::isa($_[1],__PACKAGE__);
 	$_[0]->cidr eq $_[1]->cidr;
+    },
+
+    '!='	=> sub {
+	return 1 unless UNIVERSAL::isa($_[0],__PACKAGE__) && UNIVERSAL::isa($_[1],__PACKAGE__);
+	$_[0]->cidr ne $_[1]->cidr;
     },
 
     '>'		=> sub {
@@ -325,7 +296,7 @@ Will print the string
 
 =item B<Equality>
 
-You can test for equality with either C<eq> or C<==>. C<eq> allows the
+You can test for equality with either C<eq>, C<ne>, C<==> or C<!=>. C<eq>, C<ne> allows the
 comparison with arbitrary strings as well as NetAddr::IP::Lite objects. The
 following example:
 
@@ -334,10 +305,7 @@ following example:
 
 Will print out "Yes".
 
-Comparison with C<==> requires both operands to be NetAddr::IP::Lite objects.
-
-In both cases, a true value is returned if the CIDR representation of
-the operands is equal.
+Comparison with C<==> and C<!=> requires both operands to be NetAddr::IP::Lite objects.
 
 =item B<Comparison via E<gt>, E<lt>, E<gt>=, E<lt>=, E<lt>=E<gt> and C<cmp>>
 
@@ -859,7 +827,7 @@ sub _xnew($$;$$) {
 	last;
       }
 # check for resolvable IPv6 hosts
-      elsif ($ip !~ /[^a-zA-Z0-9\.-]/ && ($tmp = $_gethostbyname->($ip))) {
+      elsif ($ip !~ /[^a-zA-Z0-9\.-]/ && ($tmp = naip_gethostbyname($ip))) {
 	$ip = $tmp;
 	$isV6 = 1;
 	last;

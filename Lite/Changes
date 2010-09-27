@@ -1,5 +1,16 @@
 Revision history for Perl extension NetAddr::IP::Lite
 
+1.18  Wed Sep 22 13:39:08 PDT 2010
+	Added overload => 'ne' and '!=' to Lite.pm
+
+1.17  Tue Sep 21 17:50:50 PDT 2010
+	Pull Socket6 stuff out of Lite and put into
+	NetAddr::IP::Util.pm in its own namespace
+
+1.16  Wed Aug 11 12:45:49 PDT 2010
+	When using Socket6, pull in missing symbol PF_INET6, which may
+	or may not be present, from Socket.
+
 1.15  Tue Jul 20 15:32:23 PDT 2010
 	Resolve named hosts using gethostbyname, followed by gethostbyname6
 	to determine whether to set ipV6 flag

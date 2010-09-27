@@ -13,7 +13,7 @@ require Exporter;
 
 @ISA = qw(Exporter DynaLoader);
 
-$VERSION = do { my @r = (q$Revision: 1.32 $ =~ /\d+/g); sprintf "%d."."%02d" x $#r, @r };
+$VERSION = do { my @r = (q$Revision: 1.33 $ =~ /\d+/g); sprintf "%d."."%02d" x $#r, @r };
 
 @EXPORT_OK = qw(
 	inet_aton
@@ -44,6 +44,7 @@ $VERSION = do { my @r = (q$Revision: 1.32 $ =~ /\d+/g); sprintf "%d."."%02d" x $
 	bcdn2bin
 	simple_pack
 	comp128
+	naip_gethostbyname
 );
 
 %EXPORT_TAGS = (
@@ -62,6 +63,7 @@ $VERSION = do { my @r = (q$Revision: 1.32 $ =~ /\d+/g); sprintf "%d."."%02d" x $
 		ipanyto6
 		maskanyto6
 		ipv6to4
+		naip_gethostbyname
 	)],
 	math	=> [qw(
 		shiftleft
@@ -90,6 +92,7 @@ $VERSION = do { my @r = (q$Revision: 1.32 $ =~ /\d+/g); sprintf "%d."."%02d" x $
 		ipanyto6
 		maskanyto6
 		ipv6to4
+		naip_gethostbyname
 	)],
 );
 
@@ -137,6 +140,61 @@ sub inet_aton {
 
 sub DESTROY {};
 
+my $mygethostbyname;
+
+package NetAddr::IP::UtilPolluted;
+
+# Socket pollutes the name space with all of its symbols. Since
+# we don't want them all, confine them to this name space.
+
+use strict;
+use Socket;
+
+sub DESTROY {};
+
+# invoke replacement subroutine for Perl's "gethostbyname"
+# if Socket6 is available.
+#
+my $_v4zero = pack('L',0);
+my $_zero = pack('L4',0,0,0,0);
+
+sub _end_gethostbyname {
+  my $tip = $_[0];
+  return 0 unless $tip && $tip ne $_v4zero && $tip ne $_zero;
+  my $len = length($tip);
+  if ($len == 4) {
+    return Util::ipv4to6($tip);
+  }
+  elsif ($len == 16) {
+    return $tip;
+  }
+  return 0;
+}
+
+unless (eval { require Socket6 }) {
+  $mygethostbyname = sub {
+	my $tip = gethostbyname($_[0]);
+ 	return &_end_gethostbyname($tip);
+  };
+} else {
+  import Socket6 qw( gethostbyname2 AF_INET6 );
+  my $tip;
+  $mygethostbyname = sub {
+	unless ($tip = gethostbyname2($_[0],&AF_INET6)) {
+	  $tip = gethostbyname($_[0]);
+	}
+	return &_end_gethostbyname($tip);
+  };
+}
+
+package NetAddr::IP::Util;
+
+sub naip_gethostbyname {
+# turn off complaint from Socket6 about missing numeric argument
+  undef local $^W;
+  return &$mygethostbyname($_[0]);
+}
+
 1;
 __END__
 
@@ -170,6 +228,7 @@ NetAddr::IP::Util -- IPv4/6 and 128 bit number utilities
 	bin2bcd
 	bcd2bin
 	mode
+	naip_gethostbyname
   );
 
   use NetAddr::IP::Util qw(:all :inet :ipv4 :ipv6 :math)
@@ -178,14 +237,14 @@ NetAddr::IP::Util -- IPv4/6 and 128 bit number utilities
 		ipv6_n2x, ipv6_n2d, inet_any2n,
 		inet_n2dx, inet_n2ad, ipv4to6,
 		mask4to6, ipanyto6, maskanyto6,
-		ipv6to4
+		ipv6to4, naip_gethostbyname
 
   :ipv4	  =>	inet_aton, inet_ntoa
 
   :ipv6	  =>	ipv6_aton, ipv6_n2x, ipv6_n2d,
 		inet_any2n, inet_n2dx, inet_n2ad
 		ipv4to6, mask4to6, ipanyto6,
-		maskanyto6, ipv6to4
+		maskanyto6, ipv6to4, naip_gethostbyname
 
   :math	  =>	hasbits, isIPv4, addconst,
 		add128, sub128, notcontiguous,
@@ -217,6 +276,7 @@ NetAddr::IP::Util -- IPv4/6 and 128 bit number utilities
   $bcdtext = bin2bcd($bits128);
   $bits128 = bcd2bin($bcdtxt);
   $modetext = mode;
+  ($name,$aliases,$addrtype,$length,@addrs)=naip_gethostbyname(NAME);
 
   NetAddr::IP::Util::lower();
   NetAddr::IP::Util::upper();
@@ -598,6 +658,10 @@ Returns the operating mode of this module.
 	returns:	"Pure Perl"
 		   or	"CC XS"
 
+=item * ($name,$aliases,$addrtype,$length,@addrs)=naip_gethostbyname(NAME);
+
+Replacement for Perl's gethostbyname if Socket6 is available
+
 =item * NetAddr::IP::Util::lower();
 
 Return IPv6 strings in lowercase.
@@ -726,6 +790,7 @@ Return IPv6 strings in uppercase.  This is the default.
 	bin2bcd
 	bcd2bin
 	mode
+	naip_gethostbyname
 
 =head1 AUTHOR
 
@@ -766,4 +831,3 @@ Michael Robinton <michael@bizsystems.com>
 =cut
 
 1;
-

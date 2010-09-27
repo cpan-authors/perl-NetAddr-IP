@@ -26,6 +26,7 @@ SYNOPSIS
             bin2bcd
             bcd2bin
             mode
+            naip_gethostbyname
       );
 
       use NetAddr::IP::Util qw(:all :inet :ipv4 :ipv6 :math)
@@ -34,14 +35,14 @@ SYNOPSIS
                     ipv6_n2x, ipv6_n2d, inet_any2n,
                     inet_n2dx, inet_n2ad, ipv4to6,
                     mask4to6, ipanyto6, maskanyto6,
-                    ipv6to4
+                    ipv6to4, naip_gethostbyname
 
       :ipv4   =>    inet_aton, inet_ntoa
 
       :ipv6   =>    ipv6_aton, ipv6_n2x, ipv6_n2d,
                     inet_any2n, inet_n2dx, inet_n2ad
                     ipv4to6, mask4to6, ipanyto6,
-                    maskanyto6, ipv6to4
+                    maskanyto6, ipv6to4, naip_gethostbyname
 
       :math   =>    hasbits, isIPv4, addconst,
                     add128, sub128, notcontiguous,
@@ -73,6 +74,7 @@ SYNOPSIS
       $bcdtext = bin2bcd($bits128);
       $bits128 = bcd2bin($bcdtxt);
       $modetext = mode;
+      ($name,$aliases,$addrtype,$length,@addrs)=naip_gethostbyname(NAME);
 
       NetAddr::IP::Util::lower();
       NetAddr::IP::Util::upper();
@@ -301,6 +303,9 @@ DESCRIPTION
                 returns:        "Pure Perl"
                            or   "CC XS"
 
+    * ($name,$aliases,$addrtype,$length,@addrs)=naip_gethostbyname(NAME);
+        Replacement for Perl's gethostbyname if Socket6 is available
+
     * NetAddr::IP::Util::lower();
         Return IPv6 strings in lowercase.
 
@@ -421,6 +426,7 @@ EXPORT_OK
             bin2bcd
             bcd2bin
             mode
+            naip_gethostbyname
 
 AUTHOR
     Michael Robinton <michael@bizsystems.com>
