@@ -4,8 +4,8 @@ package NetAddr::IP;
 
 use strict;
 #use diagnostics;
-use NetAddr::IP::Lite 1.18 qw(Zero Zeros Ones V4mask V4net);
-use NetAddr::IP::Util 1.33 qw(
+use NetAddr::IP::Lite 1.19 qw(Zero Zeros Ones V4mask V4net);
+use NetAddr::IP::Util 1.34 qw(
 	sub128
 	inet_aton
 	inet_any2n
@@ -34,7 +34,7 @@ require Exporter;
 
 @ISA = qw(Exporter NetAddr::IP::Lite);
 
-$VERSION = do { sprintf " %d.%03d", (q$Revision: 4.32 $ =~ /\d+/g) };
+$VERSION = do { sprintf " %d.%03d", (q$Revision: 4.33 $ =~ /\d+/g) };
 
 =pod
 

@@ -13,7 +13,7 @@ require Exporter;
 
 @ISA = qw(Exporter DynaLoader);
 
-$VERSION = do { my @r = (q$Revision: 1.33 $ =~ /\d+/g); sprintf "%d."."%02d" x $#r, @r };
+$VERSION = do { my @r = (q$Revision: 1.34 $ =~ /\d+/g); sprintf "%d."."%02d" x $#r, @r };
 
 @EXPORT_OK = qw(
 	inet_aton
@@ -177,7 +177,9 @@ unless (eval { require Socket6 }) {
  	return &_end_gethostbyname($tip);
   };
 } else {
-  import Socket6 qw( gethostbyname2 AF_INET6 );
+  import Socket6 qw( gethostbyname2 );
+  import Socket6 qw( AF_INET6 )
+	unless eval { &AF_INET6 };
   my $tip;
   $mygethostbyname = sub {
 	unless ($tip = gethostbyname2($_[0],&AF_INET6)) {

@@ -1,5 +1,9 @@
 Revision history for Perl extension NetAddr::IP::Util
 
+1.34  Wed Sep 29 10:32:50 PDT 2010
+	Conditionalize import of AF_INET6 in Util.pm
+	NetAddr::IP::UtilPolluted
+
 1.33  Tue Sep 21 17:50:50 PDT 2010
 	Add UtilPolluted namespace to contain name space pollution
 	created by "use Socket" when invoking Socket6.
