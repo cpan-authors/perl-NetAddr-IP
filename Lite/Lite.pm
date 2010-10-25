@@ -29,7 +29,7 @@ use NetAddr::IP::Util qw(
 
 use vars qw(@ISA @EXPORT_OK $VERSION $Accept_Binary_IP $Old_nth $AUTOLOAD *Zero);
 
-$VERSION = do { my @r = (q$Revision: 1.19 $ =~ /\d+/g); sprintf "%d."."%02d" x $#r, @r };
+$VERSION = do { my @r = (q$Revision: 1.20 $ =~ /\d+/g); sprintf "%d."."%02d" x $#r, @r };
 
 require Exporter;
 
@@ -681,7 +681,7 @@ sub _xnew($$;$$) {
 	  $ip	= $fip6{$ip};
 	  last;
 	} else {
-	  return undef;
+	  return undef unless $isV6;
         }
       } else {
 	$mask = lc $_[0];
@@ -694,7 +694,7 @@ sub _xnew($$;$$) {
 
 # parse mask
     if ($mask =~ /^(\d+)$/) {
-      if (index($ip,':') < 0) {			# is ipV4
+      if (! $isV6 && index($ip,':') < 0) {	# is ipV4
 	if ($1 == 32) {				# cidr 32
 	  $mask = Ones;
 	}

@@ -1,5 +1,11 @@
 Revision history for Perl extension NetAddr::IP
 
+4.034 Mon Oct 25 16:22:01 PDT 2010
+        Updated Lite::_xnew v1.20 to properly handle ipV6 notation of the form
+        xxxx:xxxx:xxxx:xxxx:xxxx:xxxx, DDD
+
+        Thanks to Dusty Mabe <Dusty.Mabe@tekelec.com> for spotting this bug
+
 4.033  Wed Sep 29 10:32:50 PDT 2010
         Conditionalize import of AF_INET6 in Util.pm
         NetAddr::IP::UtilPolluted
