@@ -29,7 +29,7 @@ use NetAddr::IP::Util qw(
 
 use vars qw(@ISA @EXPORT_OK $VERSION $Accept_Binary_IP $Old_nth $AUTOLOAD *Zero);
 
-$VERSION = do { my @r = (q$Revision: 1.20 $ =~ /\d+/g); sprintf "%d."."%02d" x $#r, @r };
+$VERSION = do { my @r = (q$Revision: 1.21 $ =~ /\d+/g); sprintf "%d."."%02d" x $#r, @r };
 
 require Exporter;
 
@@ -292,7 +292,7 @@ Will print the string 192.168.1.123/32.
 	my $ip = new6 NetAddr::IP::Lite '192.168.1.123';
 	print "$ip\n";
 
-Will print the string
+Will print the string 0:0:0:0:0:0:C0A8:17B/128
 
 =item B<Equality>
 
@@ -481,8 +481,12 @@ sub _new ($$$) {
 
 =item C<-E<gt>new_from_aton($netaddr)>
 
+=item C<-E<gt>new_cis("$addr $mask)>
+
+=item C<-E<gt>new_cis6("$addr $mask)>
+
 The first two methods create a new address with the supplied address in
-C<$addr> and an optional netmask C<$mask>, which can be omitted to get
+C<$addr> and an optional netmask C<$mask>, which can be omitted to get 
 a /32 or /128 netmask for IPv4 / IPv6 addresses respectively.
 
 The third method C<new_no> is exclusively for IPv4 addresses and filters
@@ -494,14 +498,23 @@ B<new_from_aton> takes a packed IPv4 address and assumes a /32 mask. This
 function replaces the DEPRECATED :aton functionality which is fundamentally
 broken.
 
-C<-E<gt>new6> marks the address as being in ipV6 address space even if the
-format would suggest otherwise.
+The last two methods B<new_cis> and B<new_cis6> differ from B<new> and
+B<new6> only in that they except the common Cisco address notation for
+address/mask pairs with a B<space> as a seperator instead of a slash (/)
 
-  i.e.	->new6('1.2.3.4') will result in ::102:304
+  i.e.  ->new_cis('1.2.3.0 24')
+        or
+        ->new_cis6('::1.2.3.0 120')
+
+C<-E<gt>new6> and
+C<-E<gt>new_cis6> mark the address as being in ipV6 address space even
+if the format would suggest otherwise.
+
+  i.e.  ->new6('1.2.3.4') will result in ::102:304
 
   addresses submitted to ->new in ipV6 notation will
   remain in that notation permanently. i.e.
-	->new('::1.2.3.4') will result in ::102:304
+        ->new('::1.2.3.4') will result in ::102:304
   whereas new('1.2.3.4') would print out as 1.2.3.4
 
   See "STRINGIFICATION" below.
@@ -638,6 +651,24 @@ sub new6($;$$) {
   goto &_xnew;
 }
 
+sub new_cis($;$$) {
+  my @in = @_;
+  if ( $in[1] && $in[1] =~ m!^(.+)\s+(.+)$! ) {
+    $in[1] = $1 .'/'. $2;
+  }
+  @_ = (0,@in);
+  goto &_xnew;
+}
+
+sub new_cis6($;$$) {
+  my @in = @_;
+  if ( $in[1] && $in[1] =~ m!^(.+)\s+(.+)$! ) {
+    $in[1] = $1 .'/'. $2;
+  }
+  @_ = (1,@in);
+  goto &_xnew;
+}
+
 sub _no_octal {
   $_[0] =~ m/^(\d+)\.(\d+)\.(\d+)\.(\d+)$/;
   return sprintf("%d.%d.%d.%d",$1,$2,$3,$4);
@@ -694,24 +725,28 @@ sub _xnew($$;$$) {
 
 # parse mask
     if ($mask =~ /^(\d+)$/) {
+      my $mval = $1;
       if (! $isV6 && index($ip,':') < 0) {	# is ipV4
-	if ($1 == 32) {				# cidr 32
+	if ($mval == 32) {				# cidr 32
 	  $mask = Ones;
 	}
 	elsif ($mask < 32) {			# small cidr
-	  $mask = shiftleft(Ones,32 -$1);
+	  $mask = shiftleft(Ones,32 -$mval);
 	} else {				# is a binary mask
-	  $mask = pack('L3N',0xffffffff,0xffffffff,0xffffffff,$1);
+	  $mask = pack('L3N',0xffffffff,0xffffffff,0xffffffff,$mval);
 	}
       } else {					# is ipV6
 	$isV6	= 1;
-	if ($1 == 128) {			# cidr 128
+	if ($mval == 128) {			# cidr 128
 	  $mask = Ones;
 	}
+	elsif ($ip =~ /^\d+\.\d+\.\d+\.\d+$/) {	# corner case of ipV4 with new6
+	  $mask = shiftleft(Ones,32 -$mval);
+	}
 	elsif ($mask < 128) {			# small cidr
-	  $mask = shiftleft(Ones,128 -$1);
+	  $mask = shiftleft(Ones,128 -$mval);
 	} else {				# is a binary mask
-	  $mask = bcd2bin($1);
+	  $mask = bcd2bin($mval);
 	}
       }
     } elsif ($mask =~ m/^\d+\.\d+\.\d+\.\d+$/) { # ipv4 form of mask

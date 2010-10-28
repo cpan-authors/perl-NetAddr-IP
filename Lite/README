@@ -88,7 +88,7 @@ DESCRIPTION
                 my $ip = new6 NetAddr::IP::Lite '192.168.1.123';
                 print "$ip\n";
 
-        Will print the string
+        Will print the string 0:0:0:0:0:0:C0A8:17B/128
 
     Equality
         You can test for equality with either "eq", "ne", "==" or "!=".
@@ -165,6 +165,8 @@ DESCRIPTION
     "->new6([$addr, [ $mask]])"
     "->new_no([$addr, [ $mask]])"
     "->new_from_aton($netaddr)"
+    "->new_cis("$addr $mask)"
+    "->new_cis6("$addr $mask)"
         The first two methods create a new address with the supplied address
         in "$addr" and an optional netmask "$mask", which can be omitted to
         get a /32 or /128 netmask for IPv4 / IPv6 addresses respectively.
@@ -178,8 +180,17 @@ DESCRIPTION
         This function replaces the DEPRECATED :aton functionality which is
         fundamentally broken.
 
-        "->new6" marks the address as being in ipV6 address space even if
-        the format would suggest otherwise.
+        The last two methods new_cis and new_cis6 differ from new and new6
+        only in that they except the common Cisco address notation for
+        address/mask pairs with a space as a seperator instead of a slash
+        (/)
+
+          i.e.  ->new_cis('1.2.3.0 24')
+                or
+                ->new_cis6('::1.2.3.0 120')
+
+        "->new6" and "->new_cis6" mark the address as being in ipV6 address
+        space even if the format would suggest otherwise.
 
           i.e.  ->new6('1.2.3.4') will result in ::102:304
 

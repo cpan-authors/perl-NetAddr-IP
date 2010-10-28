@@ -1,5 +1,18 @@
 Revision history for Perl extension NetAddr::IP::Lite
 
+1.21  Thu Oct 28 14:26:19 PDT 2010
+	fix bug where new6 improperly assigns the mask value 
+	for and ipv4 address in 32 bit space instead of 128 bit space
+
+	Thanks to Mark Martinec and Steve Huff (SHUFF) * shuff@cpan.org
+	for spotting and replicating that bug
+
+	added new_cis and new_cis6 to Lite.pm v1.21 to accomodate
+	Cisco syntax that has IP and MASK seperated by a space.
+
+	Updated typo in documentation that left out example
+	print new6 stuff
+
 1.20  Mon Oct 25 16:22:01 PDT 2010
 	Updated _xnew to properly handle ipV6 notation of the form
 	xxxx:xxxx:xxxx:xxxx:xxxx:xxxx, DDD
@@ -7,8 +20,8 @@ Revision history for Perl extension NetAddr::IP::Lite
 	Thanks to Dusty Mabe <Dusty.Mabe@tekelec.com> for spotting this bug
 
 1.19  Wed Sep 29 10:32:50 PDT 2010
-        Conditionalize import of AF_INET6 in Util.pm
-        NetAddr::IP::UtilPolluted
+	Conditionalize import of AF_INET6 in Util.pm
+	NetAddr::IP::UtilPolluted
 
 1.18  Wed Sep 22 13:39:08 PDT 2010
 	Added overload => 'ne' and '!=' to Lite.pm

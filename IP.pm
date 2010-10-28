@@ -4,7 +4,7 @@ package NetAddr::IP;
 
 use strict;
 #use diagnostics;
-use NetAddr::IP::Lite 1.19 qw(Zero Zeros Ones V4mask V4net);
+use NetAddr::IP::Lite 1.21 qw(Zero Zeros Ones V4mask V4net);
 use NetAddr::IP::Util 1.34 qw(
 	sub128
 	inet_aton
@@ -34,7 +34,7 @@ require Exporter;
 
 @ISA = qw(Exporter NetAddr::IP::Lite);
 
-$VERSION = do { sprintf " %d.%03d", (q$Revision: 4.34 $ =~ /\d+/g) };
+$VERSION = do { sprintf " %d.%03d", (q$Revision: 4.35 $ =~ /\d+/g) };
 
 =pod
 
@@ -60,7 +60,7 @@ NetAddr::IP - Manages IPv4 and IPv6 addresses and subnets
   );
 
   NOTE: NetAddr::IP::Util has a full complement of network address
-	utilites to convert back and from from binary to text.
+	utilites to convert back and forth between binary and text.
 
 	inet_aton, inet_ntoa, ipv6_aton, ipv6_n2x, ipv6_n2d
 	inet_any2d, inet_n2dx, inet_n2ad, inetanyto6, ipv6to4
@@ -471,27 +471,40 @@ sub do_prefix ($$$) {
 
 =item C<-E<gt>new_from_aton($netaddr)>
 
-The first two methods create a new address with the supplied address in
-C<$addr> and an optional netmask C<$mask>, which can be omitted to get
-a /32 or /128 netmask for IPv4 / IPv6 addresses respectively
+=item C<-E<gt>new_cis("$addr $mask)>
 
-B<new_from_aton> takes a packed IPv4 address and assumes a /32 mask. This
-function replaces the DEPRECATED :aton functionality which is fundamentally
-broken.
+=item C<-E<gt>new_cis6("$addr $mask)>
+
+The first two methods create a new address with the supplied address in
+C<$addr> and an optional netmask C<$mask>, which can be omitted to get 
+a /32 or /128 netmask for IPv4 / IPv6 addresses respectively.
 
 The third method C<new_no> is exclusively for IPv4 addresses and filters
 improperly formatted
 dot quad strings for leading 0's that would normally be interpreted as octal
 format by NetAddr per the specifications for inet_aton.
 
-C<-E<gt>new6> marks the address as being in ipV6 address space even if the
-format would suggest otherwise.
+B<new_from_aton> takes a packed IPv4 address and assumes a /32 mask. This
+function replaces the DEPRECATED :aton functionality which is fundamentally
+broken.
 
-  i.e.	->new6('1.2.3.4') will result in ::102:304
+The last two methods B<new_cis> and B<new_cis6> differ from B<new> and
+B<new6> only in that they except the common Cisco address notation for
+address/mask pairs with a B<space> as a seperator instead of a slash (/)
+
+  i.e.  ->new_cis('1.2.3.0 24')
+        or
+        ->new_cis6('::1.2.3.0 120')
+
+C<-E<gt>new6> and
+C<-E<gt>new_cis6> mark the address as being in ipV6 address space even
+if the format would suggest otherwise.
+
+  i.e.  ->new6('1.2.3.4') will result in ::102:304
 
   addresses submitted to ->new in ipV6 notation will
   remain in that notation permanently. i.e.
-	->new('::1.2.3.4') will result in ::102:304
+        ->new('::1.2.3.4') will result in ::102:304
   whereas new('1.2.3.4') would print out as 1.2.3.4
 
   See "STRINGIFICATION" below.

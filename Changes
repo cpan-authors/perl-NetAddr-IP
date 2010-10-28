@@ -1,14 +1,27 @@
 Revision history for Perl extension NetAddr::IP
 
-4.034 Mon Oct 25 16:22:01 PDT 2010
-        Updated Lite::_xnew v1.20 to properly handle ipV6 notation of the form
-        xxxx:xxxx:xxxx:xxxx:xxxx:xxxx, DDD
+4.035 Thu Oct 28 14:26:19 PDT 2010
+	fix bug in Lite v1.21 where new6 improperly assigns the mask value 
+	for and ipv4 address in 32 bit space instead of 128 bit space
 
-        Thanks to Dusty Mabe <Dusty.Mabe@tekelec.com> for spotting this bug
+	Thanks to Mark Martinec and Steve Huff (SHUFF) * shuff@cpan.org
+	for spotting and replicating that bug
+
+	added new_cis and new_cis6 to Lite.pm v1.21 to accomodate
+	Cisco syntax that has IP and MASK seperated by a space.
+
+	Updated typo in documentation that left out example
+	print new6 stuff
+
+4.034 Mon Oct 25 16:22:01 PDT 2010
+	Updated Lite::_xnew v1.20 to properly handle ipV6 notation of the form
+	xxxx:xxxx:xxxx:xxxx:xxxx:xxxx, DDD
+
+	Thanks to Dusty Mabe <Dusty.Mabe@tekelec.com> for spotting this bug
 
 4.033  Wed Sep 29 10:32:50 PDT 2010
-        Conditionalize import of AF_INET6 in Util.pm
-        NetAddr::IP::UtilPolluted
+	Conditionalize import of AF_INET6 in Util.pm
+	NetAddr::IP::UtilPolluted
 
 4.032  Wed Sep 22 13:39:08 PDT 2010
 	Added overload => 'ne' and '!=' to Lite.pm v1.18
@@ -18,15 +31,15 @@ Revision history for Perl extension NetAddr::IP
 	NetAddr::IP::Util.pm 1.33 in its own namespace
 
 4.030  Tue Jul 20 15:32:23 PDT 2010
-        Resolve named hosts in Lite.pm using gethostbyname, followed by 
+	Resolve named hosts in Lite.pm using gethostbyname, followed by 
 	gethostbyname6 to determine whether to set ipV6 flag
 
-        Thanks to Dusty Mabe <Dusty.Mabe@tekelec.com> for spotting this bug
+	Thanks to Dusty Mabe <Dusty.Mabe@tekelec.com> for spotting this bug
 
 4.029  Thu Jul  8 18:17:38 PDT 2010
 	In NetAddr::IP::Lite,
-        added support for the sub "new" to resolve host6 names
-        if the OPTIONAL perl Socket6 module is available
+	added support for the sub "new" to resolve host6 names
+	if the OPTIONAL perl Socket6 module is available
 
 	Thanks to "Mabe, Dusty" <Dusty.Mabe@tekelec.com> for spotting 
 	this and suggesting a fix.
@@ -43,13 +56,13 @@ Revision history for Perl extension NetAddr::IP
 
 4.027  Tue Jun  9 10:31:11 PDT 2009
 	In NetAddr::IP::Util v1.31,
-        ferret out shell value for Makefile.PL when calling
-        ./configure for systems where the 'x' bit gets lost
-        due to bug in Archive::Tar
+	ferret out shell value for Makefile.PL when calling
+	./configure for systems where the 'x' bit gets lost
+	due to bug in Archive::Tar
 
 4.026  Sat Mar  7 16:35:33 PST 2009
-        make the compiler test check the environment for
-        CC before using Perl's default compiler
+	make the compiler test check the environment for
+	CC before using Perl's default compiler
 
 4.025  Sat Mar  7 16:15:18 PST 2009
 	revised compiler test in Makefile.PL for Util v1.29

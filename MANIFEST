@@ -11,6 +11,7 @@ Lite/t/aton.t
 Lite/t/bigints.t
 Lite/t/bits.t
 Lite/t/broadcast.t
+Lite/t/bug62521.t
 Lite/t/cidr.t
 Lite/t/constants.t
 Lite/t/contains.t
@@ -47,6 +48,7 @@ Lite/t/v4-last.t
 Lite/t/v4-new-first.t
 Lite/t/v4-new_from_aton.t
 Lite/t/v4-new.t
+Lite/t/v4_new_cis.t
 Lite/t/v4-no_octal.t
 Lite/t/v4-num.t
 Lite/t/v4-numeric.t
@@ -56,6 +58,8 @@ Lite/t/v4-snew.t
 Lite/t/v4-wnew.t
 Lite/t/v6-contains.t
 Lite/t/v6-inc.t
+Lite/t/v6-new_cis6_base.t
+Lite/t/v6-new_cis_base.t
 Lite/t/v6-new-base.t
 Lite/t/v6-numeric.t
 Lite/t/v6-old-base.t
