@@ -1,5 +1,18 @@
 Revision history for Perl extension NetAddr::IP::Lite
 
+1.22  Tue Nov 16 16:28:37 PST 2010
+	update new6 to properly classify short ipv4 notation
+	i.e. 127/8 with test for ":" rather than match for \d.\d.\d.\d
+	
+	thanks to Steve Huff (SHUFF) * shuff@cpan.org for 
+	spotting that bug.
+
+	update t/v4-new.t for deprecated array syntax in perl 5.13
+	was:	qw(...stuff...)
+	is:	(qw(...stuff...))
+
+	thanks to Todd Rinaldo <toddr@cpan.org> for reporting this
+
 1.21  Thu Oct 28 14:26:19 PDT 2010
 	fix bug where new6 improperly assigns the mask value 
 	for and ipv4 address in 32 bit space instead of 128 bit space

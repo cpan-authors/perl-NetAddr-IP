@@ -5,7 +5,7 @@ package NetAddr::IP;
 use strict;
 #use diagnostics;
 use NetAddr::IP::Lite 1.21 qw(Zero Zeros Ones V4mask V4net);
-use NetAddr::IP::Util 1.34 qw(
+use NetAddr::IP::Util 1.35 qw(
 	sub128
 	inet_aton
 	inet_any2n
@@ -34,7 +34,7 @@ require Exporter;
 
 @ISA = qw(Exporter NetAddr::IP::Lite);
 
-$VERSION = do { sprintf " %d.%03d", (q$Revision: 4.35 $ =~ /\d+/g) };
+$VERSION = do { sprintf " %d.%03d", (q$Revision: 4.36 $ =~ /\d+/g) };
 
 =pod
 
@@ -60,7 +60,7 @@ NetAddr::IP - Manages IPv4 and IPv6 addresses and subnets
   );
 
   NOTE: NetAddr::IP::Util has a full complement of network address
-	utilites to convert back and forth between binary and text.
+	utilities to convert back and forth between binary and text.
 
 	inet_aton, inet_ntoa, ipv6_aton, ipv6_n2x, ipv6_n2d
 	inet_any2d, inet_n2dx, inet_n2ad, inetanyto6, ipv6to4
@@ -490,7 +490,7 @@ broken.
 
 The last two methods B<new_cis> and B<new_cis6> differ from B<new> and
 B<new6> only in that they except the common Cisco address notation for
-address/mask pairs with a B<space> as a seperator instead of a slash (/)
+address/mask pairs with a B<space> as a separator instead of a slash (/)
 
   i.e.  ->new_cis('1.2.3.0 24')
         or

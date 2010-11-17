@@ -13,7 +13,7 @@ require Exporter;
 
 @ISA = qw(Exporter DynaLoader);
 
-$VERSION = do { my @r = (q$Revision: 1.34 $ =~ /\d+/g); sprintf "%d."."%02d" x $#r, @r };
+$VERSION = do { my @r = (q$Revision: 1.35 $ =~ /\d+/g); sprintf "%d."."%02d" x $#r, @r };
 
 @EXPORT_OK = qw(
 	inet_aton
@@ -115,11 +115,28 @@ else {
 
 # allow user to choose upper or lower case
 
-our $n2x_format = "%X:%X:%X:%X:%X:%X:%X:%X";
-our $n2d_format = "%X:%X:%X:%X:%X:%X:%D.%D.%D.%D";
+my $n2x_format = "%X:%X:%X:%X:%X:%X:%X:%X";
+my $n2d_format = "%X:%X:%X:%X:%X:%X:%D.%D.%D.%D";
 
 sub upper { $n2x_format = uc($n2x_format); $n2d_format = uc($n2d_format); }
 sub lower { $n2x_format = lc($n2x_format); $n2d_format = lc($n2d_format); }
+
+sub ipv6_n2x {
+  die "Bad arg length for 'ipv6_n2x', length is ". length($_[0]) ." should be 16"
+	unless length($_[0]) == 16;
+  return sprintf($n2x_format,unpack("n8",$_[0]));
+}
+
+sub ipv6_n2d {
+  die "Bad arg length for 'ipv6_n2x', length is ". length($_[0]) ." should be 16"
+	unless length($_[0]) == 16;
+  my @hex = (unpack("n8",$_[0]));
+  $hex[9] = $hex[7] & 0xff;
+  $hex[8] = $hex[7] >> 8;
+  $hex[7] = $hex[6] & 0xff;
+  $hex[6] >>= 8;
+  return sprintf($n2d_format,@hex);
+}
 
 # if Socket lib is broken in some way, check for overange values
 #
@@ -160,7 +177,7 @@ my $_zero = pack('L4',0,0,0,0);
 
 sub _end_gethostbyname {
   my $tip = $_[0];
-  return 0 unless $tip && $tip ne $_v4zero && $tip ne $_zero;
+  return undef unless $tip && $tip ne $_v4zero && $tip ne $_zero;
   my $len = length($tip);
   if ($len == 4) {
     return Util::ipv4to6($tip);
@@ -168,7 +185,7 @@ sub _end_gethostbyname {
   elsif ($len == 16) {
     return $tip;
   }
-  return 0;
+  return undef;
 }
 
 unless (eval { require Socket6 }) {
@@ -388,14 +405,6 @@ Takes an IPv6 RDATA string and returns an 8 segment IPv6 hex address
   input:	128 bit RDATA string
   returns:	x:x:x:x:x:x:x:x
 
-=cut
-
-sub ipv6_n2x {
-  die "Bad arg length for 'ipv6_n2x', length is ". length($_[0]) ." should be 16"
-	unless length($_[0]) == 16;
-  return sprintf($n2x_format,unpack("n8",$_[0]));
-}
-
 =item * $dec_text = ipv6_n2d($ipv6addr);
 
 Takes an IPv6 RDATA string and returns a mixed hex - decimal IPv6 address
@@ -404,19 +413,6 @@ representation.
 
   input:	128 bit RDATA string
   returns:	x:x:x:x:x:x:d.d.d.d
-
-=cut
-
-sub ipv6_n2d {
-  die "Bad arg length for 'ipv6_n2x', length is ". length($_[0]) ." should be 16"
-	unless length($_[0]) == 16;
-  my @hex = (unpack("n8",$_[0]));
-  $hex[9] = $hex[7] & 0xff;
-  $hex[8] = $hex[7] >> 8;
-  $hex[7] = $hex[6] & 0xff;
-  $hex[6] >>= 8;
-  return sprintf($n2d_format,@hex);
-}
 
 =item * $ipv6naddr = inet_any2n($dotquad or $ipv6_text);
 

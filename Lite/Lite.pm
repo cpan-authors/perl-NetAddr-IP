@@ -29,7 +29,7 @@ use NetAddr::IP::Util qw(
 
 use vars qw(@ISA @EXPORT_OK $VERSION $Accept_Binary_IP $Old_nth $AUTOLOAD *Zero);
 
-$VERSION = do { my @r = (q$Revision: 1.21 $ =~ /\d+/g); sprintf "%d."."%02d" x $#r, @r };
+$VERSION = do { my @r = (q$Revision: 1.22 $ =~ /\d+/g); sprintf "%d."."%02d" x $#r, @r };
 
 require Exporter;
 
@@ -500,7 +500,7 @@ broken.
 
 The last two methods B<new_cis> and B<new_cis6> differ from B<new> and
 B<new6> only in that they except the common Cisco address notation for
-address/mask pairs with a B<space> as a seperator instead of a slash (/)
+address/mask pairs with a B<space> as a separator instead of a slash (/)
 
   i.e.  ->new_cis('1.2.3.0 24')
         or
@@ -740,7 +740,7 @@ sub _xnew($$;$$) {
 	if ($mval == 128) {			# cidr 128
 	  $mask = Ones;
 	}
-	elsif ($ip =~ /^\d+\.\d+\.\d+\.\d+$/) {	# corner case of ipV4 with new6
+	elsif (index($ip,':') < 0) {	# corner case of ipV4 with new6
 	  $mask = shiftleft(Ones,32 -$mval);
 	}
 	elsif ($mask < 128) {			# small cidr

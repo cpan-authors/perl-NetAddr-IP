@@ -1,5 +1,31 @@
 Revision history for Perl extension NetAddr::IP
 
+4.036 Tue Nov 16 16:28:37 PST 2010
+        In Util.pm v1.35, naip_gethostbyname modified to return undef 
+	instead of 0 (zero) on failure
+
+        thanks to Terry Cassidy enaudishaylee@tc17.com for the bug report
+
+        In Util.pm v1.35, move sub's ipv6_n2d and ipv6_n2x to non-autosplit 
+	portion of module to eliminate warnings during autosplit of "our" 
+	variables
+
+        thanks to Nicholas Bamber <nicholas@periapt.co.uk>
+        Bug-Debian: http://bugs.debian.org/cgi-bin/bugreport.cgi?bug=517361
+
+	In Lite.pm v1.22, update new6 to properly classify short ipv4 notation
+        i.e. 127/8 with test for ":" rather than match for \d.\d.\d.\d
+        
+        thanks to Steve Huff (SHUFF) * shuff@cpan.org for 
+        spotting that bug.
+
+        In Lite.pm v1.22, update t/v4-new.t for deprecated array syntax in 
+	perl 5.13
+        was:    qw(...stuff...)
+        is:     (qw(...stuff...))
+
+        thanks to Todd Rinaldo <toddr@cpan.org> for reporting this
+
 4.035 Thu Oct 28 14:26:19 PDT 2010
 	fix bug in Lite v1.21 where new6 improperly assigns the mask value 
 	for and ipv4 address in 32 bit space instead of 128 bit space

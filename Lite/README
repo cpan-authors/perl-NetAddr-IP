@@ -182,7 +182,7 @@ DESCRIPTION
 
         The last two methods new_cis and new_cis6 differ from new and new6
         only in that they except the common Cisco address notation for
-        address/mask pairs with a space as a seperator instead of a slash
+        address/mask pairs with a space as a separator instead of a slash
         (/)
 
           i.e.  ->new_cis('1.2.3.0 24')
