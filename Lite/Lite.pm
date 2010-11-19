@@ -29,7 +29,7 @@ use NetAddr::IP::Util qw(
 
 use vars qw(@ISA @EXPORT_OK $VERSION $Accept_Binary_IP $Old_nth $AUTOLOAD *Zero);
 
-$VERSION = do { my @r = (q$Revision: 1.22 $ =~ /\d+/g); sprintf "%d."."%02d" x $#r, @r };
+$VERSION = do { my @r = (q$Revision: 1.23 $ =~ /\d+/g); sprintf "%d."."%02d" x $#r, @r };
 
 require Exporter;
 
@@ -58,6 +58,8 @@ NetAddr::IP::Lite - Manages IPv4 and IPv6 addresses and subnets
 	V4net
 	:aton		DEPRECATED !
 	:old_nth
+	:upper
+	:lower
   );
 
   my $ip = new NetAddr::IP::Lite '127.0.0.1';
@@ -107,6 +109,26 @@ This module provides an object-oriented abstraction on top of IP
 addresses or IP subnets, that allows for easy manipulations. Most of the
 operations of NetAddr::IP are supported. This module will work older
 versions of Perl and does B<not> use Math::BigInt.
+
+* By default B<NetAddr::IP> functions and methods return string IPv6
+addresses in uppercase.  To change that to lowercase:
+
+NOTE: the AUGUST 2010 RFC5952 states:
+
+    4.3. Lowercase
+
+      The characters "a", "b", "c", "d", "e", and "f" in an IPv6
+      address MUST be represented in lowercase.
+
+It is recommended that all NEW applications using NetAddr::IP::Lite be
+invoked as shown on the next line.
+
+  use NetAddr::IP::Lite qw(:lower);
+
+* To ensure the current IPv6 string case behavior even if the default changes:
+
+  use NetAddr::IP::Lite qw(:upper);
+
 
 The internal representation of all IP objects is in 128 bit IPv6 notation.
 IPv4 and IPv6 objects may be freely mixed.
@@ -1218,6 +1240,16 @@ sub import {
     $Old_nth = 1;
     @_ = grep { $_ ne ':old_nth' } @_;
   }
+  if (grep { $_ eq ':lower' } @_)
+  {
+    NetAddr::IP::Util::lower();
+    @_ = grep { $_ ne ':lower' } @_;
+  }
+  if (grep { $_ eq ':upper' } @_)
+  {
+    NetAddr::IP::Util::upper();
+    @_ = grep { $_ ne ':upper' } @_;
+  }
   NetAddr::IP::Lite->export_to_level(1, @_);
 }
 
@@ -1229,6 +1261,8 @@ sub import {
 	V4net
 	:aton		DEPRECATED
 	:old_nth
+	:upper
+	:lower
 
 =head1 AUTHOR
 
@@ -1243,7 +1277,7 @@ so by using it you accept any and all the liability.
 =head1 LICENSE
 
  This software is (c) Luis E. Muñoz, 1999 - 2005
- and (c) Michael Robinton, 2006 - 2008.
+ and (c) Michael Robinton, 2006 - 2010.
 
 It can be used under the terms of the perl artistic license provided that
 proper credit for the work of the author is preserved in the form of this

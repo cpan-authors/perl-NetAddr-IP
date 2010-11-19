@@ -4,7 +4,7 @@ package NetAddr::IP;
 
 use strict;
 #use diagnostics;
-use NetAddr::IP::Lite 1.21 qw(Zero Zeros Ones V4mask V4net);
+use NetAddr::IP::Lite 1.23 qw(Zero Zeros Ones V4mask V4net);
 use NetAddr::IP::Util 1.35 qw(
 	sub128
 	inet_aton
@@ -34,7 +34,7 @@ require Exporter;
 
 @ISA = qw(Exporter NetAddr::IP::Lite);
 
-$VERSION = do { sprintf " %d.%03d", (q$Revision: 4.36 $ =~ /\d+/g) };
+$VERSION = do { sprintf " %d.%03d", (q$Revision: 4.37 $ =~ /\d+/g) };
 
 =pod
 
@@ -118,14 +118,24 @@ C<@list_of_subnets> are found to be contained in said subnet.
 * By default B<NetAddr::IP> functions and methods return string IPv6
 addresses in uppercase.  To change that to lowercase:
 
+NOTE: the AUGUST 2010 RFC5952 states:
+
+    4.3. Lowercase
+
+      The characters "a", "b", "c", "d", "e", and "f" in an IPv6
+      address MUST be represented in lowercase.
+
+It is recommended that all NEW applications using NetAddr::IP be
+invoked as shown on the next line.
+
   use NetAddr::IP qw(:lower);
 
 * To ensure the current IPv6 string case behavior even if the default changes:
 
   use NetAddr::IP qw(:upper);
 
-* To set a limit on the size of B<nets> processed or returned by
-NetAddr::IP.
+* To set a limit on the size of B<nets> processed or returned by NetAddr::IP.
+
 Set the maximum number of nets beyond which NetAddr::IP will return and
 error as a power of 2 (default 16 or 65536 nets). Each 2**16 consumes approximately 4 megs of
 memory. A 2**20 consumes 64 megs of memory, A 2**24 consumes 1 gigabyte of

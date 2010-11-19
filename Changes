@@ -1,5 +1,11 @@
 Revision history for Perl extension NetAddr::IP
 
+4.037 Fri Nov 19 10:48:01 PST 2010
+        add :upper and :lower to Lite.pm v1.23
+        add comments about rfc5952 requirement for lowercase ipV6 notation
+	in Lite.pm v1.23 and IP.pm
+        add test for :lower in Lite.pm v1.23
+
 4.036 Tue Nov 16 16:28:37 PST 2010
         In Util.pm v1.35, naip_gethostbyname modified to return undef 
 	instead of 0 (zero) on failure

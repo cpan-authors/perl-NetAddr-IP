@@ -9,6 +9,8 @@ SYNOPSIS
             V4net
             :aton           DEPRECATED !
             :old_nth
+            :upper
+            :lower
       );
 
       my $ip = new NetAddr::IP::Lite '127.0.0.1';
@@ -56,6 +58,26 @@ DESCRIPTION
     addresses or IP subnets, that allows for easy manipulations. Most of the
     operations of NetAddr::IP are supported. This module will work older
     versions of Perl and does not use Math::BigInt.
+
+    * By default NetAddr::IP functions and methods return string IPv6
+    addresses in uppercase. To change that to lowercase:
+
+    NOTE: the AUGUST 2010 RFC5952 states:
+
+        4.3. Lowercase
+
+          The characters "a", "b", "c", "d", "e", and "f" in an IPv6
+          address MUST be represented in lowercase.
+
+    It is recommended that all NEW applications using NetAddr::IP::Lite be
+    invoked as shown on the next line.
+
+      use NetAddr::IP::Lite qw(:lower);
+
+    * To ensure the current IPv6 string case behavior even if the default
+    changes:
+
+      use NetAddr::IP::Lite qw(:upper);
 
     The internal representation of all IP objects is in 128 bit IPv6
     notation. IPv4 and IPv6 objects may be freely mixed.
@@ -395,6 +417,8 @@ EXPORT_OK
             V4net
             :aton           DEPRECATED
             :old_nth
+            :upper
+            :lower
 
 AUTHOR
     Luis E. Muñoz <luismunoz@cpan.org>, Michael Robinton
@@ -406,7 +430,7 @@ WARRANTY
 
 LICENSE
      This software is (c) Luis E. Muñoz, 1999 - 2005
-     and (c) Michael Robinton, 2006 - 2008.
+     and (c) Michael Robinton, 2006 - 2010.
 
     It can be used under the terms of the perl artistic license provided
     that proper credit for the work of the author is preserved in the form

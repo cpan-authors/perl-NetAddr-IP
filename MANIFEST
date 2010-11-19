@@ -19,6 +19,7 @@ Lite/t/copy.t
 Lite/t/firstlast.t
 Lite/t/lemasklen.t
 Lite/t/loops.t
+Lite/t/lower.t
 Lite/t/mask.t
 Lite/t/masklen.t
 Lite/t/netaddr.t
