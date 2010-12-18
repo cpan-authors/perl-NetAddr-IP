@@ -187,6 +187,7 @@ DESCRIPTION
     "->new6([$addr, [ $mask]])"
     "->new_no([$addr, [ $mask]])"
     "->new_from_aton($netaddr)"
+    new_cis and new_cis6 are DEPRECATED
     "->new_cis("$addr $mask)"
     "->new_cis6("$addr $mask)"
         The first two methods create a new address with the supplied address
@@ -206,6 +207,9 @@ DESCRIPTION
         only in that they except the common Cisco address notation for
         address/mask pairs with a space as a separator instead of a slash
         (/)
+
+        These methods are DEPRECATED because the functionality is now
+        included in the other "new" methods
 
           i.e.  ->new_cis('1.2.3.0 24')
                 or
@@ -250,11 +254,15 @@ DESCRIPTION
 
           n.n
           n.n/mm
+          n.n mm
           n.n.n
           n.n.n/mm
+          n.n.n mm
           n.n.n.n
           n.n.n.n/mm            32 bit cidr notation
+          n.n.n.n mm
           n.n.n.n/m.m.m.m
+          n.n.n.n m.m.m.m
           loopback, localhost, broadcast, any, default
           x.x.x.x/host
           0xABCDEF, 0b111111000101011110, (or a bcd number)

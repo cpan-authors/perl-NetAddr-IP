@@ -29,7 +29,7 @@ use NetAddr::IP::Util qw(
 
 use vars qw(@ISA @EXPORT_OK $VERSION $Accept_Binary_IP $Old_nth $AUTOLOAD *Zero);
 
-$VERSION = do { my @r = (q$Revision: 1.23 $ =~ /\d+/g); sprintf "%d."."%02d" x $#r, @r };
+$VERSION = do { my @r = (q$Revision: 1.24 $ =~ /\d+/g); sprintf "%d."."%02d" x $#r, @r };
 
 require Exporter;
 
@@ -503,6 +503,8 @@ sub _new ($$$) {
 
 =item C<-E<gt>new_from_aton($netaddr)>
 
+=item new_cis and new_cis6 are DEPRECATED
+
 =item C<-E<gt>new_cis("$addr $mask)>
 
 =item C<-E<gt>new_cis6("$addr $mask)>
@@ -523,6 +525,9 @@ broken.
 The last two methods B<new_cis> and B<new_cis6> differ from B<new> and
 B<new6> only in that they except the common Cisco address notation for
 address/mask pairs with a B<space> as a separator instead of a slash (/)
+
+These methods are DEPRECATED because the functionality is now included
+in the other "new" methods
 
   i.e.  ->new_cis('1.2.3.0 24')
         or
@@ -568,11 +573,15 @@ C<$addr> can be any of the following and possibly more...
 
   n.n
   n.n/mm
+  n.n mm
   n.n.n
   n.n.n/mm
+  n.n.n mm
   n.n.n.n
   n.n.n.n/mm		32 bit cidr notation
+  n.n.n.n mm
   n.n.n.n/m.m.m.m
+  n.n.n.n m.m.m.m
   loopback, localhost, broadcast, any, default
   x.x.x.x/host
   0xABCDEF, 0b111111000101011110, (or a bcd number)
@@ -712,7 +721,8 @@ sub _xnew($$;$$) {
 
   while (1) {
     unless (@_) {
-      if ($ip =~ m!^(.+)/(.+)$!) {
+#      if ($ip =~ m!^(.+)/(.+)$!) {
+      if ($ip =~ m!^([a-z0-9.:-]+)(?:/|\s+)([a-z0-9.:-]+)$!) {
 	$ip	= $1;
 	$mask	= $2;
       } elsif (grep($ip eq $_,qw(default any broadcast loopback unspecified))) {

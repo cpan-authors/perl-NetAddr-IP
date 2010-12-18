@@ -4,7 +4,7 @@ package NetAddr::IP;
 
 use strict;
 #use diagnostics;
-use NetAddr::IP::Lite 1.23 qw(Zero Zeros Ones V4mask V4net);
+use NetAddr::IP::Lite 1.24 qw(Zero Zeros Ones V4mask V4net);
 use NetAddr::IP::Util 1.35 qw(
 	sub128
 	inet_aton
@@ -34,7 +34,7 @@ require Exporter;
 
 @ISA = qw(Exporter NetAddr::IP::Lite);
 
-$VERSION = do { sprintf " %d.%03d", (q$Revision: 4.37 $ =~ /\d+/g) };
+$VERSION = do { sprintf " %d.%03d", (q$Revision: 4.38 $ =~ /\d+/g) };
 
 =pod
 
@@ -481,6 +481,8 @@ sub do_prefix ($$$) {
 
 =item C<-E<gt>new_from_aton($netaddr)>
 
+=item new_cis and new_cis6 are DEPRECATED 
+
 =item C<-E<gt>new_cis("$addr $mask)>
 
 =item C<-E<gt>new_cis6("$addr $mask)>
@@ -501,6 +503,9 @@ broken.
 The last two methods B<new_cis> and B<new_cis6> differ from B<new> and
 B<new6> only in that they except the common Cisco address notation for
 address/mask pairs with a B<space> as a separator instead of a slash (/)
+
+These methods are DEPRECATED because the functionality is now included
+in the other "new" methods
 
   i.e.  ->new_cis('1.2.3.0 24')
         or

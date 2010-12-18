@@ -1,5 +1,13 @@
 Revision history for Perl extension NetAddr::IP::Lite
 
+1.24  Fri Dec 17 17:47:47 PST 2010
+	Modify subs "new" and "new6" to accomodate
+	Cisco mask syntax that uses space instead of "/" for a separator
+	This eliminates the need for "new_cis" and "newcis6" which are now
+	deprecated.
+
+	Modify t/v4-cnew.t and add t/v6-cnew.t to test the above
+
 1.23  Fri Nov 19 10:48:01 PST 2010
 	add :upper and :lower to Lite.pm v1.23
 	add comments about rfc5952 requirement for lowercase ipV6 notation
