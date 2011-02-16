@@ -1,5 +1,8 @@
 Revision history for Perl extension NetAddr::IP
 
+4.039 Wed Feb 16 15:48:03 PST 2011
+	Correct documentation for 'split' methods
+
 4.038 Fri Dec 17 17:47:47 PST 2010
         Modify subs "new" and "new6" in Lite.pm to accomodate
         Cisco mask syntax that uses space instead of "/" for a separator

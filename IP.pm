@@ -34,7 +34,7 @@ require Exporter;
 
 @ISA = qw(Exporter NetAddr::IP::Lite);
 
-$VERSION = do { sprintf " %d.%03d", (q$Revision: 4.38 $ =~ /\d+/g) };
+$VERSION = do { sprintf " %d.%03d", (q$Revision: 4.39 $ =~ /\d+/g) };
 
 =pod
 
@@ -877,7 +877,7 @@ splitting off the first parts of the list, a "best fits" list of remaining
 objects will be returned based on an increasing sort of the CIDR values of
 the C<bits> list.
 
-  i.e.	my $ip = new NetAddr::IP('192.168.0.0');
+  i.e.	my $ip = new NetAddr::IP('192.168.0.0/24');
 	my $objptr = $ip->split(28, 29, 28, 29, 26);
 
    has split plan 28 29 28 29 26 26 26 28
@@ -900,7 +900,7 @@ the remaining return object requirement.
 C<-E<gt>rsplitref> is the same as C<-E<gt>splitref> above except that the split plan is
 applied to the original object in reverse order.
 
-  i.e.	my $ip = new NetAddr::IP('192.168.0.0');
+  i.e.	my $ip = new NetAddr::IP('192.168.0.0/24');
 	my @objects = $ip->split(28, 29, 28, 29, 26);
 
    has split plan 28 26 26 26 29 28 29 28
