@@ -13,7 +13,7 @@ require Exporter;
 
 @ISA = qw(Exporter DynaLoader);
 
-$VERSION = do { my @r = (q$Revision: 1.35 $ =~ /\d+/g); sprintf "%d."."%02d" x $#r, @r };
+$VERSION = do { my @r = (q$Revision: 1.36 $ =~ /\d+/g); sprintf "%d."."%02d" x $#r, @r };
 
 @EXPORT_OK = qw(
 	inet_aton
@@ -114,9 +114,11 @@ else {
 }
 
 # allow user to choose upper or lower case
-
-my $n2x_format = "%X:%X:%X:%X:%X:%X:%X:%X";
-my $n2d_format = "%X:%X:%X:%X:%X:%X:%D.%D.%D.%D";
+BEGIN {
+  use vars qw($n2x_format $n2d_format);
+  $n2x_format = "%X:%X:%X:%X:%X:%X:%X:%X";
+  $n2d_format = "%X:%X:%X:%X:%X:%X:%D.%D.%D.%D";
+}
 
 sub upper { $n2x_format = uc($n2x_format); $n2d_format = uc($n2d_format); }
 sub lower { $n2x_format = lc($n2x_format); $n2d_format = lc($n2d_format); }
@@ -473,6 +475,7 @@ dot-quad IPv4 or a hex notation IPv6 address.
 sub inet_n2dx($) {
   my($nadr) = @_;
   if (isIPv4($nadr)) {
+    local $1;
     ipv6_n2d($nadr) =~ /([^:]+)$/;
     return $1;
   }
@@ -494,6 +497,7 @@ sub inet_n2ad($) {
   my($nadr) = @_;
   my $addr = ipv6_n2d($nadr);
   return $addr unless isIPv4($nadr);
+  local $1;
   $addr =~ /([^:]+)$/;
   return $1;
 }

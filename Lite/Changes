@@ -1,5 +1,11 @@
 Revision history for Perl extension NetAddr::IP::Lite
 
+1.25  Sat Feb 19 10:04:00 PST 2011
+	correction to use of Util.pm package lexicals
+
+	thanks to mishikal@yahoo.com for spotting the bug and to
+	Mark Martinec mark.martinec+ama...@ijs.si for the solution.
+
 1.24  Fri Dec 17 17:47:47 PST 2010
 	Modify subs "new" and "new6" to accomodate
 	Cisco mask syntax that uses space instead of "/" for a separator
