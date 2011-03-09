@@ -1,5 +1,11 @@
 Revision history for Perl extension NetAddr::IP
 
+4.041 Tue Mar  8 15:18:16 PST 2011
+        Updated Lite.pm v1.26, "sub num" to support usable IP ranges 
+	greater than 2**32
+
+        Thanks to Jan Ploski jan@plosquare.com for finding this bug
+
 4.040 Sat Feb 19 10:04:00 PST 2011     
 	correction to use of Util.pm package lexicals
 

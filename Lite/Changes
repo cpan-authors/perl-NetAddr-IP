@@ -1,5 +1,10 @@
 Revision history for Perl extension NetAddr::IP::Lite
 
+1.26  Tue Mar  8 15:18:16 PST 2011
+	Updated "sub num" to support usable IP ranges greater than 2**32
+
+	Thanks to Jan Ploski jan@plosquare.com for finding this bug
+
 1.25  Sat Feb 19 10:04:00 PST 2011
 	correction to use of Util.pm package lexicals
 

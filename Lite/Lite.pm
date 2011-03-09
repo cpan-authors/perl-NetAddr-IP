@@ -29,7 +29,7 @@ use NetAddr::IP::Util qw(
 
 use vars qw(@ISA @EXPORT_OK $VERSION $Accept_Binary_IP $Old_nth $AUTOLOAD *Zero);
 
-$VERSION = do { my @r = (q$Revision: 1.25 $ =~ /\d+/g); sprintf "%d."."%02d" x $#r, @r };
+$VERSION = do { my @r = (q$Revision: 1.26 $ =~ /\d+/g); sprintf "%d."."%02d" x $#r, @r };
 
 require Exporter;
 
@@ -1210,30 +1210,64 @@ sub nth ($$) {
 =item C<-E<gt>num()>
 
 Version 4.00 of NetAddr::IP and version 1.00 of NetAddr::IP::Lite
-Returns the number of usable addresses IP addresses within the
-subnet, not counting the broadcast or network address. Previous versions
-returned th number of IP addresses not counting the broadcast address.
+return the number of usable IP addresses within the subnet, 
+not counting the broadcast or network address.
+
+Previous versions worked only for ipV4 addresses, returned a    
+maximum span of 2**32 and returned the number of IP addresses 
+not counting the broadcast address.
+	(one greater than the new behavior)
 
 To use the old behavior for C<-E<gt>nth($index)> and C<-E<gt>num()>:
 
   use NetAddr::IP::Lite qw(:old_nth);
 
+WARNING:
+
+NetAddr::IP will calculate and return a numeric string for network 
+ranges as large as 2**128. These values are TEXT strings and perl
+can treat them as integers for numeric calculations.
+
+Perl on 32 bit platforms only handles integer numbers up to 2**32 
+and on 64 bit platforms to 2**64.
+
+If you wish to manipulate numeric strings returned by NetAddr::IP
+that are larger than 2**32 or 2**64, respectively,  you must load 
+additional modules such as Math::BigInt, bignum or some similar 
+package to do the integer math.
+
 =cut
 
 sub num ($) {
-  my @net = unpack('L3N',$_[0]->{mask} ^ Ones);
   if ($Old_nth) {
+    my @net = unpack('L3N',$_[0]->{mask} ^ Ones);
 # number of ip's less broadcast
     return 0xfffffffe if $net[0] || $net[1] || $net[2]; # 2**32 -1
     return $net[3] if $net[3];
   } else {	# returns 1 for /32 /128, 0 for /31 /127 else n-2 up to 2**32
-# number of usable IP's === number of ip's less broadcast & network addys
-    return 0xfffffffd if $net[0] || $net[1] || $net[2]; # 2**32 -2
-    return 1 unless $net[3];
-    $net[3]--;
+    (undef, my $net) = addconst($_[0]->{mask},1);
+    return 1 unless hasbits($net);	# ipV4/32 or ipV6/128
+    $net = $net ^ Ones;
+    return 0 unless hasbits($net);	# ipV4/31 or ipV6/127
+    return bin2bcd($net);
   }
-  return $net[3];
 }
+
+# deprecated
+#sub num ($) {
+#  my @net = unpack('L3N',$_[0]->{mask} ^ Ones);
+#  if ($Old_nth) {
+## number of ip's less broadcast
+#    return 0xfffffffe if $net[0] || $net[1] || $net[2]; # 2**32 -1
+#    return $net[3] if $net[3];
+#  } else {	# returns 1 for /32 /128, 0 for /31 /127 else n-2 up to 2**32
+## number of usable IP's === number of ip's less broadcast & network addys
+#    return 0xfffffffd if $net[0] || $net[1] || $net[2]; # 2**32 -2
+#    return 1 unless $net[3];
+#    $net[3]--;
+#  }
+#  return $net[3];
+#}
 
 =pod
 

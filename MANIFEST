@@ -63,6 +63,7 @@ Lite/t/v6-inc.t
 Lite/t/v6-new_cis6_base.t
 Lite/t/v6-new_cis_base.t
 Lite/t/v6-new-base.t
+Lite/t/v6-num.t
 Lite/t/v6-numeric.t
 Lite/t/v6-old-base.t
 Lite/t/version.t

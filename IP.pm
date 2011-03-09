@@ -4,7 +4,7 @@ package NetAddr::IP;
 
 use strict;
 #use diagnostics;
-use NetAddr::IP::Lite 1.25 qw(Zero Zeros Ones V4mask V4net);
+use NetAddr::IP::Lite 1.26 qw(Zero Zeros Ones V4mask V4net);
 use NetAddr::IP::Util 1.36 qw(
 	sub128
 	inet_aton
@@ -34,7 +34,7 @@ require Exporter;
 
 @ISA = qw(Exporter NetAddr::IP::Lite);
 
-$VERSION = do { sprintf " %d.%03d", (q$Revision: 4.40 $ =~ /\d+/g) };
+$VERSION = do { sprintf " %d.%03d", (q$Revision: 4.41 $ =~ /\d+/g) };
 
 =pod
 
@@ -1237,13 +1237,31 @@ To use the old behavior for C<-E<gt>nth($index)> and C<-E<gt>num()>:
 =item C<-E<gt>num()>
 
 Version 4.00 of NetAddr::IP and version 1.00 of NetAddr::IP::Lite
-Returns the number of usable addresses IP addresses within the
-subnet, not counting the broadcast or network address. Previous versions
-returned th number of IP addresses not counting the broadcast address.
+return the number of usable IP addresses within the subnet, 
+not counting the broadcast or network address.
+
+Previous versions worked only for ipV4 addresses, returned a 
+maximum span of 2**32 and returned the number of IP addresses
+not counting the broadcast address.
+	(one greater than the new behavior)
 
 To use the old behavior for C<-E<gt>nth($index)> and C<-E<gt>num()>:
 
   use NetAddr::IP::Lite qw(:old_nth);
+
+WARNING:
+
+NetAddr::IP will calculate and return a numeric string for network
+ranges as large as 2**128. These values are TEXT strings and perl
+can treat them as integers for numeric calculations.
+
+Perl on 32 bit platforms only handles integer numbers up to 2**32
+and on 64 bit platforms to 2**64.
+
+If you wish to manipulate numeric strings returned by NetAddr::IP
+that are larger than 2**32 or 2**64, respectively,  you must load
+additional modules such as Math::BigInt, bignum or some similar 
+package to do the integer math.
 
 =item C<-E<gt>re()>
 
