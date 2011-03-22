@@ -4,7 +4,7 @@ package NetAddr::IP;
 
 use strict;
 #use diagnostics;
-use NetAddr::IP::Lite 1.26 qw(Zero Zeros Ones V4mask V4net);
+use NetAddr::IP::Lite 1.27 qw(Zero Zeros Ones V4mask V4net);
 use NetAddr::IP::Util 1.36 qw(
 	sub128
 	inet_aton
@@ -34,7 +34,7 @@ require Exporter;
 
 @ISA = qw(Exporter NetAddr::IP::Lite);
 
-$VERSION = do { sprintf " %d.%03d", (q$Revision: 4.41 $ =~ /\d+/g) };
+$VERSION = do { sprintf " %d.%03d", (q$Revision: 4.42 $ =~ /\d+/g) };
 
 =pod
 
@@ -1234,16 +1234,49 @@ To use the old behavior for C<-E<gt>nth($index)> and C<-E<gt>num()>:
 
   use NetAddr::IP::Lite qw(:old_nth);
 
+  old behavior:
+  NetAddr::IP->new('10/32')->nth(0) == undef
+  NetAddr::IP->new('10/32')->nth(1) == undef
+  NetAddr::IP->new('10/31')->nth(0) == undef
+  NetAddr::IP->new('10/31')->nth(1) == 10.0.0.1/31
+  NetAddr::IP->new('10/30')->nth(0) == undef
+  NetAddr::IP->new('10/30')->nth(1) == 10.0.0.1/30
+  NetAddr::IP->new('10/30')->nth(2) == 10.0.0.2/30
+  NetAddr::IP->new('10/30')->nth(3) == 10.0.0.3/30
+
+Note that in each case, the broadcast address is represented in the
+output set and that the 'zero'th index is alway undef except for   
+a point-to-point /31 or /127 network where there are exactly two   
+addresses in the network.
+
+  new behavior:
+  NetAddr::IP->new('10/32')->nth(0)  == 10.0.0.0/32
+  NetAddr::IP->new('10.1/32'->nth(0) == 10.0.0.1/32
+  NetAddr::IP->new('10/31')->nth(0)  == 10.0.0.0/32
+  NetAddr::IP->new('10/31')->nth(1)  == 10.0.0.1/32
+  NetAddr::IP->new('10/30')->nth(0) == 10.0.0.1/30 
+  NetAddr::IP->new('10/30')->nth(1) == 10.0.0.2/30 
+  NetAddr::IP->new('10/30')->nth(2) == undef
+
+Note that a /32 net always has 1 usable address while a /31 has exactly 
+two usable addresses for point-to-point addressing. The first
+index (0) returns the address immediately following the network address
+except for a /31 or /127 when it return the network address.
+
 =item C<-E<gt>num()>
+
+As of version 4.42 of NetAddr::IP and version 1.27 of NetAddr::IP::Lite
+a /31 and /127 with return a net B<num> value of 2 instead of 0 (zero) 
+for point-to-point networks.
 
 Version 4.00 of NetAddr::IP and version 1.00 of NetAddr::IP::Lite
 return the number of usable IP addresses within the subnet, 
 not counting the broadcast or network address.
 
-Previous versions worked only for ipV4 addresses, returned a 
+Previous versions worked only for ipV4 addresses, returned a
 maximum span of 2**32 and returned the number of IP addresses
 not counting the broadcast address.
-	(one greater than the new behavior)
+        (one greater than the new behavior)
 
 To use the old behavior for C<-E<gt>nth($index)> and C<-E<gt>num()>:
 
@@ -1252,7 +1285,7 @@ To use the old behavior for C<-E<gt>nth($index)> and C<-E<gt>num()>:
 WARNING:
 
 NetAddr::IP will calculate and return a numeric string for network
-ranges as large as 2**128. These values are TEXT strings and perl
+ranges as large as 2**128. These values are TEXT strings and perl 
 can treat them as integers for numeric calculations.
 
 Perl on 32 bit platforms only handles integer numbers up to 2**32
@@ -1260,7 +1293,7 @@ and on 64 bit platforms to 2**64.
 
 If you wish to manipulate numeric strings returned by NetAddr::IP
 that are larger than 2**32 or 2**64, respectively,  you must load
-additional modules such as Math::BigInt, bignum or some similar 
+additional modules such as Math::BigInt, bignum or some similar  
 package to do the integer math.
 
 =item C<-E<gt>re()>

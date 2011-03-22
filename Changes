@@ -1,10 +1,26 @@
 Revision history for Perl extension NetAddr::IP
 
+4.042 Tue Mar 22 15:26:02 PDT 2011
+	Update Lite.pm v1.27 to encompass treatment of /31 and /127 
+	point-to-point networks as described in RFC 3021
+
+	NOTE: for /31's and /127's
+	this changes the behavior of the following methods:
+		first   returns the "network" address
+		last    returns the "broadcast" address
+		nth     index 0 returns "network" addr instead of undef
+		nth     index 1 returns "broadcast" addr instead of undef
+		num     returns 2 instead of 0 (zero)
+
+	"old_nth" behavior is unchanged
+
+	Thanks to Todd Caine todd.caine@gmail.com for pointing this out.
+
 4.041 Tue Mar  8 15:18:16 PST 2011
-        Updated Lite.pm v1.26, "sub num" to support usable IP ranges 
+	Updated Lite.pm v1.26, "sub num" to support usable IP ranges 
 	greater than 2**32
 
-        Thanks to Jan Ploski jan@plosquare.com for finding this bug
+	Thanks to Jan Ploski jan@plosquare.com for finding this bug
 
 4.040 Sat Feb 19 10:04:00 PST 2011     
 	correction to use of Util.pm package lexicals

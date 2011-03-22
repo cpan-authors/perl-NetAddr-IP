@@ -391,23 +391,30 @@ DESCRIPTION
           NetAddr::IP->new('10/30')->nth(3) == 10.0.0.3/30
 
         Note that in each case, the broadcast address is represented in the
-        output set and that the 'zero'th index is alway undef.
+        output set and that the 'zero'th index is alway undef except for a
+        point-to-point /31 or /127 network where there are exactly two
+        addresses in the network.
 
           new behavior:
           NetAddr::IP->new('10/32')->nth(0)  == 10.0.0.0/32
           NetAddr::IP->new('10.1/32'->nth(0) == 10.0.0.1/32
-          NetAddr::IP->new('10/31')->nth(0)  == undef
-          NetAddr::IP->new('10/31')->nth(1)  == undef
+          NetAddr::IP->new('10/31')->nth(0)  == 10.0.0.0/32
+          NetAddr::IP->new('10/31')->nth(1)  == 10.0.0.1/32
           NetAddr::IP->new('10/30')->nth(0) == 10.0.0.1/30
           NetAddr::IP->new('10/30')->nth(1) == 10.0.0.2/30
           NetAddr::IP->new('10/30')->nth(2) == undef
 
-        Note that a /32 net always has 1 usable address while a /31 has none
-        since it has a network and broadcast address, but no host addresses.
-        The first index (0) returns the address immediately following the
-        network address.
+        Note that a /32 net always has 1 usable address while a /31 has
+        exactly two usable addresses for point-to-point addressing. The
+        first index (0) returns the address immediately following the
+        network address except for a /31 or /127 when it return the network
+        address.
 
     "->num()"
+        As of version 4.42 of NetAddr::IP and version 1.27 of
+        NetAddr::IP::Lite a /31 and /127 with return a net num value of 2
+        instead of 0 (zero) for point-to-point networks.
+
         Version 4.00 of NetAddr::IP and version 1.00 of NetAddr::IP::Lite
         return the number of usable IP addresses within the subnet, not
         counting the broadcast or network address.

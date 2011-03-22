@@ -21,9 +21,10 @@ sub tst {
   for my $a (keys %$nets) {
     my $nc = $nets->{$a}->[1] - $new;	# net count
     $nc = 1 if $nc < 0;
+    $nc = 2 if $new && $nets->{$a}->[0] == 31;	# special case for /31, /127
     my $ip = new NetAddr::IP::Lite $a, $nets->{$a}->[0];
     print "got: $_, exp: $nc\nnot "
-	unless $ip->num == $nc;
+	unless ($_ = $ip->num) == $nc;
     print "ok ", $test++, "\n";
   }
 }

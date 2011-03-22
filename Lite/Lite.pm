@@ -29,7 +29,7 @@ use NetAddr::IP::Util qw(
 
 use vars qw(@ISA @EXPORT_OK $VERSION $Accept_Binary_IP $Old_nth $AUTOLOAD *Zero);
 
-$VERSION = do { my @r = (q$Revision: 1.26 $ =~ /\d+/g); sprintf "%d."."%02d" x $#r, @r };
+$VERSION = do { my @r = (q$Revision: 1.27 $ =~ /\d+/g); sprintf "%d."."%02d" x $#r, @r };
 
 require Exporter;
 
@@ -1139,8 +1139,15 @@ the subnet (ie, the first host address).
 
 =cut
 
+my $_cidr127 = pack('N4',0xffffffff,0xffffffff,0xffffffff,0xfffffffe);
+
 sub first ($) {
-  return $_[0]->network + 1;
+  if (hasbits($_[0]->{mask} ^ $_cidr127)) {
+    return $_[0]->network + 1;
+  } else {
+    return $_[0]->network;
+  }
+#  return $_[0]->network + 1;
 }
 
 =item C<-E<gt>last()>
@@ -1151,7 +1158,12 @@ the subnet (ie, one less than the broadcast address).
 =cut
 
 sub last ($) {
-  return $_[0]->broadcast - 1;
+  if (hasbits($_[0]->{mask} ^ $_cidr127)) {
+    return $_[0]->broadcast - 1;
+  } else {
+    return $_[0]->broadcast;
+  }
+#  return $_[0]->broadcast - 1;
 }
 
 =item C<-E<gt>nth($index)>
@@ -1181,20 +1193,23 @@ To use the old behavior for C<-E<gt>nth($index)> and C<-E<gt>num()>:
   NetAddr::IP->new('10/30')->nth(3) == 10.0.0.3/30
 
 Note that in each case, the broadcast address is represented in the
-output set and that the 'zero'th index is alway undef.
+output set and that the 'zero'th index is alway undef except for
+a point-to-point /31 or /127 network where there are exactly two
+addresses in the network.
 
   new behavior:
   NetAddr::IP->new('10/32')->nth(0)  == 10.0.0.0/32
   NetAddr::IP->new('10.1/32'->nth(0) == 10.0.0.1/32
-  NetAddr::IP->new('10/31')->nth(0)  == undef
-  NetAddr::IP->new('10/31')->nth(1)  == undef
+  NetAddr::IP->new('10/31')->nth(0)  == 10.0.0.0/32
+  NetAddr::IP->new('10/31')->nth(1)  == 10.0.0.1/32
   NetAddr::IP->new('10/30')->nth(0) == 10.0.0.1/30
   NetAddr::IP->new('10/30')->nth(1) == 10.0.0.2/30
   NetAddr::IP->new('10/30')->nth(2) == undef
 
-Note that a /32 net always has 1 usable address while a /31 has none since
-it has a network and broadcast address, but no host addresses. The first
-index (0) returns the address immediately following the network address.
+Note that a /32 net always has 1 usable address while a /31 has exactly 
+two usable addresses for point-to-point addressing. The first
+index (0) returns the address immediately following the network address 
+except for a /31 or /127 when it return the network address.
 
 =cut
 
@@ -1202,12 +1217,25 @@ sub nth ($$) {
   my $self    = shift;
   my $count   = shift;
 
-  ++$count unless ($Old_nth);
-  return undef if ($count < 1 or $count > $self->num ());
+  my $slash31 = ! hasbits($self->{mask} ^ $_cidr127);
+  if ($Old_nth) {
+    return undef if $slash31 && $count != 1;
+    return undef if ($count < 1 or $count > $self->num ());
+  }
+  elsif ($slash31) {
+    return undef if ($count && $count != 1);	# only index 0, 1 allowed for /31
+  } else {
+    ++$count;
+    return undef if ($count < 1 or $count > $self->num ());
+  }
   return $self->network + $count;
 }
 
 =item C<-E<gt>num()>
+
+As of version 4.42 of NetAddr::IP and version 1.27 of NetAddr::IP::Lite
+a /31 and /127 with return a net B<num> value of 2 instead of 0 (zero)
+for point-to-point networks.
 
 Version 4.00 of NetAddr::IP and version 1.00 of NetAddr::IP::Lite
 return the number of usable IP addresses within the subnet, 
@@ -1244,11 +1272,11 @@ sub num ($) {
 # number of ip's less broadcast
     return 0xfffffffe if $net[0] || $net[1] || $net[2]; # 2**32 -1
     return $net[3] if $net[3];
-  } else {	# returns 1 for /32 /128, 0 for /31 /127 else n-2 up to 2**32
+  } else {	# returns 1 for /32 /128, 2 for /31 /127 else n-2 up to 2**32
     (undef, my $net) = addconst($_[0]->{mask},1);
     return 1 unless hasbits($net);	# ipV4/32 or ipV6/128
     $net = $net ^ Ones;
-    return 0 unless hasbits($net);	# ipV4/31 or ipV6/127
+    return 2 unless hasbits($net);	# ipV4/31 or ipV6/127
     return bin2bcd($net);
   }
 }

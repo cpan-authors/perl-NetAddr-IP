@@ -39,6 +39,6 @@ print "got: $_, exp: 1\nnot "
 &ok;
 
 print "got: $_, exp: 0\nnot "
-  unless defined ($_ = NetAddr::IP::Lite->new('1.2.3.4/31')->num()) && $_ == 0;
+  unless defined ($_ = NetAddr::IP::Lite->new('1.2.3.4/31')->num()) && $_ == 2;
 &ok;
 
