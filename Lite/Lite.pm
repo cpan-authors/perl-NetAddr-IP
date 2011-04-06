@@ -29,7 +29,7 @@ use NetAddr::IP::Util qw(
 
 use vars qw(@ISA @EXPORT_OK $VERSION $Accept_Binary_IP $Old_nth $AUTOLOAD *Zero);
 
-$VERSION = do { my @r = (q$Revision: 1.27 $ =~ /\d+/g); sprintf "%d."."%02d" x $#r, @r };
+$VERSION = do { my @r = (q$Revision: 1.28 $ =~ /\d+/g); sprintf "%d."."%02d" x $#r, @r };
 
 require Exporter;
 
@@ -352,7 +352,7 @@ Add a 32 bit signed constant to the address part of a NetAddr object.
 This operation changes the address part to point so many hosts above the
 current objects start address. For instance, this code:
 
-    print NetAddr::IP::Lite->new('127.0.0.1') + 5;
+    print NetAddr::IP::Lite->new('127.0.0.1/8') + 5;
 
 will output 127.0.0.6/8. The address will wrap around at the broadcast
 back to the network address. This code:

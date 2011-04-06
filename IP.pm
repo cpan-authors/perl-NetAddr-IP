@@ -34,7 +34,7 @@ require Exporter;
 
 @ISA = qw(Exporter NetAddr::IP::Lite);
 
-$VERSION = do { sprintf " %d.%03d", (q$Revision: 4.42 $ =~ /\d+/g) };
+$VERSION = do { sprintf " %d.%03d", (q$Revision: 4.43 $ =~ /\d+/g) };
 
 =pod
 
@@ -271,7 +271,7 @@ Add a 32 bit signed constant to the address part of a NetAddr object.
 This operation changes the address part to point so many hosts above the
 current objects start address. For instance, this code:
 
-    print NetAddr::IP::Lite->new('127.0.0.1') + 5;
+    print NetAddr::IP::Lite->new('127.0.0.1/8') + 5;
 
 will output 127.0.0.6/8. The address will wrap around at the broadcast
 back to the network address. This code:
