@@ -4,7 +4,7 @@ package NetAddr::IP;
 
 use strict;
 #use diagnostics;
-use NetAddr::IP::Lite 1.27 qw(Zero Zeros Ones V4mask V4net);
+use NetAddr::IP::Lite 1.28 qw(Zero Zeros Ones V4mask V4net);
 use NetAddr::IP::Util 1.36 qw(
 	sub128
 	inet_aton
@@ -34,7 +34,7 @@ require Exporter;
 
 @ISA = qw(Exporter NetAddr::IP::Lite);
 
-$VERSION = do { sprintf " %d.%03d", (q$Revision: 4.43 $ =~ /\d+/g) };
+$VERSION = do { sprintf " %d.%03d", (q$Revision: 4.44 $ =~ /\d+/g) };
 
 =pod
 
@@ -390,7 +390,9 @@ sub import
 }
 
 sub compact {
-    return @{compactref(\@_)};
+    return (ref $_[0] eq 'ARRAY')
+	? compactref($_[0])	# Compact(\@list)
+	: @{compactref(\@_)};	# Compact(@list)  or ->compact(@list)
 }
 
 *Compact = \&compact;
@@ -1084,7 +1086,9 @@ Note that C<$me> and all C<$addr>'s must be C<NetAddr::IP> objects.
 
 =item C<$me-E<gt>compactref(\@list)>
 
-As usual, a faster version of =item C<-E<gt>compact()> that returns a
+=item C<$compacted_object_list = Compact(\@list)>
+
+As usual, a faster version of C<-E<gt>compact()> that returns a
 reference to a list. Note that this method takes a reference to a list
 instead.
 
@@ -1097,39 +1101,57 @@ sub compactref($) {
 #	or return [];
 #  return [] unless @r;
 
-  return [] unless (my @unr = @{$_[0]});
+  my @r;
+  {
+    my $unr  = [];
+    my $args = $_[0];
 
-  foreach(0..$#unr) {
-    $unr[$_]->{addr} = $unr[$_]->network->{addr};
+    if (ref $_[0] eq __PACKAGE__ and ref $_[1] eq 'ARRAY') {
+      # ->compactref(\@list)
+      #
+      $unr = [$_[0], @{$_[1]}]; # keeping structures intact
+    }
+    else {
+      # Compact(@list) or ->compact(@list) or Compact(\@list)
+      #
+      $unr = $args;
+    }
+
+    return [] unless @$unr;
+
+    foreach(@$unr) {
+      $_->{addr} = $_->network->{addr};
+    }
+
+    @r = sort @$unr;
   }
-  my @r = sort @unr;
 
   my $changed;
   do {
-	$changed = 0;
-	for(my $i=0; $i <= $#r -1;$i++) {
-	  if ($r[$i]->contains($r[$i +1])) {
-	    splice(@r,$i +1,1);
-	    ++$changed;
-	    --$i;
-	  }
-	  elsif ((notcontiguous($r[$i]->{mask}))[1] == (notcontiguous($r[$i +1]->{mask}))[1]) {		# masks the same
-	    if (hasbits($r[$i]->network->{addr} ^ $r[$i +1]->network->{addr})) {	# if not the same netblock
-	      my $upnet = $r[$i]->copy;
-	      $upnet->{mask} = shiftleft($upnet->{mask},1);
-	      if ($upnet->contains($r[$i +1])) {					# adjacent nets in next net up
-		$r[$i] = $upnet;
-		splice(@r,$i +1,1);
-		++$changed;
-		--$i;
-	      }
-	    } else {									# identical nets
-	      splice(@r,$i +1,1);
-	      ++$changed;
-	      --$i;
-	    }
-	  }
-	}
+    $changed = 0;
+    for(my $i=0; $i <= $#r -1;$i++) {
+      if ($r[$i]->contains($r[$i +1])) {
+        splice(@r,$i +1,1);
+        ++$changed;
+        --$i;
+      }
+      elsif ((notcontiguous($r[$i]->{mask}))[1] == (notcontiguous($r[$i +1]->{mask}))[1]) {		# masks the same
+        if (hasbits($r[$i]->{addr} ^ $r[$i +1]->{addr})) {	# if not the same netblock
+          my $upnet = $r[$i]->copy;
+          $upnet->{mask} = shiftleft($upnet->{mask},1);
+          if ($upnet->contains($r[$i +1])) {					# adjacent nets in next net up
+      $r[$i] = $upnet;
+      splice(@r,$i +1,1);
+      ++$changed;
+      --$i;
+          }
+        } else {									# identical nets
+          splice(@r,$i +1,1);
+          ++$changed;
+          --$i;
+        }
+      }
+    }
   } while $changed;
   return \@r;
 }

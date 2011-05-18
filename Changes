@@ -1,5 +1,12 @@
 Revision history for Perl extension NetAddr::IP
 
+4.044 Wed May 18 14:47:34 PDT 2011
+	added missing support for ->compactref(\@list) which is described
+	in the documentation but not implemented.
+
+	Thanks to Rusty Bourland codebard@gmail.com for spotting this
+	and providing both a patch and test code
+
 4.043 Wed Apr  6 11:31:19 PDT 2011
 	Update documentation on the use of "adding constants 
 	to an IP address".
