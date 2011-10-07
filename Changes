@@ -1,5 +1,11 @@
 Revision history for Perl extension NetAddr::IP
 
+4.045 Thu Oct  6 18:23:04 PDT 2011
+	updated NetAddr::IP::Util 1.37
+        addid isAnyIPv4, isNewIPv4, inet_4map6
+        revised naip_gethostbyname
+        to conform to Perl's gethostbyname output
+
 4.044 Wed May 18 14:47:34 PDT 2011
 	added missing support for ->compactref(\@list) which is described
 	in the documentation but not implemented.

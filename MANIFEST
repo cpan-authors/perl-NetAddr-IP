@@ -139,4 +139,10 @@ t/v6-split-bulk.t
 t/v6-splitplan.t
 t/wildcard.t
 TODO
+Lite/bug2742981.pl
+Lite/MANIFEST
+Lite/MANIFEST.SKIP
+Lite/Util/MANIFEST
+Lite/Util/MANIFEST.SKIP
+Lite/Util/t/inet_4map6.t
 META.yml                                 Module meta-data (added by MakeMaker)

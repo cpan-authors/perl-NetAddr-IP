@@ -5,13 +5,15 @@
 # Change 1..1 below to 1..last_test_to_print .
 # (It may become useful if the test is moved to ./t subdirectory.)
 
-BEGIN { $| = 1; print "1..106\n"; }
+BEGIN { $| = 1; print "1..421\n"; }
 END {print "not ok 1\n" unless $loaded;}
 
 use NetAddr::IP::Util qw(
 	ipv6_aton
 	ipv6_n2x
 	isIPv4
+	isNewIPv4
+	isAnyIPv4
 );
 
 $loaded = 1;
@@ -138,9 +140,45 @@ my @num = qw	# input
 	::1
 );
 
+# check isIPv4
+
 foreach (@num) {
   my $bstr = ipv6_aton($_);
   my $rv = isIPv4($bstr);
+  my $exp = ($_ =~ /\d::$/) ? 0:1;
+  print "got: $rv, exp: $exp for ", ipv6_n2x($bstr), "\nnot "
+	 unless $rv eq $exp;
+  &ok;
+}
+
+# check isAnyIPv4
+foreach (@num) {
+  my $bstr = ipv6_aton($_);
+  my $rv = isAnyIPv4($bstr);
+  my $exp = ($_ =~ /\d::$/) ? 0:1;
+  print "got: $rv, exp: $exp for ", ipv6_n2x($bstr), "\nnot "
+	 unless $rv eq $exp;
+  &ok;
+}
+
+my $compat = ipv6_aton('::FFFF:FFFF:0:0');
+
+# check isAnyIPv4	with compatible high bits
+foreach (@num) {
+  my $bstr = ipv6_aton($_);
+  $bstr ^= $compat;
+  my $rv = isAnyIPv4($bstr);
+  my $exp = ($_ =~ /\d::$/) ? 0:1;
+  print "got: $rv, exp: $exp for ", ipv6_n2x($bstr), "\nnot "
+	 unless $rv eq $exp;
+  &ok;
+}
+
+# check isNewIPv4	with compatible high bits
+foreach (@num) {
+  my $bstr = ipv6_aton($_);
+  $bstr ^= $compat;
+  my $rv = isNewIPv4($bstr);
   my $exp = ($_ =~ /\d::$/) ? 0:1;
   print "got: $rv, exp: $exp for ", ipv6_n2x($bstr), "\nnot "
 	 unless $rv eq $exp;

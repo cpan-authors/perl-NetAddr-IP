@@ -11,8 +11,11 @@ SYNOPSIS
             inet_any2n
             hasbits
             isIPv4
+            isNewIPv4
+            isAnyIPv4
             inet_n2dx
             inet_n2ad
+            inet_4map6
             ipv4to6
             mask4to6
             ipanyto6
@@ -33,19 +36,19 @@ SYNOPSIS
 
       :inet   =>    inet_aton, inet_ntoa, ipv6_aton,
                     ipv6_n2x, ipv6_n2d, inet_any2n,
-                    inet_n2dx, inet_n2ad, ipv4to6,
-                    mask4to6, ipanyto6, maskanyto6,
-                    ipv6to4, naip_gethostbyname
+                    inet_n2dx, inet_n2ad, inet_4map6,
+                    ipv4to6, mask4to6, ipanyto6, 
+                    maskanyto6, ipv6to4, naip_gethostbyname
 
       :ipv4   =>    inet_aton, inet_ntoa
 
       :ipv6   =>    ipv6_aton, ipv6_n2x, ipv6_n2d,
                     inet_any2n, inet_n2dx, inet_n2ad
-                    ipv4to6, mask4to6, ipanyto6,
+                    inet_4map6, ipv4to6, mask4to6, ipanyto6,
                     maskanyto6, ipv6to4, naip_gethostbyname
 
-      :math   =>    hasbits, isIPv4, addconst,
-                    add128, sub128, notcontiguous,
+      :math   =>    hasbits, isIPv4, isNewIPv4, isAnyIPv4,
+                    addconst, add128, sub128, notcontiguous,
                     bin2bcd, bcd2bin, shiftleft
 
       $dotquad = inet_ntoa($netaddr);
@@ -54,8 +57,11 @@ SYNOPSIS
       $hex_text = ipv6_n2x($ipv6naddr);
       $dec_text = ipv6_n2d($ipv6naddr);
       $ipv6naddr = inet_any2n($dotquad or $ipv6_text);
+      $ipv6naddr = inet_4map6($netaddr or $ipv6naddr);
       $rv = hasbits($bits128);
       $rv = isIPv4($bits128);
+      $rv = isNewIPv4($bits128);
+      $rv = isAnyIPv4($bits128);
       $dotquad or $hex_text = inet_n2dx($ipv6naddr);
       $dotquad or $dec_text = inet_n2ad($ipv6naddr);
       $ipv6naddr = ipv4to6($netaddr);
@@ -179,9 +185,39 @@ DESCRIPTION
           input:        128 bit IPv6 string
           returns:      true if any bits are present
 
+    * $ipv6naddr = inet_4map6($netaddr or $ipv6naddr
+        This function returns an ipV6 network address with the first 80 bits
+        set to zero and the next 16 bits set to one, while the last 32 bits
+        are filled with the ipV4 address.
+
+          input:        ipV4 netaddr
+                    or  ipV6 netaddr
+          returns:      ipV6 netaddr
+
+          returns: undef on error
+
+        An ipV6 network address must be in one of the two compatible ipV4
+        mapped address spaces. i.e.
+
+                ::ffff::d.d.d.d    or    ::d.d.d.d
+
     * $rv = isIPv4($bits128);
         This function returns true if there are no on bits present in the
         IPv6 portion of the 128 bit string and false otherwise.
+
+          i.e.  the address must be of the form - ::d.d.d.d
+
+        Note: this is an old and deprecated ipV4 compatible ipV6 address
+
+    * $rv = isNewIPv4($bits128);
+        This function return true if the IPv6 128 bit string is of the form
+
+                ::ffff::d.d.d.d
+
+    * $rv = isAnyIPv4($bits128);
+        This function return true if the IPv6 bit string is of the form
+
+                ::d.d.d.d       or      ::ffff::d.d.d.d
 
     * $dotquad or $hex_text = inet_n2dx($ipv6naddr);
         This function does the right thing and returns the text for either a
@@ -306,6 +342,11 @@ DESCRIPTION
     * ($name,$aliases,$addrtype,$length,@addrs)=naip_gethostbyname(NAME);
         Replacement for Perl's gethostbyname if Socket6 is available
 
+        This function ALWAYS returns an IPv6 address, even on IPv4 only
+        systems. IPv4 addresses are mapped into IPv6 space in the form:
+
+                ::FFFF:FFFF:d.d.d.d
+
     * NetAddr::IP::Util::lower();
         Return IPv6 strings in lowercase.
 
@@ -411,8 +452,11 @@ EXPORT_OK
             inet_any2n
             hasbits
             isIPv4
+            isNewIPv4
+            isAnyIPv4
             inet_n2dx
             inet_n2ad
+            inet_4map6
             ipv4to6
             mask4to6
             ipanyto6

@@ -21,11 +21,11 @@ CVS/.*
 \.tar\.gz$
 \.zip$
 _uu$
-Util_IS\.pm$
 Util\.(bs|[co])$
 localStuff\.h$
 config\.log$
 config\.h$
 config\.status
 localperl\.h
-Lite/bug2742981.pl
+tlib/NetAddr/IP/Util_IS.pm
+Util_IS.pm

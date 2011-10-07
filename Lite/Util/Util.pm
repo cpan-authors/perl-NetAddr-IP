@@ -13,7 +13,7 @@ require Exporter;
 
 @ISA = qw(Exporter DynaLoader);
 
-$VERSION = do { my @r = (q$Revision: 1.36 $ =~ /\d+/g); sprintf "%d."."%02d" x $#r, @r };
+$VERSION = do { my @r = (q$Revision: 1.37 $ =~ /\d+/g); sprintf "%d."."%02d" x $#r, @r };
 
 @EXPORT_OK = qw(
 	inet_aton
@@ -24,8 +24,11 @@ $VERSION = do { my @r = (q$Revision: 1.36 $ =~ /\d+/g); sprintf "%d."."%02d" x $
 	inet_any2n
 	hasbits
 	isIPv4
+	isNewIPv4
+	isAnyIPv4
 	inet_n2dx
 	inet_n2ad
+	inet_4map6
 	shiftleft
 	addconst
 	add128
@@ -58,6 +61,7 @@ $VERSION = do { my @r = (q$Revision: 1.36 $ =~ /\d+/g); sprintf "%d."."%02d" x $
 		inet_any2n
 		inet_n2dx
 		inet_n2ad
+		inet_4map6
 		ipv4to6
 		mask4to6
 		ipanyto6
@@ -69,6 +73,8 @@ $VERSION = do { my @r = (q$Revision: 1.36 $ =~ /\d+/g); sprintf "%d."."%02d" x $
 		shiftleft
 		hasbits
 		isIPv4
+		isNewIPv4
+		isAnyIPv4
 		addconst
 		add128
 		sub128
@@ -87,6 +93,7 @@ $VERSION = do { my @r = (q$Revision: 1.36 $ =~ /\d+/g); sprintf "%d."."%02d" x $
 		inet_any2n
 		inet_n2dx
 		inet_n2ad
+		inet_4map6
 		ipv4to6
 		mask4to6
 		ipanyto6
@@ -159,7 +166,14 @@ sub inet_aton {
 
 sub DESTROY {};
 
+my $_newV4compat = pack('L4',0,0,0xffffffff,0);
+
 my $mygethostbyname;
+my $_Sock6ok = 1;		# for testing gethostbyname
+
+sub _forceNoSock6() {
+  $_Sock6ok = 0;
+}
 
 package NetAddr::IP::UtilPolluted;
 
@@ -168,6 +182,7 @@ package NetAddr::IP::UtilPolluted;
 
 use strict;
 use Socket;
+use NetAddr::IP::Util qw(ipv6_n2x ipv4to6);
 
 sub DESTROY {};
 
@@ -178,35 +193,48 @@ my $_v4zero = pack('L',0);
 my $_zero = pack('L4',0,0,0,0);
 
 sub _end_gethostbyname {
-  my $tip = $_[0];
-  return undef unless $tip && $tip ne $_v4zero && $tip ne $_zero;
-  my $len = length($tip);
-  if ($len == 4) {
-    return Util::ipv4to6($tip);
+#  my ($name,$aliases,$addrtype,$length,@addrs) = @_;
+  my @rv = @_;
+# first ip address = rv[4]
+  my $tip = $rv[4];
+  unless ($tip && $tip ne $_v4zero && $tip ne $_zero) {
+    @rv = ();
   }
-  elsif ($len == 16) {
-    return $tip;
+# length = rv[3]
+  elsif ($rv[3] && $rv[3] == 4) {
+    foreach (4..$#rv) {
+      $rv[$_] = ipv4to6(inet_4map6($rv[$_]));
+    }
+    $rv[3] = 16;	# unconditionally set length to 16
   }
-  return undef;
+  elsif ($rv[3] == 16) {
+    ;	# is ok
+  } else {
+    @rv = ();
+  }
+  return wantarray ? @rv : $rv[4];
 }
 
-unless (eval { require Socket6 }) {
+unless ($_Sock6ok && eval { require Socket6 }) {
   $mygethostbyname = sub {
-	my $tip = gethostbyname($_[0]);
- 	return &_end_gethostbyname($tip);
+        my @tip = gethostbyname($_[0]);
+        return &_end_gethostbyname(@tip);
   };
 } else {
   import Socket6 qw( gethostbyname2 );
   import Socket6 qw( AF_INET6 )
-	unless eval { &AF_INET6 };
-  my $tip;
+        unless eval { &AF_INET6 };
+
   $mygethostbyname = sub {
-	unless ($tip = gethostbyname2($_[0],&AF_INET6)) {
-	  $tip = gethostbyname($_[0]);
-	}
-	return &_end_gethostbyname($tip);
+	my @tip;
+        unless (@tip = gethostbyname2($_[0],&AF_INET6)) {
+          @tip = gethostbyname($_[0]);
+        }
+        return &_end_gethostbyname(@tip);
   };
 }
+
+#package NetAddr::IP::Util;
 
 package NetAddr::IP::Util;
 
@@ -216,7 +244,36 @@ sub naip_gethostbyname {
   return &$mygethostbyname($_[0]);
 }
 
+sub isNewIPv4 {
+print "NOT DEFINE\n" unless defined $_[0];
+  my $naddr = $_[0] ^ $_newV4compat;
+  return isIPv4($naddr);
+}
+
+sub isAnyIPv4 {
+  my $naddr = $_[0];
+  my $rv = isIPv4($_[0]);
+  return $rv if $rv;
+  return isNewIPv4($naddr);
+}
+
+sub inet_4map6 {
+  my $naddr = shift;
+  if (length($naddr) == 4) {
+    $naddr = ipv4to6($naddr);
+  }
+  elsif (length($naddr) == 16) {
+    ;	# is OK
+    return undef unless isAnyIPv4($naddr);
+  } else {
+    return undef;
+  }
+  $naddr |= $_newV4compat;
+  return $naddr;
+}
+
 1;
+
 __END__
 
 =head1 NAME
@@ -234,8 +291,11 @@ NetAddr::IP::Util -- IPv4/6 and 128 bit number utilities
 	inet_any2n
 	hasbits
 	isIPv4
+	isNewIPv4
+	isAnyIPv4
 	inet_n2dx
 	inet_n2ad
+	inet_4map6
 	ipv4to6
 	mask4to6
 	ipanyto6
@@ -256,19 +316,19 @@ NetAddr::IP::Util -- IPv4/6 and 128 bit number utilities
 
   :inet	  =>	inet_aton, inet_ntoa, ipv6_aton,
 		ipv6_n2x, ipv6_n2d, inet_any2n,
-		inet_n2dx, inet_n2ad, ipv4to6,
-		mask4to6, ipanyto6, maskanyto6,
-		ipv6to4, naip_gethostbyname
+		inet_n2dx, inet_n2ad, inet_4map6,
+		ipv4to6, mask4to6, ipanyto6, 
+		maskanyto6, ipv6to4, naip_gethostbyname
 
   :ipv4	  =>	inet_aton, inet_ntoa
 
   :ipv6	  =>	ipv6_aton, ipv6_n2x, ipv6_n2d,
 		inet_any2n, inet_n2dx, inet_n2ad
-		ipv4to6, mask4to6, ipanyto6,
+		inet_4map6, ipv4to6, mask4to6, ipanyto6,
 		maskanyto6, ipv6to4, naip_gethostbyname
 
-  :math	  =>	hasbits, isIPv4, addconst,
-		add128, sub128, notcontiguous,
+  :math	  =>	hasbits, isIPv4, isNewIPv4, isAnyIPv4,
+		addconst, add128, sub128, notcontiguous,
 		bin2bcd, bcd2bin, shiftleft
 
   $dotquad = inet_ntoa($netaddr);
@@ -277,8 +337,11 @@ NetAddr::IP::Util -- IPv4/6 and 128 bit number utilities
   $hex_text = ipv6_n2x($ipv6naddr);
   $dec_text = ipv6_n2d($ipv6naddr);
   $ipv6naddr = inet_any2n($dotquad or $ipv6_text);
+  $ipv6naddr = inet_4map6($netaddr or $ipv6naddr);
   $rv = hasbits($bits128);
   $rv = isIPv4($bits128);
+  $rv = isNewIPv4($bits128);
+  $rv = isAnyIPv4($bits128);
   $dotquad or $hex_text = inet_n2dx($ipv6naddr);
   $dotquad or $dec_text = inet_n2ad($ipv6naddr);
   $ipv6naddr = ipv4to6($netaddr);
@@ -456,10 +519,43 @@ This allows the implementation of logical functions of the form of:
   input:	128 bit IPv6 string
   returns:	true if any bits are present
 
+=item * $ipv6naddr = inet_4map6($netaddr or $ipv6naddr
+
+This function returns an ipV6 network address with the first 80 bits
+set to zero and the next 16 bits set to one, while the last 32 bits
+are filled with the ipV4 address. 
+
+  input:	ipV4 netaddr
+	    or	ipV6 netaddr
+  returns:	ipV6 netaddr
+
+  returns: undef on error
+
+An ipV6 network address must be in one of the two compatible ipV4
+mapped address spaces. i.e.
+
+	::ffff::d.d.d.d    or    ::d.d.d.d
+
 =item * $rv = isIPv4($bits128);
 
 This function returns true if there are no on bits present in the IPv6
 portion of the 128 bit string and false otherwise.
+
+  i.e.	the address must be of the form - ::d.d.d.d
+
+Note: this is an old and deprecated ipV4 compatible ipV6 address
+	
+=item * $rv = isNewIPv4($bits128);
+
+This function return true if the IPv6 128 bit string is of the form
+
+	::ffff::d.d.d.d
+
+=item * $rv = isAnyIPv4($bits128);
+
+This function return true if the IPv6 bit string is of the form
+
+	::d.d.d.d	or	::ffff::d.d.d.d
 
 =item * $dotquad or $hex_text = inet_n2dx($ipv6naddr);
 
@@ -664,6 +760,11 @@ Returns the operating mode of this module.
 
 Replacement for Perl's gethostbyname if Socket6 is available
 
+This function ALWAYS returns an IPv6 address, even on IPv4 only systems.
+IPv4 addresses are mapped into IPv6 space in the form:
+
+	::FFFF:FFFF:d.d.d.d
+
 =item * NetAddr::IP::Util::lower();
 
 Return IPv6 strings in lowercase.
@@ -777,8 +878,11 @@ Return IPv6 strings in uppercase.  This is the default.
 	inet_any2n
 	hasbits
 	isIPv4
+	isNewIPv4
+	isAnyIPv4
 	inet_n2dx
 	inet_n2ad
+	inet_4map6
 	ipv4to6
 	mask4to6
 	ipanyto6
