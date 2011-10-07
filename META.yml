@@ -1,6 +1,6 @@
 --- #YAML:1.0
 name:                NetAddr-IP
-version:             4.046
+version:             4.047
 abstract:            Manages IPv4 and IPv6 addresses and subnets
 license:             ~
 author:              

@@ -13,7 +13,7 @@ require Exporter;
 
 @ISA = qw(Exporter DynaLoader);
 
-$VERSION = do { my @r = (q$Revision: 1.38 $ =~ /\d+/g); sprintf "%d."."%02d" x $#r, @r };
+$VERSION = do { my @r = (q$Revision: 1.39 $ =~ /\d+/g); sprintf "%d."."%02d" x $#r, @r };
 
 @EXPORT_OK = qw(
 	inet_aton
@@ -137,7 +137,7 @@ sub ipv6_n2x {
 }
 
 sub ipv6_n2d {
-  die "Bad arg length for 'ipv6_n2x', length is ". length($_[0]) ." should be 16"
+  die "Bad arg length for 'ipv6_n2d', length is ". length($_[0]) ." should be 16"
 	unless length($_[0]) == 16;
   my @hex = (unpack("n8",$_[0]));
   $hex[9] = $hex[7] & 0xff;
@@ -164,88 +164,9 @@ sub inet_aton {
   return &yinet_aton;
 }
 
-sub DESTROY {};
-
 my $_newV4compat = pack('L4',0,0,0xffffffff,0);
 
-my $mygethostbyname;
-my $_Sock6ok = 1;		# for testing gethostbyname
-
-sub _forceNoSock6() {
-  $_Sock6ok = 0;
-}
-
-package NetAddr::IP::UtilPolluted;
-
-# Socket pollutes the name space with all of its symbols. Since
-# we don't want them all, confine them to this name space.
-
-use strict;
-use Socket;
-use NetAddr::IP::Util qw(ipv6_n2x ipv4to6 inet_4map6);
-
-sub DESTROY {};
-
-# invoke replacement subroutine for Perl's "gethostbyname"
-# if Socket6 is available.
-#
-my $_v4zero = pack('L',0);
-my $_zero = pack('L4',0,0,0,0);
-
-sub _end_gethostbyname {
-#  my ($name,$aliases,$addrtype,$length,@addrs) = @_;
-  my @rv = @_;
-# first ip address = rv[4]
-  my $tip = $rv[4];
-  unless ($tip && $tip ne $_v4zero && $tip ne $_zero) {
-    @rv = ();
-  }
-# length = rv[3]
-  elsif ($rv[3] && $rv[3] == 4) {
-    foreach (4..$#rv) {
-      $rv[$_] = ipv4to6(inet_4map6($rv[$_]));
-    }
-    $rv[3] = 16;	# unconditionally set length to 16
-  }
-  elsif ($rv[3] == 16) {
-    ;	# is ok
-  } else {
-    @rv = ();
-  }
-  return wantarray ? @rv : $rv[4];
-}
-
-unless ($_Sock6ok && eval { require Socket6 }) {
-  $mygethostbyname = sub {
-        my @tip = gethostbyname($_[0]);
-        return &_end_gethostbyname(@tip);
-  };
-} else {
-  import Socket6 qw( gethostbyname2 );
-  import Socket6 qw( AF_INET6 )
-        unless eval { &AF_INET6 };
-
-  $mygethostbyname = sub {
-	my @tip;
-        unless (@tip = gethostbyname2($_[0],&AF_INET6)) {
-          @tip = gethostbyname($_[0]);
-        }
-        return &_end_gethostbyname(@tip);
-  };
-}
-
-#package NetAddr::IP::Util;
-
-package NetAddr::IP::Util;
-
-sub naip_gethostbyname {
-# turn off complaint from Socket6 about missing numeric argument
-  undef local $^W;
-  return &$mygethostbyname($_[0]);
-}
-
 sub isNewIPv4 {
-print "NOT DEFINE\n" unless defined $_[0];
   my $naddr = $_[0] ^ $_newV4compat;
   return isIPv4($naddr);
 }
@@ -270,6 +191,90 @@ sub inet_4map6 {
   }
   $naddr |= $_newV4compat;
   return $naddr;
+}
+
+sub DESTROY {};
+
+my $mygethostbyname;
+
+my $_Sock6ok = 1;		# for testing gethostbyname
+
+sub import {
+  if (grep { $_ eq ':noSock6' } @_) {
+print "EXCLUDE Sock6\n";
+	$_Sock6ok = 0;
+	@_ = grep { $_ ne ':noSock6' } @_;
+  }
+  NetAddr::IP::Util->export_to_level(1,@_);
+}
+
+package NetAddr::IP::UtilPolluted;
+
+# Socket pollutes the name space with all of its symbols. Since
+# we don't want them all, confine them to this name space.
+
+use strict;
+use Socket;
+
+sub DESTROY {};
+
+# invoke replacement subroutine for Perl's "gethostbyname"
+# if Socket6 is available.
+#
+my $_v4zero = pack('L',0);
+my $_zero = pack('L4',0,0,0,0);
+
+sub _end_gethostbyname {
+#  my ($name,$aliases,$addrtype,$length,@addrs) = @_;
+  my @rv = @_;
+# first ip address = rv[4]
+  my $tip = $rv[4];
+  unless ($tip && $tip ne $_v4zero && $tip ne $_zero) {
+    @rv = ();
+  }
+# length = rv[3]
+  elsif ($rv[3] && $rv[3] == 4) {
+    foreach (4..$#rv) {
+      $rv[$_] = NetAddr::IP::Util::inet_4map6(NetAddr::IP::Util::ipv4to6($rv[$_]));
+    }
+    $rv[3] = 16;	# unconditionally set length to 16
+  }
+  elsif ($rv[3] == 16) {
+    ;	# is ok
+  } else {
+    @rv = ();
+  }
+  return @rv;
+}
+
+unless (eval { require Socket6 }) {
+  $mygethostbyname = sub {
+        my @tip = gethostbyname($_[0]);
+	return &_end_gethostbyname(@tip);
+  };
+} else {
+  import Socket6 qw( gethostbyname2 );
+  import Socket6 qw( AF_INET6 )
+        unless eval { &AF_INET6 };
+
+  $mygethostbyname = sub {
+	my @tip;
+        unless ($_Sock6ok && (@tip = gethostbyname2($_[0],&AF_INET6))) {
+          @tip = gethostbyname($_[0]);
+        }
+	return &_end_gethostbyname(@tip);
+  };
+}
+
+package NetAddr::IP::Util;
+
+sub naip_gethostbyname {
+# turn off complaint from Socket6 about missing numeric argument
+  undef local $^W;
+  my @rv = &$mygethostbyname($_[0]);
+  return wantarray
+	? @rv
+	: $rv[4];
 }
 
 1;
