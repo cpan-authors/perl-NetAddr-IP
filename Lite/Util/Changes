@@ -1,5 +1,8 @@
 Revision history for Perl extension NetAddr::IP::Util
 
+1.38  Thu Oct  6 20:20:33 PDT 2011
+	corrected missing internal reference to inet_4map6
+
 1.37  Thu Oct  6 18:23:04 PDT 2011
 	addid isAnyIPv4, isNewIPv4, inet_4map6
 	revised naip_gethostbyname

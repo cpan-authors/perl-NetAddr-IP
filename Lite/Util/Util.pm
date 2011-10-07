@@ -13,7 +13,7 @@ require Exporter;
 
 @ISA = qw(Exporter DynaLoader);
 
-$VERSION = do { my @r = (q$Revision: 1.37 $ =~ /\d+/g); sprintf "%d."."%02d" x $#r, @r };
+$VERSION = do { my @r = (q$Revision: 1.38 $ =~ /\d+/g); sprintf "%d."."%02d" x $#r, @r };
 
 @EXPORT_OK = qw(
 	inet_aton
@@ -182,7 +182,7 @@ package NetAddr::IP::UtilPolluted;
 
 use strict;
 use Socket;
-use NetAddr::IP::Util qw(ipv6_n2x ipv4to6);
+use NetAddr::IP::Util qw(ipv6_n2x ipv4to6 inet_4map6);
 
 sub DESTROY {};
 
