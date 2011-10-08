@@ -1,5 +1,8 @@
 Revision history for Perl extension NetAddr::IP
 
+4.048  Sat Oct  8 01:33:44 PDT 2011
+	remove debug print statement from Util v1.40
+
 4.047 Thu Oct  6 23:41:42 PDT 2011
 	really correct missing reference in Util v1.39
 	doc update only in Lite.pm v1.30

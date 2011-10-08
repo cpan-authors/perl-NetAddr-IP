@@ -13,7 +13,7 @@ require Exporter;
 
 @ISA = qw(Exporter DynaLoader);
 
-$VERSION = do { my @r = (q$Revision: 1.39 $ =~ /\d+/g); sprintf "%d."."%02d" x $#r, @r };
+$VERSION = do { my @r = (q$Revision: 1.40 $ =~ /\d+/g); sprintf "%d."."%02d" x $#r, @r };
 
 @EXPORT_OK = qw(
 	inet_aton
@@ -201,7 +201,6 @@ my $_Sock6ok = 1;		# for testing gethostbyname
 
 sub import {
   if (grep { $_ eq ':noSock6' } @_) {
-print "EXCLUDE Sock6\n";
 	$_Sock6ok = 0;
 	@_ = grep { $_ ne ':noSock6' } @_;
   }

@@ -1,5 +1,8 @@
 Revision history for Perl extension NetAddr::IP::Util
 
+1.40  Sat Oct  8 01:33:44 PDT 2011
+	remove debug print statement from Util.pm
+
 1.39  Thu Oct  6 23:41:42 PDT 2011
 	really correct missing internal reference
 
