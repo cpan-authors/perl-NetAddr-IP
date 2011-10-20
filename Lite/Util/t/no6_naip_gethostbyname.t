@@ -5,14 +5,16 @@
 # Change 1..1 below to 1..last_test_to_print .
 # (It may become useful if the test is moved to ./t subdirectory.)
 
-BEGIN { $| = 1; print "1..6\n"; }
+BEGIN { $| = 1; print "1..3\n"; }
 END {print "not ok 1\n" unless $loaded;}
 
+#use diagnostics;
 use NetAddr::IP::Util qw(
-	ipv6_aton
+	:noSock6
+	naip_gethostbyname
+	havegethostbyname2
 	ipv6_n2x
-	inet_any2n
-	inet_n2dx
+	inet_aton
 );
 
 $loaded = 1;
@@ -30,21 +32,27 @@ sub ok {
   ++$test;
 }
 
-my @num = qw	# input					expected
-(   a1b2:c3d4:e5d6:f7e8:08f9:190a:2a1b:3b4c	A1B2:C3D4:E5D6:F7E8:8F9:190A:2A1B:3B4C
-    		1.2.3.4					1.2.3.4
-    A1B2:C3D4:E5D6:F7E8:08F9:190A:1.2.3.4	A1B2:C3D4:E5D6:F7E8:8F9:190A:102:304
-		::1.2.3.4				1.2.3.4
-	::FFFF:FFFF:1.2.3.4				1.2.3.4
-);
+my $exp = '0:0:0:0:FFFF:FFFF:7F00:1';
+my $host = '127.1';
+my $got = ipv6_n2x( scalar naip_gethostbyname($host));
+print "got: $got\nexp: $exp\nnot "
+	unless $got eq $exp;
+&ok;
 
-my $ff = ipv6_aton($num[1]);
-for(my $i=0;$i<@num;$i+=2) {
-  my $num = $num[$i];
-  my $bstr = inet_any2n($num);
-  my $rv = inet_n2dx($bstr);
-  my $exp = $num[$i +1];
-  print "got: $rv\nexp: $exp\nnot "
-	 unless $rv eq $exp;
-  &ok;
+$exp = '0:0:0:0:0:0:0:1';
+$host = $exp;
+
+if (havegethostbyname2()) {
+  $got = ipv6_n2x(scalar naip_gethostbyname($host));
+  print "got: $got\nexp: $exp\nnot "
+	unless $got eq $exp;
+} else {
+  $got = scalar naip_gethostbyname($host);
+  if ($got) {
+    $got = eval{ inet_ntoa($got) } ||
+	   eval{ ipv6_n2x($got) };
+  }
+  print "unexpected return value got: $got\nnot "
+	if $got;
 }
+&ok;

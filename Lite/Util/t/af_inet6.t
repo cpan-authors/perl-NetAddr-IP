@@ -5,14 +5,15 @@
 # Change 1..1 below to 1..last_test_to_print .
 # (It may become useful if the test is moved to ./t subdirectory.)
 
-BEGIN { $| = 1; print "1..6\n"; }
+BEGIN { $| = 1; print "1..3\n"; }
 END {print "not ok 1\n" unless $loaded;}
 
-use NetAddr::IP::Util qw(
-	ipv6_aton
-	ipv6_n2x
-	inet_any2n
-	inet_n2dx
+#use diagnostics;
+use Config;
+use NetAddr::IP::InetBase qw(
+	AF_INET
+	AF_INET6
+	fake_AF_INET6
 );
 
 $loaded = 1;
@@ -30,21 +31,16 @@ sub ok {
   ++$test;
 }
 
-my @num = qw	# input					expected
-(   a1b2:c3d4:e5d6:f7e8:08f9:190a:2a1b:3b4c	A1B2:C3D4:E5D6:F7E8:8F9:190A:2A1B:3B4C
-    		1.2.3.4					1.2.3.4
-    A1B2:C3D4:E5D6:F7E8:08F9:190A:1.2.3.4	A1B2:C3D4:E5D6:F7E8:8F9:190A:102:304
-		::1.2.3.4				1.2.3.4
-	::FFFF:FFFF:1.2.3.4				1.2.3.4
-);
+## test 2 - 13	add stuff to buffer
+my $af;
+print "AF_INET = 2 not found in the Socket library\nnot "
+	unless ($af = AF_INET()) && $af == 2;
+&ok;
 
-my $ff = ipv6_aton($num[1]);
-for(my $i=0;$i<@num;$i+=2) {
-  my $num = $num[$i];
-  my $bstr = inet_any2n($num);
-  my $rv = inet_n2dx($bstr);
-  my $exp = $num[$i +1];
-  print "got: $rv\nexp: $exp\nnot "
-	 unless $rv eq $exp;
-  &ok;
-}
+my $fake = fake_AF_INET6();
+my $af_inet6 = AF_INET6();
+my $txt = $fake
+	? "\n\tSocket does not have AF_INET6, Socket6 not present\n\tguessed AF_INET6 for '$Config{osname}' = $fake\n"
+	: "\n\tAF_INET6 = $af_inet6 derived from Socket or Socket6\n";
+print STDERR $txt;
+&ok;

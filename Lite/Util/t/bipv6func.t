@@ -8,7 +8,8 @@
 BEGIN { $| = 1; print "1..27\n"; }
 END {print "not ok 1\n" unless $loaded;}
 
-use NetAddr::IP::Util qw(
+use NetAddr::IP::InetBase qw(
+	:upper
 	ipv6_aton
 	ipv6_n2x
 	ipv6_n2d

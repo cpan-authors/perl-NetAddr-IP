@@ -3,22 +3,31 @@ package NetAddr::IP::Util;
 
 use strict;
 #use diagnostics;
-#use lib qw(blib lib);
+#use lib qw(blib/lib);
 
 use vars qw($VERSION @EXPORT_OK @ISA %EXPORT_TAGS $Mode);
 use AutoLoader qw(AUTOLOAD);
 use NetAddr::IP::Util_IS;
+use NetAddr::IP::InetBase qw(
+	:upper
+	:all
+);
+
+*NetAddr::IP::Util::upper = \&NetAddr::IP::InetBase::upper;
+*NetAddr::IP::Util::lower = \&NetAddr::IP::InetBase::lower;
+
 require DynaLoader;
 require Exporter;
 
 @ISA = qw(Exporter DynaLoader);
 
-$VERSION = do { my @r = (q$Revision: 1.40 $ =~ /\d+/g); sprintf "%d."."%02d" x $#r, @r };
+$VERSION = do { my @r = (q$Revision: 1.41 $ =~ /\d+/g); sprintf "%d."."%02d" x $#r, @r };
 
 @EXPORT_OK = qw(
 	inet_aton
 	inet_ntoa
 	ipv6_aton
+	ipv6_ntoa
 	ipv6_n2x
 	ipv6_n2d
 	inet_any2n
@@ -28,6 +37,8 @@ $VERSION = do { my @r = (q$Revision: 1.40 $ =~ /\d+/g); sprintf "%d."."%02d" x $
 	isAnyIPv4
 	inet_n2dx
 	inet_n2ad
+	inet_pton
+	inet_ntop
 	inet_4map6
 	shiftleft
 	addconst
@@ -47,7 +58,11 @@ $VERSION = do { my @r = (q$Revision: 1.40 $ =~ /\d+/g); sprintf "%d."."%02d" x $
 	bcdn2bin
 	simple_pack
 	comp128
+	packzeros
+	AF_INET
+	AF_INET6
 	naip_gethostbyname
+	havegethostbyname2
 );
 
 %EXPORT_TAGS = (
@@ -56,17 +71,21 @@ $VERSION = do { my @r = (q$Revision: 1.40 $ =~ /\d+/g); sprintf "%d."."%02d" x $
 		inet_aton
 		inet_ntoa
 		ipv6_aton
+		ipv6_ntoa
 		ipv6_n2x
 		ipv6_n2d
 		inet_any2n
 		inet_n2dx
 		inet_n2ad
+		inet_pton
+		inet_ntop
 		inet_4map6
 		ipv4to6
 		mask4to6
 		ipanyto6
 		maskanyto6
 		ipv6to4
+		packzeros
 		naip_gethostbyname
 	)],
 	math	=> [qw(
@@ -88,17 +107,21 @@ $VERSION = do { my @r = (q$Revision: 1.40 $ =~ /\d+/g); sprintf "%d."."%02d" x $
 	)],
 	ipv6	=> [qw(
 		ipv6_aton
+		ipv6_ntoa
 		ipv6_n2x
 		ipv6_n2d
 		inet_any2n
 		inet_n2dx
 		inet_n2ad
+		inet_pton
+		inet_ntop
 		inet_4map6
 		ipv4to6
 		mask4to6
 		ipanyto6
 		maskanyto6
 		ipv6to4
+		packzeros
 		naip_gethostbyname
 	)],
 );
@@ -111,72 +134,23 @@ if (NetAddr::IP::Util_IS->not_pure) {
 if (NetAddr::IP::Util_IS->pure || $@) {	## load the pure perl version if 'C' lib missing
   require NetAddr::IP::UtilPP;
   import NetAddr::IP::UtilPP qw( :all );
-  require Socket;
-  import Socket qw(inet_ntoa);
-  *yinet_aton = \&Socket::inet_aton;
+#  require Socket;
+#  import Socket qw(inet_ntoa);
+#  *yinet_aton = \&Socket::inet_aton;
   $Mode = 'Pure Perl';
 }
 else {
   $Mode = 'CC XS';
 }
 
-# allow user to choose upper or lower case
-BEGIN {
-  use vars qw($n2x_format $n2d_format);
-  $n2x_format = "%X:%X:%X:%X:%X:%X:%X:%X";
-  $n2d_format = "%X:%X:%X:%X:%X:%X:%D.%D.%D.%D";
-}
-
-sub upper { $n2x_format = uc($n2x_format); $n2d_format = uc($n2d_format); }
-sub lower { $n2x_format = lc($n2x_format); $n2d_format = lc($n2d_format); }
-
-sub ipv6_n2x {
-  die "Bad arg length for 'ipv6_n2x', length is ". length($_[0]) ." should be 16"
-	unless length($_[0]) == 16;
-  return sprintf($n2x_format,unpack("n8",$_[0]));
-}
-
-sub ipv6_n2d {
-  die "Bad arg length for 'ipv6_n2d', length is ". length($_[0]) ." should be 16"
-	unless length($_[0]) == 16;
-  my @hex = (unpack("n8",$_[0]));
-  $hex[9] = $hex[7] & 0xff;
-  $hex[8] = $hex[7] >> 8;
-  $hex[7] = $hex[6] & 0xff;
-  $hex[6] >>= 8;
-  return sprintf($n2d_format,@hex);
-}
-
 # if Socket lib is broken in some way, check for overange values
 #
-my $overange = yinet_aton('256.1') ? 1:0;
+#my $overange = yinet_aton('256.1') ? 1:0;
+my $overange = gethostbyname('256.1') ? 1:0;
 
 sub mode() { $Mode };
 
-sub inet_aton {
-  if (! $overange || $_[0] =~ /[^0-9\.]/) {	# hostname
-    return &yinet_aton;
-  }
-  my @dq = split(/\./,$_[0]);
-  foreach (@dq) {
-    return undef if $_ > 255;
-  }
-  return &yinet_aton;
-}
-
 my $_newV4compat = pack('L4',0,0,0xffffffff,0);
-
-sub isNewIPv4 {
-  my $naddr = $_[0] ^ $_newV4compat;
-  return isIPv4($naddr);
-}
-
-sub isAnyIPv4 {
-  my $naddr = $_[0];
-  my $rv = isIPv4($_[0]);
-  return $rv if $rv;
-  return isNewIPv4($naddr);
-}
 
 sub inet_4map6 {
   my $naddr = shift;
@@ -195,9 +169,17 @@ sub inet_4map6 {
 
 sub DESTROY {};
 
+my $havegethostbyname2 = 0;
+
 my $mygethostbyname;
 
 my $_Sock6ok = 1;		# for testing gethostbyname
+
+sub havegethostbyname2 {
+  return $_Sock6ok
+	? $havegethostbyname2
+	: 0;
+}
 
 sub import {
   if (grep { $_ eq ':noSock6' } @_) {
@@ -215,14 +197,12 @@ package NetAddr::IP::UtilPolluted;
 use strict;
 use Socket;
 
-sub DESTROY {};
+my $_v4zero = pack('L',0);
+my $_zero = pack('L4',0,0,0,0);
 
 # invoke replacement subroutine for Perl's "gethostbyname"
 # if Socket6 is available.
 #
-my $_v4zero = pack('L',0);
-my $_zero = pack('L4',0,0,0,0);
-
 sub _end_gethostbyname {
 #  my ($name,$aliases,$addrtype,$length,@addrs) = @_;
   my @rv = @_;
@@ -246,19 +226,24 @@ sub _end_gethostbyname {
   return @rv;
 }
 
-unless (eval { require Socket6 }) {
+unless ( eval { require Socket6 }) {
   $mygethostbyname = sub {
         my @tip = gethostbyname($_[0]);
 	return &_end_gethostbyname(@tip);
   };
 } else {
-  import Socket6 qw( gethostbyname2 );
-  import Socket6 qw( AF_INET6 )
-        unless eval { &AF_INET6 };
+  import Socket6 qw( gethostbyname2 getipnodebyname );
+  my $try = eval { my @try = gethostbyname2('127.0.0.1',NetAddr::IP::Util::AF_INET()); $try[4] };
+  if (! $@ && $try && $try eq INADDR_LOOPBACK()) {
+    *_ghbn2 = \&Socket6::gethostbyname2;
+    $havegethostbyname2 = 1;
+  } else {
+    *_ghbn2 = sub { return () };	# use failure branch below
+  }
 
   $mygethostbyname = sub {
 	my @tip;
-        unless ($_Sock6ok && (@tip = gethostbyname2($_[0],&AF_INET6))) {
+        unless ($_Sock6ok && (@tip = _ghbn2($_[0],NetAddr::IP::Util::AF_INET6())) && @tip > 1) {
           @tip = gethostbyname($_[0]);
         }
 	return &_end_gethostbyname(@tip);
@@ -290,6 +275,7 @@ NetAddr::IP::Util -- IPv4/6 and 128 bit number utilities
 	inet_aton
 	inet_ntoa
 	ipv6_aton
+	ipv6_ntoa
 	ipv6_n2x
 	ipv6_n2d
 	inet_any2n
@@ -299,12 +285,15 @@ NetAddr::IP::Util -- IPv4/6 and 128 bit number utilities
 	isAnyIPv4
 	inet_n2dx
 	inet_n2ad
+	inet_pton
+	inet_ntop
 	inet_4map6
 	ipv4to6
 	mask4to6
 	ipanyto6
 	maskanyto6
 	ipv6to4
+	packzeros
 	shiftleft
 	addconst
 	add128
@@ -313,23 +302,28 @@ NetAddr::IP::Util -- IPv4/6 and 128 bit number utilities
 	bin2bcd
 	bcd2bin
 	mode
+	AF_INET
+	AF_INET6
 	naip_gethostbyname
   );
 
   use NetAddr::IP::Util qw(:all :inet :ipv4 :ipv6 :math)
 
-  :inet	  =>	inet_aton, inet_ntoa, ipv6_aton,
-		ipv6_n2x, ipv6_n2d, inet_any2n,
-		inet_n2dx, inet_n2ad, inet_4map6,
-		ipv4to6, mask4to6, ipanyto6, 
+  :inet	  =>	inet_aton, inet_ntoa, ipv6_aton
+		ipv6_ntoa, ipv6_n2x, ipv6_n2d, 
+		inet_any2n, inet_n2dx, inet_n2ad, 
+		inet_pton, inet_ntop, inet_4map6, 
+		ipv4to6, mask4to6, ipanyto6, packzeros
 		maskanyto6, ipv6to4, naip_gethostbyname
 
   :ipv4	  =>	inet_aton, inet_ntoa
 
-  :ipv6	  =>	ipv6_aton, ipv6_n2x, ipv6_n2d,
-		inet_any2n, inet_n2dx, inet_n2ad
-		inet_4map6, ipv4to6, mask4to6, ipanyto6,
-		maskanyto6, ipv6to4, naip_gethostbyname
+  :ipv6	  =>	ipv6_aton, ipv6_ntoa, ipv6_n2x, 
+		ipv6_n2d, inet_any2n, inet_n2dx, 
+		inet_n2ad, inet_pton, inet_ntop,
+		inet_4map6, ipv4to6, mask4to6,
+		ipanyto6, maskanyto6, ipv6to4,
+		packzeros, naip_gethostbyname
 
   :math	  =>	hasbits, isIPv4, isNewIPv4, isAnyIPv4,
 		addconst, add128, sub128, notcontiguous,
@@ -338,8 +332,10 @@ NetAddr::IP::Util -- IPv4/6 and 128 bit number utilities
   $dotquad = inet_ntoa($netaddr);
   $netaddr = inet_aton($dotquad);
   $ipv6naddr = ipv6_aton($ipv6_text);
+  $ipv6_text = ipvt_ntoa($ipv6naddr);
   $hex_text = ipv6_n2x($ipv6naddr);
   $dec_text = ipv6_n2d($ipv6naddr);
+  $hex_text = packzeros($hex_text);
   $ipv6naddr = inet_any2n($dotquad or $ipv6_text);
   $ipv6naddr = inet_4map6($netaddr or $ipv6naddr);
   $rv = hasbits($bits128);
@@ -348,6 +344,8 @@ NetAddr::IP::Util -- IPv4/6 and 128 bit number utilities
   $rv = isAnyIPv4($bits128);
   $dotquad or $hex_text = inet_n2dx($ipv6naddr);
   $dotquad or $dec_text = inet_n2ad($ipv6naddr);
+  $netaddr = inet_pton($AF_family,$hex_text);
+  $hex_text = inet_ntop($AF_family,$netaddr);
   $ipv6naddr = ipv4to6($netaddr);
   $ipv6naddr = mask4to6($netaddr);
   $ipv6naddr = ipanyto6($netaddr);
@@ -365,6 +363,7 @@ NetAddr::IP::Util -- IPv4/6 and 128 bit number utilities
   $bits128 = bcd2bin($bcdtxt);
   $modetext = mode;
   ($name,$aliases,$addrtype,$length,@addrs)=naip_gethostbyname(NAME);
+  $trueif = havegethostbyname2();
 
   NetAddr::IP::Util::lower();
   NetAddr::IP::Util::upper();
@@ -433,39 +432,13 @@ and returns a 128 bit binary RDATA string.
   input:	ipv6 text
   returns:	128 bit RDATA string
 
-=cut
+=item * $ipv6_text = ipv6_ntoa($ipv6naddr);
 
-sub ipv6_aton {
-  my($ipv6) = @_;
-  return undef unless $ipv6;
-  local($1,$2,$3,$4,$5);
-  if ($ipv6 =~ /^(.*:)(\d{1,3})\.(\d{1,3})\.(\d{1,3})\.(\d{1,3})$/) {	# mixed hex, dot-quad
-    return undef if $2 > 255 || $3 > 255 || $4 > 255 || $5 > 255;
-    $ipv6 = sprintf("%s%X%02X:%X%02X",$1,$2,$3,$4,$5);			# convert to pure hex
-  }
-  my $c;
-  return undef if
-	$ipv6 =~ /[^:0-9a-fA-F]/ ||			# non-hex character
-	(($c = $ipv6) =~ s/::/x/ && $c =~ /(?:x|:):/) ||	# double :: ::?
-	$ipv6 =~ /[0-9a-fA-F]{5,}/;			# more than 4 digits
-  $c = $ipv6 =~ tr/:/:/;				# count the colons
-  return undef if $c < 7 && $ipv6 !~ /::/;
-  if ($c > 7) {						# strip leading or trailing ::
-    return undef unless
-	$ipv6 =~ s/^::/:/ ||
-	$ipv6 =~ s/::$/:/;
-    return undef if --$c > 7;
-  }
-  while ($c++ < 7) {					# expand compressed fields
-    $ipv6 =~ s/::/:::/;
-  }
-  $ipv6 .= 0 if $ipv6 =~ /:$/;
-  my @hex = split(/:/,$ipv6);
-  foreach(0..$#hex) {
-    $hex[$_] = hex($hex[$_] || 0);
-  }
-  pack("n8",@hex);
-}
+Convert a 128 bit binary IPv6 address to compressed rfc 1884
+text representation.
+
+  input:	128 bit RDATA string
+  returns:	ipv6 text
 
 =item * $hex_text = ipv6_n2x($ipv6addr);
 
@@ -491,16 +464,6 @@ dot-quad address (if found) with '::' and passes it to B<ipv6_aton>.
 
   input:	dot-quad or rfc1844 address
   returns:	128 bit IPv6 string
-
-=cut
-
-sub inet_any2n($) {
-  my($addr) = @_;
-  $addr = '' unless $addr;
-  $addr = '::' . $addr
-	unless $addr =~ /:/;
-  return ipv6_aton($addr);
-}
 
 =item * $rv = hasbits($bits128);
 
@@ -570,18 +533,6 @@ dot-quad IPv4 or a hex notation IPv6 address.
   returns:	ddd.ddd.ddd.ddd
 	    or	x:x:x:x:x:x:x:x
 
-=cut
-
-sub inet_n2dx($) {
-  my($nadr) = @_;
-  if (isIPv4($nadr)) {
-    local $1;
-    ipv6_n2d($nadr) =~ /([^:]+)$/;
-    return $1;
-  }
-  return ipv6_n2x($nadr);
-}
-
 =item * $dotquad or $dec_text = inet_n2ad($ipv6naddr);
 
 This function B<does the right thing> and returns the text for either a
@@ -591,20 +542,29 @@ dot-quad IPv4 or a hex::decimal notation IPv6 address.
   returns:	ddd.ddd.ddd.ddd
 	    or  x:x:x:x:x:x:ddd.ddd.ddd.dd
 
-=cut
+=item * $netaddr = inet_pton($AF_family,$hex_text);
 
-sub inet_n2ad($) {
-  my($nadr) = @_;
-  my $addr = ipv6_n2d($nadr);
-  return $addr unless isIPv4($nadr);
-  local $1;
-  $addr =~ /([^:]+)$/;
-  return $1;
-}
+This function takes an IP address in IPv4 or IPv6 text format and converts it into
+binary format. The type of IP address conversion is controlled by the FAMILY
+argument.
+
+=item * $hex_text = inet_ntop($AF_family,$netaddr);
+
+This function takes and IP address in binary format and converts it into
+text format. The type of IP address conversion is controlled by the FAMILY 
+argument.
+
+NOTE: inet_ntop ALWAYS returns lowercase characters.
+
+=item * $hex_text = packzeros($hex_text);
+
+This function optimizes and rfc 1884 IPv6 hex address to reduce the number of
+long strings of zero bits as specified in rfc 1884, 2.2 (2) by substituting
+B<::> for the first occurence of the longest string of zeros in the address.
 
 =item * $ipv6naddr = ipv4to6($netaddr);
 
-Convert an ipv4 network address into an ipv6 network address.
+Convert an ipv4 network address into an IPv6 network address.
 
   input:	32 bit network address
   returns:	128 bit network address
@@ -764,10 +724,34 @@ Returns the operating mode of this module.
 
 Replacement for Perl's gethostbyname if Socket6 is available
 
+In ARRAY context, returns a list of five elements, the hostname or NAME,
+a space seperated list of C_NAMES, AF family, length of the address
+structure, and an array of one or more netaddr's
+
+In SCALAR context, returns the first netaddr.
+
 This function ALWAYS returns an IPv6 address, even on IPv4 only systems.
 IPv4 addresses are mapped into IPv6 space in the form:
 
 	::FFFF:FFFF:d.d.d.d
+
+This is NOT the expected result from Perl's gethostbyname2. It is instead equivalent to:
+
+  On an IPv4 only system:
+    $ipv6naddr = ipv4to6 scalar ( gethostbyname( name ));
+
+  On a system with Socket6 and a working gethostbyname2:
+    $ipv6naddr = gethostbyname2( name, AF_INET6 );
+  and if that fails, the IPv4 conversion above.
+
+For a gethostbyname2 emulator that behave like Socket6, see:
+L<Net::DNS::Dig>
+
+=item * $trueif = havegethostbyname2();
+
+This function returns TRUE if Socket6 has a functioning B<gethostbyname2>,
+otherwise it returns FALSE. See the comments above about the behavior of
+B<naip_gethostbyname>.
 
 =item * NetAddr::IP::Util::lower();
 
@@ -851,17 +835,19 @@ Return IPv6 strings in uppercase.  This is the default.
 	? 1 : 0;
   }
 
+  # truely hard way to do $ip++
   # add a constant, wrapping at netblock boundaries
   # to subtract the constant, negate it before calling
   # 'addwrap' since 'addconst' will extend the sign bits
   #
   sub addwrap {
     my($nip,$const) = @_;
-    my $mask	= $nip->{addr};
+    my $addr	= $nip->{addr};
+    my $mask	= $nip->{mask};
     my $bits	= $nip->{bits};
     my $notmask	= ~ $mask;
     my $hibits	= $addr & $mask;
-    my $addr = addconst($addr,$const);
+    $addr = addconst($addr,$const);
     my $wraponly = $addr & $notmask;
     my $newip = {
 	addr	=> $hibits | $wraponly,
@@ -872,11 +858,30 @@ Return IPv6 strings in uppercase.  This is the default.
     return $newip;
   }
 
+  # something more useful
+  # increment a /24 net to the NEXT net at the boundry
+
+  my $nextnet = 256;	# for /24
+  LOOP:
+  while (...continuing) {
+    your code....
+    ...
+    my $lastip = $ip-copy();
+    $ip++;
+    if ($ip < $lastip) {	# host part wrapped?
+  # discard carry
+      (undef, $ip->{addr} = addconst($ip->{addr}, $nextnet);
+    }
+    next LOOP;
+  }
+
+
 =head1 EXPORT_OK
 
 	inet_aton
 	inet_ntoa
 	ipv6_aton
+	ipv6_ntoa
 	ipv6_n2x
 	ipv6_n2d
 	inet_any2n
@@ -886,12 +891,15 @@ Return IPv6 strings in uppercase.  This is the default.
 	isAnyIPv4
 	inet_n2dx
 	inet_n2ad
+	inet_pton
+	inet_ntop
 	inet_4map6
 	ipv4to6
 	mask4to6
 	ipanyto6
 	maskanyto6
 	ipv6to4
+	packzeros
 	shiftleft
 	addconst
 	add128
@@ -901,42 +909,54 @@ Return IPv6 strings in uppercase.  This is the default.
 	bcd2bin
 	mode
 	naip_gethostbyname
+	havegethostbyname2
 
 =head1 AUTHOR
 
 Michael Robinton <michael@bizsystems.com>
-
-=head1 ACKNOWLEDGMENTS
-
-The following functions are used in whole or in part as include files to
-Util.xs. The copyright is include in the file.
-
-  file:		     function:
-
-  miniSocket.inc  inet_aton, inet_ntoa
-
-inet_aton, inet_ntoa are from the perl-5.8.0 release by Larry Wall, copyright
-1989-2002. inet_aton, inet_ntoa code is current through perl-5.9.3 release.
-Thank you Larry for making PERL possible for all of us.
 
 =head1 COPYRIGHT
 
-Copyright 2003 - 2010, Michael Robinton E<lt>michael@bizsystems.comE<gt>
+Copyright 2003 - 2011, Michael Robinton E<lt>michael@bizsystems.comE<gt>
 
-LICENSE AND WARRANTY
+All rights reserved.
 
-This software is (c) Michael Robinton.  It can be used under the terms of
-the perl artistic license provided  that proper credit for the work of
-the  author is  preserved in  the form  of this  copyright  notice and
-license for this module.
+This program is free software; you can redistribute it and/or modify
+it under the terms of either:
 
-No warranty of any kind is  expressed or implied, by using it
-you accept any and all the liability.
+  a) the GNU General Public License as published by the Free
+  Software Foundation; either version 2, or (at your option) any
+  later version, or
 
+  b) the "Artistic License" which comes with this distribution.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See either
+the GNU General Public License or the Artistic License for more details.
+
+You should have received a copy of the Artistic License with this
+distribution, in the file named "Artistic".  If not, I'll be glad to provide
+one.
+
+You should also have received a copy of the GNU General Public License
+along with this program in the file named "Copying". If not, write to the
+
+        Free Software Foundation, Inc.
+        59 Temple Place, Suite 330
+        Boston, MA  02111-1307, USA
+
+or visit their web page on the internet at:
+
+        http://www.gnu.org/copyleft/gpl.html.
 
 =head1 AUTHOR
 
 Michael Robinton <michael@bizsystems.com>
+
+=head1 SEE ALSO
+
+NetAddr::IP(3), NetAddr::IP::Lite(3), NetAddr::IP::InetBase(3)
 
 =cut
 

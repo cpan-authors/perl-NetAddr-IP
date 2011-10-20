@@ -12,11 +12,10 @@ require Exporter;
 
 @ISA = qw(Exporter);
 
-$VERSION = do { my @r = (q$Revision: 1.7 $ =~ /\d+/g); sprintf "%d."."%02d" x $#r, @r };
+$VERSION = do { my @r = (q$Revision: 1.8 $ =~ /\d+/g); sprintf "%d."."%02d" x $#r, @r };
 
 @EXPORT_OK = qw(
 	hasbits
-	isIPv4
 	shiftleft
 	addconst
 	add128
@@ -53,7 +52,6 @@ NetAddr::IP::UtilPP -- pure Perl functions for NetAddr::IP::Util
 
   use NetAddr::IP::UtilPP qw(
 	hasbits
-	isIPv4
 	shiftleft
 	addconst
 	add128
@@ -71,7 +69,6 @@ NetAddr::IP::UtilPP -- pure Perl functions for NetAddr::IP::Util
   use NetAddr::IP::UtilPP qw(:all)
 
   $rv = hasbits($bits128);
-  $rv = isIPv4($bits128);
   $bitsX2 = shiftleft($bits128,$n);
   $carry = addconst($ipv6naddr,$signed_32con);
   ($carry,$ipv6naddr)=addconst($ipv6naddr,$signed_32con);
@@ -122,31 +119,34 @@ sub _deadlen {
   $len *= 8;
   $should = 128 unless $should;
   my $sub = (caller(1))[3];
-  die "Bad argument length for ".__PACKAGE__.":$sub, is $len, should be $should";
+  die "Bad argument length for $sub, is $len, should be $should";
 }
 
 sub hasbits {
   _deadlen(length($_[0]))
 	if length($_[0]) != 16;
+  return 1 if vec($_[0],0,32);
+  return 1 if vec($_[0],1,32);
+  return 1 if vec($_[0],2,32);
   return 1 if vec($_[0],3,32);
-  return (isIPv4($_[0])) ? 0 : 1;
+  return 0;
 }
 
-=item * $rv = isIPv4($bits128);
-
-This function returns true if there are no on bits present in the IPv6
-portion of the 128 bit string and false otherwise.
-
-=cut
-
-sub isIPv4 {
-  _deadlen(length($_[0]))
-	if length($_[0]) != 16;
-  return 0 if vec($_[0],0,32);
-  return 0 if vec($_[0],1,32);
-  return 0 if vec($_[0],2,32);
-  return 1;
-}
+#=item * $rv = isIPv4($bits128);
+#
+#This function returns true if there are no on bits present in the IPv6
+#portion of the 128 bit string and false otherwise.
+#
+#=cut
+#
+#sub xisIPv4 {
+#  _deadlen(length($_[0]))
+#	if length($_[0]) != 16;
+#  return 0 if vec($_[0],0,32);
+#  return 0 if vec($_[0],1,32);
+#  return 0 if vec($_[0],2,32);
+#  return 1;
+#}
 
 =item * $bitsXn = shiftleft($bits128,$n);
 
@@ -655,7 +655,6 @@ sub simple_pack {
 =head1 EXPORT_OK
 
 	hasbits
-	isIPv4
 	shiftleft
 	addconst
 	add128
@@ -681,22 +680,38 @@ Michael Robinton E<lt>michael@bizsystems.comE<gt>
 
 =head1 COPYRIGHT
 
-Copyright 2006 - 2008, Michael Robinton <michael@bizsystems.com>
+Copyright 2003 - 2011, Michael Robinton E<lt>michael@bizsystems.comE<gt>
+
+All rights reserved.
 
 This program is free software; you can redistribute it and/or modify
-it under the terms of the GNU General Public License (except as noted
-otherwise in individuals sub modules)  published by
-the Free Software Foundation; either version 2 of the License, or
-(at your option) any later version.
+it under the terms of either:
+
+  a) the GNU General Public License as published by the Free
+  Software Foundation; either version 2, or (at your option) any
+  later version, or
+
+  b) the "Artistic License" which comes with this distribution.
 
 This program is distributed in the hope that it will be useful,
 but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-GNU General Public License for more details.
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See either
+the GNU General Public License or the Artistic License for more details.
 
-You should have received a copy of the GNU General Public License
-along with this program; if not, write to the Free Software
-Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
+You should have received a copy of the Artistic License with this
+distribution, in the file named "Artistic".  If not, I'll be glad to provide
+one.
+
+You should also have received a copy of the GNU General Public License
+along with this program in the file named "Copying". If not, write to the
+
+        Free Software Foundation, Inc.
+        59 Temple Place, Suite 330
+        Boston, MA  02111-1307, USA
+
+or visit their web page on the internet at:
+
+        http://www.gnu.org/copyleft/gpl.html.
 
 =head1 AUTHOR
 

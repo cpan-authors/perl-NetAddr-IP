@@ -36,7 +36,8 @@ my $cfile = $& .'.c';
 my %makeparms = (
     NAME		=> $pkg,
     VERSION_FROM	=> $module,	# finds $VERSION
-    depend		=> {$cfile => q[xs_include/miniSocket.inc localconf.h config.h localperl.h],
+#    depend		=> {$cfile => q[xs_include/miniSocket.inc localconf.h config.h localperl.h],
+    depend		=> {$cfile => q[ localconf.h config.h localperl.h ],
 			},
 #    PREREQ_PM		=> {Test::More	=> 0,
 #			},

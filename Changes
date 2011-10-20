@@ -1,5 +1,41 @@
 Revision history for Perl extension NetAddr::IP
 
+4.049  Sat Oct 15 22:15:10 PDT 2011
+	Updates to Lite.pm, Util.pm, new module InetBase.pm
+
+	In Lite v1.32
+        bug68723, add capability to parse input of the form
+        ->new6(12345,1). This should have been there but was
+        missing. Thanks to Andrei Benea for spotting this.
+        
+        In Util v1.41
+        add inet_pton, inet_ntop, AF_INET, AF_INET6
+
+        modify inet_n2dx and inet_n2ad to
+        recognize the new 128 bit IPv4 format
+        ::FFFF:FFFF:0:0
+
+        replace isIPv4 with a pure perl version for portablity
+
+        split the following into NetAddr::IP::InetBase v0.01
+	to provide better long term support for IPv6
+        inet_aton
+        inet_ntoa
+        ipv6_aton
+        ipv6_n2x
+        ipv6_n2d
+        inet_any2n
+        inet_n2dx
+        inet_n2ad
+        inet_ntop
+        inet_pton
+        packzeros
+        isIPv4
+        isNewIPv4
+        isAnyIPv4
+        AF_INET
+        AF_INET6
+
 4.048  Sat Oct  8 01:33:44 PDT 2011
 	remove debug print statement from Util v1.40
 

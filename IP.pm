@@ -4,8 +4,8 @@ package NetAddr::IP;
 
 use strict;
 #use diagnostics;
-use NetAddr::IP::Lite 1.31 qw(Zero Zeros Ones V4mask V4net);
-use NetAddr::IP::Util 1.40 qw(
+use NetAddr::IP::Lite 1.32 qw(Zero Zeros Ones V4mask V4net);
+use NetAddr::IP::Util 1.41 qw(
 	sub128
 	inet_aton
 	inet_any2n
@@ -18,6 +18,7 @@ use NetAddr::IP::Util 1.40 qw(
 	hasbits
 	notcontiguous
 );
+
 use AutoLoader qw(AUTOLOAD);
 
 use vars qw(
@@ -34,7 +35,7 @@ require Exporter;
 
 @ISA = qw(Exporter NetAddr::IP::Lite);
 
-$VERSION = do { sprintf " %d.%03d", (q$Revision: 4.48 $ =~ /\d+/g) };
+$VERSION = do { sprintf " %d.%03d", (q$Revision: 4.49 $ =~ /\d+/g) };
 
 =pod
 
@@ -69,6 +70,8 @@ See L<NetAddr::IP::Util>
 
 
   my $ip = new NetAddr::IP::Lite '127.0.0.1';
+	 or if your prefer
+  my $ip = NetAddr::IP::Lite->new('127.0.0.1);
 	or from a packed IPv4 address
   my $ip = new_from_aton NetAddr::IP::Lite (inet_aton('127.0.0.1'));
 	or from an octal filtered IPv4 address
@@ -335,11 +338,11 @@ objects stored using the L<Storable> module.
 
 =cut
 
+my $full_format = "%04X:%04X:%04X:%04X:%04X:%04X:%D.%D.%D.%D";
+my $full6_format = "%04X:%04X:%04X:%04X:%04X:%04X:%04X:%04X";
+
 sub import
 {
-    our $full_format = "%04X:%04X:%04X:%04X:%04X:%04X:%D.%D.%D.%D";
-    our $full6_format = "%04X:%04X:%04X:%04X:%04X:%04X:%04X:%04X";
-
     if (grep { $_ eq ':old_storable' } @_) {
 	@_ = grep { $_ ne ':old_storable' } @_;
     } else {
@@ -434,6 +437,24 @@ sub rsplit {
   unshift @_, 1;	# mark as reversed
   my $rv = &_splitref;
   return $rv ? @$rv : ();
+}
+
+sub full($) {
+  if (! $_[0]->{isv6} && isIPv4($_[0]->{addr})) {
+    my @hex = (unpack("n8",$_[0]->{addr}));
+    $hex[9] = $hex[7] & 0xff;
+    $hex[8] = $hex[7] >> 8;
+    $hex[7] = $hex[6] & 0xff;
+    $hex[6] >>= 8;
+    return sprintf($full_format,@hex);
+  } else {
+    &full6;
+  }
+}
+
+sub full6($) {
+  my @hex = (unpack("n8",$_[0]->{addr}));
+  return sprintf($full6_format,@hex);
 }
 
 sub DESTROY {};
@@ -815,26 +836,6 @@ To force ipV4 addresses into full ipV6 format use:
 =item C<-E<gt>full6()>
 
 Returns the address part in FULL ipV6 notation
-
-=cut
-
-sub full($) {
-  if (! $_[0]->{isv6} && isIPv4($_[0]->{addr})) {
-    my @hex = (unpack("n8",$_[0]->{addr}));
-    $hex[9] = $hex[7] & 0xff;
-    $hex[8] = $hex[7] >> 8;
-    $hex[7] = $hex[6] & 0xff;
-    $hex[6] >>= 8;
-    return sprintf($full_format,@hex);
-  } else {
-    &full6;
-  }
-}
-
-sub full6($) {
-  my @hex = (unpack("n8",$_[0]->{addr}));
-  return sprintf($full6_format,@hex);
-}
 
 =item C<$me-E<gt>contains($other)>
 
@@ -1477,10 +1478,6 @@ sub mod_version {
   &STORABLE_thaw;
 }
 
-1;
-
-__END__
-
 =pod
 
 =back
@@ -1520,13 +1517,41 @@ Michael Robinton E<lt>michael@bizsystems.comE<gt>
 This software comes with the same warranty as perl itself (ie, none),
 so by using it you accept any and all the liability.
 
-=head1 LICENSE
+=head1 COPYRIGHT
 
 This software is (c) Luis E. Muñoz, 1999 - 2007, and (c) Michael
-Robinton, 2006 - 2010.  It can be used under the terms of the Perl
-artistic license provided that proper credit for the work of the
-authors is preserved in the form of this copyright notice and license
-for this module.
+Robinton, 2006 - 2011.
+
+All rights reserved.
+
+This program is free software; you can redistribute it and/or modify
+it under the terms of either:
+
+  a) the GNU General Public License as published by the Free
+  Software Foundation; either version 2, or (at your option) any
+  later version, or
+
+  b) the "Artistic License" which comes with this distribution.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See either
+the GNU General Public License or the Artistic License for more details.
+
+You should have received a copy of the Artistic License with this
+distribution, in the file named "Artistic".  If not, I'll be glad to provide
+one.
+
+You should also have received a copy of the GNU General Public License
+along with this program in the file named "Copying". If not, write to the
+
+        Free Software Foundation, Inc.
+        59 Temple Place, Suite 330
+        Boston, MA  02111-1307, USA
+
+or visit their web page on the internet at:
+
+        http://www.gnu.org/copyleft/gpl.html.
 
 =head1 SEE ALSO
 

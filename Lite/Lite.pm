@@ -6,30 +6,32 @@ use Carp;
 use strict;
 #use diagnostics;
 #use warnings;
-use NetAddr::IP::Util qw(
+use NetAddr::IP::InetBase qw(
 	inet_any2n
+	isIPv4
+	inet_n2dx
+	inet_aton
+	ipv6_aton
+	ipv6_n2x
+);	
+use NetAddr::IP::Util qw(
 	addconst
 	sub128
 	ipv6to4
 	notcontiguous
-	isIPv4
 	shiftleft
-	inet_n2dx
 	hasbits
 	bin2bcd
 	bcd2bin
-	inet_aton
-	inet_any2n
-	ipv6_aton
-	ipv6_n2x
 	mask4to6
 	ipv4to6
 	naip_gethostbyname
+	havegethostbyname2
 );
 
 use vars qw(@ISA @EXPORT_OK $VERSION $Accept_Binary_IP $Old_nth $AUTOLOAD *Zero);
 
-$VERSION = do { my @r = (q$Revision: 1.31 $ =~ /\d+/g); sprintf "%d."."%02d" x $#r, @r };
+$VERSION = do { my @r = (q$Revision: 1.32 $ =~ /\d+/g); sprintf "%d."."%02d" x $#r, @r };
 
 require Exporter;
 
@@ -63,6 +65,8 @@ NetAddr::IP::Lite - Manages IPv4 and IPv6 addresses and subnets
   );
 
   my $ip = new NetAddr::IP::Lite '127.0.0.1';
+	or if your prefer
+  my $ip = NetAddr::IP::Lite->new('127.0.0.1);
 	or from a packed IPv4 address
   my $ip = new_from_aton NetAddr::IP::Lite (inet_aton('127.0.0.1'));
 	or from an octal filtered IPv4 address
@@ -608,18 +612,25 @@ If called with no arguments, 'default' is assumed.
 
 =cut
 
+my $lbmask = inet_aton('255.0.0.0');
+my $_p4broad	= inet_any2n('255.255.255.255');
+my $_p4loop	= inet_any2n('127.0.0.1');
+my $_p4mloop	= inet_aton('255.0.0.0');
+   $_p4mloop	= mask4to6($_p4mloop);
+my $_p6loop	= inet_any2n('::1');
+
 my %fip4 = (
         default         => Zeros,
         any             => Zeros,
-        broadcast       => inet_any2n('255.255.255.255'),
-        loopback        => inet_any2n('127.0.0.1'),
+        broadcast       => $_p4broad,
+        loopback        => $_p4loop,
 	unspecified	=> undef,
 );
 my %fip4m = (
         default         => Zeros,
         any             => Zeros,
         broadcast       => Ones,
-        loopback        => mask4to6(inet_aton('255.0.0.0')),
+        loopback        => $_p4mloop,
 	unspecified	=> undef,	# not applicable for ipV4
 	host		=> Ones,
 );
@@ -628,7 +639,7 @@ my %fip6 = (
 	default         => Zeros,
 	any             => Zeros,
 	broadcast       => undef,	# not applicable for ipV6
-	loopback        => inet_any2n('::1'),
+	loopback        => $_p6loop,
 	unspecified     => Zeros,
 );
 
@@ -745,6 +756,8 @@ sub _xnew($$;$$) {
 	  last;
 	} else {
 	  return undef unless $isV6;
+# add for ipv6 notation "12345, 1"
+	  $mask = lc $_[0];
         }
       } else {
 	$mask = lc $_[0];
@@ -758,8 +771,22 @@ sub _xnew($$;$$) {
 # parse mask
     if ($mask =~ /^(\d+)$/) {
       my $mval = $1;
-      if (! $isV6 && index($ip,':') < 0) {	# is ipV4
-	if ($mval == 32) {				# cidr 32
+# need to test here for 'dots'	try running the tests that fail with $ip =~ /\D/ and print what IP is to see what's missing
+      if (! $isV6 && index($ip,':') < 0) {	# ipV4
+	my $try;
+	if ($ip !~ /\D/ &&	# binary IP address, could be ipV6
+	   ($try = bcd2bin($ip)) &&
+	   ! isIPv4($try) ) {
+	  $isV6 = 1;
+	  if ($mask < 128) {			# small cidr
+	    $mask = shiftleft(Ones,128 -$mval);	# with small cidr
+	  } else {				# else binary mask
+	    $mask = bcd2bin($mval);
+	  }
+	  $ip = $try;
+	  last;
+	}
+	elsif ($mval == 32) {				# cidr 32
 	  $mask = Ones;
 	}
 	elsif ($mask < 32) {			# small cidr
@@ -767,12 +794,27 @@ sub _xnew($$;$$) {
 	} else {				# is a binary mask
 	  $mask = pack('L3N',0xffffffff,0xffffffff,0xffffffff,$mval);
 	}
+#      }
+#      elsif (! $isV6 && $ip !~ /\D/) {		# is just a big number
+#	$ip = bcd2bin($ip);			# special case
+#	if (isAnyIPv4($ip)) {
+#	  $mask = shiftleft(Ones,32 -$mval);
+#	} else {
+#	  $mask = shiftleft(Ones,128 -$mval);
+#	}	 
       } else {					# is ipV6
 	$isV6	= 1;
 	if ($mval == 128) {			# cidr 128
 	  $mask = Ones;
 	}
-	elsif (index($ip,':') < 0) {	# corner case of ipV4 with new6
+	elsif ($ip !~ /\D/) {			# numeric IPv6 address
+	  if ($mask < 128) {			# small cidr
+	    $mask = shiftleft(Ones,128 -$mval);	# with small cidr
+	  } else {				# else binary mask
+	    $mask = bcd2bin($mval);
+	  }
+	}
+	elsif (index($ip,':') < 0) {		# corner case of ipV4 with new6
 	  $mask = shiftleft(Ones,32 -$mval);
 	}
 	elsif ($mask < 128) {			# small cidr
@@ -818,7 +860,8 @@ sub _xnew($$;$$) {
       elsif ($ip =~ /^(\d+)$/ && $hasmask && $1 >= 0 and $1 < 256) { # pure numeric
 	$ip = sprintf("%d.0.0.0",$1);
       }
-      elsif ($ip =~ /^\d+$/ && !$hasmask) {	# a big integer
+#      elsif ($ip =~ /^\d+$/ && !$hasmask) {	# a big integer
+      elsif ($ip =~ /^\d+$/ ) {	# a big integer
 	$ip = bcd2bin($ip);
 	last;
       }
@@ -894,7 +937,7 @@ sub _xnew($$;$$) {
 	last;
       }
 # check for resolvable IPv6 hosts
-      elsif ($ip !~ /[^a-zA-Z0-9\.-]/ && ($tmp = naip_gethostbyname($ip))) {
+      elsif ($ip !~ /[^a-zA-Z0-9\.-]/ && havegethostbyname2() && ($tmp = naip_gethostbyname($ip))) {
 	$ip = $tmp;
 	$isV6 = 1;
 	last;
@@ -1346,18 +1389,45 @@ Michael Robinton E<lt>michael@bizsystems.comE<gt>
 This software comes with the  same warranty as perl itself (ie, none),
 so by using it you accept any and all the liability.
 
-=head1 LICENSE
+=head1 COPYRIGHT
 
  This software is (c) Luis E. Muñoz, 1999 - 2005
- and (c) Michael Robinton, 2006 - 2010.
+ and (c) Michael Robinton, 2006 - 2011.
 
-It can be used under the terms of the perl artistic license provided that
-proper credit for the work of the author is preserved in the form of this
-copyright notice and license for this module.
+All rights reserved.
+
+This program is free software; you can redistribute it and/or modify
+it under the terms of either:
+
+  a) the GNU General Public License as published by the Free
+  Software Foundation; either version 2, or (at your option) any
+  later version, or
+
+  b) the "Artistic License" which comes with this distribution.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See either
+the GNU General Public License or the Artistic License for more details.
+
+You should have received a copy of the Artistic License with this
+distribution, in the file named "Artistic".  If not, I'll be glad to provide
+one.
+
+You should also have received a copy of the GNU General Public License
+along with this program in the file named "Copying". If not, write to the
+
+        Free Software Foundation, Inc.
+        59 Temple Place, Suite 330
+        Boston, MA  02111-1307, USA
+
+or visit their web page on the internet at:
+
+        http://www.gnu.org/copyleft/gpl.html.
 
 =head1 SEE ALSO
 
-perl(1), NetAddr::IP(3), NetAddr::IP::Util(3)
+NetAddr::IP(3), NetAddr::IP::Util(3), NetAddr::IP::InetBase(3)
 
 =cut
 

@@ -44,7 +44,7 @@ extern "C" {
 #endif
 
 /*	workaround for OS's without inet_aton			*/
-#include "xs_include/inet_aton.c"
+/*	#include "xs_include/inet_aton.c"	removed 10-12-11 */
 
 typedef union
 {
@@ -54,7 +54,8 @@ typedef union
 
 char * is_ipv6to4 = "ipv6to4", * is_shiftleft = "shiftleft", * is_comp128 = "comp128";
 char * is_sub128 = "sub128", * is_add128 = "add128";
-char * is_hasbits = "hasbits", * is_isIPv4 = "isIPv4";
+char * is_hasbits = "hasbits";
+/* , * is_isIPv4 = "isIPv4"; */
 char * is_bcd2bin = "bcd2bin", * is_simple_pack = "simple_pack", * is_bcdn2bin = "bcdn2bin";
 char * is_mask4to6 = "mask4to6", * is_ipv4to6 = "ipv4to6";
 char * is_maskanyto6 = "maskanyto6", * is_ipanyto6 = "ipanyto6";
@@ -468,11 +469,13 @@ _bcd2txt(unsigned char * bcd2p, BCD * n)
   return j;
 }
 
+/*	INCLUDE: xs_include/miniSocket.inc	removed 10-12-11	*/
+
+
+
 MODULE = NetAddr::IP::Util    PACKAGE = NetAddr::IP::Util
 
 PROTOTYPES: ENABLE
-
-INCLUDE: xs_include/miniSocket.inc
 
 void
 comp128(s,...)
@@ -601,8 +604,6 @@ PPCODE:
 int
 hasbits(s)
 	SV * s
-ALIAS:
-	NetAddr::IP::Util::isIPv4 = 1
 PREINIT:
 	unsigned char * bp;
 	char * subname;
@@ -610,19 +611,11 @@ PREINIT:
 CODE:
 	bp = (unsigned char *) SvPV(s,len);
 	if (len != 16) {
-	  if (ix == 1)
-	    subname = is_isIPv4;
-	  else
-	    subname = is_hasbits;
+	  subname = is_hasbits;
 	  croak("Bad arg length for %s%s, length is %d, should be %d",
 		"NetAddr::IP::Util::",subname,len *8,128);
 	}
-	if (ix == 1) {
-	  RETVAL = _isipv4(bp);
-	}
-	else {
-	  RETVAL = have128(bp);
-	}
+	RETVAL = have128(bp);
 OUTPUT:
 	RETVAL
 

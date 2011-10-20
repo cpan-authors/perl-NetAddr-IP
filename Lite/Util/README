@@ -6,6 +6,7 @@ SYNOPSIS
             inet_aton
             inet_ntoa
             ipv6_aton
+            ipv6_ntoa
             ipv6_n2x
             ipv6_n2d
             inet_any2n
@@ -15,12 +16,15 @@ SYNOPSIS
             isAnyIPv4
             inet_n2dx
             inet_n2ad
+            inet_pton
+            inet_ntop
             inet_4map6
             ipv4to6
             mask4to6
             ipanyto6
             maskanyto6
             ipv6to4
+            packzeros
             shiftleft
             addconst
             add128
@@ -29,23 +33,28 @@ SYNOPSIS
             bin2bcd
             bcd2bin
             mode
+            AF_INET
+            AF_INET6
             naip_gethostbyname
       );
 
       use NetAddr::IP::Util qw(:all :inet :ipv4 :ipv6 :math)
 
-      :inet   =>    inet_aton, inet_ntoa, ipv6_aton,
-                    ipv6_n2x, ipv6_n2d, inet_any2n,
-                    inet_n2dx, inet_n2ad, inet_4map6,
-                    ipv4to6, mask4to6, ipanyto6, 
+      :inet   =>    inet_aton, inet_ntoa, ipv6_aton
+                    ipv6_ntoa, ipv6_n2x, ipv6_n2d, 
+                    inet_any2n, inet_n2dx, inet_n2ad, 
+                    inet_pton, inet_ntop, inet_4map6, 
+                    ipv4to6, mask4to6, ipanyto6, packzeros
                     maskanyto6, ipv6to4, naip_gethostbyname
 
       :ipv4   =>    inet_aton, inet_ntoa
 
-      :ipv6   =>    ipv6_aton, ipv6_n2x, ipv6_n2d,
-                    inet_any2n, inet_n2dx, inet_n2ad
-                    inet_4map6, ipv4to6, mask4to6, ipanyto6,
-                    maskanyto6, ipv6to4, naip_gethostbyname
+      :ipv6   =>    ipv6_aton, ipv6_ntoa, ipv6_n2x, 
+                    ipv6_n2d, inet_any2n, inet_n2dx, 
+                    inet_n2ad, inet_pton, inet_ntop,
+                    inet_4map6, ipv4to6, mask4to6,
+                    ipanyto6, maskanyto6, ipv6to4,
+                    packzeros, naip_gethostbyname
 
       :math   =>    hasbits, isIPv4, isNewIPv4, isAnyIPv4,
                     addconst, add128, sub128, notcontiguous,
@@ -54,8 +63,10 @@ SYNOPSIS
       $dotquad = inet_ntoa($netaddr);
       $netaddr = inet_aton($dotquad);
       $ipv6naddr = ipv6_aton($ipv6_text);
+      $ipv6_text = ipvt_ntoa($ipv6naddr);
       $hex_text = ipv6_n2x($ipv6naddr);
       $dec_text = ipv6_n2d($ipv6naddr);
+      $hex_text = packzeros($hex_text);
       $ipv6naddr = inet_any2n($dotquad or $ipv6_text);
       $ipv6naddr = inet_4map6($netaddr or $ipv6naddr);
       $rv = hasbits($bits128);
@@ -64,6 +75,8 @@ SYNOPSIS
       $rv = isAnyIPv4($bits128);
       $dotquad or $hex_text = inet_n2dx($ipv6naddr);
       $dotquad or $dec_text = inet_n2ad($ipv6naddr);
+      $netaddr = inet_pton($AF_family,$hex_text);
+      $hex_text = inet_ntop($AF_family,$netaddr);
       $ipv6naddr = ipv4to6($netaddr);
       $ipv6naddr = mask4to6($netaddr);
       $ipv6naddr = ipanyto6($netaddr);
@@ -81,6 +94,7 @@ SYNOPSIS
       $bits128 = bcd2bin($bcdtxt);
       $modetext = mode;
       ($name,$aliases,$addrtype,$length,@addrs)=naip_gethostbyname(NAME);
+      $trueif = havegethostbyname2();
 
       NetAddr::IP::Util::lower();
       NetAddr::IP::Util::upper();
@@ -141,6 +155,13 @@ DESCRIPTION
 
           input:        ipv6 text
           returns:      128 bit RDATA string
+
+    * $ipv6_text = ipv6_ntoa($ipv6naddr);
+        Convert a 128 bit binary IPv6 address to compressed rfc 1884 text
+        representation.
+
+          input:        128 bit RDATA string
+          returns:      ipv6 text
 
     * $hex_text = ipv6_n2x($ipv6addr);
         Takes an IPv6 RDATA string and returns an 8 segment IPv6 hex address
@@ -235,8 +256,26 @@ DESCRIPTION
           returns:      ddd.ddd.ddd.ddd
                     or  x:x:x:x:x:x:ddd.ddd.ddd.dd
 
+    * $netaddr = inet_pton($AF_family,$hex_text);
+        This function takes an IP address in IPv4 or IPv6 text format and
+        converts it into binary format. The type of IP address conversion is
+        controlled by the FAMILY argument.
+
+    * $hex_text = inet_ntop($AF_family,$netaddr);
+        This function takes and IP address in binary format and converts it
+        into text format. The type of IP address conversion is controlled by
+        the FAMILY argument.
+
+        NOTE: inet_ntop ALWAYS returns lowercase characters.
+
+    * $hex_text = packzeros($hex_text);
+        This function optimizes and rfc 1884 IPv6 hex address to reduce the
+        number of long strings of zero bits as specified in rfc 1884, 2.2
+        (2) by substituting :: for the first occurence of the longest string
+        of zeros in the address.
+
     * $ipv6naddr = ipv4to6($netaddr);
-        Convert an ipv4 network address into an ipv6 network address.
+        Convert an ipv4 network address into an IPv6 network address.
 
           input:        32 bit network address
           returns:      128 bit network address
@@ -342,10 +381,34 @@ DESCRIPTION
     * ($name,$aliases,$addrtype,$length,@addrs)=naip_gethostbyname(NAME);
         Replacement for Perl's gethostbyname if Socket6 is available
 
+        In ARRAY context, returns a list of five elements, the hostname or
+        NAME, a space seperated list of C_NAMES, AF family, length of the
+        address structure, and an array of one or more netaddr's
+
+        In SCALAR context, returns the first netaddr.
+
         This function ALWAYS returns an IPv6 address, even on IPv4 only
         systems. IPv4 addresses are mapped into IPv6 space in the form:
 
                 ::FFFF:FFFF:d.d.d.d
+
+        This is NOT the expected result from Perl's gethostbyname2. It is
+        instead equivalent to:
+
+          On an IPv4 only system:
+            $ipv6naddr = ipv4to6 scalar ( gethostbyname( name ));
+
+          On a system with Socket6 and a working gethostbyname2:
+            $ipv6naddr = gethostbyname2( name, AF_INET6 );
+          and if that fails, the IPv4 conversion above.
+
+        For a gethostbyname2 emulator that behave like Socket6, see: the
+        Net::DNS::Dig manpage
+
+    * $trueif = havegethostbyname2();
+        This function returns TRUE if Socket6 has a functioning
+        gethostbyname2, otherwise it returns FALSE. See the comments above
+        about the behavior of naip_gethostbyname.
 
     * NetAddr::IP::Util::lower();
         Return IPv6 strings in lowercase.
@@ -422,17 +485,19 @@ EXAMPLES
             ? 1 : 0;
       }
 
+      # truely hard way to do $ip++
       # add a constant, wrapping at netblock boundaries
       # to subtract the constant, negate it before calling
       # 'addwrap' since 'addconst' will extend the sign bits
       #
       sub addwrap {
         my($nip,$const) = @_;
-        my $mask    = $nip->{addr};
+        my $addr    = $nip->{addr};
+        my $mask    = $nip->{mask};
         my $bits    = $nip->{bits};
         my $notmask = ~ $mask;
         my $hibits  = $addr & $mask;
-        my $addr = addconst($addr,$const);
+        $addr = addconst($addr,$const);
         my $wraponly = $addr & $notmask;
         my $newip = {
             addr    => $hibits | $wraponly,
@@ -443,10 +508,28 @@ EXAMPLES
         return $newip;
       }
 
+      # something more useful
+      # increment a /24 net to the NEXT net at the boundry
+
+      my $nextnet = 256;    # for /24
+      LOOP:
+      while (...continuing) {
+        your code....
+        ...
+        my $lastip = $ip-copy();
+        $ip++;
+        if ($ip < $lastip) {        # host part wrapped?
+      # discard carry
+          (undef, $ip->{addr} = addconst($ip->{addr}, $nextnet);
+        }
+        next LOOP;
+      }
+
 EXPORT_OK
             inet_aton
             inet_ntoa
             ipv6_aton
+            ipv6_ntoa
             ipv6_n2x
             ipv6_n2d
             inet_any2n
@@ -456,12 +539,15 @@ EXPORT_OK
             isAnyIPv4
             inet_n2dx
             inet_n2ad
+            inet_pton
+            inet_ntop
             inet_4map6
             ipv4to6
             mask4to6
             ipanyto6
             maskanyto6
             ipv6to4
+            packzeros
             shiftleft
             addconst
             add128
@@ -471,36 +557,49 @@ EXPORT_OK
             bcd2bin
             mode
             naip_gethostbyname
+            havegethostbyname2
 
 AUTHOR
     Michael Robinton <michael@bizsystems.com>
-
-ACKNOWLEDGMENTS
-    The following functions are used in whole or in part as include files to
-    Util.xs. The copyright is include in the file.
-
-      file:              function:
-
-      miniSocket.inc  inet_aton, inet_ntoa
-
-    inet_aton, inet_ntoa are from the perl-5.8.0 release by Larry Wall,
-    copyright 1989-2002. inet_aton, inet_ntoa code is current through
-    perl-5.9.3 release. Thank you Larry for making PERL possible for all of
-    us.
 
 COPYRIGHT
-    Copyright 2003 - 2010, Michael Robinton <michael@bizsystems.com>
+    Copyright 2003 - 2011, Michael Robinton <michael@bizsystems.com>
 
-    LICENSE AND WARRANTY
+    All rights reserved.
 
-    This software is (c) Michael Robinton. It can be used under the terms of
-    the perl artistic license provided that proper credit for the work of
-    the author is preserved in the form of this copyright notice and license
-    for this module.
+    This program is free software; you can redistribute it and/or modify it
+    under the terms of either:
 
-    No warranty of any kind is expressed or implied, by using it you accept
-    any and all the liability.
+      a) the GNU General Public License as published by the Free
+      Software Foundation; either version 2, or (at your option) any
+      later version, or
+
+      b) the "Artistic License" which comes with this distribution.
+
+    This program is distributed in the hope that it will be useful, but
+    WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See either the GNU
+    General Public License or the Artistic License for more details.
+
+    You should have received a copy of the Artistic License with this
+    distribution, in the file named "Artistic". If not, I'll be glad to
+    provide one.
+
+    You should also have received a copy of the GNU General Public License
+    along with this program in the file named "Copying". If not, write to
+    the
+
+            Free Software Foundation, Inc.
+            59 Temple Place, Suite 330
+            Boston, MA  02111-1307, USA
+
+    or visit their web page on the internet at:
+
+            http://www.gnu.org/copyleft/gpl.html.
 
 AUTHOR
     Michael Robinton <michael@bizsystems.com>
+
+SEE ALSO
+    NetAddr::IP(3), NetAddr::IP::Lite(3), NetAddr::IP::InetBase(3)
 

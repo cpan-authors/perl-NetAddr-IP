@@ -5,14 +5,12 @@
 # Change 1..1 below to 1..last_test_to_print .
 # (It may become useful if the test is moved to ./t subdirectory.)
 
-BEGIN { $| = 1; print "1..6\n"; }
+BEGIN { $| = 1; print "1..13\n"; }
 END {print "not ok 1\n" unless $loaded;}
 
 use NetAddr::IP::Util qw(
-	ipv6_aton
-	ipv6_n2x
-	inet_any2n
-	inet_n2dx
+	
+	packzeros
 );
 
 $loaded = 1;
@@ -30,20 +28,25 @@ sub ok {
   ++$test;
 }
 
-my @num = qw	# input					expected
-(   a1b2:c3d4:e5d6:f7e8:08f9:190a:2a1b:3b4c	A1B2:C3D4:E5D6:F7E8:8F9:190A:2A1B:3B4C
-    		1.2.3.4					1.2.3.4
-    A1B2:C3D4:E5D6:F7E8:08F9:190A:1.2.3.4	A1B2:C3D4:E5D6:F7E8:8F9:190A:102:304
-		::1.2.3.4				1.2.3.4
-	::FFFF:FFFF:1.2.3.4				1.2.3.4
+my @addr = qw	# input					expected
+(  D0:00:0000:0000:000:b00:0000:000		d0::b00:0:0
+   0d0:00:0000:0000:000:0B00::			d0::b00:0:0
+   ::c3D4:e5d6:0:0:0:0				0:0:c3d4:e5d6::
+   0:0000:c3D4:e5d6:0:0:0:0			0:0:c3d4:e5d6::
+   0:0:0:0:0:0:0:0				::
+   0:0::					::
+   ::0:000:0					::
+   0:0::1.2.3.4					::1.2.3.4
+   ::1.2.3.4					::1.2.3.4
+   ::01b2:C3d4:0:0:0:1.2.3.4			0:1b2:c3d4::1.2.3.4
+   0:0:0:0:a1b2:c3D4::				::a1b2:c3d4:0:0
+   12:0:0:0:34:0:00:000				12::34:0:0:0
 );
 
-my $ff = ipv6_aton($num[1]);
-for(my $i=0;$i<@num;$i+=2) {
-  my $num = $num[$i];
-  my $bstr = inet_any2n($num);
-  my $rv = inet_n2dx($bstr);
-  my $exp = $num[$i +1];
+for(my $i=0;$i<@addr;$i+=2) {
+  my $addr = $addr[$i];
+  my $rv = packzeros($addr);
+  my $exp = lc $addr[$i +1];
   print "got: $rv\nexp: $exp\nnot "
 	 unless $rv eq $exp;
   &ok;
