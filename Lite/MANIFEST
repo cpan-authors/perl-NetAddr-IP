@@ -8,7 +8,8 @@ README
 bug2742981
 t/addr.t
 t/aton.t
-t/bigints.t
+t/bigint.t
+t/bignums.t
 t/bin_ips.t
 t/bits.t
 t/broadcast.t

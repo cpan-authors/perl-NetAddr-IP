@@ -11,7 +11,7 @@ require Exporter;
 
 @ISA = qw(Exporter);
 
-$VERSION = do { my @r = (q$Revision: 0.01 $ =~ /\d+/g); sprintf "%d."."%02d" x $#r, @r };
+$VERSION = do { my @r = (q$Revision: 0.02 $ =~ /\d+/g); sprintf "%d."."%02d" x $#r, @r };
 
 @EXPORT_OK = qw(
 	inet_aton
@@ -81,17 +81,12 @@ if (eval { AF_INET6() } ) {
   $emulateAF_INET6 = -1;			# have it, remind below
 }
 if (eval{ require Socket6 } ) {
-  if ($emulateAF_INET6) {
-    import Socket6 qw(
+  import Socket6 qw(
 	inet_pton
 	inet_ntop
-    );
-  } else {
-    import Socket6 qw(
-	inet_pton
-	inet_ntop
-	AF_INET6
-    );
+  );
+  unless ($emulateAF_INET6) {
+    *AF_INET6 = \&Socket6::AF_INET6;
   }
   $emulateAF_INET6 = 0;				# clear, have it from elsewhere or here
 } else {

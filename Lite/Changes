@@ -1,5 +1,12 @@
 Revision history for Perl extension NetAddr::IP::Lite
 
+1.33  Sat Oct 22 01:47:42 PDT 2011
+	In Lite/Util/lib/NetAddr/IP/Lite/Util/InetBase.pm v0.02
+        Socket6 prior to version 0.23 does not have AF_INET6 in the
+        EXPORT_OK array, modify InetBase.pm v0.2 to work around this.     
+
+	Add support for Math::BigInt objects
+
 1.32  Sat Oct 15 22:05:23 PDT 2011
 	bug68723, add capability to parse input of the form
 	->new6(12345,1). This should have been there but was

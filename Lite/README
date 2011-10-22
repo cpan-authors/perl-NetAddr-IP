@@ -59,7 +59,7 @@ DESCRIPTION
     This module provides an object-oriented abstraction on top of IP
     addresses or IP subnets, that allows for easy manipulations. Most of the
     operations of NetAddr::IP are supported. This module will work older
-    versions of Perl and does not use Math::BigInt.
+    versions of Perl and does not use but is compatible with Math::BigInt.
 
     * By default NetAddr::IP functions and methods return string IPv6
     addresses in uppercase. To change that to lowercase:
@@ -284,7 +284,8 @@ DESCRIPTION
           ::x:x/host
           0xABCDEF, 0b111111000101011110 within the limits
           of perl's number resolution
-          123456789012  a 'big' bcd number i.e. Math::BigInt
+          123456789012  a 'big' bcd number (bigger than perl likes)
+          and Math::BigInt
 
         If called with no arguments, 'default' is assumed.
 
@@ -348,6 +349,13 @@ DESCRIPTION
 
         This method is essential for serializing the representation of a
         subnet.
+
+    "->bigint()"
+        When called in a scalar context, will return a Math::BigInt
+        representation of the address part of the IP address. When called in
+        an array contest, it returns a list of two elements. The first
+        element is as described, the second element is the Math::BigInt
+        representation of the netmask.
 
     "$me->contains($other)"
         Returns true when "$me" completely contains "$other". False is
@@ -453,7 +461,7 @@ EXPORT_OK
             :upper
             :lower
 
-AUTHOR
+AUTHORS
     Luis E. Muñoz <luismunoz@cpan.org>, Michael Robinton
     <michael@bizsystems.com>
 

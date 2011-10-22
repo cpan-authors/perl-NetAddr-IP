@@ -47,7 +47,8 @@ Lite/README
 Lite/bug2742981
 Lite/t/addr.t
 Lite/t/aton.t
-Lite/t/bigints.t
+Lite/t/bigint.t
+Lite/t/bignums.t
 Lite/t/bin_ips.t
 Lite/t/bits.t
 Lite/t/broadcast.t

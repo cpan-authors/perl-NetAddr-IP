@@ -11,6 +11,7 @@ use NetAddr::IP::InetBase qw(
 	isIPv4
 	inet_n2dx
 	inet_aton
+inet_ntoa
 	ipv6_aton
 	ipv6_n2x
 );	
@@ -31,7 +32,7 @@ use NetAddr::IP::Util qw(
 
 use vars qw(@ISA @EXPORT_OK $VERSION $Accept_Binary_IP $Old_nth $AUTOLOAD *Zero);
 
-$VERSION = do { my @r = (q$Revision: 1.32 $ =~ /\d+/g); sprintf "%d."."%02d" x $#r, @r };
+$VERSION = do { my @r = (q$Revision: 1.33 $ =~ /\d+/g); sprintf "%d."."%02d" x $#r, @r };
 
 require Exporter;
 
@@ -111,8 +112,8 @@ reason, then type:
 
 This module provides an object-oriented abstraction on top of IP
 addresses or IP subnets, that allows for easy manipulations. Most of the
-operations of NetAddr::IP are supported. This module will work older
-versions of Perl and does B<not> use Math::BigInt.
+operations of NetAddr::IP are supported. This module will work with older
+versions of Perl and does B<not> use but is compatible with Math::BigInt.
 
 * By default B<NetAddr::IP> functions and methods return string IPv6
 addresses in uppercase.  To change that to lowercase:
@@ -606,7 +607,8 @@ Any RFC1884 notation
   ::x:x/host
   0xABCDEF, 0b111111000101011110 within the limits
   of perl's number resolution
-  123456789012  a 'big' bcd number i.e. Math::BigInt
+  123456789012  a 'big' bcd number (bigger than perl likes)
+  and Math::BigInt
 
 If called with no arguments, 'default' is assumed.
 
@@ -727,16 +729,26 @@ sub _xnew($$;$$) {
   my $class	= ref $proto || $proto || __PACKAGE__;
   my $ip	= lc shift;
   $ip = 'default' unless defined $ip;
+  $ip = join('',reverse @{$ip->{value}})		# treat as big bcd string
+	if ref $ip && ref $ip eq 'Math::BigInt' &&	# can /CIDR notation
+	    ($ip->{sign} eq '+' ||
+	     die 'NetAddr::IP does not accept negative Math::BigInt numbers');
   my $hasmask = 1;
   my($mask,$tmp);
 
   while (1) {
+# process IP's with no CIDR or that have the CIDR as part of the IP argument string
     unless (@_) {
 #      if ($ip =~ m!^(.+)/(.+)$!) {
-      if ($ip =~ m!^([a-z0-9.:-]+)(?:/|\s+)([a-z0-9.:-]+)$!) {
+      if ($ip !~ /\D/) {		# binary number notation
+	$ip = bcd2bin($ip);
+	$mask = Ones;
+	last;
+      }
+      elsif ($ip =~ m!^([a-z0-9.:-]+)(?:/|\s+)([a-z0-9.:-]+)$!) {
 	$ip	= $1;
 	$mask	= $2;
-      } elsif (grep($ip eq $_,qw(default any broadcast loopback unspecified))) {
+      } elsif (grep($ip eq $_,(qw(default any broadcast loopback unspecified)))) {
 	$isV6 = 1 if $ip eq 'unspecified';
 	if ($isV6) {
 	  $mask = $fip6m{$ip};
@@ -748,80 +760,93 @@ sub _xnew($$;$$) {
 	last;
       }
     }
+# process "ipv6" token and default IP's
     elsif (defined $_[0]) {
       if ($_[0] =~ /ipv6/i || $isV6) {
-	if (grep($ip eq $_,qw(default any loopback unspecified))) {
+	if (grep($ip eq $_,(qw(default any loopback unspecified)))) {
 	  $mask	= $fip6m{$ip};
 	  $ip	= $fip6{$ip};
 	  last;
 	} else {
 	  return undef unless $isV6;
 # add for ipv6 notation "12345, 1"
-	  $mask = lc $_[0];
         }
-      } else {
-	$mask = lc $_[0];
+#	$mask = lc $_[0];
+#      } else {
+#	$mask = lc $_[0];
       }
+# extract mask
+      $mask = lc $_[0];
     }
+###
+### process mask
     unless (defined $mask) {
       $hasmask	= 0;
       $mask	= 'host';
     }
 
-# parse mask
-    if ($mask =~ /^(\d+)$/) {
-      my $mval = $1;
-# need to test here for 'dots'	try running the tests that fail with $ip =~ /\D/ and print what IP is to see what's missing
-      if (! $isV6 && index($ip,':') < 0) {	# ipV4
-	my $try;
-	if ($ip !~ /\D/ &&	# binary IP address, could be ipV6
-	   ($try = bcd2bin($ip)) &&
-	   ! isIPv4($try) ) {
-	  $isV6 = 1;
-	  if ($mask < 128) {			# small cidr
-	    $mask = shiftleft(Ones,128 -$mval);	# with small cidr
-	  } else {				# else binary mask
-	    $mask = bcd2bin($mval);
+# two kinds of IP's can turn on the isV6 flag
+# 1) big digits that are over the IPv4 boundry
+# 2) IPv6 IP syntax
+#
+# check these conditions and set isV6 as appropriate
+#
+    my $try;
+    $isV6 = 1	# unconditionally
+	if	# check big bcd and IPv6 rfc1884
+	( $ip !~ /\D/ && 				  # ip is all decimal
+	  (length($ip) > 3 || $ip > 255) &&		  # exclude a single digit in the range of zero to 255, could be funny IPv4
+	  ($try = bcd2bin($ip)) && ! isIPv4($try)) ||	  # precedence so $try is not corrupted
+	(index($ip,':') >= 0 && ($try = ipv6_aton($ip))); # fails if not an rfc1884 address
+
+# if either of the above conditions is true, $try contains the NetAddr 128 bit address
+
+# checkfor Math::BigInt mask
+    $mask = join('',reverse @{$mask->{value}})        # treat as big bcd string
+        if ref $mask && ref $mask eq 'Math::BigInt' &&
+	    ($mask->{sign} eq '+' ||
+	     die 'NetAddr::IP does not accept negative Math::BigInt numbers');
+    if ($mask !~ /\D/) {				# bcd or CIDR notation
+      my $isCIDR = length($mask) < 4 && $mask < 129;
+      if ($isV6) {
+	if ($isCIDR) {
+	  if ($ip =~ /^\d+\.\d+\.\d+\.\d+$/) {	# corner condition of IPv4 with isV6
+	    $try = ipv4to6(inet_aton($ip));
+	    if ($mask < 32) {
+	      $mask = shiftleft(Ones,32 -$mask);
+	    }
+	    elsif ($mask == 32) {
+	      $mask = Ones;
+	    } else {
+	      return undef;			# undoubtably an error
+	    }
 	  }
-	  $ip = $try;
-	  last;
-	}
-	elsif ($mval == 32) {				# cidr 32
-	  $mask = Ones;
-	}
-	elsif ($mask < 32) {			# small cidr
-	  $mask = shiftleft(Ones,32 -$mval);
-	} else {				# is a binary mask
-	  $mask = pack('L3N',0xffffffff,0xffffffff,0xffffffff,$mval);
-	}
-#      }
-#      elsif (! $isV6 && $ip !~ /\D/) {		# is just a big number
-#	$ip = bcd2bin($ip);			# special case
-#	if (isAnyIPv4($ip)) {
-#	  $mask = shiftleft(Ones,32 -$mval);
-#	} else {
-#	  $mask = shiftleft(Ones,128 -$mval);
-#	}	 
-      } else {					# is ipV6
-	$isV6	= 1;
-	if ($mval == 128) {			# cidr 128
-	  $mask = Ones;
-	}
-	elsif ($ip !~ /\D/) {			# numeric IPv6 address
-	  if ($mask < 128) {			# small cidr
-	    $mask = shiftleft(Ones,128 -$mval);	# with small cidr
-	  } else {				# else binary mask
-	    $mask = bcd2bin($mval);
+	  elsif ($mask < 128) {
+	    $mask = shiftleft(Ones,128 -$mask);	# small cidr
+	  } else {
+	    $mask = Ones();
 	  }
+	} else {
+	  $mask = bcd2bin($mask);
 	}
-	elsif (index($ip,':') < 0) {		# corner case of ipV4 with new6
-	  $mask = shiftleft(Ones,32 -$mval);
+      }
+      elsif ($isCIDR && $mask < 33) {		# is V4
+	if ($mask < 32) {
+	  $mask = shiftleft(Ones,32 -$mask);
 	}
-	elsif ($mask < 128) {			# small cidr
-	  $mask = shiftleft(Ones,128 -$mval);
-	} else {				# is a binary mask
-	  $mask = bcd2bin($mval);
+	elsif ( $mask == 32) {
+	  $mask = Ones;
+	} else {
+	  $mask = bcd2bin($mask);
+	  $mask |= $_v4mask;			# v4 always 
 	}
+      } else {					# also V4
+	$mask = bcd2bin($mask);
+	$mask |= $_v4mask;
+      }
+      if ($try) {				# is a big number
+	$ip = $try;
+	last;
       }
     } elsif ($mask =~ m/^\d+\.\d+\.\d+\.\d+$/) { # ipv4 form of mask
       $mask = _no_octal($mask) if $noctal;	# filter for octal
@@ -837,13 +862,13 @@ sub _xnew($$;$$) {
       return undef unless defined ($mask = ipv6_aton($mask));	# try ipv6 form of mask
     }
 
-# parse IP
+# process remaining IP's
 
     if (index($ip,':') < 0) {				# ipv4 address
       if ($ip =~ m/^(\d+)\.(\d+)\.(\d+)\.(\d+)$/) {
 	;	# the common case
       }
-      elsif (grep($ip eq $_,qw(default any broadcast loopback))) {
+      elsif (grep($ip eq $_,(qw(default any broadcast loopback)))) {
 	return undef unless defined ($ip = $fip4{$ip});
 	last;
       }
@@ -865,6 +890,7 @@ sub _xnew($$;$$) {
 	$ip = bcd2bin($ip);
 	last;
       }
+# these next three might be broken??? but they have been in the code a long time and no one has complained
       elsif ($ip =~ /^0[xb]\d+$/ && $hasmask &&
 		(($tmp = eval "$ip") || 1) &&
 		$tmp >= 0 && $tmp < 256) {
@@ -965,12 +991,11 @@ sub _xnew($$;$$) {
 	$ip = $tmp;
 	last;
       }
-      last if grep($ip eq $_,qw(default any loopback unspecified)) &&
+      last if grep($ip eq $_,(qw(default any loopback unspecified))) &&
 		defined ($ip = $fip6{$ip});
       return undef;
     }
   } # end while (1)
-
   return undef if notcontiguous($mask);			# invalid if not contiguous
 
   my $self = {
@@ -1120,7 +1145,7 @@ sub range ($) {
 
 When called in a scalar context, will return a numeric representation
 of the address part of the IP address. When called in an array
-contest, it returns a list of two elements. The first element is as
+context, it returns a list of two elements. The first element is as
 described, the second element is the numeric representation of the
 netmask.
 
@@ -1143,6 +1168,74 @@ sub numeric ($) {
   return (! $_[0]->{isv6} && isIPv4($_[0]->{addr}))
     ? sprintf("%u",unpack('N',ipv6to4($_[0]->{addr})))
     : bin2bcd($_[0]->{addr});
+}
+
+=item C<-E<gt>bigint()>
+
+When called in a scalar context, will return a Math::BigInt representation
+of the address part of the IP address. When called in an array
+contest, it returns a list of two elements. The first element is as
+described, the second element is the Math::BigInt  representation of the
+netmask.
+
+=cut
+
+sub _biValue {
+  my $bi;
+  unless ($_[0]) {
+    $bi = {
+	sign	=> '+',
+	value	=> ['0'],
+    };
+    return bless $bi, 'Math::BigInt';
+  }
+  my $numstr = $_[0];
+  my @bi;
+  while ($numstr) {
+    my $nibble = substr($numstr,-7,7,'');
+    push @bi, $nibble;
+  }
+  $bi = {
+	sign	=> '+',
+	value	=> \@bi,
+  };
+  bless $bi, 'Math::BigInt';
+}
+
+sub bigint($) {
+  my($addr,$mask);
+  if (wantarray) {
+    if (! $_[0]->{isv6} && isIPv4($_[0]->{addr})) {
+      $addr = $_[0]->{addr}
+	? sprintf("%u",unpack('N',ipv6to4($_[0]->{addr})))
+	: 0;
+      $mask = $_[0]->{mask}
+	? sprintf("%u",unpack('N',ipv6to4($_[0]->{mask})))
+	: 0;
+    }
+    else {
+      $addr = $_[0]->{addr}
+	? bin2bcd($_[0]->{addr})
+	: 0;
+      $mask = $_[0]->{mask}
+	? bin2bcd($_[0]->{mask})
+	: 0;
+    }
+    (_biValue($addr),_biValue($mask));
+
+  } else {	# not wantarray
+
+    if (! $_[0]->{isv6} && isIPv4($_[0]->{addr})) {
+      $addr = $_[0]->{addr}
+	? sprintf("%u",unpack('N',ipv6to4($_[0]->{addr})))
+	: 0;
+    } else {
+      $addr = $_[0]->{addr}
+	? bin2bcd($_[0]->{addr})
+	: 0;
+    }
+    _biValue($addr);
+  }
 }
 
 =item C<$me-E<gt>contains($other)>
@@ -1379,7 +1472,7 @@ sub import {
 	:upper
 	:lower
 
-=head1 AUTHOR
+=head1 AUTHORS
 
 Luis E. Muñoz E<lt>luismunoz@cpan.orgE<gt>,
 Michael Robinton E<lt>michael@bizsystems.comE<gt>

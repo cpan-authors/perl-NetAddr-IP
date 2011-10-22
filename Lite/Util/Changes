@@ -1,3 +1,6 @@
+1.42  Fri Oct 21 10:34:46 PDT 2011
+	Socket6 prior to version 0.23 does not have AF_INET6 in the
+	EXPORT_OK array, modify InetBase.pm v0.2 to work around this.
 
 1.41  Sat Oct 15 17:26:21 PDT 2011
 	add inet_pton, inet_ntop, AF_INET, AF_INET6

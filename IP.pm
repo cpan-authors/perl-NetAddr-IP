@@ -35,7 +35,7 @@ require Exporter;
 
 @ISA = qw(Exporter NetAddr::IP::Lite);
 
-$VERSION = do { sprintf " %d.%03d", (q$Revision: 4.49 $ =~ /\d+/g) };
+$VERSION = do { sprintf " %d.%03d", (q$Revision: 4.50 $ =~ /\d+/g) };
 
 =pod
 
@@ -63,8 +63,9 @@ NetAddr::IP - Manages IPv4 and IPv6 addresses and subnets
   NOTE: NetAddr::IP::Util has a full complement of network address
 	utilities to convert back and forth between binary and text.
 
-	inet_aton, inet_ntoa, ipv6_aton, ipv6_n2x, ipv6_n2d
-	inet_any2d, inet_n2dx, inet_n2ad, inetanyto6, ipv6to4
+	inet_aton, inet_ntoa, ipv6_aton, ipv6_ntoa 
+	ipv6_n2x, ipv6_n2d inet_any2d, inet_n2dx, 
+	inet_n2ad, inetanyto6, ipv6to4
 
 See L<NetAddr::IP::Util>
 
@@ -187,8 +188,8 @@ reason, then type:
 
 This module provides an object-oriented abstraction on top of IP
 addresses or IP subnets, that allows for easy manipulations.
-Version 4.xx of NetAdder::IP will will work older
-versions of Perl and does B<not> use Math::BigInt as in previous versions.
+Version 4.xx of NetAdder::IP will will work with older
+versions of Perl and does B<not> use but is compatible with Math::BigInt.
 
 The internal representation of all IP objects is in 128 bit IPv6 notation.
 IPv4 and IPv6 objects may be freely mixed.
@@ -594,7 +595,8 @@ Any RFC1884 notation
   ::x:x/host
   0xABCDEF, 0b111111000101011110 within the limits
   of perl's number resolution
-  123456789012  a 'big' bcd number i.e. Math::BigInt
+  123456789012  a 'big' bcd number (bigger than perl likes)
+  and Math::BigInt
 
 If called with no arguments, 'default' is assumed.
 
@@ -705,6 +707,14 @@ netmask.
 
 This method is essential for serializing the representation of a
 subnet.
+
+=item C<-E<gt>bigint()>
+
+When called in scalar context, will return a Math::BigInt
+representation of the address part of the IP address. When called in
+an array context, it returns a list of tow elements, The first
+element is as described, the second element is the Math::BigInt
+representation of the netmask.
 
 =item C<-E<gt>wildcard()>
 
