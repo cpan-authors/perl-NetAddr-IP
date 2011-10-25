@@ -1,5 +1,10 @@
 Revision history for Perl extension NetAddr::IP
 
+4.052 Tue Oct 25 16:18:38 PDT 2011
+        add test in Lite.pm v1.35 for api-version of Math::BigInt to 
+	support versions earlier than 1.70, circa Dec 2003. 
+        Thanks to Paul Howarth <paul@city-fan.org> for spotting that bug.
+
 4.051 Mon Oct 24 14:44:53 PDT 2011
 	fix bug 71869
 	in Lite.pm v1.34

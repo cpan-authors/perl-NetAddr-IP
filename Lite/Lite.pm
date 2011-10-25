@@ -32,7 +32,7 @@ use NetAddr::IP::Util qw(
 
 use vars qw(@ISA @EXPORT_OK $VERSION $Accept_Binary_IP $Old_nth $AUTOLOAD *Zero);
 
-$VERSION = do { my @r = (q$Revision: 1.34 $ =~ /\d+/g); sprintf "%d."."%02d" x $#r, @r };
+$VERSION = do { my @r = (q$Revision: 1.35 $ =~ /\d+/g); sprintf "%d."."%02d" x $#r, @r };
 
 require Exporter;
 
@@ -1181,21 +1181,28 @@ netmask.
 =cut
 
 my $biloaded;
+my $biapi;
 
 sub _biValue {
   unless ($biloaded) {
     if (eval {require Math::BigInt::Calc}) {
       $biloaded = \&Math::BigInt::Calc::_new;
+      $biapi = eval {Math::BigInt::Calc::api_version()};
     } else {
       require NetAddr::IP::Calc;
       $biloaded = \&NetAddr::IP::Calc::_new;
+      $biapi = 1;
     }
   }
-  my $bi = {
+
+  my $biarray = $biapi
+	? $biloaded->(undef,$_[0])
+	: $biloaded->(undef,\$_[0]);	# versions before 1.70 expect a reference
+
+  bless {
 	sign	=> '+',
-	value	=> $biloaded->(undef,$_[0]),
-  };
-  bless $bi, 'Math::BigInt';
+	value	=> $biarray,
+  }, 'Math::BigInt';
 }
 
 sub bigint($) {
