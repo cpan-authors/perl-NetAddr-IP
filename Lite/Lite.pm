@@ -32,7 +32,7 @@ use NetAddr::IP::Util qw(
 
 use vars qw(@ISA @EXPORT_OK $VERSION $Accept_Binary_IP $Old_nth $AUTOLOAD *Zero);
 
-$VERSION = do { my @r = (q$Revision: 1.33 $ =~ /\d+/g); sprintf "%d."."%02d" x $#r, @r };
+$VERSION = do { my @r = (q$Revision: 1.34 $ =~ /\d+/g); sprintf "%d."."%02d" x $#r, @r };
 
 require Exporter;
 
@@ -113,7 +113,7 @@ reason, then type:
 This module provides an object-oriented abstraction on top of IP
 addresses or IP subnets, that allows for easy manipulations. Most of the
 operations of NetAddr::IP are supported. This module will work with older
-versions of Perl and does B<not> use but is compatible with Math::BigInt.
+versions of Perl and is compatible with Math::BigInt.
 
 * By default B<NetAddr::IP> functions and methods return string IPv6
 addresses in uppercase.  To change that to lowercase:
@@ -1180,24 +1180,20 @@ netmask.
 
 =cut
 
+my $biloaded;
+
 sub _biValue {
-  my $bi;
-  unless ($_[0]) {
-    $bi = {
-	sign	=> '+',
-	value	=> ['0'],
-    };
-    return bless $bi, 'Math::BigInt';
+  unless ($biloaded) {
+    if (eval {require Math::BigInt::Calc}) {
+      $biloaded = \&Math::BigInt::Calc::_new;
+    } else {
+      require NetAddr::IP::Calc;
+      $biloaded = \&NetAddr::IP::Calc::_new;
+    }
   }
-  my $numstr = $_[0];
-  my @bi;
-  while ($numstr) {
-    my $nibble = substr($numstr,-7,7,'');
-    push @bi, $nibble;
-  }
-  $bi = {
+  my $bi = {
 	sign	=> '+',
-	value	=> \@bi,
+	value	=> $biloaded->(undef,$_[0]),
   };
   bless $bi, 'Math::BigInt';
 }

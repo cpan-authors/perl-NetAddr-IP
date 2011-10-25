@@ -1,6 +1,7 @@
 MANIFEST
 MANIFEST.SKIP
 Changes
+Calc.pm
 Lite.pm
 Makefile.PL
 META.yml

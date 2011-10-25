@@ -58,8 +58,8 @@ INSTALLATION
 DESCRIPTION
     This module provides an object-oriented abstraction on top of IP
     addresses or IP subnets, that allows for easy manipulations. Most of the
-    operations of NetAddr::IP are supported. This module will work older
-    versions of Perl and does not use but is compatible with Math::BigInt.
+    operations of NetAddr::IP are supported. This module will work with
+    older versions of Perl and is compatible with Math::BigInt.
 
     * By default NetAddr::IP functions and methods return string IPv6
     addresses in uppercase. To change that to lowercase:
@@ -343,7 +343,7 @@ DESCRIPTION
     "->numeric()"
         When called in a scalar context, will return a numeric
         representation of the address part of the IP address. When called in
-        an array contest, it returns a list of two elements. The first
+        an array context, it returns a list of two elements. The first
         element is as described, the second element is the numeric
         representation of the netmask.
 

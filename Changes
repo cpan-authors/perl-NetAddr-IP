@@ -1,13 +1,23 @@
 Revision history for Perl extension NetAddr::IP
 
-4.050  Sat Oct 22 01:58:57 PDT 2011
+4.051 Mon Oct 24 14:44:53 PDT 2011
+	fix bug 71869
+	in Lite.pm v1.34
+        use Math::BigInt::Calc for creating BigInt values and fall
+        back to NetAddr::IP::Calc if Math::BigInt is not present.
+
+        remove reference to Config{osname} in InetBase.pm v0.03
+        (Util 1.43)
+
+
+4.050 Sat Oct 22 01:58:57 PDT 2011
         In Lite/Util/lib/NetAddr/IP/Lite/Util/InetBase.pm v0.02
         Socket6 prior to version 0.23 does not have AF_INET6 in the  
         EXPORT_OK array, modify InetBase.pm v0.2 to work around this.
 
 	Add support for Math::BigInt to NetAddr::IP::Lite v1.33
 
-4.049  Sat Oct 15 22:15:10 PDT 2011
+4.049 Sat Oct 15 22:15:10 PDT 2011
 	Updates to Lite.pm, Util.pm, new module InetBase.pm
 
 	In Lite v1.32
@@ -43,7 +53,7 @@ Revision history for Perl extension NetAddr::IP
         AF_INET
         AF_INET6
 
-4.048  Sat Oct  8 01:33:44 PDT 2011
+4.048 Sat Oct  8 01:33:44 PDT 2011
 	remove debug print statement from Util v1.40
 
 4.047 Thu Oct  6 23:41:42 PDT 2011

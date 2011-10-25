@@ -11,7 +11,7 @@ require Exporter;
 
 @ISA = qw(Exporter);
 
-$VERSION = do { my @r = (q$Revision: 0.02 $ =~ /\d+/g); sprintf "%d."."%02d" x $#r, @r };
+$VERSION = do { my @r = (q$Revision: 0.03 $ =~ /\d+/g); sprintf "%d."."%02d" x $#r, @r };
 
 @EXPORT_OK = qw(
 	inet_aton
@@ -91,17 +91,15 @@ if (eval{ require Socket6 } ) {
   $emulateAF_INET6 = 0;				# clear, have it from elsewhere or here
 } else {
   unless ($emulateAF_INET6) {	# unlikely at this point
-    require Config;		# make an educated guess about AF_INET6
-    my $osname = $Config::Config{osname};
-    if ($osname =~ /(?:free|dragon.+)bsd/i) {	# FreeBSD, DragonFlyBSD
+    if ($^O =~ /(?:free|dragon.+)bsd/i) {	# FreeBSD, DragonFlyBSD
 	$emulateAF_INET6 = 28;
-    } elsif ($osname =~ /bsd/i) {		# other BSD flavors like NetBDS, OpenBSD, BSD
+    } elsif ($^O =~ /bsd/i) {		# other BSD flavors like NetBDS, OpenBSD, BSD
 	$emulateAF_INET6 = 24;
-    } elsif ($osname =~ /(?:darwin|mac)/i) {	# Mac OS X
+    } elsif ($^O =~ /(?:darwin|mac)/i) {	# Mac OS X
 	$emulateAF_INET6 = 30;
-    } elsif ($osname =~ /win/i) {		# Windows
+    } elsif ($^O =~ /win/i) {		# Windows
 	$emulateAF_INET6 = 23;
-    } elsif ($osname =~ /(?:solaris|sun)/i) {		# Sun box
+    } elsif ($^O =~ /(?:solaris|sun)/i) {		# Sun box
 	$emulateAF_INET6 = 26;
     } else {					# use linux default
 	$emulateAF_INET6 = 10;

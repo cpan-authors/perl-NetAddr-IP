@@ -35,7 +35,7 @@ require Exporter;
 
 @ISA = qw(Exporter NetAddr::IP::Lite);
 
-$VERSION = do { sprintf " %d.%03d", (q$Revision: 4.50 $ =~ /\d+/g) };
+$VERSION = do { sprintf " %d.%03d", (q$Revision: 4.51 $ =~ /\d+/g) };
 
 =pod
 
@@ -189,7 +189,7 @@ reason, then type:
 This module provides an object-oriented abstraction on top of IP
 addresses or IP subnets, that allows for easy manipulations.
 Version 4.xx of NetAdder::IP will will work with older
-versions of Perl and does B<not> use but is compatible with Math::BigInt.
+versions of Perl and is compatible with Math::BigInt.
 
 The internal representation of all IP objects is in 128 bit IPv6 notation.
 IPv4 and IPv6 objects may be freely mixed.
