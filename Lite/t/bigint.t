@@ -8,11 +8,11 @@ use NetAddr::IP::Lite;
 use Data::Dumper;
 
 BEGIN {
-  unless ( eval { require Math::BigInt }) {
-    print "ok 1	# skip all tests, Math::BigInt not found!\n";
+  unless ( eval { require Math::BigInt::Calc }) {
+    print "1..1\n";
+    print "ok 1	# skip all tests, Math::BigInt::Calc not found!\n";
     exit;
   }
-  import Math::BigInt @Math::BigInt::EXPORTS;
 }
 
 # good test results go here

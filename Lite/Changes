@@ -1,5 +1,10 @@
 Revision history for Perl extension NetAddr::IP::Lite
 
+1.36  Wed Oct 26 08:52:34 PDT 2011
+	fix bug #71925. A a sub-varient of #62521 that showed up only for
+	short notation for IPv4. i.e. 127/n, 127.0/n, 127.0.0/n but
+	not 127.0.0.0/n
+
 1.35  Tue Oct 25 16:18:38 PDT 2011
 	add test for api-version of Math::BigInt to support versions 
 	earlier than 1.70, circa Dec 2003. 

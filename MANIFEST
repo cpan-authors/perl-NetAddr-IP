@@ -6,7 +6,6 @@ MANIFEST			This list of files
 MANIFEST.SKIP
 META.yml                                 Module meta-data (added by MakeMaker)
 Makefile.PL
-README
 TODO
 docs/rfc1884.txt
 t/constants.t

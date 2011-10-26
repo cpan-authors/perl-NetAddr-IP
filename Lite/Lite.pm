@@ -32,7 +32,7 @@ use NetAddr::IP::Util qw(
 
 use vars qw(@ISA @EXPORT_OK $VERSION $Accept_Binary_IP $Old_nth $AUTOLOAD *Zero);
 
-$VERSION = do { my @r = (q$Revision: 1.35 $ =~ /\d+/g); sprintf "%d."."%02d" x $#r, @r };
+$VERSION = do { my @r = (q$Revision: 1.36 $ =~ /\d+/g); sprintf "%d."."%02d" x $#r, @r };
 
 require Exporter;
 
@@ -792,8 +792,7 @@ sub _xnew($$;$$) {
 # check these conditions and set isV6 as appropriate
 #
     my $try;
-    $isV6 = 1	# unconditionally
-	if	# check big bcd and IPv6 rfc1884
+    $isV6 = 1 if	# check big bcd and IPv6 rfc1884
 	( $ip !~ /\D/ && 				  # ip is all decimal
 	  (length($ip) > 3 || $ip > 255) &&		  # exclude a single digit in the range of zero to 255, could be funny IPv4
 	  ($try = bcd2bin($ip)) && ! isIPv4($try)) ||	  # precedence so $try is not corrupted
@@ -810,7 +809,20 @@ sub _xnew($$;$$) {
       my $isCIDR = length($mask) < 4 && $mask < 129;
       if ($isV6) {
 	if ($isCIDR) {
-	  if ($ip =~ /^\d+\.\d+\.\d+\.\d+$/) {	# corner condition of IPv4 with isV6
+	  my($dq1,$dq2,$dq3,$dq4);
+	  if ($ip =~ /^(\d+)(?:|\.(\d+)(?:|\.(\d+)(?:|\.(\d+))))$/ &&
+	    do {$dq1 = $1;
+		$dq2 = $2 || 0;
+		$dq3 = $3 || 0;
+		$dq4 = $4 || 0;
+		1;
+	    } &&
+	    $dq1 >= 0 && $dq1 < 256 &&
+	    $dq2 >= 0 && $dq2 < 256 &&
+	    $dq3 >= 0 && $dq3 < 256 &&
+	    $dq4 >= 0 && $dq4 < 256
+	  ) {	# corner condition of IPv4 with isV6
+	    $ip = join('.',$dq1,$dq2,$dq3,$dq4);
 	    $try = ipv4to6(inet_aton($ip));
 	    if ($mask < 32) {
 	      $mask = shiftleft(Ones,32 -$mask);
@@ -1191,10 +1203,10 @@ sub _biValue {
     } else {
       require NetAddr::IP::Calc;
       $biloaded = \&NetAddr::IP::Calc::_new;
-      $biapi = 1;
+      $biapi = 99;
     }
   }
-
+print "BIAPI=$biapi\n";
   my $biarray = $biapi
 	? $biloaded->(undef,$_[0])
 	: $biloaded->(undef,\$_[0]);	# versions before 1.70 expect a reference

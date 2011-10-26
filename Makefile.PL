@@ -40,43 +40,6 @@ by invoking this as:
   sleep $view if $view;
 }
 
-eval q{ use Test::Pod;
-	$check0 = 1; };
-
-unless ($check0)
-{
-    print <<EOF;
-
-Looks like this host does not have Test::Pod installed. Without this module,
-the Pod documentation cannot be tested. This is not a big deal really, but
-you might want to install Test::Pod by issuing the following command:
-
-    perl -MCPAN -e "install('Test::Pod')"
-
-at a nearby shell. This is nice because it allows easy tests of your own
-documentation.
-
-EOF
-    ;
-}
-
-eval q{ use Pod::Coverage;
-	$check1 = 1; };
-
-unless ($check1)
-{
-    print <<EOF;
-
-You might want to install Pod::Coverage, so that coverage of the
-documentation can be properly tested. You can do so by typing the
-following:
-
-    perl -MCPAN -e "install('Pod::Coverage')"
-
-EOF
-    ;
-}
-
 sleep $view if $view && ($check0 || $check1);
 
 print <<EOF;
