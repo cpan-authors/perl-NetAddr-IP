@@ -11,7 +11,6 @@ use NetAddr::IP::InetBase qw(
 	isIPv4
 	inet_n2dx
 	inet_aton
-inet_ntoa
 	ipv6_aton
 	ipv6_n2x
 );	
@@ -32,7 +31,7 @@ use NetAddr::IP::Util qw(
 
 use vars qw(@ISA @EXPORT_OK $VERSION $Accept_Binary_IP $Old_nth $AUTOLOAD *Zero);
 
-$VERSION = do { my @r = (q$Revision: 1.36 $ =~ /\d+/g); sprintf "%d."."%02d" x $#r, @r };
+$VERSION = do { my @r = (q$Revision: 1.37 $ =~ /\d+/g); sprintf "%d."."%02d" x $#r, @r };
 
 require Exporter;
 
@@ -718,6 +717,16 @@ sub _no_octal {
   return sprintf("%d.%d.%d.%d",$1,$2,$3,$4);
 }
 
+# function to stringify various flavors of Math::BigInt objects
+# tests to see if the object is a hash or a signed scalar
+#
+sub retMBIstring {
+  local *MBI = $_[0];
+  return (defined *MBI{HASH})           # recent version ?
+        ? join('',reverse @{$_[0]->{value}})
+        : do { ${$_[0]} =~ /(\d+)/; $1 };
+}
+
 sub _xnew($$;$$) {
   my $noctal	= 0;
   my $isV6	= shift;
@@ -727,14 +736,17 @@ sub _xnew($$;$$) {
   }
   my $proto	= shift;
   my $class	= ref $proto || $proto || __PACKAGE__;
-  my $ip	= lc shift;
+  my $ip	= shift;
+
   $ip = 'default' unless defined $ip;
-  $ip = join('',reverse @{$ip->{value}})		# treat as big bcd string
-	if ref $ip && ref $ip eq 'Math::BigInt' &&	# can /CIDR notation
-	    ($ip->{sign} eq '+' ||
-	     die 'NetAddr::IP does not accept negative Math::BigInt numbers');
+  $ip = retMBIstring($ip)		# treat as big bcd string
+	if ref $ip && ref $ip eq 'Math::BigInt';	# can /CIDR notation
   my $hasmask = 1;
   my($mask,$tmp);
+
+# IP to lower case AFTER ref test for Math::BigInt. 'lc' strips blessing
+
+  $ip = lc $ip;
 
   while (1) {
 # process IP's with no CIDR or that have the CIDR as part of the IP argument string
@@ -776,7 +788,7 @@ sub _xnew($$;$$) {
 #	$mask = lc $_[0];
       }
 # extract mask
-      $mask = lc $_[0];
+      $mask = $_[0];
     }
 ###
 ### process mask
@@ -801,10 +813,13 @@ sub _xnew($$;$$) {
 # if either of the above conditions is true, $try contains the NetAddr 128 bit address
 
 # checkfor Math::BigInt mask
-    $mask = join('',reverse @{$mask->{value}})        # treat as big bcd string
-        if ref $mask && ref $mask eq 'Math::BigInt' &&
-	    ($mask->{sign} eq '+' ||
-	     die 'NetAddr::IP does not accept negative Math::BigInt numbers');
+    $mask = retMBIstring($mask)				# treat as big bcd string
+        if ref $mask && ref $mask eq 'Math::BigInt';
+
+# MASK to lower case AFTER ref test for Math::BigInt, 'lc' strips blessing
+
+    $mask = lc $mask;
+
     if ($mask !~ /\D/) {				# bcd or CIDR notation
       my $isCIDR = length($mask) < 4 && $mask < 129;
       if ($isV6) {
@@ -1192,29 +1207,39 @@ netmask.
 
 =cut
 
-my $biloaded;
-my $biapi;
+# as of this writing there are three known flavors of Math::BigInt
+# v0.01		MBI::new returns a scalar ref
+# v1.?? - 1.69	CALC::_new takes a reference to a scalar, returns an array, MBI returns a hash ref
+# v1.70 and up	CALC::_new takes a scalar, returns and array, MBI returns a hash ref
 
-sub _biValue {
-  unless ($biloaded) {
-    if (eval {require Math::BigInt::Calc}) {
-      $biloaded = \&Math::BigInt::Calc::_new;
-      $biapi = eval {Math::BigInt::Calc::api_version()};
+my $biloaded;
+my $no_mbi_emu = 1;
+
+# function to force into test development mode
+#
+sub _force_bi_emu {
+  undef $biloaded;
+  $no_mbi_emu = 0;
+  print STDERR "\n\n\tWARNING: test development mode, this 
+\tmessage SHOULD NEVER BE SEEN IN PRODUCTION!
+set my \$no_mbi_emu = 1 in t/bigint.t to remove this warning\n\n";
+}
+
+# from bi string like Math::BigInt 0.01
+#
+sub _bi_fake {
+  bless \('+'. $_[1]), 'Math::BigInt';
+}
+
+sub _biRef {
+  unless ($biloaded) {					# load Math::BigInt on demand
+    if (eval {$no_mbi_emu && require Math::BigInt}) {	# any version should work, three known
+      $biloaded = \&Math::BigInt::new;
     } else {
-      require NetAddr::IP::Calc;
-      $biloaded = \&NetAddr::IP::Calc::_new;
-      $biapi = 99;
+      $biloaded = \&_bi_fake;
     }
   }
-print "BIAPI=$biapi\n";
-  my $biarray = $biapi
-	? $biloaded->(undef,$_[0])
-	: $biloaded->(undef,\$_[0]);	# versions before 1.70 expect a reference
-
-  bless {
-	sign	=> '+',
-	value	=> $biarray,
-  }, 'Math::BigInt';
+  $biloaded->('Math::BigInt',$_[0]);
 }
 
 sub bigint($) {
@@ -1236,7 +1261,7 @@ sub bigint($) {
 	? bin2bcd($_[0]->{mask})
 	: 0;
     }
-    (_biValue($addr),_biValue($mask));
+    (_biRef($addr),_biRef($mask));
 
   } else {	# not wantarray
 
@@ -1249,7 +1274,7 @@ sub bigint($) {
 	? bin2bcd($_[0]->{addr})
 	: 0;
     }
-    _biValue($addr);
+    _biRef($addr);
   }
 }
 

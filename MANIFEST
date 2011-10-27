@@ -37,7 +37,6 @@ t/v6-split-bulk.t
 t/v6-splitplan.t
 t/wildcard.t
 Lite/Changes
-Lite/Calc.pm
 Lite/Lite.pm
 Lite/MANIFEST
 Lite/MANIFEST.SKIP
