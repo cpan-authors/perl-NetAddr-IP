@@ -1,5 +1,8 @@
 Revision history for Perl extension NetAddr::IP::Lite
 
+1.38  Fri Oct 28 11:41:22 PDT 2011
+	patch for bug 71869, issues with Math::BigInt varients
+
 1.37  Thu Oct 27 12:48:55 PDT 2011
 	add detection of early Math::Bigint 0.01 object structures
 	circa perl 5.6.1

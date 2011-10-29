@@ -1,5 +1,9 @@
 Revision history for Perl extension NetAddr::IP
 
+4.055 Fri Oct 28 11:41:22 PDT 2011
+	in Lite.pm v1.38
+        patch for bug 71869, issues with Math::BigInt varients
+
 4.054 Thu Oct 27 12:48:55 PDT 2011
         In Lite.pm v1.37, remove Calc.pm
         add detection of early Math::Bigint object structure
