@@ -1,5 +1,10 @@
 Revision history for Perl extension NetAddr::IP::Lite
 
+1.39  Wed Nov  2 19:15:31 PDT 2011
+	bump rev to incorporate
+        improved inet_aton in InetBase v0.04 to overcome broken
+        gethostbyname found in NetBSD and OpenBSD
+
 1.38  Fri Oct 28 11:41:22 PDT 2011
 	patch for bug 71869, issues with Math::BigInt varients
 

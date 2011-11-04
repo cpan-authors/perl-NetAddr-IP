@@ -11,7 +11,7 @@ require Exporter;
 
 @ISA = qw(Exporter);
 
-$VERSION = do { my @r = (q$Revision: 0.03 $ =~ /\d+/g); sprintf "%d."."%02d" x $#r, @r };
+$VERSION = do { my @r = (q$Revision: 0.04 $ =~ /\d+/g); sprintf "%d."."%02d" x $#r, @r };
 
 @EXPORT_OK = qw(
 	inet_aton
@@ -150,17 +150,51 @@ sub ipv6_n2d {
 # if Socket lib is broken in some way, check for overange values
 #
 #my $overange = yinet_aton('256.1') ? 1:0;
-my $overange = gethostbyname('256.1') ? 1:0;
+#my $overange = gethostbyname('256.1') ? 1:0;
+
+#sub inet_aton {
+#  unless (! $overange || $_[0] =~ /[^0-9\.]/) {	# hostname
+#    my @dq = split(/\./,$_[0]);
+#    foreach (@dq) {
+#      return undef if $_ > 255;
+#    }
+#  }
+#  scalar gethostbyname($_[0]);
+#}
 
 sub inet_aton {
-  unless (! $overange || $_[0] =~ /[^0-9\.]/) {	# hostname
-    my @dq = split(/\./,$_[0]);
-    foreach (@dq) {
-      return undef if $_ > 255;
+  my $host = $_[0];
+  return undef unless defined $host;
+  if ($host =~ /^(\d+)(?:|\.(\d+)(?:|\.(\d+)(?:|\.(\d+))))$/) {
+    if (defined $4) {
+      return undef unless
+        $1 >= 0 && $1 < 256 &&
+        $2 >= 0 && $2 < 256 &&
+        $3 >= 0 && $3 < 256 &&
+        $4 >= 0 && $4 < 256;
+      return pack('C4',$1,$2,$3,$4);
+#      $host = ($1 << 24) + ($2 << 16) + ($3 << 8) + $4;
+    } elsif (defined $3) {
+      return undef unless  
+        $1 >= 0 && $1 < 256 &&
+        $2 >= 0 && $2 < 256 &&
+        $3 >= 0 && $3 < 256;  
+      return pack('C4',$1,$2,0,$3);
+#      $host = ($1 << 24) + ($2 << 16) + $3;
+    } elsif (defined $2) {
+      return undef unless  
+        $1 >= 0 && $1 < 256 &&
+        $2 >= 0 && $2 < 256;  
+      return pack('C4',$1,0,0,$2);
+#      $host = ($1 << 24) + $2;
+    } else {
+      return pack('C4',0,0,0,$1);
+#      $host = $1;
     }
+#    return pack('N',$host);
   }
-  scalar gethostbyname($_[0]);
-}
+  scalar gethostbyname($host);
+} 	
 
 my $_zero = pack('L4',0,0,0,0);
 my $_ipv4mask = pack('L4',0xffffffff,0xffffffff,0xffffffff,0);
