@@ -21,7 +21,7 @@ require Exporter;
 
 @ISA = qw(Exporter DynaLoader);
 
-$VERSION = do { my @r = (q$Revision: 1.44 $ =~ /\d+/g); sprintf "%d."."%02d" x $#r, @r };
+$VERSION = do { my @r = (q$Revision: 1.45 $ =~ /\d+/g); sprintf "%d."."%02d" x $#r, @r };
 
 @EXPORT_OK = qw(
 	inet_aton
@@ -146,7 +146,7 @@ else {
 # if Socket lib is broken in some way, check for overange values
 #
 #my $overange = yinet_aton('256.1') ? 1:0;
-my $overange = gethostbyname('256.1') ? 1:0;
+#my $overange = gethostbyname('256.1') ? 1:0;
 
 sub mode() { $Mode };
 
@@ -203,6 +203,9 @@ my $_zero = pack('L4',0,0,0,0);
 # invoke replacement subroutine for Perl's "gethostbyname"
 # if Socket6 is available.
 #
+# NOTE: in certain BSD implementations, Perl's gethostbyname is broken
+# we will use our own InetBase::inet_aton instead
+
 sub _end_gethostbyname {
 #  my ($name,$aliases,$addrtype,$length,@addrs) = @_;
   my @rv = @_;
@@ -228,7 +231,8 @@ sub _end_gethostbyname {
 
 unless ( eval { require Socket6 }) {
   $mygethostbyname = sub {
-        my @tip = gethostbyname($_[0]);
+# SEE NOTE above about broken BSD
+	my @tip = gethostbyname(NetAddr::IP::InetBase::fillIPv4($_[0]));
 	return &_end_gethostbyname(@tip);
   };
 } else {
@@ -244,7 +248,8 @@ unless ( eval { require Socket6 }) {
   $mygethostbyname = sub {
 	my @tip;
         unless ($_Sock6ok && (@tip = _ghbn2($_[0],NetAddr::IP::Util::AF_INET6())) && @tip > 1) {
-          @tip = gethostbyname($_[0]);
+# SEE NOTE above about broken BSD
+          @tip = gethostbyname(NetAddr::IP::InetBase::fillIPv4($_[0]));
         }
 	return &_end_gethostbyname(@tip);
   };

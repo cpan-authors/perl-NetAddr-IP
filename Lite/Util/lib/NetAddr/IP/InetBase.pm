@@ -11,7 +11,7 @@ require Exporter;
 
 @ISA = qw(Exporter);
 
-$VERSION = do { my @r = (q$Revision: 0.04 $ =~ /\d+/g); sprintf "%d."."%02d" x $#r, @r };
+$VERSION = do { my @r = (q$Revision: 0.05 $ =~ /\d+/g); sprintf "%d."."%02d" x $#r, @r };
 
 @EXPORT_OK = qw(
 	inet_aton
@@ -32,6 +32,7 @@ $VERSION = do { my @r = (q$Revision: 0.04 $ =~ /\d+/g); sprintf "%d."."%02d" x $
 	AF_INET
 	AF_INET6
 	fake_AF_INET6
+	fillIPv4
 );
 
 %EXPORT_TAGS = (
@@ -39,6 +40,7 @@ $VERSION = do { my @r = (q$Revision: 0.04 $ =~ /\d+/g); sprintf "%d."."%02d" x $
 	ipv4	=> [qw(
 		inet_aton
 		inet_ntoa
+		fillIPv4
 	)],
 	ipv6	=> [qw(
 		ipv6_aton
@@ -162,7 +164,7 @@ sub ipv6_n2d {
 #  scalar gethostbyname($_[0]);
 #}
 
-sub inet_aton {
+sub fillIPv4 {
   my $host = $_[0];
   return undef unless defined $host;
   if ($host =~ /^(\d+)(?:|\.(\d+)(?:|\.(\d+)(?:|\.(\d+))))$/) {
@@ -172,29 +174,72 @@ sub inet_aton {
         $2 >= 0 && $2 < 256 &&
         $3 >= 0 && $3 < 256 &&
         $4 >= 0 && $4 < 256;
-      return pack('C4',$1,$2,$3,$4);
+      $host = $1.'.'.$2.'.'.$3.'.'.$4;
+#      return pack('C4',$1,$2,$3,$4);
 #      $host = ($1 << 24) + ($2 << 16) + ($3 << 8) + $4;
     } elsif (defined $3) {
       return undef unless  
         $1 >= 0 && $1 < 256 &&
         $2 >= 0 && $2 < 256 &&
         $3 >= 0 && $3 < 256;  
-      return pack('C4',$1,$2,0,$3);
+      $host = $1.'.'.$2.'.0.'.$3
+#      return pack('C4',$1,$2,0,$3);
 #      $host = ($1 << 24) + ($2 << 16) + $3;
     } elsif (defined $2) {
       return undef unless  
         $1 >= 0 && $1 < 256 &&
         $2 >= 0 && $2 < 256;  
-      return pack('C4',$1,0,0,$2);
+      $host = $1.'.0.0.'.$2;
+#      return pack('C4',$1,0,0,$2);
 #      $host = ($1 << 24) + $2;
     } else {
-      return pack('C4',0,0,0,$1);
+      $host = '0.0.0.'.$1;
+#      return pack('C4',0,0,0,$1);
 #      $host = $1;
     }
 #    return pack('N',$host);
   }
-  scalar gethostbyname($host);
+  $host;
 } 	
+
+sub inet_aton {
+  my $host = fillIPv4($_[0]);
+  return $host ? scalar gethostbyname($host) : undef;
+}
+
+#sub inet_aton {
+#  my $host = $_[0];
+#  return undef unless defined $host;
+#  if ($host =~ /^(\d+)(?:|\.(\d+)(?:|\.(\d+)(?:|\.(\d+))))$/) {
+#    if (defined $4) {
+#      return undef unless
+#        $1 >= 0 && $1 < 256 &&
+#        $2 >= 0 && $2 < 256 &&
+#        $3 >= 0 && $3 < 256 &&
+#        $4 >= 0 && $4 < 256;
+#      return pack('C4',$1,$2,$3,$4);
+##      $host = ($1 << 24) + ($2 << 16) + ($3 << 8) + $4;
+#    } elsif (defined $3) {
+#      return undef unless  
+#        $1 >= 0 && $1 < 256 &&
+#        $2 >= 0 && $2 < 256 &&
+#        $3 >= 0 && $3 < 256;  
+#      return pack('C4',$1,$2,0,$3);
+##      $host = ($1 << 24) + ($2 << 16) + $3;
+#    } elsif (defined $2) {
+#      return undef unless  
+#        $1 >= 0 && $1 < 256 &&
+#        $2 >= 0 && $2 < 256;  
+#      return pack('C4',$1,0,0,$2);
+##      $host = ($1 << 24) + $2;
+#    } else {
+#      return pack('C4',0,0,0,$1);
+##      $host = $1;
+#    }
+##    return pack('N',$host);
+#  }
+#  scalar gethostbyname($host);
+#} 	
 
 my $_zero = pack('L4',0,0,0,0);
 my $_ipv4mask = pack('L4',0xffffffff,0xffffffff,0xffffffff,0);
@@ -651,6 +696,15 @@ is present on this host.
 This function return FALSE if AF_INET6 is provided by Socket or Socket6. Otherwise, it returns the best guess
 value based on name of the host operating system.
 
+=item * $ip_filled = fillIPv4($shortIP);
+
+This function converts IPv4 addresses of the form 127.1 to the long form
+127.0.0.1 
+
+If the function is passed an argument that does not match the form of an IP
+address, the original argument is returned. i.e. pass it a hostname or a
+short IP and it will return a hostname or a filled IP.
+
 =back
 
 =head1 EXPORT_OK
@@ -674,6 +728,7 @@ value based on name of the host operating system.
 	AF_INET
 	AF_INET6
 	fake_AF_INET6
+	fillIPv4
 
 =head1 %EXPORT_TAGS
 

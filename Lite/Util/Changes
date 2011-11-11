@@ -1,3 +1,13 @@
+1.45  Fri Nov 11 13:20:32 PST 2011
+	break out the code in InetBase v0.05 that expands short IPv4 
+	addresses into dotquad format to account for broken BSD 
+	implementations of inet_aton and gethostbyname that do 
+	not recognize the short format. EXPORT this as sub 'fillIPv4'
+
+	in Util.pm, add 'fillIPv4' to calls to gethostbyname to 
+	work around broken inet_aton and gethostbyname implementations
+	in certain BSD implementations
+
 1.44  Wed Nov  2 19:15:31 PDT 2011
 	improve inet_aton in InetBase v0.04 to overcome broken
 	gethostbyname found in NetBSD and OpenBSD

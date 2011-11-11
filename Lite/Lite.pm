@@ -13,6 +13,7 @@ use NetAddr::IP::InetBase qw(
 	inet_aton
 	ipv6_aton
 	ipv6_n2x
+	fillIPv4
 );	
 use NetAddr::IP::Util qw(
 	addconst
@@ -31,7 +32,7 @@ use NetAddr::IP::Util qw(
 
 use vars qw(@ISA @EXPORT_OK $VERSION $Accept_Binary_IP $Old_nth $AUTOLOAD *Zero);
 
-$VERSION = do { my @r = (q$Revision: 1.39 $ =~ /\d+/g); sprintf "%d."."%02d" x $#r, @r };
+$VERSION = do { my @r = (q$Revision: 1.40 $ =~ /\d+/g); sprintf "%d."."%02d" x $#r, @r };
 
 require Exporter;
 
@@ -975,7 +976,7 @@ sub _xnew($$;$$) {
 	last;
       }
 # check for resolvable IPv4 hosts
-      elsif ($ip !~ /[^a-zA-Z0-9\.-]/ && ($tmp = gethostbyname($ip)) && $tmp ne $_v4zero && $tmp ne $_zero ) {
+      elsif ($ip !~ /[^a-zA-Z0-9\.-]/ && ($tmp = gethostbyname(fillIPv4($ip))) && $tmp ne $_v4zero && $tmp ne $_zero ) {
 	$ip = ipv4to6($tmp);
 	last;
       }

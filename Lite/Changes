@@ -1,9 +1,21 @@
 Revision history for Perl extension NetAddr::IP::Lite
 
+1.40  Fri Nov 11 13:20:32 PST 2011
+	add call to InetBase::fillIPv4 to all uses of gethostbyname
+
+	break out the code in InetBase v0.05 that expands short IPv4 
+	addresses into dotquad format to account for broken BSD 
+	implementations of inet_aton and gethostbyname that do 
+	not recognize the short format. EXPORT this as sub 'fillIPv4'
+
+	in Util.pm v1.45, add 'fillIPv4' to calls to gethostbyname to 
+	work around broken inet_aton and gethostbyname implementations
+	in certain BSD implementations
+
 1.39  Wed Nov  2 19:15:31 PDT 2011
 	bump rev to incorporate
-        improved inet_aton in InetBase v0.04 to overcome broken
-        gethostbyname found in NetBSD and OpenBSD
+	improved inet_aton in InetBase v0.04 to overcome broken
+	gethostbyname found in NetBSD and OpenBSD
 
 1.38  Fri Oct 28 11:41:22 PDT 2011
 	patch for bug 71869, issues with Math::BigInt varients
@@ -31,13 +43,13 @@ Revision history for Perl extension NetAddr::IP::Lite
 	back to NetAddr::IP::Calc if Math::BigInt is not present.
 	Thanks to Paul Howarth <paul@city-fan.org> for spotting that bug.
 
-        remove reference to Config{osname} in InetBase.pm v0.03
+	remove reference to Config{osname} in InetBase.pm v0.03
 	(Util 1.43)
 
 1.33  Sat Oct 22 01:47:42 PDT 2011
 	In Lite/Util/lib/NetAddr/IP/Lite/Util/InetBase.pm v0.02
-        Socket6 prior to version 0.23 does not have AF_INET6 in the
-        EXPORT_OK array, modify InetBase.pm v0.2 to work around this.     
+	Socket6 prior to version 0.23 does not have AF_INET6 in the
+	EXPORT_OK array, modify InetBase.pm v0.2 to work around this.     
 
 	Add support for Math::BigInt objects
 
@@ -47,32 +59,32 @@ Revision history for Perl extension NetAddr::IP::Lite
 	missing. Thanks to Andrei Benea for spotting this.
 	
 	In Util v1.41
-        add inet_pton, inet_ntop, AF_INET, AF_INET6
+	add inet_pton, inet_ntop, AF_INET, AF_INET6
 
-        modify inet_n2dx and inet_n2ad to
-        recognize the new 128 bit IPv4 format
-        ::FFFF:FFFF:0:0
+	modify inet_n2dx and inet_n2ad to
+	recognize the new 128 bit IPv4 format
+	::FFFF:FFFF:0:0
 
-        replace isIPv4 with a pure perl version for portablity
+	replace isIPv4 with a pure perl version for portablity
 
 	split the following into NetAddr::IP::InetBase v0.01
 	to provide better long term support for IPv6
-        inet_aton
-        inet_ntoa
-        ipv6_aton
-        ipv6_n2x
-        ipv6_n2d
-        inet_any2n
-        inet_n2dx
-        inet_n2ad
-        inet_ntop
-        inet_pton
-        packzeros
-        isIPv4
-        isNewIPv4
-        isAnyIPv4
-        AF_INET
-        AF_INET6
+	inet_aton
+	inet_ntoa
+	ipv6_aton
+	ipv6_n2x
+	ipv6_n2d
+	inet_any2n
+	inet_n2dx
+	inet_n2ad
+	inet_ntop
+	inet_pton
+	packzeros
+	isIPv4
+	isNewIPv4
+	isAnyIPv4
+	AF_INET
+	AF_INET6
 
 1.31  Sat Oct  8 01:33:44 PDT 2011
 	remove debug print statement from Util.pm v1.40
