@@ -1,5 +1,9 @@
 Revision history for Perl extension NetAddr::IP::Lite
 
+1.41  Fri Nov 11 19:23:11 PST 2011
+	up rev for documentation update
+        update documentation in InetBase v0.06
+
 1.40  Fri Nov 11 13:20:32 PST 2011
 	add call to InetBase::fillIPv4 to all uses of gethostbyname
 

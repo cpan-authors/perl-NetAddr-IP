@@ -11,7 +11,7 @@ require Exporter;
 
 @ISA = qw(Exporter);
 
-$VERSION = do { my @r = (q$Revision: 0.05 $ =~ /\d+/g); sprintf "%d."."%02d" x $#r, @r };
+$VERSION = do { my @r = (q$Revision: 0.06 $ =~ /\d+/g); sprintf "%d."."%02d" x $#r, @r };
 
 @EXPORT_OK = qw(
 	inet_aton
@@ -307,11 +307,12 @@ NetAddr::IP::InetBase -- IPv4 and IPV6 utilities
 	AF_INET
 	AF_INET6
 	fake_AF_INET6
+	fillIPv4
   );
 
   use NetAddr::IP::Util qw(:all :inet :ipv4 :ipv6 :math)
 
-  :ipv4	  =>	inet_aton, inet_ntoa
+  :ipv4	  =>	inet_aton, inet_ntoa, fillIPv4
 
   :ipv6	  =>	ipv6_aton, ipv6_ntoa,ipv6_n2x, ipv6_n2d,
 		inet_any2n, inet_n2dx, inet_n2ad
@@ -335,6 +336,7 @@ NetAddr::IP::InetBase -- IPv4 and IPV6 utilities
   $constant = AF_INET();
   $constant = AF_INET6();
   $trueif   = fake_AF_INET6();
+  $ip_filled = fillIPv4($shortIP);
 
   NetAddr::IP::InetBase::lower();
   NetAddr::IP::InetBase::upper();
