@@ -78,6 +78,7 @@ Lite/t/overminus.t
 Lite/t/pathological.t
 Lite/t/range.t
 Lite/t/relops.t
+Lite/t/rfc_1918.t
 Lite/t/v4-aton.t
 Lite/t/v4-badnm.t
 Lite/t/v4-base.t

@@ -4,7 +4,7 @@ package NetAddr::IP;
 
 use strict;
 #use diagnostics;
-use NetAddr::IP::Lite 1.41 qw(Zero Zeros Ones V4mask V4net);
+use NetAddr::IP::Lite 1.42 qw(Zero Zeros Ones V4mask V4net);
 use NetAddr::IP::Util 1.46 qw(
 	sub128
 	inet_aton
@@ -35,7 +35,7 @@ require Exporter;
 
 @ISA = qw(Exporter NetAddr::IP::Lite);
 
-$VERSION = do { sprintf " %d.%03d", (q$Revision: 4.58 $ =~ /\d+/g) };
+$VERSION = do { sprintf " %d.%03d", (q$Revision: 4.59 $ =~ /\d+/g) };
 
 =pod
 
@@ -70,13 +70,13 @@ NetAddr::IP - Manages IPv4 and IPv6 addresses and subnets
 See L<NetAddr::IP::Util>
 
 
-  my $ip = new NetAddr::IP::Lite '127.0.0.1';
+  my $ip = new NetAddr::IP '127.0.0.1';
 	 or if your prefer
-  my $ip = NetAddr::IP::Lite->new('127.0.0.1);
+  my $ip = NetAddr::IP->new('127.0.0.1);
 	or from a packed IPv4 address
-  my $ip = new_from_aton NetAddr::IP::Lite (inet_aton('127.0.0.1'));
+  my $ip = new_from_aton NetAddr::IP (inet_aton('127.0.0.1'));
 	or from an octal filtered IPv4 address
-  my $ip = new_no NetAddr::IP::Lite '127.012.0.0';
+  my $ip = new_no NetAddr::IP '127.012.0.0';
 
   print "The address is ", $ip->addr, " with mask ", $ip->mask, "\n" ;
 
@@ -188,7 +188,7 @@ reason, then type:
 
 This module provides an object-oriented abstraction on top of IP
 addresses or IP subnets, that allows for easy manipulations.
-Version 4.xx of NetAdder::IP will will work with older
+Version 4.xx of NetAdder::IP will work with older
 versions of Perl and is compatible with Math::BigInt.
 
 The internal representation of all IP objects is in 128 bit IPv6 notation.
@@ -275,12 +275,12 @@ Add a 32 bit signed constant to the address part of a NetAddr object.
 This operation changes the address part to point so many hosts above the
 current objects start address. For instance, this code:
 
-    print NetAddr::IP::Lite->new('127.0.0.1/8') + 5;
+    print NetAddr::IP->new('127.0.0.1/8') + 5;
 
 will output 127.0.0.6/8. The address will wrap around at the broadcast
 back to the network address. This code:
 
-    print NetAddr::IP::Lite->new('10.0.0.1/24') + 255;
+    print NetAddr::IP->new('10.0.0.1/24') + 255;
 
     outputs 10.0.0.0/24.
 
@@ -295,7 +295,7 @@ The complement of the addition of a constant.
 
 =item B<Difference (C<->)>
 
-Returns the difference between the address parts of two NetAddr::IP::Lite
+Returns the difference between the address parts of two NetAddr::IP
 objects address parts as a 32 bit signed number.
 
 Returns B<undef> if the difference is out of range.
@@ -712,7 +712,7 @@ subnet.
 
 When called in scalar context, will return a Math::BigInt
 representation of the address part of the IP address. When called in
-an array context, it returns a list of tow elements, The first
+an array context, it returns a list of two elements, The first
 element is as described, the second element is the Math::BigInt
 representation of the netmask.
 
@@ -859,6 +859,14 @@ The complement of C<-E<gt>contains()>. Returns true when C<$me> is
 completely contained within C<$other>.
 
 Note that C<$me> and C<$other> must be C<NetAddr::IP> objects.
+
+=item C-E<gt>is_rfc1918()>
+
+Returns true when C<$me> is an RFC 1918 address.
+
+  10.0.0.0      -   10.255.255.255  (10/8 prefix)
+  172.16.0.0    -   172.31.255.255  (172.16/12 prefix)
+  192.168.0.0   -   192.168.255.255 (192.168/16 prefix)
 
 =item C<-E<gt>splitref($bits,[optional $bits1,$bits2,...])>
 
@@ -1565,7 +1573,8 @@ or visit their web page on the internet at:
 
 =head1 SEE ALSO
 
-  perl(1),NetAddr::IP::Lite, NetAddr::IP::Util.
+  perl(1) L<NetAddr::IP::Lite>, L<NetAddr::IP::Util>,
+L<NetAddr::IP::InetBase>
 
 =cut
 

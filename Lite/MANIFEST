@@ -40,6 +40,7 @@ t/overminus.t
 t/pathological.t
 t/range.t
 t/relops.t
+t/rfc_1918.t
 t/v4-aton.t
 t/v4-badnm.t
 t/v4-base.t

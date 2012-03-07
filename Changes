@@ -1,5 +1,10 @@
 Revision history for Perl extension NetAddr::IP
 
+4.059 Wed Mar  7 12:50:04 PST 2012
+	add is_rfc1918 to Lite.pm v1.42
+
+	documentation updates
+
 4.058 Fri Nov 11 19:23:11 PST 2011
         up rev for documentation update
         update documentation in InetBase v0.06
@@ -201,7 +206,7 @@ Revision history for Perl extension NetAddr::IP
 	for spotting and replicating that bug
 
 	added new_cis and new_cis6 to Lite.pm v1.21 to accomodate
-	Cisco syntax that has IP and MASK seperated by a space.
+	Cisco syntax that has IP and MASK separated by a space.
 
 	Updated typo in documentation that left out example
 	print new6 stuff

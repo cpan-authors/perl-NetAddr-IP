@@ -1,3 +1,7 @@
+1.47
+	correct typo in documentation POD
+	Thanks to Gregor Herrmann, Debian Perl Group
+
 1.46  Fri Nov 11 19:23:11 PST 2011
 	update documentation in InetBase v0.06
 

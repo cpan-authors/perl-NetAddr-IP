@@ -21,7 +21,7 @@ require Exporter;
 
 @ISA = qw(Exporter DynaLoader);
 
-$VERSION = do { my @r = (q$Revision: 1.46 $ =~ /\d+/g); sprintf "%d."."%02d" x $#r, @r };
+$VERSION = do { my @r = (q$Revision: 1.47 $ =~ /\d+/g); sprintf "%d."."%02d" x $#r, @r };
 
 @EXPORT_OK = qw(
 	inet_aton
@@ -730,7 +730,7 @@ Returns the operating mode of this module.
 Replacement for Perl's gethostbyname if Socket6 is available
 
 In ARRAY context, returns a list of five elements, the hostname or NAME,
-a space seperated list of C_NAMES, AF family, length of the address
+a space separated list of C_NAMES, AF family, length of the address
 structure, and an array of one or more netaddr's
 
 In SCALAR context, returns the first netaddr.

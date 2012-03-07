@@ -32,7 +32,7 @@ use NetAddr::IP::Util qw(
 
 use vars qw(@ISA @EXPORT_OK $VERSION $Accept_Binary_IP $Old_nth $AUTOLOAD *Zero);
 
-$VERSION = do { my @r = (q$Revision: 1.41 $ =~ /\d+/g); sprintf "%d."."%02d" x $#r, @r };
+$VERSION = do { my @r = (q$Revision: 1.42 $ =~ /\d+/g); sprintf "%d."."%02d" x $#r, @r };
 
 require Exporter;
 
@@ -1322,6 +1322,37 @@ sub within ($$) {
   my $brdo	= $_[1]->{addr} | ~ $_[1]->{mask};
   return (sub128($netme,$neto) && sub128($brdo,$brdme))
 	? 1 : 0;
+}
+
+=item C-E<gt>is_rfc1918()>
+
+Returns true when C<$me> is an RFC 1918 address.
+
+     10.0.0.0        -   10.255.255.255  (10/8 prefix)
+     172.16.0.0      -   172.31.255.255  (172.16/12 prefix)
+     192.168.0.0     -   192.168.255.255 (192.168/16 prefix)
+
+=cut
+
+my $ip_10	= NetAddr::IP::Lite->new('10.0.0.0/8');
+my $ip_10n	= $ip_10->{addr};               # already the right value
+my $ip_10b	= $ip_10n | ~ $ip_10->{mask};
+
+my $ip_172	= NetAddr::IP::Lite->new('172.16.0.0/12');
+my $ip_172n	= $ip_172->{addr};              # already the right value
+my $ip_172b	= $ip_172n | ~ $ip_172->{mask};
+
+my $ip_192	= NetAddr::IP::Lite->new('192.168.0.0/16');
+my $ip_192n	= $ip_192->{addr};              # already the right value
+my $ip_192b	= $ip_192n | ~ $ip_192->{mask};
+
+sub is_rfc1918 ($) {
+  my $netme     = $_[0]->{addr} & $_[0]->{mask};
+  my $brdme     = $_[0]->{addr} | ~ $_[0]->{mask};
+  return 1 if (sub128($netme,$ip_10n) && sub128($ip_10b,$brdme));
+  return 1 if (sub128($netme,$ip_192n) && sub128($ip_192b,$brdme));
+  return (sub128($netme,$ip_172n) && sub128($ip_172b,$brdme))
+        ? 1 : 0;
 }
 
 =item C<-E<gt>first()>
