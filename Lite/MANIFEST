@@ -14,6 +14,7 @@ t/bin_ips.t
 t/bits.t
 t/broadcast.t
 t/bug62521.t
+t/bug75976.t
 t/cidr.t
 t/constants.t
 t/contains.t

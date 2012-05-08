@@ -52,6 +52,7 @@ Lite/t/bin_ips.t
 Lite/t/bits.t
 Lite/t/broadcast.t
 Lite/t/bug62521.t
+Lite/t/bug75976.t
 Lite/t/cidr.t
 Lite/t/constants.t
 Lite/t/contains.t

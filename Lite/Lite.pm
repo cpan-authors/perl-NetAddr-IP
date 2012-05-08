@@ -32,7 +32,7 @@ use NetAddr::IP::Util qw(
 
 use vars qw(@ISA @EXPORT_OK $VERSION $Accept_Binary_IP $Old_nth $AUTOLOAD *Zero);
 
-$VERSION = do { my @r = (q$Revision: 1.42 $ =~ /\d+/g); sprintf "%d."."%02d" x $#r, @r };
+$VERSION = do { my @r = (q$Revision: 1.44 $ =~ /\d+/g); sprintf "%d."."%02d" x $#r, @r };
 
 require Exporter;
 
@@ -574,6 +574,8 @@ To accept addresses in that format, invoke the module as in
 
 If called with no arguments, 'default' is assumed.
 
+If called with an empty string as the argument, returns 'undef'
+
 C<$addr> can be any of the following and possibly more...
 
   n.n
@@ -611,6 +613,8 @@ Any RFC1884 notation
   and Math::BigInt
 
 If called with no arguments, 'default' is assumed.
+
+If called with and empty string as the argument, 'undef' is returned;
 
 =cut
 
@@ -728,6 +732,9 @@ sub _xnew($$;$$) {
   my $proto	= shift;
   my $class	= ref $proto || $proto || __PACKAGE__;
   my $ip	= shift;
+
+# fix for bug #75976
+  return undef if defined $ip && $ip eq '';
 
   $ip = 'default' unless defined $ip;
   $ip = _retMBIstring($ip)		# treat as big bcd string
@@ -1500,6 +1507,7 @@ sub num ($) {
     return 1 unless hasbits($net);	# ipV4/32 or ipV6/128
     $net = $net ^ Ones;
     return 2 unless hasbits($net);	# ipV4/31 or ipV6/127
+    $net &= $_v4net unless $_[0]->{isv6};
     return bin2bcd($net);
   }
 }

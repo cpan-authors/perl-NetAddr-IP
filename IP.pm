@@ -4,7 +4,7 @@ package NetAddr::IP;
 
 use strict;
 #use diagnostics;
-use NetAddr::IP::Lite 1.42 qw(Zero Zeros Ones V4mask V4net);
+use NetAddr::IP::Lite 1.44 qw(Zero Zeros Ones V4mask V4net);
 use NetAddr::IP::Util 1.46 qw(
 	sub128
 	inet_aton
@@ -35,7 +35,7 @@ require Exporter;
 
 @ISA = qw(Exporter NetAddr::IP::Lite);
 
-$VERSION = do { sprintf " %d.%03d", (q$Revision: 4.59 $ =~ /\d+/g) };
+$VERSION = do { sprintf " %d.%03d", (q$Revision: 4.61 $ =~ /\d+/g) };
 
 =pod
 
@@ -566,6 +566,8 @@ To accept addresses in that format, invoke the module as in
 
 If called with no arguments, 'default' is assumed.
 
+If called with an empty string as the argument, returns 'undef'
+
 C<$addr> can be any of the following and possibly more...
 
   n.n
@@ -599,6 +601,8 @@ Any RFC1884 notation
   and Math::BigInt
 
 If called with no arguments, 'default' is assumed.
+
+If called with an empty string as the argument, returns 'undef'
 
 =item C<-E<gt>broadcast()>
 

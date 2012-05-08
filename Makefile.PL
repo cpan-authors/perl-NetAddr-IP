@@ -19,7 +19,7 @@ qq(
 #        YOUR VERSION OF PERL = $pv HAS SERIOUS BUGS		#
 #								#
 # Early versions of perl 5.8.x contain bugs that cause certain 	#
-# \@_ operations to fail. 	See perl bug [ 23429]			#
+# \@_ operations to fail. 	See perl bug [ 23429]		#
 #	Please upgrade to at least perl 5.8.6			#
 #                                                              	# 
 ################################################################# 

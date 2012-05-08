@@ -252,6 +252,8 @@ DESCRIPTION
 
         If called with no arguments, 'default' is assumed.
 
+        If called with an empty string as the argument, returns 'undef'
+
         "$addr" can be any of the following and possibly more...
 
           n.n
@@ -288,6 +290,9 @@ DESCRIPTION
           and Math::BigInt
 
         If called with no arguments, 'default' is assumed.
+
+        If called with and empty string as the argument, 'undef' is
+        returned;
 
     "->broadcast()"
         Returns a new object referring to the broadcast address of a given

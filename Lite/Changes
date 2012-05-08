@@ -1,5 +1,14 @@
 Revision history for Perl extension NetAddr::IP::Lite
 
+1.44  Tue May  8 16:24:03 PDT 2012
+	fixed bug that return $ip->num() = 2^128 for 0.0.0.0/0
+	Thanks to Sebastian <debug@test1.org> for spotting it.
+
+1.43  Fri Apr  6 13:19:48 PDT 2012
+	fix bug #75976, change in behavior introduced in v4.050
+	where an empty string supplied to "new" previously returned 
+	'undef' and now returns 'default' for ipV4 or ipV6
+
 1.42  Wed Mar  7 12:50:04 PST 2012
 	add "is_rfc1918" and tests
 
