@@ -29,10 +29,9 @@ qq(
 
 unless (grep { m/-noxs/ } @ARGV) {
   print q{
-This build requires a C compiler by default except on Windows
-where the Pure Perl version is mandatory. The Pure Perl
-version does not require compilation of XS code can be used
-by invoking this as:
+This build requires a C compiler by default except on Windows where
+the Pure Perl version is mandatory. The Pure Perl version, which does
+not require compilation of XS code, can be used by invoking this as:
 
   perl Makefile.PL -noxs
 
@@ -54,10 +53,10 @@ data. To regain backwards compatibility, the module must be use()d as
 
     use NetAddr::IP ':old_storable';
 
-Which will disable the new hooks and revert back to the old ways.
+which will disable the new hooks and revert back to the old ways.
 
-If you do  not use Storable along NetAddr::IP or  just don't know what
-this all means, most likely you're safe to go along.
+If you do not use Storable along with NetAddr::IP, or just don't know
+what this all means, most likely you're safe to go ahead.
 
 Versions before 3.25 recognized by default IP addresses as returned by
 inet_aton. This is no longer the default. To enable this behavior

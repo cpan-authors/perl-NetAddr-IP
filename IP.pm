@@ -35,9 +35,11 @@ require Exporter;
 
 @ISA = qw(Exporter NetAddr::IP::Lite);
 
-$VERSION = do { sprintf " %d.%03d", (q$Revision: 4.61 $ =~ /\d+/g) };
+$VERSION = do { sprintf " %d.%03d", (q$Revision: 4.62 $ =~ /\d+/g) };
 
 =pod
+
+=encoding UTF-8
 
 =head1 NAME
 
@@ -71,7 +73,7 @@ See L<NetAddr::IP::Util>
 
 
   my $ip = new NetAddr::IP '127.0.0.1';
-	 or if your prefer
+	 or if you prefer
   my $ip = NetAddr::IP->new('127.0.0.1);
 	or from a packed IPv4 address
   my $ip = new_from_aton NetAddr::IP (inet_aton('127.0.0.1'));
@@ -140,18 +142,18 @@ invoked as shown on the next line.
 
 * To set a limit on the size of B<nets> processed or returned by NetAddr::IP.
 
-Set the maximum number of nets beyond which NetAddr::IP will return and
-error as a power of 2 (default 16 or 65536 nets). Each 2**16 consumes approximately 4 megs of
-memory. A 2**20 consumes 64 megs of memory, A 2**24 consumes 1 gigabyte of
-memory.
+Set the maximum number of nets beyond which NetAddr::IP will return
+an error as a power of 2 (default 16 or 65536 nets). Each 2**16
+consumes approximately 4 megs of memory. A 2**20 consumes 64 megs of
+memory, A 2**24 consumes 1 gigabyte of memory.
 
   use NetAddr::IP qw(netlimit);
   netlimit 20;
 
-The maximum B<netlimit> allowed is a 2**24. Attempts to set limits below the
-default of 16 or above the maximum of 24 are ignored.
+The maximum B<netlimit> allowed is 2**24. Attempts to set limits below
+the default of 16 or above the maximum of 24 are ignored.
 
-Returns true on success otherwise undef.
+Returns true on success, otherwise C<undef>.
 
 =cut
 
@@ -174,10 +176,11 @@ Un-tar the distribution in an appropriate directory and type:
 	make test
 	make install
 
-B<NetAddr::IP> depends on B<NetAddr::IP::Util> which installs by default with its primary functions compiled
-using Perl's XS extensions to build a 'C' library. If you do not have a 'C'
-complier available or would like the slower Pure Perl version for some other
-reason, then type:
+B<NetAddr::IP> depends on B<NetAddr::IP::Util> which installs by
+default with its primary functions compiled using Perl's XS extensions
+to build a C library. If you do not have a C complier available or
+would like the slower Pure Perl version for some other reason, then
+type:
 
 	perl Makefile.PL -noxs
 	make
@@ -187,9 +190,9 @@ reason, then type:
 =head1 DESCRIPTION
 
 This module provides an object-oriented abstraction on top of IP
-addresses or IP subnets, that allows for easy manipulations.
-Version 4.xx of NetAdder::IP will work with older
-versions of Perl and is compatible with Math::BigInt.
+addresses or IP subnets that allows for easy manipulations.  Version
+4.xx of NetAddr::IP will work with older versions of Perl and is
+compatible with Math::BigInt.
 
 The internal representation of all IP objects is in 128 bit IPv6 notation.
 IPv4 and IPv6 objects may be freely mixed.
@@ -238,14 +241,14 @@ Will print the string 192.168.1.123/32.
 
 =item B<Equality>
 
-You can test for equality with either C<eq> or C<==>. C<eq> allows the
+You can test for equality with either C<eq> or C<==>. C<eq> allows
 comparison with arbitrary strings as well as NetAddr::IP objects. The
 following example:
 
     if (NetAddr::IP->new('127.0.0.1','255.0.0.0') eq '127.0.0.1/8')
        { print "Yes\n"; }
 
-Will print out "Yes".
+will print out "Yes".
 
 Comparison with C<==> requires both operands to be NetAddr::IP objects.
 
@@ -1536,7 +1539,7 @@ Michael Robinton E<lt>michael@bizsystems.comE<gt>
 
 =head1 WARRANTY
 
-This software comes with the same warranty as perl itself (ie, none),
+This software comes with the same warranty as Perl itself (ie, none),
 so by using it you accept any and all the liability.
 
 =head1 COPYRIGHT

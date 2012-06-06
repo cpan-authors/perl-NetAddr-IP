@@ -1,5 +1,10 @@
 Revision history for Perl extension NetAddr::IP
 
+4.062 Wed Jun  6 12:34:48 PDT 2012
+	documentation updates courtesy of
+	Ben Bullock <benkasminbullock@gmail.com>
+	Thank you Ben.
+
 4.061 Tue May  8 16:24:03 PDT 2012
         fixed bug in Lite v1.44 that returned 
 	$ip->num() = 2^128 for 0.0.0.0/0
