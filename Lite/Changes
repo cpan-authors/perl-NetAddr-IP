@@ -1,5 +1,7 @@
 Revision history for Perl extension NetAddr::IP::Lite
 
+1.45  Fri Aug 10 11:46:18 PDT 2012
+
 1.44  Tue May  8 16:24:03 PDT 2012
 	fixed bug that return $ip->num() = 2^128 for 0.0.0.0/0
 	Thanks to Sebastian <debug@test1.org> for spotting it.

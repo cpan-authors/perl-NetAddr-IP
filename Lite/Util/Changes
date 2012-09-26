@@ -1,6 +1,8 @@
-1.47
+1.47  Fri Aug 10 11:46:18 PDT 2012
 	correct typo in documentation POD
 	Thanks to Gregor Herrmann, Debian Perl Group
+
+	Updated GPL text and address
 
 1.46  Fri Nov 11 19:23:11 PST 2011
 	update documentation in InetBase v0.06

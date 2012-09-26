@@ -20,6 +20,7 @@ t/old-store.t
 t/over-arr.t
 t/over-qq.t
 t/relops.t
+t/rfc3021.t
 t/short.t
 t/splitref.t
 t/v4-coalesce.t

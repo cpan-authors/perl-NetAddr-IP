@@ -1,5 +1,11 @@
 Revision history for Perl extension NetAddr::IP
 
+4.064 Tue Sep 25 13:54:47 PDT 2012
+	added support for rfc3021 /31 networks to hostenum
+
+4.063 Fri Aug 10 11:46:18 PDT 2012
+	Updated GPL v2.0 text and address in all modules
+
 4.062 Wed Jun  6 12:34:48 PDT 2012
 	documentation updates courtesy of
 	Ben Bullock <benkasminbullock@gmail.com>

@@ -4,8 +4,8 @@ package NetAddr::IP;
 
 use strict;
 #use diagnostics;
-use NetAddr::IP::Lite 1.44 qw(Zero Zeros Ones V4mask V4net);
-use NetAddr::IP::Util 1.46 qw(
+use NetAddr::IP::Lite 1.45 qw(Zero Zeros Ones V4mask V4net);
+use NetAddr::IP::Util 1.47 qw(
 	sub128
 	inet_aton
 	inet_any2n
@@ -27,6 +27,7 @@ use vars qw(
 	@ISA
 	$VERSION
 	$_netlimit
+	$rfc3021
 );
 require Exporter;
 
@@ -35,7 +36,9 @@ require Exporter;
 
 @ISA = qw(Exporter NetAddr::IP::Lite);
 
-$VERSION = do { sprintf " %d.%03d", (q$Revision: 4.62 $ =~ /\d+/g) };
+$VERSION = do { sprintf " %d.%03d", (q$Revision: 4.64 $ =~ /\d+/g) };
+
+$rfc3021 = 0;
 
 =pod
 
@@ -60,6 +63,7 @@ NetAddr::IP - Manages IPv4 and IPv6 addresses and subnets
 	:upper
 	:old_storable
 	:old_nth
+	:rfc3021
   );
 
   NOTE: NetAddr::IP::Util has a full complement of network address
@@ -393,6 +397,11 @@ sub import
         NetAddr::IP::Util::upper();
 	@_ = grep { $_ ne ':upper' } @_;
     }
+    if (grep { $_ eq ':rfc3021' } @_)
+    {
+	$rfc3021 = 1;
+        @_ = grep { $_ ne ':rfc3021' } @_;
+    }
     NetAddr::IP->export_to_level(1, @_);
 }
 
@@ -410,7 +419,8 @@ sub Coalesce {
 
 sub hostenumref($) {
   my $r = _splitref(0,$_[0]);
-  unless ((notcontiguous($_[0]->{mask}))[1] == 128) {
+  unless ((notcontiguous($_[0]->{mask}))[1] == 128 ||
+	  ($rfc3021 && $_[0]->masklen == 31) ) {
     splice(@$r, 0, 1);
     splice(@$r, scalar @$r - 1, 1);
   }
@@ -1095,6 +1105,15 @@ sub hostenum ($) {
 
 Faster version of C<-E<gt>hostenum()>, returning a reference to a list.
 
+NOTE: hostenum and hostenumref report zero (0) useable hosts in a /31
+network. This is the behavior expected prior to RFC 3021. To report 2
+useable hosts for use in point-to-point networks, use B<:rfc3021> tag.
+
+	use NetAddr::IP qw(:rfc3021);
+
+This will cause hostenum and hostenumref to return two (2) useable hosts in
+a /31 network.
+ 
 =item C<$me-E<gt>compact($addr1, $addr2, ...)>
 
 =item C<@compacted_object_list = Compact(@object_list)>
@@ -1545,7 +1564,7 @@ so by using it you accept any and all the liability.
 =head1 COPYRIGHT
 
 This software is (c) Luis E. Muñoz, 1999 - 2007, and (c) Michael
-Robinton, 2006 - 2011.
+Robinton, 2006 - 2012.
 
 All rights reserved.
 
@@ -1570,9 +1589,9 @@ one.
 You should also have received a copy of the GNU General Public License
 along with this program in the file named "Copying". If not, write to the
 
-        Free Software Foundation, Inc.
-        59 Temple Place, Suite 330
-        Boston, MA  02111-1307, USA
+	Free Software Foundation, Inc.
+	51 Franklin Street, Fifth Floor
+	Boston, MA 02110-1301 USA.
 
 or visit their web page on the internet at:
 
