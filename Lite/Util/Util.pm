@@ -21,7 +21,7 @@ require Exporter;
 
 @ISA = qw(Exporter DynaLoader);
 
-$VERSION = do { my @r = (q$Revision: 1.47 $ =~ /\d+/g); sprintf "%d."."%02d" x $#r, @r };
+$VERSION = do { my @r = (q$Revision: 1.48 $ =~ /\d+/g); sprintf "%d."."%02d" x $#r, @r };
 
 @EXPORT_OK = qw(
 	inet_aton
@@ -150,7 +150,7 @@ else {
 
 sub mode() { $Mode };
 
-my $_newV4compat = pack('L4',0,0,0xffffffff,0);
+my $_newV4compat = pack('N4',0,0,0xffff,0);
 
 sub inet_4map6 {
   my $naddr = shift;

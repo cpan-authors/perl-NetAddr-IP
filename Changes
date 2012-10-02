@@ -1,5 +1,9 @@
 Revision history for Perl extension NetAddr::IP
 
+4.065 Tue Oct  2 12:36:11 PDT 2012
+        correct format for IPv6 embedded IPv4 addresses
+        in InetBase v0.8
+
 4.064 Tue Sep 25 13:54:47 PDT 2012
 	added support for rfc3021 /31 networks to hostenum
 

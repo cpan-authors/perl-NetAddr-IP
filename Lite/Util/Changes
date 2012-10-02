@@ -1,3 +1,7 @@
+1.48 Tue Oct  2 12:36:11 PDT 2012
+	correct incorrect format for IPv6 embedded IPv4 addresses
+	in InetBase v0.8
+
 1.47  Fri Aug 10 11:46:18 PDT 2012
 	correct typo in documentation POD
 	Thanks to Gregor Herrmann, Debian Perl Group
