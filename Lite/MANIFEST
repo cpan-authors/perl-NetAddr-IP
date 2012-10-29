@@ -72,6 +72,10 @@ t/v6-numeric.t
 t/v6-old-base.t
 t/version.t
 t/within.t
+t/v6-cnew-uri.t
+t/v6-new-base-uri.t
+t/v6-numeric-uri.t
+t/v6-old-base-uri.t
 Util/MANIFEST
 Util/MANIFEST.SKIP
 Util/Changes

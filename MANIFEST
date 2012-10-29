@@ -37,6 +37,7 @@ t/v6-re.t
 t/v6-split-bulk.t
 t/v6-splitplan.t
 t/wildcard.t
+t/full6-uri.t
 Lite/Changes
 Lite/Lite.pm
 Lite/MANIFEST
@@ -111,6 +112,10 @@ Lite/t/v6-numeric.t
 Lite/t/v6-old-base.t
 Lite/t/version.t
 Lite/t/within.t
+Lite/t/v6-cnew-uri.t
+Lite/t/v6-new-base-uri.t
+Lite/t/v6-numeric-uri.t
+Lite/t/v6-old-base-uri.t
 Lite/Util/Changes
 Lite/Util/MANIFEST
 Lite/Util/MANIFEST.SKIP

@@ -32,7 +32,7 @@ use NetAddr::IP::Util qw(
 
 use vars qw(@ISA @EXPORT_OK $VERSION $Accept_Binary_IP $Old_nth $AUTOLOAD *Zero);
 
-$VERSION = do { my @r = (q$Revision: 1.46 $ =~ /\d+/g); sprintf "%d."."%02d" x $#r, @r };
+$VERSION = do { my @r = (q$Revision: 1.47 $ =~ /\d+/g); sprintf "%d."."%02d" x $#r, @r };
 
 require Exporter;
 
@@ -755,7 +755,8 @@ sub _xnew($$;$$) {
 	$mask = Ones;
 	last;
       }
-      elsif ($ip =~ m!^([a-z0-9.:-]+)(?:/|\s+)([a-z0-9.:-]+)$!) {
+      elsif ($ip =~ m!^([a-z0-9.:-]+)(?:/|\s+)([a-z0-9.:-]+)$! ||
+	     $ip =~ m!^[\[]{1}([a-z0-9.:-]+)(?:/|\s+)([a-z0-9.:-]+)[\]]{1}$!) {
 	$ip	= $1;
 	$mask	= $2;
       } elsif (grep($ip eq $_,(qw(default any broadcast loopback unspecified)))) {
@@ -1012,6 +1013,7 @@ sub _xnew($$;$$) {
 ########## continuing
     else {						# ipv6 address
       $isV6 = 1;
+      $ip = $1 if $ip =~ /\[([^\]]+)\]/;		# transform URI notation
       if (defined ($tmp = ipv6_aton($ip))) {
 	$ip = $tmp;
 	last;

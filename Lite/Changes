@@ -1,5 +1,10 @@
 Revision history for Perl extension NetAddr::IP::Lite
 
+1.47 Mon Oct 29 13:30:14 PDT 2012
+	update Lite.pm v1.47 to support bracketed IPv6 URI notation
+	as described in RFC-3986
+	Thanks to Quanah Gibson-Mount mishikal@yahoo.com
+
 1.46 Tue Oct  2 12:36:11 PDT 2012
         correct incorrect format for IPv6 embedded IPv4 addresses
         in InetBase v0.8
