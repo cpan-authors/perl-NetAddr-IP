@@ -1,10 +1,10 @@
+About-NetAddr-IP.txt
 Artistic
 Changes
 Copying
 IP.pm
-MANIFEST			This list of files
+MANIFEST
 MANIFEST.SKIP
-META.yml                                 Module meta-data (added by MakeMaker)
 Makefile.PL
 TODO
 docs/rfc1884.txt
@@ -42,7 +42,6 @@ Lite/Changes
 Lite/Lite.pm
 Lite/MANIFEST
 Lite/MANIFEST.SKIP
-Lite/META.yml
 Lite/Makefile.PL
 Lite/README
 Lite/bug2742981
@@ -171,3 +170,4 @@ Lite/Util/t/naip_gethostbyname.t
 Lite/Util/t/no6_naip_gethostbyname.t
 Lite/Util/typemap
 
+META.yml                                 Module meta-data (added by MakeMaker)

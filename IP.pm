@@ -4,6 +4,7 @@ package NetAddr::IP;
 
 use strict;
 #use diagnostics;
+use Carp;
 use NetAddr::IP::Lite 1.47 qw(Zero Zeros Ones V4mask V4net);
 use NetAddr::IP::Util 1.48 qw(
 	sub128
@@ -36,7 +37,7 @@ require Exporter;
 
 @ISA = qw(Exporter NetAddr::IP::Lite);
 
-$VERSION = do { sprintf " %d.%03d", (q$Revision: 4.66 $ =~ /\d+/g) };
+$VERSION = do { sprintf " %d.%03d", (q$Revision: 4.67 $ =~ /\d+/g) };
 
 $rfc3021 = 0;
 
@@ -1062,7 +1063,9 @@ sub _splitplan {
 sub _splitref {
   my $rev = shift;
   my($plan,$masks) = &_splitplan;
-  return undef unless $plan;
+# bug report 82719
+  croak("netmask error: overrange or spurious bits") unless defined $plan;
+#  return undef unless $plan;
   my $net = $_[0]->network();
   return [$net] unless $masks;
   my $addr = $net->{addr};

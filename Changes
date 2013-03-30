@@ -1,5 +1,10 @@
 Revision history for Perl extension NetAddr::IP
 
+4.067 Sat Mar 30 12:57:20 PDT 2013
+	Improved diagnostic message for "die" with bad mask for 
+	hostenum, hostenumref, split, splitref, rsplit, rsplitref
+	Thanks to GENSYM@cpan.org for pointing out the need.
+
 4.066 Mon Oct 29 13:30:14 PDT 2012
         update Lite.pm v1.47 to support bracketed IPv6 URI notation
         as described in RFC-3986

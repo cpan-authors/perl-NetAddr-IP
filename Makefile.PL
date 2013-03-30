@@ -84,7 +84,7 @@ my %makeparms = (
 	      ($] >= 5.005 ?    ## Add these new keywords supported since 5.005
 	       (ABSTRACT_FROM	=> 'IP.pm',
 		AUTHOR     	=> 'Luis E. Muñoz <luismunoz@cpan.org>, Michael Robinton <miker@cpan.org>') : ()),
-		clean		=> { FILES    => "*~ tmp*"},
+		clean		=> { FILES    => "*~ tmp* META.yml"},
 );
 
 WriteMakefile(%makeparms);

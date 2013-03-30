@@ -13,7 +13,7 @@ my %makeparms = (
     'VERSION_FROM'	=> $module, # finds $VERSION
     'PREREQ_PM'		=> {Test::More	=> 0,
 			},
-    'clean'		=> { FILES    => "*~ tmp*"},
+    'clean'		=> { FILES    => "*~ tmp* META.yml"},
     'dist'		=> {COMPRESS=>'gzip', SUFFIX=>'gz'}
 );
 

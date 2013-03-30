@@ -3,7 +3,6 @@ MANIFEST.SKIP
 Changes
 Lite.pm
 Makefile.PL
-META.yml
 README
 bug2742981
 t/addr.t
