@@ -1,5 +1,8 @@
 Revision history for Perl extension NetAddr::IP
 
+4.068 Wed Apr  3 10:52:24 PDT 2013
+	update Makefile.PL in Util.pm v 1.49 to better detect 'winduhs'
+
 4.067 Sat Mar 30 12:57:20 PDT 2013
 	Improved diagnostic message for "die" with bad mask for 
 	hostenum, hostenumref, split, splitref, rsplit, rsplitref

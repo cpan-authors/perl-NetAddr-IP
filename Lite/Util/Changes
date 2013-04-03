@@ -1,3 +1,7 @@
+
+1.49  Wed Apr  3 10:52:24 PDT 2013
+	modify Makefile.PL to better detect 'winduhs'
+
 1.48 Tue Oct  2 12:36:11 PDT 2012
 	correct incorrect format for IPv6 embedded IPv4 addresses
 	in InetBase v0.8

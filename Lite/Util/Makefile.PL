@@ -24,7 +24,9 @@ GetOptions(
 	},
 );
 
-if ($^O eq 'MSWin32') {
+print STDERR "building for $^O\n";
+
+if ($Config{osname} =~ /MSWin32/i || $Config{osname} eq 'dos') {
   $useXS = 0;		# force NOXS mode for windows
 }
 

@@ -1,5 +1,8 @@
 Revision history for Perl extension NetAddr::IP::Lite
 
+1.48 Wed Apr  3 10:52:24 PDT 2013
+	Update Util.pm v1.49 to better detect 'winduhs'
+
 1.47 Mon Oct 29 13:30:14 PDT 2012
 	update Lite.pm v1.47 to support bracketed IPv6 URI notation
 	as described in RFC-3986
