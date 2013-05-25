@@ -32,7 +32,7 @@ use NetAddr::IP::Util qw(
 
 use vars qw(@ISA @EXPORT_OK $VERSION $Accept_Binary_IP $Old_nth $AUTOLOAD *Zero);
 
-$VERSION = do { my @r = (q$Revision: 1.48 $ =~ /\d+/g); sprintf "%d."."%02d" x $#r, @r };
+$VERSION = do { my @r = (q$Revision: 1.50 $ =~ /\d+/g); sprintf "%d."."%02d" x $#r, @r };
 
 require Exporter;
 
@@ -47,6 +47,10 @@ require Exporter;
 $Accept_Binary_IP = 0;
 $Old_nth = 0;
 *Zero = \&Zeros;
+
+=pod
+
+=encoding UTF-8
 
 =head1 NAME
 
@@ -1571,7 +1575,7 @@ sub import {
 
 =head1 AUTHORS
 
-Luis E. Muñoz E<lt>luismunoz@cpan.orgE<gt>,
+Luis E. MuÃ±oz E<lt>luismunoz@cpan.orgE<gt>,
 Michael Robinton E<lt>michael@bizsystems.comE<gt>
 
 =head1 WARRANTY
@@ -1581,7 +1585,7 @@ so by using it you accept any and all the liability.
 
 =head1 COPYRIGHT
 
- This software is (c) Luis E. Muñoz, 1999 - 2005
+ This software is (c) Luis E. MuÃ±oz, 1999 - 2005
  and (c) Michael Robinton, 2006 - 2012.
 
 All rights reserved.

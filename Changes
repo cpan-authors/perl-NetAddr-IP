@@ -1,5 +1,14 @@
 Revision history for Perl extension NetAddr::IP
 
+4.069 Sat May 25 15:10:45 PDT 2013
+        IN Lite.pm v1.50, add =encoding UTF-8
+        In Util.pm v1.50
+        changed Makefile.PL to check for config.h when building for XS
+        with 'gcc', try building with 'cc', and check again.
+        If config.h is not found, force Pure Perl mode.
+
+        Kill XS in winduhs and Darwin, both of which misbehave when compiling XS code
+
 4.068 Wed Apr  3 10:52:24 PDT 2013
 	update Makefile.PL in Util.pm v 1.49 to better detect 'winduhs'
 

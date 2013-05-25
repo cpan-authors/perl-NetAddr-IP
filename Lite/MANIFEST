@@ -78,7 +78,8 @@ t/v6-old-base-uri.t
 Util/MANIFEST
 Util/MANIFEST.SKIP
 Util/Changes
-Util/configure
+Util/configure.cc
+Util/configure.gcc
 Util/configure.ac
 Util/config.h.in
 Util/lib/NetAddr/IP/UtilPP.pm

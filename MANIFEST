@@ -123,7 +123,8 @@ Lite/Util/README
 Lite/Util/Util.pm
 Lite/Util/Util.xs
 Lite/Util/config.h.in
-Lite/Util/configure
+Lite/Util/configure.cc
+Lite/Util/configure.gcc
 Lite/Util/configure.ac
 Lite/Util/lib/NetAddr/IP/InetBase.pm
 Lite/Util/lib/NetAddr/IP/UtilPP.pm

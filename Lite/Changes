@@ -1,14 +1,25 @@
 Revision history for Perl extension NetAddr::IP::Lite
 
-1.48 Wed Apr  3 10:52:24 PDT 2013
+1.50  Sat May 25 15:10:45 PDT 2013
+	add =encoding UTF-8
+
+1.49  Tue Apr  9 12:02:34 PDT 2013
+	In Util.pm v1.50
+        changed Makefile.PL to check for config.h when building for XS
+        with 'gcc', try building with 'cc', and check again.
+        If config.h is not found, force Pure Perl mode.
+
+        Kill XS in winduhs and Darwin, both of which misbehave when compiling XS code
+
+1.48  Wed Apr  3 10:52:24 PDT 2013
 	Update Util.pm v1.49 to better detect 'winduhs'
 
-1.47 Mon Oct 29 13:30:14 PDT 2012
+1.47  Mon Oct 29 13:30:14 PDT 2012
 	update Lite.pm v1.47 to support bracketed IPv6 URI notation
 	as described in RFC-3986
 	Thanks to Quanah Gibson-Mount mishikal@yahoo.com
 
-1.46 Tue Oct  2 12:36:11 PDT 2012
+1.46  Tue Oct  2 12:36:11 PDT 2012
         correct incorrect format for IPv6 embedded IPv4 addresses
         in InetBase v0.8
 
