@@ -32,7 +32,7 @@ use NetAddr::IP::Util qw(
 
 use vars qw(@ISA @EXPORT_OK $VERSION $Accept_Binary_IP $Old_nth $AUTOLOAD *Zero);
 
-$VERSION = do { my @r = (q$Revision: 1.50 $ =~ /\d+/g); sprintf "%d."."%02d" x $#r, @r };
+$VERSION = do { my @r = (q$Revision: 1.51 $ =~ /\d+/g); sprintf "%d."."%02d" x $#r, @r };
 
 require Exporter;
 
@@ -199,6 +199,7 @@ my $_zero = pack('L4',0,0,0,0);
 my $_ones = ~$_zero;
 my $_v4mask = pack('L4',0xffffffff,0xffffffff,0xffffffff,0);
 my $_v4net = ~ $_v4mask;
+my $_ipv4FFFF = pack('N4',0,0,0xffff,0);
 
 sub Zeros() {
   return $_zero;
@@ -508,6 +509,8 @@ sub _new ($$$) {
 
 =item C<-E<gt>new6([$addr, [ $mask]])>
 
+=item C<-E<gt>new6FFFF([$addr, [ $mask]])>
+
 =item C<-E<gt>new_no([$addr, [ $mask]])>
 
 =item C<-E<gt>new_from_aton($netaddr)>
@@ -518,9 +521,14 @@ sub _new ($$$) {
 
 =item C<-E<gt>new_cis6("$addr $mask)>
 
-The first two methods create a new address with the supplied address in
+The first three methods create a new address with the supplied address in
 C<$addr> and an optional netmask C<$mask>, which can be omitted to get 
-a /32 or /128 netmask for IPv4 / IPv6 addresses respectively.
+a /32 or /128 netmask for IPv4 / IPv6 addresses respectively. 
+
+new6FFFF specifically returns an IPv4 address in IPv6 format according to RFC4291
+
+  new6		     ::xxxx:xxxx
+  new6FFFF	::FFFF:xxxx:xxxx
 
 The third method C<new_no> is exclusively for IPv4 addresses and filters
 improperly formatted
@@ -701,6 +709,12 @@ sub new_from_aton($$) {
 sub new6($;$$) {
   unshift @_, 1;
   goto &_xnew;
+}
+
+sub new6FFFF($;$$) {
+  my $ip = _xnew(1,@_);
+  $ip->{addr} |= $_ipv4FFFF;
+  return $ip;
 }
 
 sub new_cis($;$$) {

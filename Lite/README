@@ -187,14 +187,22 @@ DESCRIPTION
 
     "->new([$addr, [ $mask|IPv6 ]])"
     "->new6([$addr, [ $mask]])"
+    "->new6FFFF([$addr, [ $mask]])"
     "->new_no([$addr, [ $mask]])"
     "->new_from_aton($netaddr)"
     new_cis and new_cis6 are DEPRECATED
     "->new_cis("$addr $mask)"
     "->new_cis6("$addr $mask)"
-        The first two methods create a new address with the supplied address
-        in "$addr" and an optional netmask "$mask", which can be omitted to
-        get a /32 or /128 netmask for IPv4 / IPv6 addresses respectively.
+        The first three methods create a new address with the supplied
+        address in "$addr" and an optional netmask "$mask", which can be
+        omitted to get a /32 or /128 netmask for IPv4 / IPv6 addresses
+        respectively.
+
+        new6FFFF specifically returns an IPv4 address in IPv6 format
+        according to RFC4291
+
+          new6               ::xxxx:xxxx
+          new6FFFF      ::FFFF:xxxx:xxxx
 
         The third method "new_no" is exclusively for IPv4 addresses and
         filters improperly formatted dot quad strings for leading 0's that

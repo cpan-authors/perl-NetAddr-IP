@@ -1,5 +1,10 @@
 Revision history for Perl extension NetAddr::IP
 
+4.070 Thu Sep 12 12:54:22 PDT 2013
+	nth documention error fixed. thanks to Anton tobez@tobez.org
+
+	Lite v1.51, add new6FFFF, RFC4291 compliant ipv4->ipV6 new
+
 4.069 Sat May 25 15:10:45 PDT 2013
         IN Lite.pm v1.50, add =encoding UTF-8
         In Util.pm v1.50

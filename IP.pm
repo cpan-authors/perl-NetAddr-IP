@@ -5,8 +5,8 @@ package NetAddr::IP;
 use strict;
 #use diagnostics;
 use Carp;
-use NetAddr::IP::Lite 1.48 qw(Zero Zeros Ones V4mask V4net);
-use NetAddr::IP::Util 1.49 qw(
+use NetAddr::IP::Lite 1.51 qw(Zero Zeros Ones V4mask V4net);
+use NetAddr::IP::Util 1.50 qw(
 	sub128
 	inet_aton
 	inet_any2n
@@ -37,7 +37,7 @@ require Exporter;
 
 @ISA = qw(Exporter NetAddr::IP::Lite);
 
-$VERSION = do { sprintf " %d.%03d", (q$Revision: 4.69 $ =~ /\d+/g) };
+$VERSION = do { sprintf " %d.%03d", (q$Revision: 4.70 $ =~ /\d+/g) };
 
 $rfc3021 = 0;
 
@@ -1322,8 +1322,8 @@ addresses in the network.
   new behavior:
   NetAddr::IP->new('10/32')->nth(0)  == 10.0.0.0/32
   NetAddr::IP->new('10.1/32'->nth(0) == 10.0.0.1/32
-  NetAddr::IP->new('10/31')->nth(0)  == 10.0.0.0/32
-  NetAddr::IP->new('10/31')->nth(1)  == 10.0.0.1/32
+  NetAddr::IP->new('10/31')->nth(0)  == 10.0.0.0/31
+  NetAddr::IP->new('10/31')->nth(1)  == 10.0.0.1/31
   NetAddr::IP->new('10/30')->nth(0) == 10.0.0.1/30 
   NetAddr::IP->new('10/30')->nth(1) == 10.0.0.2/30 
   NetAddr::IP->new('10/30')->nth(2) == undef
