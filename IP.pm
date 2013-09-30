@@ -37,7 +37,7 @@ require Exporter;
 
 @ISA = qw(Exporter NetAddr::IP::Lite);
 
-$VERSION = do { sprintf " %d.%03d", (q$Revision: 4.70 $ =~ /\d+/g) };
+$VERSION = do { sprintf " %d.%03d", (q$Revision: 4.71 $ =~ /\d+/g) };
 
 $rfc3021 = 0;
 
@@ -846,6 +846,20 @@ sub short($) {
     return join '.', @o;
   }
   return _compV6($addr);
+}
+
+=item C<-E<gt>canon()>
+
+Returns the address part in canonical notation as a string.  For
+ipV4, this is dotted quad, and is the same as the return value from 
+"->addr()".  For ipV6 it is as per RFC5952, and is the same as the LOWER CASE value
+returned by "->short()".
+
+=cut
+
+sub canon($) {
+  my $addr = $_[0]->addr;
+  return $_[0]->{isv6} ? lc _compV6($addr) : $addr;
 }
 
 =item C<-E<gt>full()>

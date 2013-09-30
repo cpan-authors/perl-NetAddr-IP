@@ -1,5 +1,8 @@
 Revision history for Perl extension NetAddr::IP
 
+4.071 Mon Sep 30 13:41:03 PDT 2013
+	add method "canon" by request from <tom.jones@bccx.com>
+
 4.070 Thu Sep 12 12:54:22 PDT 2013
 	nth documention error fixed. thanks to Anton tobez@tobez.org
 
