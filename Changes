@@ -1,5 +1,8 @@
 Revision history for Perl extension NetAddr::IP
 
+4.072 Mon Jan 27 11:59:58 PST 2014
+        modify Makefile.PL to bypass missing 'pod2text'
+
 4.071 Mon Sep 30 13:41:03 PDT 2013
 	add method "canon" by request from <tom.jones@bccx.com>
 

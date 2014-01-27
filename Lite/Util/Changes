@@ -1,4 +1,7 @@
 
+1.51  Mon Jan 27 11:59:58 PST 2014
+        modify Makefile.PL to bypass missing 'pod2text'
+
 1.50  Tue Apr  9 12:02:34 PDT 2013
 	changed Makefile.PL to check for config.h when building for XS
 	with 'gcc', try building with 'cc', and check again.

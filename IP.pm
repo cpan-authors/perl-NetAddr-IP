@@ -37,7 +37,7 @@ require Exporter;
 
 @ISA = qw(Exporter NetAddr::IP::Lite);
 
-$VERSION = do { sprintf " %d.%03d", (q$Revision: 4.71 $ =~ /\d+/g) };
+$VERSION = do { sprintf " %d.%03d", (q$Revision: 4.72 $ =~ /\d+/g) };
 
 $rfc3021 = 0;
 
@@ -1581,7 +1581,7 @@ so by using it you accept any and all the liability.
 =head1 COPYRIGHT
 
 This software is (c) Luis E. Muñoz, 1999 - 2007, and (c) Michael
-Robinton, 2006 - 2012.
+Robinton, 2006 - 2014.
 
 All rights reserved.
 

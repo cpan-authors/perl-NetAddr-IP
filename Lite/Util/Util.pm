@@ -21,7 +21,7 @@ require Exporter;
 
 @ISA = qw(Exporter DynaLoader);
 
-$VERSION = do { my @r = (q$Revision: 1.50 $ =~ /\d+/g); sprintf "%d."."%02d" x $#r, @r };
+$VERSION = do { my @r = (q$Revision: 1.51 $ =~ /\d+/g); sprintf "%d."."%02d" x $#r, @r };
 
 @EXPORT_OK = qw(
 	inet_aton
@@ -922,7 +922,7 @@ Michael Robinton <michael@bizsystems.com>
 
 =head1 COPYRIGHT
 
-Copyright 2003 - 2013, Michael Robinton E<lt>michael@bizsystems.comE<gt>
+Copyright 2003 - 2014, Michael Robinton E<lt>michael@bizsystems.comE<gt>
 
 All rights reserved.
 

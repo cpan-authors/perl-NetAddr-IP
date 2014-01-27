@@ -1,5 +1,8 @@
 Revision history for Perl extension NetAddr::IP::Lite
 
+1.52  Mon Jan 27 11:59:58 PST 2014
+        modify Makefile.PL to bypass missing 'pod2text'
+
 1.51  Thu Sep 12 12:54:22 PDT 2013
 	add new6FFFF, RFC4291 compliant ipv4->ipV6 new
 

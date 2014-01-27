@@ -32,7 +32,7 @@ use NetAddr::IP::Util qw(
 
 use vars qw(@ISA @EXPORT_OK $VERSION $Accept_Binary_IP $Old_nth $AUTOLOAD *Zero);
 
-$VERSION = do { my @r = (q$Revision: 1.51 $ =~ /\d+/g); sprintf "%d."."%02d" x $#r, @r };
+$VERSION = do { my @r = (q$Revision: 1.52 $ =~ /\d+/g); sprintf "%d."."%02d" x $#r, @r };
 
 require Exporter;
 
@@ -1600,7 +1600,7 @@ so by using it you accept any and all the liability.
 =head1 COPYRIGHT
 
  This software is (c) Luis E. Muñoz, 1999 - 2005
- and (c) Michael Robinton, 2006 - 2012.
+ and (c) Michael Robinton, 2006 - 2014.
 
 All rights reserved.
 
