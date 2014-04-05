@@ -29,6 +29,7 @@ t/netaddr.t
 t/network.t
 t/new-nth.t
 t/new-num.t
+t/nofqdn.t
 t/numeric.t
 t/old-nth.t
 t/old-num.t

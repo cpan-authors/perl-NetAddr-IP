@@ -37,7 +37,7 @@ require Exporter;
 
 @ISA = qw(Exporter NetAddr::IP::Lite);
 
-$VERSION = do { sprintf " %d.%03d", (q$Revision: 4.72 $ =~ /\d+/g) };
+$VERSION = do { sprintf " %d.%03d", (q$Revision: 4.73 $ =~ /\d+/g) };
 
 $rfc3021 = 0;
 
@@ -65,6 +65,7 @@ NetAddr::IP - Manages IPv4 and IPv6 addresses and subnets
 	:old_storable
 	:old_nth
 	:rfc3021
+	:nofqdn
   );
 
   NOTE: NetAddr::IP::Util has a full complement of network address
@@ -101,6 +102,8 @@ See L<NetAddr::IP::Util>
   FFFF:FFFF:FFFF:FFFF:FFFF:FFFF::          = V4mask();
   ::FFFF:FFFF                              = V4net();
 
+  Will also return an ipV4 or ipV6 representation of a
+  resolvable Fully Qualified Domanin Name (FQDN).
 
 ###### DEPRECATED, will be remove in version 5 ############
 
@@ -613,6 +616,12 @@ Any RFC1884 notation
   of perl's number resolution
   123456789012  a 'big' bcd number (bigger than perl likes)
   and Math::BigInt
+
+A Fully Qualified Domain Name which returns an ipV4 address or an ipV6
+address, embodied in that order. This previously undocumented feature
+may be disabled with:
+
+	use NetAddr::IP::Lite ':nofqdn';
 
 If called with no arguments, 'default' is assumed.
 

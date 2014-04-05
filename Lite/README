@@ -11,6 +11,7 @@ SYNOPSIS
             :old_nth
             :upper
             :lower
+            :nofqdn
       );
 
       my $ip = new NetAddr::IP::Lite '127.0.0.1';
@@ -36,6 +37,9 @@ SYNOPSIS
       FFFF:FFFF:FFFF:FFFF:FFFF:FFFF:FFFF:FFFF  = Ones();
       FFFF:FFFF:FFFF:FFFF:FFFF:FFFF::          = V4mask();
       ::FFFF:FFFF                              = V4net();
+
+      Will also return an ipV4 or ipV6 representation of a
+      resolvable Fully Qualified Domanin Name (FQDN).
 
 INSTALLATION
     Un-tar the distribution in an appropriate directory and type:
@@ -297,6 +301,12 @@ DESCRIPTION
           123456789012  a 'big' bcd number (bigger than perl likes)
           and Math::BigInt
 
+        A Fully Qualified Domain Name which returns an ipV4 address or an
+        ipV6 address, embodied in that order. This previously undocumented
+        feature may be disabled with:
+
+                use NetAddr::IP::Lite ':nofqdn';
+
         If called with no arguments, 'default' is assumed.
 
         If called with and empty string as the argument, 'undef' is
@@ -480,6 +490,7 @@ EXPORT_OK
             :old_nth
             :upper
             :lower
+            :nofqdn
 
 AUTHORS
     Luis E. Muñoz <luismunoz@cpan.org>, Michael Robinton

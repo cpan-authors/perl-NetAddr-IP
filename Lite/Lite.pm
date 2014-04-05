@@ -30,9 +30,9 @@ use NetAddr::IP::Util qw(
 	havegethostbyname2
 );
 
-use vars qw(@ISA @EXPORT_OK $VERSION $Accept_Binary_IP $Old_nth $AUTOLOAD *Zero);
+use vars qw(@ISA @EXPORT_OK $VERSION $Accept_Binary_IP $Old_nth $NoFQDN $AUTOLOAD *Zero);
 
-$VERSION = do { my @r = (q$Revision: 1.52 $ =~ /\d+/g); sprintf "%d."."%02d" x $#r, @r };
+$VERSION = do { my @r = (q$Revision: 1.53 $ =~ /\d+/g); sprintf "%d."."%02d" x $#r, @r };
 
 require Exporter;
 
@@ -67,6 +67,7 @@ NetAddr::IP::Lite - Manages IPv4 and IPv6 addresses and subnets
 	:old_nth
 	:upper
 	:lower
+	:nofqdn
   );
 
   my $ip = new NetAddr::IP::Lite '127.0.0.1';
@@ -92,6 +93,9 @@ NetAddr::IP::Lite - Manages IPv4 and IPv6 addresses and subnets
   FFFF:FFFF:FFFF:FFFF:FFFF:FFFF:FFFF:FFFF  = Ones();
   FFFF:FFFF:FFFF:FFFF:FFFF:FFFF::	   = V4mask();
   ::FFFF:FFFF				   = V4net();
+
+  Will also return an ipV4 or ipV6 representation of a
+  resolvable Fully Qualified Domanin Name (FQDN).
 
 =head1 INSTALLATION
 
@@ -624,6 +628,12 @@ Any RFC1884 notation
   123456789012  a 'big' bcd number (bigger than perl likes)
   and Math::BigInt
 
+A Fully Qualified Domain Name which returns an ipV4 address or an ipV6
+address, embodied in that order. This previously undocumented feature
+may be disabled with:
+
+	use NetAddr::IP::Lite ':nofqdn';
+
 If called with no arguments, 'default' is assumed.
 
 If called with and empty string as the argument, 'undef' is returned;
@@ -1002,12 +1012,12 @@ sub _xnew($$;$$) {
 	last;
       }
 # check for resolvable IPv4 hosts
-      elsif ($ip !~ /[^a-zA-Z0-9\.-]/ && ($tmp = gethostbyname(fillIPv4($ip))) && $tmp ne $_v4zero && $tmp ne $_zero ) {
+      elsif (! $NoFQDN && $ip !~ /[^a-zA-Z0-9\.-]/ && ($tmp = gethostbyname(fillIPv4($ip))) && $tmp ne $_v4zero && $tmp ne $_zero ) {
 	$ip = ipv4to6($tmp);
 	last;
       }
 # check for resolvable IPv6 hosts
-      elsif ($ip !~ /[^a-zA-Z0-9\.-]/ && havegethostbyname2() && ($tmp = naip_gethostbyname($ip))) {
+      elsif (! $NoFQDN && $ip !~ /[^a-zA-Z0-9\.-]/ && havegethostbyname2() && ($tmp = naip_gethostbyname($ip))) {
 	$ip = $tmp;
 	$isV6 = 1;
 	last;
@@ -1573,6 +1583,11 @@ sub import {
     NetAddr::IP::Util::upper();
     @_ = grep { $_ ne ':upper' } @_;
   }
+  if (grep { $_ eq ':nofqdn' } @_)
+  {
+    $NoFQDN = 1;
+    @_ = grep { $_ ne ':nofqdn' } @_;
+  }
   NetAddr::IP::Lite->export_to_level(1, @_);
 }
 
@@ -1586,6 +1601,7 @@ sub import {
 	:old_nth
 	:upper
 	:lower
+	:nofqdn
 
 =head1 AUTHORS
 

@@ -70,6 +70,7 @@ Lite/t/netaddr.t
 Lite/t/network.t
 Lite/t/new-nth.t
 Lite/t/new-num.t
+Lite/t/nofqdn.t
 Lite/t/numeric.t
 Lite/t/old-nth.t
 Lite/t/old-num.t
