@@ -1,5 +1,10 @@
 Revision history for Perl extension NetAddr::IP::Lite
 
+1.54  Wed Jun 11 09:36:10 PDT 2014
+	change input filter for resolvable hostnames
+	to allow the underscore character
+	Thanks to grankio [...] gmail.com for the heads up on this issue.
+
 1.53  Sat Apr  5 09:32:11 PDT 2014
         add documentation about FQDN conversion and
         an option to disable

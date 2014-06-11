@@ -32,7 +32,7 @@ use NetAddr::IP::Util qw(
 
 use vars qw(@ISA @EXPORT_OK $VERSION $Accept_Binary_IP $Old_nth $NoFQDN $AUTOLOAD *Zero);
 
-$VERSION = do { my @r = (q$Revision: 1.53 $ =~ /\d+/g); sprintf "%d."."%02d" x $#r, @r };
+$VERSION = do { my @r = (q$Revision: 1.54 $ =~ /\d+/g); sprintf "%d."."%02d" x $#r, @r };
 
 require Exporter;
 
@@ -1012,12 +1012,12 @@ sub _xnew($$;$$) {
 	last;
       }
 # check for resolvable IPv4 hosts
-      elsif (! $NoFQDN && $ip !~ /[^a-zA-Z0-9\.-]/ && ($tmp = gethostbyname(fillIPv4($ip))) && $tmp ne $_v4zero && $tmp ne $_zero ) {
+      elsif (! $NoFQDN && $ip !~ /[^a-zA-Z0-9\._-]/ && ($tmp = gethostbyname(fillIPv4($ip))) && $tmp ne $_v4zero && $tmp ne $_zero ) {
 	$ip = ipv4to6($tmp);
 	last;
       }
 # check for resolvable IPv6 hosts
-      elsif (! $NoFQDN && $ip !~ /[^a-zA-Z0-9\.-]/ && havegethostbyname2() && ($tmp = naip_gethostbyname($ip))) {
+      elsif (! $NoFQDN && $ip !~ /[^a-zA-Z0-9\._-]/ && havegethostbyname2() && ($tmp = naip_gethostbyname($ip))) {
 	$ip = $tmp;
 	$isV6 = 1;
 	last;
