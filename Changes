@@ -1,5 +1,19 @@
 Revision history for Perl extension NetAddr::IP
 
+4.077 Fri Aug 14 01:17:23 PDT 2015
+	re-numbered because of CPAN upload issue
+
+4.076 Thu Aug 13 22:44:48 PDT 2015
+	added method is_local() to Lite.pm
+	inspired by Xan Charbonne
+
+        fix Util Makefile.PL to accomodate bug in Android's sh
+
+	add method full6m()
+	inspired by abraxxa@cpan.org
+
+        fix Util/Makefile.PL issue with clang compiler, bug 86831
+
 4.075 Wed Jun 11 11:41:17 PDT 2014
 	make CPAN happy with new rev number
 

@@ -5,8 +5,8 @@ package NetAddr::IP;
 use strict;
 #use diagnostics;
 use Carp;
-use NetAddr::IP::Lite 1.54 qw(Zero Zeros Ones V4mask V4net);
-use NetAddr::IP::Util 1.50 qw(
+use NetAddr::IP::Lite 1.55 qw(Zero Zeros Ones V4mask V4net);
+use NetAddr::IP::Util 1.52 qw(
 	sub128
 	inet_aton
 	inet_any2n
@@ -37,7 +37,7 @@ require Exporter;
 
 @ISA = qw(Exporter NetAddr::IP::Lite);
 
-$VERSION = do { sprintf " %d.%03d", (q$Revision: 4.75 $ =~ /\d+/g) };
+$VERSION = do { sprintf " %d.%03d", (q$Revision: 4.77 $ =~ /\d+/g) };
 
 $rfc3021 = 0;
 
@@ -475,6 +475,11 @@ sub full6($) {
   return sprintf($full6_format,@hex);
 }
 
+sub full6m($) {
+  my @hex = (unpack("n8",$_[0]->{mask}));
+  return sprintf($full6_format,@hex);
+}
+
 sub DESTROY {};
 
 1;
@@ -888,6 +893,10 @@ To force ipV4 addresses into full ipV6 format use:
 
 Returns the address part in FULL ipV6 notation
 
+=item C<-E<gt>full6m()>
+   
+Returns the mask part in FULL ipV6 notation
+
 =item C<$me-E<gt>contains($other)>
 
 Returns true when C<$me> completely contains C<$other>. False is
@@ -908,6 +917,13 @@ Returns true when C<$me> is an RFC 1918 address.
   10.0.0.0      -   10.255.255.255  (10/8 prefix)
   172.16.0.0    -   172.31.255.255  (172.16/12 prefix)
   192.168.0.0   -   192.168.255.255 (192.168/16 prefix)
+
+=item C<-E<gt>is_local()>
+
+Returns true when C<$me> is a local network address.
+   
+        i.e.    ipV4    127.0.0.0 - 127.255.255.255
+  or            ipV6    === ::1
 
 =item C<-E<gt>splitref($bits,[optional $bits1,$bits2,...])>
 

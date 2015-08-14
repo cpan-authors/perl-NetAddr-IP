@@ -4,6 +4,8 @@ use ExtUtils::MakeMaker qw(
 );
 use Config;
 use Cwd;
+# fix for bug in Android's sh
+use File::Spec;
 use Getopt::Long qw(
 	GetOptions
 );
@@ -58,7 +60,9 @@ my %makeparms = (
 # Check if we have a C compiler
 
 unless (defined $useXS) {
-  if (test_cc()) {
+  my $compiler = test_cc();
+  if ($compiler) {
+    $ENV{CC} = $compiler;
     print "You have a working compiler.\n";
     $useXS = 1;
 #    $makeparms{'MYEXTLIB'} = 'netdns$(LIB_EXT)',
@@ -85,6 +89,9 @@ while ($useXS) {
   # turn the XS bits on.
   delete $makeparms{'XS'};
   delete $makeparms{'C'};
+
+# fix bug in Andorid's sh
+  local $ENV{TMPDIR} = File::Spec->tmpdir() if $^O eq 'android';
 
   unless (-e './config.h') {
     system $Config{sh}, 'configure.gcc';
@@ -202,27 +209,32 @@ sub test_cc {
 
   unless (open(F, ">compile.c")) {
       warn "Cannot write compile.c, skipping test compilation and installing pure Perl version.\n";
-    return;
+    return 0;
   }
 
-  my $CC = $ENV{CC} || $Config{ccname};
-  my $command = qq|$CC compile.c -o compile.output|;
+  my $CC;
+  foreach $CC (($ENV{CC},$Config{ccname},$Config{cc})) {
+    next unless $_;
+    my $command = qq|$CC compile.c -o compile.output|;
 
-  print F <<'EOF';
+    print F <<'EOF';
 int main() { return 0; }
 EOF
 
-  close(F) or return;
+    close(F) or return 0;
 
-  print STDERR $command,"\n";
+    print STDERR $command,"\n";
 
-  my $rv = system($command);
+    my $rv = system($command);
 
-  foreach my $file (glob('compile*')) {
-    unlink($file) || warn "Could not delete $file: $!\n";
+    foreach my $file (glob('compile*')) {
+      unlink($file) || warn "Could not delete $file: $!\n";
+    }
+    if ($rv == 0) {
+      return $CC;
+    }
   }
-
-  return ($rv == 0);
+  return ;
 }
 
 sub MY::top_targets {

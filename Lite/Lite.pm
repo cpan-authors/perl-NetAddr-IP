@@ -32,7 +32,7 @@ use NetAddr::IP::Util qw(
 
 use vars qw(@ISA @EXPORT_OK $VERSION $Accept_Binary_IP $Old_nth $NoFQDN $AUTOLOAD *Zero);
 
-$VERSION = do { my @r = (q$Revision: 1.54 $ =~ /\d+/g); sprintf "%d."."%02d" x $#r, @r };
+$VERSION = do { my @r = (q$Revision: 1.55 $ =~ /\d+/g); sprintf "%d."."%02d" x $#r, @r };
 
 require Exporter;
 
@@ -1390,6 +1390,24 @@ sub is_rfc1918 ($) {
   return 1 if (sub128($netme,$ip_192n) && sub128($ip_192b,$brdme));
   return (sub128($netme,$ip_172n) && sub128($ip_172b,$brdme))
         ? 1 : 0;
+}
+
+=item C<-E<gt>is_local()>
+
+Returns true when C<$me> is a local network address.
+
+	i.e.	ipV4	127.0.0.0 - 127.255.255.255
+  or		ipV6	=== ::1
+
+=cut
+
+my $_lclhost6	= NetAddr::IP::Lite->new('::1');
+my $_lclnet	= NetAddr::IP::Lite->new('127/8');
+
+sub is_local ($) {
+  return ($_[0]->{isv6})
+	? $_[0] == $_lclhost6
+	: $_[0]->within($_lclnet);
 }
 
 =item C<-E<gt>first()>

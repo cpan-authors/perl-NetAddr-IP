@@ -1,5 +1,13 @@
 Revision history for Perl extension NetAddr::IP::Lite
 
+1.55  Thu Aug 13 22:44:48 PDT 2015
+	added method is_local()
+	inspired by request from Xan Charbonne
+
+        fix Util Makefile.PL to accomodate bug in Android's sh
+
+        fix Util/Makefile.PL issue with clang compiler, bug 86831
+
 1.54  Wed Jun 11 09:36:10 PDT 2014
 	change input filter for resolvable hostnames
 	to allow the underscore character

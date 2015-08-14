@@ -397,6 +397,12 @@ DESCRIPTION
              172.16.0.0      -   172.31.255.255  (172.16/12 prefix)
              192.168.0.0     -   192.168.255.255 (192.168/16 prefix)
 
+    "->is_local()"
+        Returns true when "$me" is a local network address.
+
+                i.e.    ipV4    127.0.0.0 - 127.255.255.255
+          or            ipV6    === ::1
+
     "->first()"
         Returns a new object representing the first usable IP address within
         the subnet (ie, the first host address).

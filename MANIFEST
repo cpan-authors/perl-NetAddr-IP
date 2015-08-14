@@ -61,6 +61,7 @@ Lite/t/contains.t
 Lite/t/copy.t
 Lite/t/firstlast.t
 Lite/t/ipv4FFFF.t
+Lite/t/is_local.t
 Lite/t/lemasklen.t
 Lite/t/loops.t
 Lite/t/lower.t

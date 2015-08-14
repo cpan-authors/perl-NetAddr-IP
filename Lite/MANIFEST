@@ -19,6 +19,7 @@ t/constants.t
 t/contains.t
 t/copy.t
 t/firstlast.t
+t/is_local.t
 t/ipv4FFFF.t
 t/lemasklen.t
 t/loops.t

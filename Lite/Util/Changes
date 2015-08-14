@@ -1,4 +1,9 @@
 
+1.52  Thu Aug 13 22:44:48 PDT 2015
+	fix Makefile.PL to accomodate bug in Android's sh
+
+	fix Makefile.PL issue with clang compiler, bug 86831
+
 1.51  Mon Jan 27 11:59:58 PST 2014
         modify Makefile.PL to bypass missing 'pod2text'
 
