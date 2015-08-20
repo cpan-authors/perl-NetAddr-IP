@@ -1,4 +1,7 @@
 
+1.53  Mon Aug 17 15:35:28 PDT 2015
+	fix typo in MakefilePL that cause compiler to not be found at all
+
 1.52  Thu Aug 13 22:44:48 PDT 2015
 	fix Makefile.PL to accomodate bug in Android's sh
 

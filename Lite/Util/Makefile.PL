@@ -213,8 +213,8 @@ sub test_cc {
   }
 
   my $CC;
-  foreach $CC (($ENV{CC},$Config{ccname},$Config{cc})) {
-    next unless $_;
+  foreach $CC (($ENV{CC},$Config{cc},$Config{ccname})) {
+    next unless $CC;
     my $command = qq|$CC compile.c -o compile.output|;
 
     print F <<'EOF';
@@ -234,7 +234,7 @@ EOF
       return $CC;
     }
   }
-  return ;
+  return undef;
 }
 
 sub MY::top_targets {

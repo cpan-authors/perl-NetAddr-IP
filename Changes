@@ -1,5 +1,9 @@
 Revision history for Perl extension NetAddr::IP
 
+4.078 Mon Aug 17 15:35:28 PDT 2015      
+        fix typo in Util.pm 1.53 MakefilePL that cause compiler to not be
+	found at all
+
 4.077 Fri Aug 14 01:17:23 PDT 2015
 	re-numbered because of CPAN upload issue
 
