@@ -5,7 +5,7 @@ package NetAddr::IP;
 use strict;
 #use diagnostics;
 use Carp;
-use NetAddr::IP::Lite 1.56 qw(Zero Zeros Ones V4mask V4net);
+use NetAddr::IP::Lite 1.57 qw(Zero Zeros Ones V4mask V4net);
 use NetAddr::IP::Util 1.53 qw(
 	sub128
 	inet_aton
@@ -37,7 +37,7 @@ require Exporter;
 
 @ISA = qw(Exporter NetAddr::IP::Lite);
 
-$VERSION = do { sprintf " %d.%03d", (q$Revision: 4.78 $ =~ /\d+/g) };
+$VERSION = do { sprintf " %d.%03d", (q$Revision: 4.79 $ =~ /\d+/g) };
 
 $rfc3021 = 0;
 
@@ -386,6 +386,11 @@ sub import
     {
 	$NetAddr::IP::Lite::Old_nth = 1;
 	@_ = grep { $_ ne ':old_nth' } @_;
+    }
+    if (grep { $_ eq ':nofqdn'} @_)
+    {
+	$NetAddr::IP::NetAddr::IP::Lite::NoFQDN = 1;
+	@_ = grep { $_ ne ':nofqdn' } @_;
     }
     if (grep { $_ eq ':lower' } @_)
     {

@@ -1,5 +1,10 @@
 Revision history for Perl extension NetAddr::IP::Lite
 
+1.57  Fri Mar 25 16:18:26 PDT 2016
+	correct non-suppression of leading zeros in certain instances of
+	new_no use. Thanks to "Mike Bartman (mbartman)" <mbartman@cisco.com>
+	for spotting the bug.
+
 1.56  Mon Aug 17 15:35:28 PDT 2015
         fix typo in Util.pm 1.53 MakefilePL that cause compiler to not be found at all
 

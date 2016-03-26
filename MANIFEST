@@ -17,6 +17,7 @@ t/loops.t
 t/lower.t
 t/masklen.t
 t/new-store.t
+t/nofqdn.t
 t/old-store.t
 t/over-arr.t
 t/over-qq.t

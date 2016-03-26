@@ -32,7 +32,7 @@ use NetAddr::IP::Util qw(
 
 use vars qw(@ISA @EXPORT_OK $VERSION $Accept_Binary_IP $Old_nth $NoFQDN $AUTOLOAD *Zero);
 
-$VERSION = do { my @r = (q$Revision: 1.56 $ =~ /\d+/g); sprintf "%d."."%02d" x $#r, @r };
+$VERSION = do { my @r = (q$Revision: 1.57 $ =~ /\d+/g); sprintf "%d."."%02d" x $#r, @r };
 
 require Exporter;
 
@@ -746,8 +746,10 @@ sub new_cis6($;$$) {
 }
 
 sub _no_octal {
-  $_[0] =~ m/^(\d+)\.(\d+)\.(\d+)\.(\d+)$/;
-  return sprintf("%d.%d.%d.%d",$1,$2,$3,$4);
+#  $_[0] =~ m/^(\d+)\.(\d+)\.(\d+)\.(\d+)$/;
+#  return sprintf("%d.%d.%d.%d",$1,$2,$3,$4);
+  (my $rv = $_[0]) =~ s#\b0*([1-9]\d*/?|0/?)#$1#g;	# suppress leading zeros
+  $rv;
 }
 
 sub _xnew($$;$$) {
@@ -760,6 +762,10 @@ sub _xnew($$;$$) {
   my $proto	= shift;
   my $class	= ref $proto || $proto || __PACKAGE__;
   my $ip	= shift;
+
+  if ($ip && $noctal && $ip !~ m|(?:[^\s0123456789/. -])|) {		# octal suppression required if not an IPv4 address
+    $ip = _no_octal($ip);
+  }
 
 # fix for bug #75976
   return undef if defined $ip && $ip eq '';
@@ -885,6 +891,9 @@ sub _xnew($$;$$) {
 	}
       }
       elsif ($isCIDR && $mask < 33) {		# is V4
+#	if ($ip && $noctal && $ip !~ m|(?:[^\s0123456789.])|) {              # octal suppression required if not an IPv4 address
+#	  $mask = _no_octal($mask);
+#	}
 	if ($mask < 32) {
 	  $mask = shiftleft(Ones,32 -$mask);
 	}
@@ -993,13 +1002,13 @@ sub _xnew($$;$$) {
       }
       elsif ($ip =~ m/^(\d+\.\d+\.\d+\.\d+)
 		\s*-\s*(\d+\.\d+\.\d+\.\d+)$/x) {
-	if ($noctal) {
-	  return undef unless ($ip = inet_aton(_no_octal($1)));
-	  return undef unless ($tmp = inet_aton(_no_octal($2)));
-	} else {
+#	if ($noctal) {
+#	  return undef unless ($ip = inet_aton(_no_octal($1)));
+#	  return undef unless ($tmp = inet_aton(_no_octal($2)));
+#	} else {
 	  return undef unless ($ip = inet_aton($1));
 	  return undef unless ($tmp = inet_aton($2));
-	}
+#	}
 # check for left side greater than right side
 # save numeric difference in $mask
 	return undef if ($tmp = unpack('N',$tmp) - unpack('N',$ip)) < 0;
