@@ -23,10 +23,11 @@ CVS/.*
 _uu$
 Util_IS\.pm$
 Util\.(bs|[co])$
-localStuff\.h$
+localperl\.h
+localconf\.h
 config\.log$
 config\.h$
 config\.status
-localperl\.h
-Lite/bug2742981.pl
+xs/config\.h
+xs/localperl\.h
 META.yml
