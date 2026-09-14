@@ -1,168 +1,101 @@
-# Before `make install' is performed this script should be runnable with
-# `make test'. After `make install' it should work as `perl test.pl'
+#!/usr/bin/env perl
 
-######################### We start with some black magic to print on failure.
-# Change 1..1 below to 1..last_test_to_print .
-# (It may become useful if the test is moved to ./t subdirectory.)
-
-BEGIN { $| = 1; print "1..31\n"; }
-END {print "not ok 1\n" unless $loaded;}
+use Test2::V1 -ipP;
+use Test2::Tools::Exception qw( dies );
 
 use NetAddr::IP::Util qw(
-	bcd2bin
-	bin2bcd
-	hasbits
-	isIPv4
-	add128
-	sub128
-	shiftleft
-	comp128
-	bcdn2txt
-	bin2bcdn
-	bcdn2bin
-	simple_pack
+    add128
+    bcd2bin
+    bcdn2bin
+    bcdn2txt
+    bin2bcd
+    bin2bcdn
+    comp128
+    hasbits
+    isIPv4
+    shiftleft
+    simple_pack
+    sub128
 );
 
-$loaded = 1;
-print "ok 1\n";
-######################### End of black magic.
+## simple_pack – bad character input
 
-# Insert your test code below (better if it prints "ok 13"
-# (correspondingly "not ok 13") depending on the success of chunk 13
-# of the test code):
-
-$test = 2;
-
-sub ok {
-  print "ok $test\n";
-  ++$test;
-}
-
-## tests 2 - 9	simple_pack
-
-foreach(
+for my $input (
 	'1234/',
 	'1234:',
 	'a1234',
 	'&1234',
 ) {
-  my $rv;
-  eval {	$rv = simple_pack($_) };
-  if (defined $rv) {
-    $rv = unpack("H40",$rv);
-    print "got: $rv, exp: 'die'\nnot ";
-  }
-  &ok;
-
-  print "expected a die from bad character input\nnot "
-	unless $@ && $@ =~ /Bad/;
-  &ok;
+	like(dies { simple_pack($input) }, qr/Bad/, "simple_pack dies on '$input'");
 }
 
-## tests 10 - 17	bcd2bin
+## bcd2bin – bad character input
 
-foreach(
+for my $input (
 	'1234/',
 	'1234:',
 	'a1234',
 	'&1234',
 ) {
-  my $rv;
-  eval {	$rv = bcd2bin($_) };
-  if (defined $rv) {
-    $rv = unpack("H40",$rv);
-    print "got: $rv, exp: 'die'\nnot ";
-  }
-  &ok;
-
-  print "expected a die from bad character input\nnot "
-	unless $@ && $@ =~ /Bad/;
-  &ok;
+	like(dies { bcd2bin($input) }, qr/Bad/, "bcd2bin dies on '$input'");
 }
 
-## test 18	bcdn2bin
-eval { bcdn2bin('123456789012345678901') };
-print "expected a die from bad vector string length\nnot "
-	unless $@ && $@ =~ /Bad/;
-&ok;
+## bcdn2bin – bad vector string length
 
-## test 19	bcdn2bin
-eval { bcdn2bin('12345678901234567890') };
-print "expected a die from missing length specifier\nnot "
-	unless $@ && $@ =~ /Bad/;
-&ok;
+like(dies { bcdn2bin('123456789012345678901') }, qr/Bad/, 'bcdn2bin dies on bad length');
 
-## test 20	bin2bcd
-eval { bin2bcd('123') };
-print "expected a die from bad vector string length\nnot "
-	unless $@ && $@ =~ /Bad/;
-&ok;
+## bcdn2bin – missing length specifier
 
-## test 21	bin2bcdn
-eval { bin2bcdn('123') };
-print "expected a die from bad vector string length\nnot "
-	unless $@ && $@ =~ /Bad/;
-&ok;
+like(dies { bcdn2bin('12345678901234567890') }, qr/Bad/, 'bcdn2bin dies on missing length specifier');
 
-## test 22	bcdn2txt
-eval { bcdn2txt('123456789012345678901') };
-print "expected a die from bad vector string length\nnot "
-	unless $@ && $@ =~ /Bad/;
-&ok;
+## bin2bcd – bad vector string length
 
-## test 23	bcdn2txt
-my $rv;
+like(dies { bin2bcd('123') }, qr/Bad/, 'bin2bcd dies on bad length');
+
+## bin2bcdn – bad vector string length
+
+like(dies { bin2bcdn('123') }, qr/Bad/, 'bin2bcdn dies on bad length');
+
+## bcdn2txt – bad vector string length
+
+like(dies { bcdn2txt('123456789012345678901') }, qr/Bad/, 'bcdn2txt dies on bad length');
+
+## bcdn2txt – success case
+
+my $rv  = bcdn2txt('12345678901234567890');
 my $exp = '3132333435363738393031323334353637383930';
-$rv = bcdn2txt('12345678901234567890');
-print "got: $rv\nexp: $exp\nnot "
-	unless $rv eq $exp;
-&ok;
+is($rv, $exp, 'bcdn2txt returns expected value');
 
-## test 24	hasbits
-eval { hasbits('123') };
-print "expected a die from bad vector string length\nnot "
-	unless $@ && $@ =~ /Bad/;
-&ok;
+## hasbits – bad vector string length
 
-## test 25	isIPv4
-eval { isIPv4('12345678901234567') };
-print "expected a die from bad vector string length\nnot "
-	unless $@ && $@ =~ /Bad/;
-&ok;
+like(dies { hasbits('123') }, qr/Bad/, 'hasbits dies on bad length');
 
-## test 26	add128
-eval { add128('123','1234567890123456') };
-print "expected a die from bad vector string length\nnot "
-	unless $@ && $@ =~ /Bad/;
-&ok;
+## isIPv4 – bad vector string length
 
-## test 27	sub128
-eval { sub128('1234567890123456','12345678901234567') };
-print "expected a die from bad vector string length\nnot "
-	unless $@ && $@ =~ /Bad/;
-&ok;
+like(dies { isIPv4('12345678901234567') }, qr/Bad/, 'isIPv4 dies on bad length');
 
-## test 28	comp128
-eval { comp128('123') };
-print "expected a die from bad vector string length\nnot "
-	unless $@ && $@ =~ /Bad/;
-&ok;
+## add128 – bad vector string length
 
-## test 29	shiftleft
-eval { shiftleft	('12345678901234567') };
-print "expected a die from bad vector string length\nnot "
-	unless $@ && $@ =~ /Bad/;
-&ok;
+like(dies { add128('123', '1234567890123456') }, qr/Bad/, 'add128 dies on bad length');
 
-## test 30	shiftleft
-eval { shiftleft	('1234567890123456',-1) };
-print "expected a die from bad shift count specifier\nnot "
-	unless $@ && $@ =~ /Bad/;
-&ok;
+## sub128 – bad vector string length
 
-## test 31	shiftleft
-eval { shiftleft	('1234567890123456',129) };
-print "expected a die from bad shift count specifier\nnot "
-	unless $@ && $@ =~ /Bad/;
-&ok;
+like(dies { sub128('1234567890123456', '12345678901234567') }, qr/Bad/, 'sub128 dies on bad length');
 
+## comp128 – bad vector string length
+
+like(dies { comp128('123') }, qr/Bad/, 'comp128 dies on bad length');
+
+## shiftleft – bad vector string length
+
+like(dies { shiftleft('12345678901234567') }, qr/Bad/, 'shiftleft dies on bad length');
+
+## shiftleft – bad shift count (negative)
+
+like(dies { shiftleft('1234567890123456', -1) }, qr/Bad/, 'shiftleft dies on negative shift count');
+
+## shiftleft – bad shift count (too large)
+
+like(dies { shiftleft('1234567890123456', 129) }, qr/Bad/, 'shiftleft dies on shift count too large');
+
+done_testing;

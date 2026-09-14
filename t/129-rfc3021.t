@@ -1,31 +1,21 @@
-use NetAddr::IP;
+#!/usr/bin/env perl
 
-$| = 1;
+use Test2::V1 -ipP;
 
-print '1..4', "\n";
+use NetAddr::IP ();
 
-my $test = 1;
-
-my $ip = new NetAddr::IP('192.168.1.8/31');
+my $ip = NetAddr::IP->new('192.0.2.8/31');
 my @hosts = $ip->hostenum;
 
-print scalar(@hosts)," found where none expected\nnot "
-	if @hosts;
-print "ok ",$test++,"\n";
+is(scalar @hosts, 0, 'no hosts before :rfc3021 import');
 
-NetAddr::IP::import qw(:rfc3021);
+NetAddr::IP::import(qw(:rfc3021));
 
 @hosts = $ip->hostenum;
 
-print scalar(@hosts)," found where 2 expected\nnot "
-	unless @hosts == 2;
-print "ok ",$test++,"\n";
+is(scalar @hosts, 2, '2 hosts after :rfc3021 import');
 
-print "got: $hosts[0], exp: 192.168.1.8/32\nnot "
-	unless "$hosts[0]" eq '192.168.1.8/32';
-print "ok ",$test++,"\n";
+is("$hosts[0]", '192.0.2.8/32', 'first host is 192.0.2.8/32');
+is("$hosts[1]", '192.0.2.9/32', 'second host is 192.0.2.9/32');
 
-print "got: $hosts[1], exp: 192.168.1.9/32\nnot "
-	unless "$hosts[1]" eq '192.168.1.9/32';
-print "ok ",$test++,"\n";
-
+done_testing;

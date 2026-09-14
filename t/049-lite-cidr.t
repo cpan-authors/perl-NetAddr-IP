@@ -1,36 +1,17 @@
+#!/usr/bin/env perl
 
-#use diagnostics;
-use NetAddr::IP::Lite;
+use Test2::V1 -ipP;
 
-$| = 1;
+use NetAddr::IP::Lite ();
 
-print "1..3\n";
-
-my $test = 1;
-sub ok() {
-  print 'ok ',$test++,"\n";
-}
-
-my $loip	= new NetAddr::IP::Lite('::1.2.3.4/120');		# same as 1.2.3.4/24
-my $hiip	= new NetAddr::IP::Lite('FF00::4/120');
-my $dqip	= new NetAddr::IP::Lite('1.2.3.4/24');
+my $loip = NetAddr::IP::Lite->new('::1.2.3.4/120');
+my $hiip = NetAddr::IP::Lite->new('FF00::4/120');
+my $dqip = NetAddr::IP::Lite->new('192.0.2.4/24');
 
 ## test cidr
 
-my $exp = 'FF00:0:0:0:0:0:0:4/120';
-my $txt = $hiip->cidr;
-print "got: $txt, exp: $exp\nnot "
-	unless $txt eq $exp;
-&ok;
+is($hiip->cidr, 'FF00:0:0:0:0:0:0:4/120', 'hiip cidr');
+is($loip->cidr, '0:0:0:0:0:0:102:304/120', 'loip cidr');
+is($dqip->cidr, '192.0.2.4/24', 'dqip cidr');
 
-$exp = '0:0:0:0:0:0:102:304/120';
-$txt = $loip->cidr;
-print "got: $txt, exp: $exp\nnot "
-	unless $txt eq $exp;
-&ok;
-
-$exp = '1.2.3.4/24';
-$txt = $dqip->cidr;
-print "got: $txt, exp: $exp\nnot "
-	unless $txt eq $exp;
-&ok;
+done_testing;

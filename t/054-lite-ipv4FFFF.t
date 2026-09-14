@@ -1,18 +1,12 @@
+#!/usr/bin/env perl
 
-#use diagnostics;
-use NetAddr::IP::Lite;
+use Test2::V1 -ipP;
 
-$| = 1;
+use NetAddr::IP::Lite ();
 
-print "1..1\n";
-
-my $test = 1;
-sub ok() {
-  print 'ok ',$test++,"\n";
-}
-
-my $ip = new6FFFF NetAddr::IP::Lite('127.0.0.1');
+my $ip  = NetAddr::IP::Lite->new6FFFF('127.0.0.1');
 my $exp = '0:0:0:0:0:FFFF:7F00:1/128';
-print "got: $ip\nexp: $exp\nnot "
-	unless "$ip" eq $exp;
-&ok;
+
+is("$ip", $exp, 'new6FFFF returns expected IPv4 mapped address');
+
+done_testing;

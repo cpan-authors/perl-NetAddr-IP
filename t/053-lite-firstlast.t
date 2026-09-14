@@ -1,66 +1,27 @@
+#!/usr/bin/env perl
 
-#use diagnostics;
-use NetAddr::IP::Lite;
+use Test2::V1 -ipP;
 
-$| = 1;
+use NetAddr::IP::Lite ();
 
-print "1..8\n";
+subtest 'regular subnets' => sub {
+    my $ip4 = NetAddr::IP::Lite->new('1.2.3.11/29');
+    my $ip6 = NetAddr::IP::Lite->new('FF::8B/125');
 
-my $test = 1;
-sub ok() {
-  print 'ok ',$test++,"\n";
-}
+    is($ip4->first->addr, '1.2.3.9',           'IPv4 /29 first');
+    is($ip4->last->addr,  '1.2.3.14',          'IPv4 /29 last');
+    is($ip6->first->addr, 'FF:0:0:0:0:0:0:89', 'IPv6 /125 first');
+    is($ip6->last->addr,  'FF:0:0:0:0:0:0:8E', 'IPv6 /125 last');
+};
 
-my $ip4 = NetAddr::IP::Lite->new('1.2.3.11/29');
-my $ip6 = NetAddr::IP::Lite->new('FF::8B/125');
+subtest 'point-to-point subnets' => sub {
+    my $ip4 = NetAddr::IP::Lite->new('1.2.3.11/31');
+    my $ip6 = NetAddr::IP::Lite->new('FF::8B/127');
 
-my $exp = '1.2.3.9';
-my $rv = $ip4->first->addr;
-print "got: $rv, exp: $exp\nnot "
-	unless $rv eq $exp;
-&ok;
+    is($ip4->first->addr, '1.2.3.10',          'IPv4 /31 first');
+    is($ip4->last->addr,  '1.2.3.11',          'IPv4 /31 last');
+    is($ip6->first->addr, 'FF:0:0:0:0:0:0:8A', 'IPv6 /127 first');
+    is($ip6->last->addr,  'FF:0:0:0:0:0:0:8B', 'IPv6 /127 last');
+};
 
-$exp = '1.2.3.14';
-$rv = $ip4->last->addr;
-print "got: $rv, exp: $exp\nnot "
-	unless $rv eq $exp;
-&ok;
-
-$exp = 'FF:0:0:0:0:0:0:89';
-$rv = $ip6->first->addr;
-print "got: $rv, exp: $exp\nnot "
-	unless $rv eq $exp;
-&ok;
-
-$exp = 'FF:0:0:0:0:0:0:8E';
-$rv = $ip6->last->addr;
-print "got: $rv, exp: $exp\nnot "
-	unless $rv eq $exp;
-&ok;
-
-$ip4 = NetAddr::IP::Lite->new('1.2.3.11/31');
-$ip6 = NetAddr::IP::Lite->new('FF::8B/127');
-
-$exp = '1.2.3.10';
-$rv = $ip4->first->addr;
-print "got: $rv, exp: $exp\nnot "
-	unless $rv eq $exp;
-&ok;
-
-$exp = '1.2.3.11';
-$rv = $ip4->last->addr;
-print "got: $rv, exp: $exp\nnot "
-	unless $rv eq $exp;
-&ok;
-
-$exp = 'FF:0:0:0:0:0:0:8A';
-$rv = $ip6->first->addr;
-print "got: $rv, exp: $exp\nnot "
-	unless $rv eq $exp;
-&ok;
-
-$exp = 'FF:0:0:0:0:0:0:8B';
-$rv = $ip6->last->addr;
-print "got: $rv, exp: $exp\nnot "
-	unless $rv eq $exp;
-&ok;
+done_testing;

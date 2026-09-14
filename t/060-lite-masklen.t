@@ -1,37 +1,15 @@
+#!/usr/bin/env perl
 
-#use diagnostics;
-use NetAddr::IP::Lite;
+use Test2::V1 -ipP;
 
-$| = 1;
+use NetAddr::IP::Lite ();
 
-print "1..3\n";
+my $loip = NetAddr::IP::Lite->new('::1.2.3.4/120');
+my $hiip = NetAddr::IP::Lite->new('FF00::1:4/120');
+my $dqip = NetAddr::IP::Lite->new('192.0.2.4/24');
 
-my $test = 1;
-sub ok() {
-  print 'ok ',$test++,"\n";
-}
+is($loip->masklen, 120, 'masklen lo');
+is($hiip->masklen, 120, 'masklen hi');
+is($dqip->masklen, 24,  'masklen dq');
 
-my $loip	= new NetAddr::IP::Lite('::1.2.3.4/120');		# same as 1.2.3.4/24
-my $hiip	= new NetAddr::IP::Lite('FF00::1:4/120');
-my $dqip	= new NetAddr::IP::Lite('1.2.3.4/24');
-
-## test	masklen lo
-$exp = 120;
-my $masklen = $loip->masklen;
-print "got: $masklen, exp: $exp\nnot "
-	unless $masklen == $exp;
-&ok;
-
-## test masklen hi
-$exp = 120;
-$masklen = $hiip->masklen;
-print "got: $masklen, exp: $exp\nnot "
-	unless $masklen == $exp;
-&ok;
-
-## test masklen dq
-$exp = 24;
-$masklen = $dqip->masklen;
-print "got: $masklen, exp: $exp\nnot "
-	unless $masklen == $exp;
-&ok;
+done_testing;

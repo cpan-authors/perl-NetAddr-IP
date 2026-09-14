@@ -1,34 +1,19 @@
+#!/usr/bin/env perl
 
-#use diagnostics;
-use NetAddr::IP::Util qw(
-	inet_ntoa
-	ipv6_n2x
-);
-use NetAddr::IP::Lite;
+use Test2::V1 -ipP;
 
-$| = 1;
+use NetAddr::IP::Util ();
+use NetAddr::IP::Lite ();
 
-print "1..2\n";
-
-my $test = 1;
-sub ok() {
-  print 'ok ',$test++,"\n";
-}
-
-my $loip	= new NetAddr::IP::Lite('1.2.3.4/24');
-my $hiip	= new NetAddr::IP::Lite('FF00::4/120');
-
-## test range
+my $loip = NetAddr::IP::Lite->new('192.0.2.4/24');
+my $hiip = NetAddr::IP::Lite->new('FF00::4/120');
 
 my $exp = 'FF00:0:0:0:0:0:0:0 - FF00:0:0:0:0:0:0:FF';
 my $txt = $hiip->range;
-print "got: $txt, exp: $exp\nnot "
-	unless $txt eq $exp;
-&ok;
+is($txt, $exp, 'FF00::4/120 range');
 
-$exp = '1.2.3.0 - 1.2.3.255';
+$exp = '192.0.2.0 - 192.0.2.255';
 $txt = $loip->range;
-print "got: $txt, exp: $exp\nnot "
-	unless $txt eq $exp;
-&ok;
+is($txt, $exp, '192.0.2.4/24 range');
 
+done_testing;

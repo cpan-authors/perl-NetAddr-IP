@@ -1,27 +1,34 @@
+#!/usr/bin/env perl
 
-use Test::More qw(no_plan); #tests => 28;
+use Test2::V1 -ipP;
 
-use_ok('NetAddr::IP');
+use NetAddr::IP ();
 
-my $ip = new NetAddr::IP('ffff:a123:b345:c789::/48');
+my $ip = NetAddr::IP->new('ffff:a123:b345:c789::/48');
 my $rv;
-ok(($rv = sprintf("%s",$ip)) eq 'FFFF:A123:B345:C789:0:0:0:0/48',"$rv eq FFFF:A123:B345:C789:0:0:0:0/48");
-my $nets = $ip->splitref(48);
-ok($nets,'there is a net');
-ok(@$nets == 1,'one item net');
-ok(($rv = sprintf("%s",$ip)) eq 'FFFF:A123:B345:C789:0:0:0:0/48',"$rv eq FFFF:A123:B345:C789:0:0:0:0/48");
 
-$nets = $ip->splitref(49,50);
-ok($nets,'there are nets');
-ok(($rv = @$nets) == 3,"$rv is 3 item net");
+subtest 'splitref with same cidr' => sub {
+    ok(($rv = sprintf('%s', $ip)) eq 'FFFF:A123:B345:C789:0:0:0:0/48', "$rv eq FFFF:A123:B345:C789:0:0:0:0/48");
+    my $nets = $ip->splitref(48);
+    ok($nets,         'there is a net');
+    ok(@$nets == 1,   'one item net');
+    ok(($rv = sprintf('%s', $ip)) eq 'FFFF:A123:B345:C789:0:0:0:0/48', "$rv eq FFFF:A123:B345:C789:0:0:0:0/48");
+};
 
-my @exp = qw(
-	FFFF:A123:B345:0:0:0:0:0/49
-	FFFF:A123:B345:8000:0:0:0:0/50
-	FFFF:A123:B345:C000:0:0:0:0/50
-);
+subtest 'splitref with multiple cidrs' => sub {
+    my $nets = $ip->splitref(49, 50);
+    ok($nets,                'there are nets');
+    ok(($rv = @$nets) == 3,  "$rv is 3 item net");
 
-foreach(0..$#{$nets}) {
-  ok(($rv = sprintf("%s",$nets->[$_])) eq $exp[$_], "$rv eq $exp[$_]");
-}
+    my @exp = qw(
+        FFFF:A123:B345:0:0:0:0:0/49
+        FFFF:A123:B345:8000:0:0:0:0/50
+        FFFF:A123:B345:C000:0:0:0:0/50
+    );
 
+    for my $i (0 .. $#$nets) {
+        ok(($rv = sprintf('%s', $nets->[$i])) eq $exp[$i], "$rv eq $exp[$i]");
+    }
+};
+
+done_testing;

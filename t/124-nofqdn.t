@@ -1,29 +1,12 @@
+#!/usr/bin/env perl
 
+use Test2::V1 -ipP;
+use Test2::Require::Internet ();
 
-use NetAddr::IP;
+use NetAddr::IP ();
 
-$| = 1;
+my $ip = NetAddr::IP->new('arin.net');
+ok(defined $ip, 'resolved arin.net');
+like("$ip", qr/^\d+\.\d+\.\d+\.\d+\/\d+$/, 'arin.net resolves to an IP address');
 
-print "1..1\n";
-
-my $test = 1;
-sub ok() {
-  print 'ok ',$test++,"\n";
-}
-
-
-my $ip = new NetAddr::IP('arin.net');
-if (defined $ip) {
-  print "ok $test	# Skipped, resolved $ip\n";
-  $test++;
-} else {
-  print "ok $test	# Skipped, resolver not working\n";
-  $test++;
-}
-
-#import NetAddr::IP qw(:nofqdn);
-#
-#$ip = new NetAddr::IP('arin.net');
-#print "unexpected response with :nofqdn\nnot "
-#	if defined $ip;
-#&ok;
+done_testing;

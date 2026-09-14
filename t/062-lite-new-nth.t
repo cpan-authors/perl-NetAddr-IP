@@ -1,44 +1,41 @@
+#!/usr/bin/env perl
 
-#use diagnostics;
-use NetAddr::IP::Lite;
+use Test2::V1 -ipP;
 
-$| = 1;
+use NetAddr::IP::Lite ();
 
-sub ok() {
-  print 'ok ',$test++,"\n";
+my $ip4 = NetAddr::IP::Lite->new('192.0.2.11/29');
+
+subtest 'nth tests' => sub {
+    my %try = (
+        0 => '192.0.2.9',
+        1 => '192.0.2.10',
+        2 => '192.0.2.11',
+        3 => '192.0.2.12',
+        4 => '192.0.2.13',
+        5 => '192.0.2.14',
+        6 => 'undef',
+    );
+
+    for my $input (sort { $a <=> $b } keys %try) {
+        my $rv = $ip4->nth($input);
+        $rv = defined $rv
+            ? $rv->addr
+            : 'undef';
+        is($rv, $try{$input}, "nth($input) returns $try{$input}");
+    }
+};
+
+{
+    my $ip = NetAddr::IP::Lite->new('192.0.2.4/32');
+    my $num = $ip->num();
+    is($num, 1, 'num() returns 1 for /32');
 }
 
-my $ip4 = NetAddr::IP::Lite->new('1.2.3.11/29');
-
-my @try = qw(
-	0	1.2.3.9
-	1	1.2.3.10
-	2	1.2.3.11
-	3	1.2.3.12
-	4	1.2.3.13
-	5	1.2.3.14
-	6	undef
-);
-
-print '1..', (@try/2) +2, "\n";
-
-$test = 1;
-
-for (my $i=0;$i<@try;$i+=2) {
-  my $rv = $ip4->nth($try[$i]);
-  $rv = defined $rv
-	? $rv->addr
-	: 'undef';
-  print "got: $rv, exp: $try[$i+1]\nnot "
-	unless $rv eq $try[$i+1];
-  &ok;
+{
+    my $ip = NetAddr::IP::Lite->new('192.0.2.4/31');
+    my $num = $ip->num();
+    is($num, 2, 'num() returns 2 for /31');
 }
 
-print "got: $_, exp: 1\nnot "
-  unless ($_ = NetAddr::IP::Lite->new('1.2.3.4/32')->num()) && $_ == 1;
-&ok;
-
-print "got: $_, exp: 0\nnot "
-  unless defined ($_ = NetAddr::IP::Lite->new('1.2.3.4/31')->num()) && $_ == 2;
-&ok;
-
+done_testing;

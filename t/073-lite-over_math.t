@@ -1,64 +1,38 @@
+#!/usr/bin/env perl
 
-#use diagnostics;
-use NetAddr::IP::Lite;
+use Test2::V1 -ipP;
 
-$| = 1;
+use NetAddr::IP::Lite ();
 
-print "1..7\n";
-
-my $test = 1;
-sub ok() {
-  print 'ok ',$test++,"\n";
-}
-
-my $ip	= new NetAddr::IP::Lite('0.0.0.4/24');
+my $ip  = NetAddr::IP::Lite->new('0.0.0.4/24');
+my $nip;
 
 ## test '+'
-my $exp = '0.0.0.132/24';
-my $nip = $ip + 128;
-print 'got: ',$nip," exp: $exp\nnot "
-	unless $nip eq $exp;
-&ok;
+$nip = $ip + 128;
+is("$nip", '0.0.0.132/24', 'addition');
 
 ## test '+' wrap around
 $nip = $ip + 257;
-$exp = '0.0.0.5/24';
-print 'got: ',$nip," exp: $exp\nnot "
-	unless $nip eq $exp;
-&ok;
+is("$nip", '0.0.0.5/24', 'addition wrap around');
 
 ## test '-' and wrap
 $nip = $ip - 10;
-$exp = '0.0.0.250/24';
-print 'got: ',$nip," exp: $exp\nnot "
-	unless $nip eq $exp;
-&ok;
+is("$nip", '0.0.0.250/24', 'subtraction and wrap');
 
 ## test '++' post
 $nip++;
-$exp = '0.0.0.251/24';
-print 'got: ',$nip," exp: $exp\nnot "
-	unless $nip eq $exp;
-&ok;
+is("$nip", '0.0.0.251/24', 'post increment');
 
 ## test '++' pre
 ++$nip;
-$exp = '0.0.0.252/24';
-print 'got: ',$nip," exp: $exp\nnot "
-	unless $nip eq $exp;
-&ok;
+is("$nip", '0.0.0.252/24', 'pre increment');
 
 ## test '--' post
 $ip--;
-$exp = '0.0.0.3/24';
-print 'got: ',$ip," exp: $exp\nnot "
-	unless $ip eq $exp;
-&ok;
+is("$ip", '0.0.0.3/24', 'post decrement');
 
 ## test '--' pre
 --$ip;
-$exp = '0.0.0.2/24';
-print 'got: ',$ip," exp: $exp\nnot "
-	unless $ip eq $exp;
-&ok;
+is("$ip", '0.0.0.2/24', 'pre decrement');
 
+done_testing;
