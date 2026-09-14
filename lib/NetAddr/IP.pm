@@ -1267,6 +1267,8 @@ towards C<$number>.
 
 Called as a method, the array will include C<$me>.
 
+The returned list is in address order.
+
 WARNING: the list of subnet must be the same type. i.e ipV4 or ipV6
 
 =cut
@@ -1311,13 +1313,13 @@ sub coalesce
     # Now add to @ret all the subnets with more than $number hits
     for my $c (map { new NetAddr::IP $_ }
 	       grep { $ret{$_} >= $number }
-	       keys %ret)
+	       sort keys %ret)
     {
 	next if grep { $_->contains($c) } @ret;
 	push @ret, $c;
     }
 
-    return \@ret;
+    return [ sort @ret ];
 }
 
 =pod
