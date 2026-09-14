@@ -1,3 +1,7 @@
+^\.git/
+^\.github/
+^\.gitignore$
+^\.editorconfig$
 ^Build$
 ^_build/
 ^blib/
@@ -24,10 +28,9 @@ _uu$
 Util_IS\.pm$
 Util\.(bs|[co])$
 localperl\.h
-localconf\.h
 config\.log$
-config\.h$
+^xs/config\.h$
 config\.status
-xs/config\.h
-xs/localperl\.h
-META.yml
+^xs/localperl\.h$
+META\.yml
+^MYMETA\.
