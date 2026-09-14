@@ -384,7 +384,7 @@ Un-tar the distribution in an appropriate directory and type:
 
 B<NetAddr::IP::Util> installs by default with its primary functions compiled
 using Perl's XS extensions to build a 'C' library. If you do not have a 'C'
-complier available or would like the slower Pure Perl version for some other
+compiler available or would like the slower Pure Perl version for some other
 reason, then type:
 
 	perl Makefile.PL -noxs
@@ -565,7 +565,7 @@ NOTE: inet_ntop ALWAYS returns lowercase characters.
 
 This function optimizes and rfc 1884 IPv6 hex address to reduce the number of
 long strings of zero bits as specified in rfc 1884, 2.2 (2) by substituting
-B<::> for the first occurence of the longest string of zeros in the address.
+B<::> for the first occurrence of the longest string of zeros in the address.
 
 =item * $ipv6naddr = ipv4to6($netaddr);
 
