@@ -159,10 +159,10 @@ close F;
 # Build parameters
 #
 my %makeparms = (
-    NAME         => 'NetAddr::IP',
-    VERSION_FROM => 'lib/NetAddr/IP.pm',
+    NAME         => 'NetAddr::IP::Util',
+    VERSION_FROM => 'lib/NetAddr/IP/Util.pm',
     PREREQ_PM    => { Test::More => 0 },
-    ABSTRACT_FROM => 'lib/NetAddr/IP.pm',
+    ABSTRACT     => 'Manages IPv4 and IPv6 addresses and subnets',
     AUTHOR       => 'Luis E. Muñoz <luismunoz@cpan.org>, Michael Robinton <miker@cpan.org>',
     INC          => '-Ixs',
     clean        => { FILES => "*.bs *.o *~ tmp* META.yml Util_IS.pm localperl.h auto* lib/NetAddr/IP/Util.o lib/NetAddr/IP/Util_IS.pm xs/config.h xs/config.log xs/config.status xs/localperl.h" },
