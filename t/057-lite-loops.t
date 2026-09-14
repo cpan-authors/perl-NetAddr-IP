@@ -1,51 +1,33 @@
-use NetAddr::IP::Lite;
+#!/usr/bin/env perl
 
-$| = 1;
+use Test2::V1 -ipP;
 
-my @deltas = (0, 1, 2, 3, 255);
+use NetAddr::IP::Lite ();
 
-print "1..", 15 + @deltas, "\n";
-
-my $count = 1;
-
-for (my $ip = new NetAddr::IP::Lite '10.0.0.1/28';
-     $ip < $ip->broadcast;
-     $ip ++)
-{
-    my $o = $ip->addr;
-
-    $o =~ s/^.+\.(\d+)$/$1/;
-
-    if ($o == $count) {
-	print "ok $count\n";
+subtest 'increment loop' => sub {
+    my $count = 1;
+    for (my $ip = NetAddr::IP::Lite->new('192.0.2.1/28');
+         $ip < $ip->broadcast;
+         $ip++)
+    {
+        my $o = $ip->addr;
+        $o =~ s/^.+\.([0-9]+)$/$1/;
+        ok($o == $count, "IP $count incremented correctly");
+        $count++;
     }
-    else {
-	print "not ok $count\n";
+};
+
+my $ip = NetAddr::IP::Lite->new('192.0.2.255/24');
+$ip++;
+
+is("$ip", '192.0.2.0/24', 'increment wraps around');
+
+subtest 'addition with deltas' => sub {
+    my @deltas = (0, 1, 2, 3, 255);
+    my $ip = NetAddr::IP::Lite->new('192.0.2.0/24');
+    for my $v (@deltas) {
+        is($ip + $v, '192.0.2.' . $v . '/24', "add $v to 192.0.2.0/24");
     }
+};
 
-    ++ $count;
-}
-
-my $ip = new NetAddr::IP::Lite '10.0.0.255/24';
-$ip ++;
-
-if ($ip eq '10.0.0.0/24') {
-    print "ok $count\n";
-}
-else {
-    print "not ok $count\n";
-}
-
-++$count;
-
-$ip = new NetAddr::IP::Lite '10.0.0.0/24';
-
-for my $v (@deltas) {
-    if ($ip + $v eq '10.0.0.' . $v . '/24') {
-	print "ok $count\n";
-    }
-    else {
-	print "not ok $count\n";
-    }
-    ++ $count;
-}
+done_testing;

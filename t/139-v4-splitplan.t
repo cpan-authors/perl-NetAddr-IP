@@ -1,73 +1,88 @@
+#!/usr/bin/env perl
 
-use Test::More tests => 28;
+use Test2::V1 -ipP;
 
-use_ok('NetAddr::IP');
+use NetAddr::IP ();
 
-my $ip = new NetAddr::IP('192.168.21.13/15');
+my $ip = NetAddr::IP->new('192.168.21.13/15');
 my $rv;
-ok(($rv = sprintf("%s",$ip)) eq '192.168.21.13/15',"$rv eq 192.168.21.13/15");
 
-my($plan,$masks) = $ip->_splitplan(15);
-ok($plan,'there is a plan');
-ok(!$masks,'plan returns the orignal net');
-ok(@$plan == 1,'one item plan');
-ok(($rv = $plan->[0]) == 15,"plan $rv is original cidr 15");
+subtest 'splitplan with same cidr' => sub {
+    ok(($rv = sprintf('%s', $ip)) eq '192.168.21.13/15', "$rv eq 192.168.21.13/15");
 
-my $cmask = new NetAddr::IP('255.126.0.0');
-ok(($rv = sprintf("%s",$cmask)) eq '255.126.0.0/32',"$rv eq 255.126.0.0/32");
+    my ($plan, $masks) = $ip->_splitplan(15);
+    ok($plan,       'there is a plan');
+    ok(!$masks,     'plan returns the original net');
+    ok(@$plan == 1, 'one item plan');
+    ok(($rv = $plan->[0]) == 15, "plan $rv is original cidr 15");
+};
 
-($plan,$masks) = $ip->_splitplan($cmask);
-ok(!$plan,'failing because of bits in mask');
+subtest 'splitplan with mask containing bits' => sub {
+    my $cmask = NetAddr::IP->new('255.126.0.0');
+    ok(($rv = sprintf('%s', $cmask)) eq '255.126.0.0/32', "$rv eq 255.126.0.0/32");
 
-$cmask = new NetAddr::IP('255.254.0.0');
-ok(($rv = sprintf("%s",$cmask)) eq '255.254.0.0/32',"$rv eq 255.254.0.0/32");
+    my ($plan, $masks) = $ip->_splitplan($cmask);
+    ok(!$plan, 'failing because of bits in mask');
+};
 
-($plan,$masks) = $ip->_splitplan($cmask);
-ok($plan,'there is a plan');
+subtest 'splitplan with matching object mask' => sub {
+    my $cmask = NetAddr::IP->new('255.254.0.0');
+    ok(($rv = sprintf('%s', $cmask)) eq '255.254.0.0/32', "$rv eq 255.254.0.0/32");
 
-ok(!$masks,'plan returns the orignal net');
-ok(@$plan == 1,'one item plan');
-ok(($rv = $plan->[0]) == 15,"plan $rv is original cidr 15");
+    my ($plan, $masks) = $ip->_splitplan($cmask);
+    ok($plan,       'there is a plan');
+    ok(!$masks,     'plan returns the original net');
+    ok(@$plan == 1, 'one item plan');
+    ok(($rv = $plan->[0]) == 15, "plan $rv is original cidr 15");
+};
 
-$cmask = '255.254.0.0';			# ipV4 text cmask
-($plan,$masks) = $ip->_splitplan($cmask);
-ok($plan,'there is a plan');
-ok(!$masks,'plan returns the orignal net');
-ok(@$plan == 1,'one item plan');
-ok(($rv = $plan->[0]) == 15,"plan $rv is original cidr 15");
+subtest 'splitplan with text mask' => sub {
+    my $cmask = '255.254.0.0';
+    my ($plan, $masks) = $ip->_splitplan($cmask);
+    ok($plan,       'there is a plan');
+    ok(!$masks,     'plan returns the original net');
+    ok(@$plan == 1, 'one item plan');
+    ok(($rv = $plan->[0]) == 15, "plan $rv is original cidr 15");
+};
 
-$cmask = '255.126.0.0';                    # ipV4 text cmask
-($plan,$masks) = $ip->_splitplan($cmask);
-ok(!$plan,'failing because of bits in mask');
+subtest 'splitplan failing cases' => sub {
+    my ($plan, $masks);
 
-$cmask = 'garbage';
-($plan,$masks) = $ip->_splitplan($cmask);
-ok(!$plan,'failing because of garbage');
+    ($plan, $masks) = $ip->_splitplan('255.126.0.0');
+    ok(!$plan, 'failing because of bits in text mask');
 
-$cmask = 14;	# cidr is bigger than requested
-($plan,$masks) = $ip->_splitplan($cmask);
-ok(!$plan,'failing because of 15 overange');
+    ($plan, $masks) = $ip->_splitplan('garbage');
+    ok(!$plan, 'failing because of garbage');
 
-# cidr makes more nets than 2**16
-($plan,$masks) = $ip->_splitplan(32);
-ok(!$plan,'failing to many nets 32 - 15 = 2**17');
+    ($plan, $masks) = $ip->_splitplan(14);
+    ok(!$plan, 'failing because of 15 overrange');
 
-($plan,$masks) = $ip->_splitplan(16,16,16);
-ok(!$plan,'failing because of 3 * 16 overange');
+    ($plan, $masks) = $ip->_splitplan(32);
+    ok(!$plan, 'failing too many nets 32 - 15 = 2**17');
 
-# test for plan that just fits
-($plan,$masks) = $ip->_splitplan(31);
-ok($plan,'there is a plan 31');
-ok($masks,'plan has masks');
-ok(($rv = @{$plan}) == 2 ** 16,"$rv should = 65536");
+    ($plan, $masks) = $ip->_splitplan(16, 16, 16);
+    ok(!$plan, 'failing because of 3 * 16 overrange');
+};
 
-# set netlimit internal to 4 nets
-$NetAddr::IP::_netlimit = 4;
-($plan,$masks) = $ip->_splitplan(17);	# should fit
-ok($plan,"plan of 4 17's");
+subtest 'splitplan that just fits' => sub {
+    my ($plan, $masks) = $ip->_splitplan(31);
+    ok($plan,                       'there is a plan 31');
+    ok($masks,                      'plan has masks');
+    ok(($rv = @{$plan}) == 2 ** 16, "$rv should = 65536");
+};
 
-($plan,$masks) = $ip->_splitplan(17,17,17,17,18);
-ok(!plan,"fail plan of 4 17's + 18");
+subtest 'splitplan with netlimit' => sub {
+    local $NetAddr::IP::_netlimit = 4;
+    my ($plan, $masks);
 
-($plan,$masks) = $ip->_splitplan(18);
-ok(!plan,"fail plan of 8 18's");
+    ($plan, $masks) = $ip->_splitplan(17);
+    ok($plan, "plan of 4 17's");
+
+    ($plan, $masks) = $ip->_splitplan(17, 17, 17, 17, 18);
+    ok(!$plan, "fail plan of 4 17's + 18");
+
+    ($plan, $masks) = $ip->_splitplan(18);
+    ok(!$plan, "fail plan of 8 18's");
+};
+
+done_testing;

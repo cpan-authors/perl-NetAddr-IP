@@ -1,33 +1,36 @@
-# $Id: loops.t,v 1.2 2006/08/16 19:17:01 lem Exp $
+#!/usr/bin/env perl
 
-use Test::More;
+use Test2::V1 -ipP;
+
+use NetAddr::IP ();
 
 my @deltas = (0, 1, 2, 3, 255);
 
-plan tests => 16 + @deltas;
+subtest 'octet increment' => sub {
+    my $count = 1;
 
-use_ok('NetAddr::IP');
-my $count = 1;
+    for (my $ip = NetAddr::IP->new('10.0.0.1/28');
+         $ip < $ip->broadcast;
+         $ip ++)
+    {
+        my $o = $ip->addr;
 
-for (my $ip = new NetAddr::IP '10.0.0.1/28';
-     $ip < $ip->broadcast;
-     $ip ++)
-{
-    my $o = $ip->addr;
+        $o =~ s/^.+\.([0-9]+)$/$1/;
+        is($o, $count, 'Correct octet for ' . $ip);
+        ++ $count;
+    }
+};
 
-    $o =~ s/^.+\.(\d+)$/$1/;
-    is($o, $count, "Correct octet for " . $ip);
-    ++ $count;
-}
-
-my $ip = new NetAddr::IP '10.0.0.255/24';
+my $ip = NetAddr::IP->new('10.0.0.255/24');
 $ip ++;
 
-is($ip, '10.0.0.0/24', "Correct mask wraparound");
+is($ip, '10.0.0.0/24', 'Correct mask wraparound');
 
-$ip = new NetAddr::IP '10.0.0.0/24';
+$ip = NetAddr::IP->new('10.0.0.0/24');
 
 for my $v (@deltas) {
     my $target = '10.0.0.' . $v . '/24';
     is($ip + $v, '10.0.0.' . $v . '/24', "$ip + $v vs $target");
 }
+
+done_testing;

@@ -1,13 +1,12 @@
-#!/usr/bin/perl
+#!/usr/bin/env perl
 
 # This code was provided by Brent Imhoff and adapted to become a real test.
 # What this excercises, is that ::compact() should provide the same result
 # without caring about the order of its arguments. -lem
 
-use strict;
-#use warnings;
-use Test::More tests => 3;
-use NetAddr::IP qw(Compact);
+use Test2::V1 -ipP;
+
+use NetAddr::IP qw( Compact );
 
 my @temp = <DATA>;
 
@@ -21,7 +20,9 @@ my $sortdec = Compact(map { NetAddr::IP->new($_) } @sortdec);
 
 is($sortnum, $sorttag);
 is($sortnum, $sortdec);
-is($sortdec, $sorttag);		# I know this one is redundant
+is($sortdec, $sorttag); # I know this one is redundant
+
+done_testing;
 
 __END__
 205.170.190.0/24

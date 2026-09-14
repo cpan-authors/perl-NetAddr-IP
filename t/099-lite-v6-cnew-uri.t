@@ -1,23 +1,17 @@
-use NetAddr::IP::Lite;
+#!/usr/bin/env perl
 
-my @subnets = (
-	       [ '[dead:beef:1234::/16]', 'DEAD:BEEF:1234:0:0:0:0:0/16' ],
-	       [ '[::1234:BEEF:DEAD/24]', '0:0:0:0:0:1234:BEEF:DEAD/24' ],
-	       );
-$| = 1;
+use Test2::V1 -ipP;
 
-print '1..', (scalar @subnets) , "\n";
+use NetAddr::IP::Lite ();
 
-my $count = 1;
+my %subnets = (
+    '[dead:beef:1234::/16]' => 'DEAD:BEEF:1234:0:0:0:0:0/16',
+    '[::1234:BEEF:DEAD/24]' => '0:0:0:0:0:1234:BEEF:DEAD/24',
+);
 
-for my $n (@subnets) {
-    my $ip = new NetAddr::IP::Lite $n->[0];
-    if ($ip eq $n->[1]) {
-	print "ok $count\n";
-    }
-    else {
-	print $ip, "\nnot ok $count\n";
-    }
-
-    ++ $count;
+for my $input (sort keys %subnets) {
+    my $ip = NetAddr::IP::Lite->new($input);
+    is($ip, $subnets{$input}, "converted $input");
 }
+
+done_testing;

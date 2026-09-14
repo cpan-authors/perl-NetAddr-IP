@@ -1,36 +1,26 @@
+#!/usr/bin/env perl
 
-#use diagnostics;
-use NetAddr::IP::Lite;
+use Test2::V1 -ipP;
 
-$| = 1;
+use NetAddr::IP::Lite ();
 
-print "1..3\n";
-
-my $test = 1;
-sub ok() {
-  print 'ok ',$test++,"\n";
-}
-
-my $loip	= new NetAddr::IP::Lite('::1.2.3.4/120');		# same as 1.2.3.4/24
-my $hiip	= new NetAddr::IP::Lite('FF00::1:4/120');
+my $loip = NetAddr::IP::Lite->new('::1.2.3.4/120');
+my $hiip = NetAddr::IP::Lite->new('FF00::1:4/120');
 
 ## test '""' just for the heck of it
 my $exp = 'FF00:0:0:0:0:0:1:4/120';
-my $txt = sprintf("%s",$hiip);
-print 'got: ',$txt," exp: $exp\nnot "
-	unless $txt eq $exp;
-&ok;
+is("$hiip", $exp, 'stringify hiip');
 
-## test	addr lo
+## test addr lo
 $exp = '0:0:0:0:0:0:102:304';
 my $addr = $loip->addr;
-print "got: $addr, exp: $exp\nnot "
-	unless $addr eq $exp && ! ref $addr;
-&ok;
+is($addr, $exp, 'addr lo');
+ok(!ref $addr, 'addr lo is not a reference');
 
 ## test addr hi
 $exp = 'FF00:0:0:0:0:0:1:4';
 $addr = $hiip->addr;
-print "got: $addr, exp: $exp\nnot "
-	unless $addr eq $exp && ! ref $addr;
-&ok;
+is($addr, $exp, 'addr hi');
+ok(!ref $addr, 'addr hi is not a reference');
+
+done_testing;

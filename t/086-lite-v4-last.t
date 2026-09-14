@@ -1,32 +1,22 @@
-use NetAddr::IP::Lite;
+#!/usr/bin/env perl
 
-my %w = ('default'	=> [ '255.255.255.254', '0.0.0.0' ],
-	 'loopback'	=> [ '127.255.255.254', '255.0.0.0' ],
-	 '127.0.0.1/8'	=> [ '127.255.255.254', '255.0.0.0' ],
-	 '10.'		=> [ '10.255.255.254', '255.0.0.0' ],
-	 '10.10.10/24'	=> [ '10.10.10.254', '255.255.255.0' ],
-	 );
+use Test2::V1 -ipP;
 
-$| = 1;
+use NetAddr::IP::Lite ();
 
-print '1..', (2 * scalar keys %w), "\n";
-
-my $count = 1;
+my %w = (
+    'default'      => ['255.255.255.254', '0.0.0.0'],
+    'loopback'     => ['127.255.255.254', '255.0.0.0'],
+    '127.0.0.1/8'  => ['127.255.255.254', '255.0.0.0'],
+    '10.'          => ['10.255.255.254',  '255.0.0.0'],
+    '10.10.10/24'  => ['10.10.10.254',    '255.255.255.0'],
+);
 
 for my $a (keys %w) {
     my $ip = NetAddr::IP::Lite->new($a)->last;
 
-    if ($ip->addr eq $w{$a}->[0]) {
-	print "ok ", $count++, "\n";
-    }
-    else {
-	print "not ok ", $count++, "\n";
-    }
-
-    if ($ip->mask eq $w{$a}->[1]) {
-	print "ok ", $count++, "\n";
-    }
-    else {
-	print "not ok ", $count++, "\n";
-    }
+    is($ip->addr, $w{$a}->[0], "$a last address");
+    is($ip->mask, $w{$a}->[1], "$a last mask");
 }
+
+done_testing;

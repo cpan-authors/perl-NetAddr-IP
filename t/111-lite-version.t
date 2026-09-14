@@ -1,29 +1,18 @@
+#!/usr/bin/env perl
 
-#use diagnostics;
-use NetAddr::IP::Lite;
+use Test2::V1 -ipP;
 
-$| = 1;
+use NetAddr::IP::Lite ();
 
-print "1..2\n";
+my $loip = NetAddr::IP::Lite->new('192.0.2.4/24');
+my $hiip = NetAddr::IP::Lite->new('FF00::1:4/120');
 
-my $test = 1;
-sub ok() {
-  print 'ok ',$test++,"\n";
-}
-
-my $loip	= new NetAddr::IP::Lite('1.2.3.4/24');
-my $hiip	= new NetAddr::IP::Lite('FF00::1:4/120');
-
-## test	version lo
-$exp = 4;
+my $exp     = 4;
 my $version = $loip->version;
-print "got: $version, exp: $exp\nnot "
-	unless $version == $exp;
-&ok;
+is($version, $exp, 'version lo');
 
-## test version hi
-$exp = 6;
+$exp     = 6;
 $version = $hiip->version;
-print "got: $version, exp: $exp\nnot "
-	unless $version == $exp;
-&ok;
+is($version, $exp, 'version hi');
+
+done_testing;

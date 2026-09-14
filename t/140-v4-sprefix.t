@@ -1,51 +1,26 @@
-use NetAddr::IP;
+#!/usr/bin/env perl
 
-# $Id: v4-sprefix.t,v 1.1.1.1 2006/08/14 15:36:06 lem Exp $
+use Test2::V1 -ipP;
 
-my @addr = (
-	    [ '10.',		'10.0.0.0/8' ],
-	    [ '11.11.',		'11.11.0.0/16' ],
-	    [ '12.12.12.',	'12.12.12.0/24' ],
-	    [ '13.13.13.13',	'13.13.13.13/32' ],
-	    );
+use NetAddr::IP ();
 
-$| = 1;
-print "1..", (3 * scalar @addr), "\n";
+my %addr = (
+    '10.'         => '10.0.0.0/8',
+    '11.11.'      => '11.11.0.0/16',
+    '12.12.12.'   => '12.12.12.0/24',
+    '13.13.13.13' => '13.13.13.13/32',
+);
 
-my $count = 1;
+for my $prefix (sort keys %addr) {
+    my $ip = NetAddr::IP->new($prefix);
 
-for my $a (@addr) {
-    my $ip = new NetAddr::IP $a->[0];
+    is($ip->cidr, $addr{$prefix}, 'cidr returns correct value');
 
-    if ($ip->cidr eq $a->[1]) {
-	print "ok $count\n";
-    }
-    else {
-	print "not ok $count\n";
-    }
+    my $p = NetAddr::IP->new($ip->cidr);
 
-    ++ $count;
+    is($p->prefix, $prefix, 'prefix returns correct value');
 
-    my $p = new NetAddr::IP $ip->cidr;
-
-    if ($p->prefix eq $a->[0]) {
-	print "ok $count\n";
-    }
-    else {
-	print "not ok $count\n";
-    }
-
-    ++ $count;
-
-    if ($p->nprefix eq $a->[0]) {
-	print "ok $count\n";
-    }
-    else {
-	print "not ok $count\n";
-    }
-
-    ++ $count;
-
+    is($p->nprefix, $prefix, 'nprefix returns correct value');
 }
 
-
+done_testing;

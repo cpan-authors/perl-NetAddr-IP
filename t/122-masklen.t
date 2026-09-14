@@ -1,21 +1,13 @@
-use NetAddr::IP;
+#!/usr/bin/env perl
 
-# $Id: masklen.t,v 1.1.1.1 2006/08/14 15:36:06 lem Exp $
+use Test2::V1 -ipP;
+use NetAddr::IP ();
 
 my @masks = 0 .. 32;
 
-$| = 1;
-
-print '1..', scalar @masks, "\n";
-
-my $count = 1;
-
 for my $m (@masks) {
-    my $ip = new NetAddr::IP '10.0.0.1', $m;
-    if ($ip->masklen == $m) {
-	print "ok ", $count ++, "\n";
-    }
-    else {
-	print "not ok ", $count ++, "\n";
-    }
+    my $ip = NetAddr::IP->new('10.0.0.1', $m);
+    is($ip->masklen, $m, "masklen for mask $m");
 }
+
+done_testing;

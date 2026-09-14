@@ -1,40 +1,25 @@
-# t/new-store.t - test new Storable related - methods
+#!/usr/bin/env perl
 
-use Test::More;
+use Test2::V1 -ipP;
+use Test2::Tools::Exception qw( lives );
 
-my $tests = 7;
+plan skip_all => 'Storable not available'
+    unless eval { require Storable; Storable->import('freeze', 'thaw'); 1 };
 
-plan tests => $tests;
+use NetAddr::IP ();
 
-SKIP:
-{
-    skip "Failed to use Storable, module not found", $tests
-	unless eval {require Storable && use_ok("Storable", 'freeze', 'thaw')};
+my $oip = NetAddr::IP->new('localhost');
+my $nip;
 
-    skip "Failed to use NetAddr::IP", $tests
-	unless use_ok("NetAddr::IP");
+isa_ok($oip, ['NetAddr::IP'], 'Correct return type');
 
-    my $oip = new NetAddr::IP "localhost";
-    my $nip;
+my $serialized;
 
-    isa_ok($oip, 'NetAddr::IP', 'Correct return type');
+ok(lives { $serialized = freeze($oip) }, 'Freezing');
 
-    my $serialized;
+ok(lives { $nip = thaw($serialized) }, 'Thawing');
 
-    eval { $serialized = freeze($oip) };
-    unless (ok(!$@, "Freezing"))
-    {
-	diag $@;
-    }
+isa_ok($nip, ['NetAddr::IP'], 'Recovered correct type');
+is("$nip", "$oip", 'New object eq original object');
 
-#    diag "Result is '$serialized'";
-
-    eval { $nip = thaw($serialized) };
-    unless (ok(!$@, "Thawing"))
-    {
-	diag $@;
-    }
-
-    isa_ok($nip, 'NetAddr::IP', 'Recovered correct type');
-    is("$nip", "$oip", "New object eq original object");
-}
+done_testing;

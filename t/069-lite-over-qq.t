@@ -1,53 +1,21 @@
-use NetAddr::IP::Lite;
+#!/usr/bin/env perl
 
-my @addr = ('10.0.0.0/8', '192.168.0.0/16', '127.0.0.1/32');
+use Test2::V1 -ipP;
 
-$| = 1;
+use NetAddr::IP::Lite ();
 
-print "1..", 5 * scalar @addr, "\n";
+my @addr = ('192.0.2.0/8', '192.0.2.1/16', '127.0.0.1/32');
 
-my $count = 1;
+subtest 'stringification and comparison' => sub {
+    for my $a (@addr) {
+        my $ip = NetAddr::IP::Lite->new($a);
 
-for my $a (@addr) {
-    my $ip = new NetAddr::IP::Lite $a;
-    if ($a eq "$ip") {
-	print "ok $count\n";
+        is("$ip",      $a, "stringified $a eq $a");
+        is($ip,        $a, "stringify eq $a");
+        is($ip,        $a, "stringify eq $a (reversed)");
+        is($ip,        $ip, "self eq self");
+        cmp_ok($ip, '==', $ip, "self numeric eq self");
     }
-    else {
-	print "not ok $count\n";
-    }
-    ++ $count;
+};
 
-    if ($a eq $ip) {
-	print "ok $count\n";
-    }
-    else {
-	print "not ok $count\n";
-    }
-    ++ $count;
-
-    if ($ip eq $a) {
-	print "ok $count\n";
-    }
-    else {
-	print "not ok $count\n";
-    }
-    ++ $count;
-
-    if ($ip eq $ip) {
-	print "ok $count\n";
-    }
-    else {
-	print "not ok $count\n";
-    }
-    ++ $count;
-
-    if ($ip == $ip) {
-	print "ok $count\n";
-    }
-    else {
-	print "not ok $count\n";
-    }
-    ++ $count;
-
-}
+done_testing;

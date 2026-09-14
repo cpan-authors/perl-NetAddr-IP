@@ -1,37 +1,21 @@
-use NetAddr::IP;
+#!/usr/bin/env perl
 
-my @addr = (
-	[ 'localhost', '0.0.0.0' ],
-	[ '10.0.0.0/24', '0.0.0.255' ],
-	[ '192.168.0.0/16', '0.0.255.255' ],
-	[ '10.128.0.1/17', '0.0.127.255' ]
+use Test2::V1 -ipP;
+
+use NetAddr::IP ();
+
+my %addr = (
+    'localhost'      => '0.0.0.0',
+    '10.0.0.0/24'    => '0.0.0.255',
+    '192.168.0.0/16' => '0.0.255.255',
+    '10.128.0.1/17'  => '0.0.127.255',
 );
 
-$| = 1;
+for my $input (sort keys %addr) {
+    my $ip = NetAddr::IP->new($input);
 
-print "1..", 2 * scalar @addr, "\n";
-
-my $count = 1;
-
-for my $a (@addr) {
-    my $ip = new NetAddr::IP $a->[0];
-
-    if ($ip->wildcard eq $a->[1]) {
-	print "ok $count\n";
-    }
-    else {
-	print "not ok $count\n";
-    }
-
-    ++$count;
-
-
-    if (($ip->wildcard)[1] eq $a->[1]) {
-	print "ok $count\n";
-    }
-    else {
-	print "not ok $count\n";
-    }
-
-    ++$count;
+    is($ip->wildcard, $addr{$input}, "wildcard for $input");
+    is(($ip->wildcard)[1], $addr{$input}, "wildcard list for $input");
 }
+
+done_testing;
