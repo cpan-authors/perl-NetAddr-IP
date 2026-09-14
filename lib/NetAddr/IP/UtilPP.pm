@@ -369,7 +369,7 @@ sub ipv4to6 {
 
 =item * $ipv6naddr = mask4to6($netaddr);
 
-Convert an ipv4 netowrk address into an ipv6 network mask.
+Convert an ipv4 network address into an ipv6 network mask.
 
   input:	32 bit network/mask address
   returns:	128 bit network/mask address
