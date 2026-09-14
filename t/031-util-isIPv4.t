@@ -1,186 +1,142 @@
-# Before `make install' is performed this script should be runnable with
-# `make test'. After `make install' it should work as `perl test.pl'
+#!/usr/bin/env perl
 
-######################### We start with some black magic to print on failure.
-# Change 1..1 below to 1..last_test_to_print .
-# (It may become useful if the test is moved to ./t subdirectory.)
+use Test2::V1 -ipP;
 
-BEGIN { $| = 1; print "1..421\n"; }
-END {print "not ok 1\n" unless $loaded;}
+use NetAddr::IP::Util qw( ipv6_aton ipv6_n2x isAnyIPv4 isIPv4 isNewIPv4 );
 
-use NetAddr::IP::Util qw(
-	ipv6_aton
-	ipv6_n2x
-	isIPv4
-	isNewIPv4
-	isAnyIPv4
+my @num = qw(
+    ::
+    8000::
+    4000::
+    2000::
+    1000::
+    800::
+    400::
+    200::
+    100::
+    80::
+    40::
+    20::
+    10::
+    1::
+    0:8000::
+    0:4000::
+    0:2000::
+    0:1000::
+    0:800::
+    0:400::
+    0:200::
+    0:100::
+    0:80::
+    0:40::
+    0:20::
+    0:10::
+    0:1::
+    0:0:8000::
+    0:0:4000::
+    0:0:2000::
+    0:0:1000::
+    0:0:800::
+    0:0:400::
+    0:0:200::
+    0:0:100::
+    0:0:80::
+    0:0:40::
+    0:0:20::
+    0:0:10::
+    0:0:1::
+    0:0:0:8000::
+    0:0:0:4000::
+    0:0:0:2000::
+    0:0:0:1000::
+    0:0:0:800::
+    0:0:0:400::
+    0:0:0:200::
+    0:0:0:100::
+    0:0:0:80::
+    0:0:0:40::
+    0:0:0:20::
+    0:0:0:10::
+    0:0:0:1::
+    0:0:0:0:8000::
+    0:0:0:0:4000::
+    0:0:0:0:2000::
+    0:0:0:0:1000::
+    0:0:0:0:800::
+    0:0:0:0:400::
+    0:0:0:0:200::
+    0:0:0:0:100::
+    0:0:0:0:80::
+    0:0:0:0:40::
+    0:0:0:0:20::
+    0:0:0:0:10::
+    0:0:0:0:1::
+    ::8000:0
+    ::4000:0
+    ::2000:0
+    ::1000:0
+    ::800:0
+    ::400:0
+    ::200:0
+    ::100:0
+    ::80:0
+    ::40:0
+    ::20:0
+    ::10:0
+    ::1:0
+    ::8000
+    ::4000
+    ::2000
+    ::1000
+    ::800
+    ::400
+    ::200
+    ::100
+    ::80
+    ::40
+    ::20
+    ::10
+    ::1
 );
 
-$loaded = 1;
-print "ok 1\n";
-######################### End of black magic.
+subtest 'isIPv4' => sub {
+    for my $addr (@num) {
+        my $bstr = ipv6_aton($addr);
+        my $rv   = isIPv4($bstr);
+        my $exp  = ($addr =~ m/[0-9]::$/) ? 0 : 1;
+        is($rv, $exp, 'isIPv4 for ' . ipv6_n2x($bstr));
+    }
+};
 
-# Insert your test code below (better if it prints "ok 13"
-# (correspondingly "not ok 13") depending on the success of chunk 13
-# of the test code):
-
-$test = 2;
-
-sub ok {
-  print "ok $test\n";
-  ++$test;
-}
-
-my @num = qw	# input
-(
-	::
-	8000::
-	4000::
-	2000::
-	1000::
-	800::
-	400::
-	200::
-	100::
-	80::
-	40::
-	20::
-	10::
-	1::
-	0:8000::
-	0:4000::
-	0:2000::
-	0:1000::
-	0:800::
-	0:400::
-	0:200::
-	0:100::
-	0:80::
-	0:40::
-	0:20::
-	0:10::
-	0:1::
-	0:0:8000::
-	0:0:4000::
-	0:0:2000::
-	0:0:1000::
-	0:0:800::
-	0:0:400::
-	0:0:200::
-	0:0:100::
-	0:0:80::
-	0:0:40::
-	0:0:20::
-	0:0:10::
-	0:0:1::
-	0:0:0:8000::
-	0:0:0:4000::
-	0:0:0:2000::
-	0:0:0:1000::
-	0:0:0:800::
-	0:0:0:400::
-	0:0:0:200::
-	0:0:0:100::
-	0:0:0:80::
-	0:0:0:40::
-	0:0:0:20::
-	0:0:0:10::
-	0:0:0:1::
-	0:0:0:0:8000::
-	0:0:0:0:4000::
-	0:0:0:0:2000::
-	0:0:0:0:1000::
-	0:0:0:0:800::
-	0:0:0:0:400::
-	0:0:0:0:200::
-	0:0:0:0:100::
-	0:0:0:0:80::
-	0:0:0:0:40::
-	0:0:0:0:20::
-	0:0:0:0:10::
-	0:0:0:0:1::
-	0:0:0:0:0:8000::
-	0:0:0:0:0:4000::
-	0:0:0:0:0:2000::
-	0:0:0:0:0:1000::
-	0:0:0:0:0:800::
-	0:0:0:0:0:400::
-	0:0:0:0:0:200::
-	0:0:0:0:0:100::
-	0:0:0:0:0:80::
-	0:0:0:0:0:40::
-	0:0:0:0:0:20::
-	0:0:0:0:0:10::
-	0:0:0:0:0:1::
-	::8000:0
-	::4000:0
-	::2000:0
-	::1000:0
-	::800:0
-	::400:0
-	::200:0
-	::100:0
-	::80:0
-	::40:0
-	::20:0
-	::10:0
-	::1:0
-	::8000
-	::4000
-	::2000
-	::1000
-	::800
-	::400
-	::200
-	::100
-	::80
-	::40
-	::20
-	::10
-	::1
-);
-
-# check isIPv4
-
-foreach (@num) {
-  my $bstr = ipv6_aton($_);
-  my $rv = isIPv4($bstr);
-  my $exp = ($_ =~ /\d::$/) ? 0:1;
-  print "got: $rv, exp: $exp for ", ipv6_n2x($bstr), "\nnot "
-	 unless $rv eq $exp;
-  &ok;
-}
-
-# check isAnyIPv4
-foreach (@num) {
-  my $bstr = ipv6_aton($_);
-  my $rv = isAnyIPv4($bstr);
-  my $exp = ($_ =~ /\d::$/) ? 0:1;
-  print "got: $rv, exp: $exp for ", ipv6_n2x($bstr), "\nnot "
-	 unless $rv eq $exp;
-  &ok;
-}
+subtest 'isAnyIPv4' => sub {
+    for my $addr (@num) {
+        my $bstr = ipv6_aton($addr);
+        my $rv   = isAnyIPv4($bstr);
+        my $exp  = ($addr =~ m/[0-9]::$/) ? 0 : 1;
+        is($rv, $exp, 'isAnyIPv4 for ' . ipv6_n2x($bstr));
+    }
+};
 
 my $compat = ipv6_aton('::FFFF:0:0');
 
-# check isAnyIPv4	with compatible high bits
-foreach (@num) {
-  my $bstr = ipv6_aton($_);
-  $bstr ^= $compat;
-  my $rv = isAnyIPv4($bstr);
-  my $exp = ($_ =~ /\d::$/) ? 0:1;
-  print "got: $rv, exp: $exp for ", ipv6_n2x($bstr), "\nnot "
-	 unless $rv eq $exp;
-  &ok;
-}
+subtest 'isAnyIPv4 with compatible high bits' => sub {
+    for my $addr (@num) {
+        my $bstr = ipv6_aton($addr);
+        $bstr  ^= $compat;
+        my $rv   = isAnyIPv4($bstr);
+        my $exp  = ($addr =~ m/[0-9]::$/) ? 0 : 1;
+        is($rv, $exp, 'isAnyIPv4 compat for ' . ipv6_n2x($bstr));
+    }
+};
 
-# check isNewIPv4	with compatible high bits
-foreach (@num) {
-  my $bstr = ipv6_aton($_);
-  $bstr ^= $compat;
-  my $rv = isNewIPv4($bstr);
-  my $exp = ($_ =~ /\d::$/) ? 0:1;
-  print "got: $rv, exp: $exp for ", ipv6_n2x($bstr), "\nnot "
-	 unless $rv eq $exp;
-  &ok;
-}
+subtest 'isNewIPv4 with compatible high bits' => sub {
+    for my $addr (@num) {
+        my $bstr = ipv6_aton($addr);
+        $bstr  ^= $compat;
+        my $rv   = isNewIPv4($bstr);
+        my $exp  = ($addr =~ m/[0-9]::$/) ? 0 : 1;
+        is($rv, $exp, 'isNewIPv4 compat for ' . ipv6_n2x($bstr));
+    }
+};
+
+done_testing;

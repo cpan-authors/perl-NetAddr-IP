@@ -1,33 +1,23 @@
+#!/usr/bin/env perl
 
-#use diagnostics;
-use NetAddr::IP::Util qw(
-	inet_n2dx
+use Test2::V1 -ipP;
+
+use NetAddr::IP::Util qw( inet_n2dx );
+use NetAddr::IP::Lite ();
+
+my $loip = NetAddr::IP::Lite->new('::1.2.3.4/120');
+my $hiip = NetAddr::IP::Lite->new('FF00::4/120');
+
+is(
+    inet_n2dx($hiip->aton),
+    'FF00:0:0:0:0:0:0:4',
+    'FF00::4 aton'
 );
-use NetAddr::IP::Lite;
 
-$| = 1;
+is(
+    inet_n2dx($loip->aton),
+    '1.2.3.4',
+    '::1.2.3.4/120 aton'
+);
 
-print "1..2\n";
-
-my $test = 1;
-sub ok() {
-  print 'ok ',$test++,"\n";
-}
-
-my $loip	= new NetAddr::IP::Lite('::1.2.3.4/120');		# same as 1.2.3.4/24
-my $hiip	= new NetAddr::IP::Lite('FF00::4/120');
-
-## test aton
-
-my $exp = 'FF00:0:0:0:0:0:0:4';
-my $txt = inet_n2dx($hiip->aton);
-print "got: $txt, exp: $exp\nnot "
-	unless $txt eq $exp;
-&ok;
-
-$exp = '1.2.3.4';
-$txt = inet_n2dx($loip->aton);
-print "got: $txt, exp: $exp\nnot "
-	unless $txt eq $exp;
-&ok;
-
+done_testing;

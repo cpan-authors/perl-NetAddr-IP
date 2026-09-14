@@ -1,5 +1,7 @@
-use NetAddr::IP::Lite;
-use Test::More;
+#!/usr/bin/env perl
+
+use Test2::V1 -ipP;
+use NetAddr::IP::Lite ();
 
 my @pairs =
     (
@@ -45,47 +47,53 @@ qw(
  0010:0000:0000:0000:0000:0000:0000:0000
  0100:0000:0000:0000:0000:0000:0000:0000
  1000:0000:0000:0000:0000:0000:0000:0000
-   );
+);
 
-my $tests = 4 * @pairs + @scale ** 2;
-plan tests => $tests;
+my @ip_scale = map { NetAddr::IP::Lite->new($_) } @scale;
 
-for my $p (@pairs)
-{
-    my $a = new NetAddr::IP::Lite $p->[0];
-    isa_ok($a, 'NetAddr::IP::Lite', "$p->[0]");
-    is($a->numeric, $p->[1], "$p->[0] Scalar numeric ok");
-    is(($a->numeric)[0], $p->[1], "$p->[0] Array numeric ok for network");
-    is(($a->numeric)[1], $p->[2], "$p->[0] Array numeric ok for mask");
-}
-
-@ip_scale = map { new NetAddr::IP::Lite $_ } @scale;
-
-isa_ok($_, 'NetAddr::IP::Lite', $_->addr) for @ip_scale;
-
-for my $i (0 .. $#ip_scale)
-{
-    for my $l (0 .. $i - 1)
+subtest 'isa_ok for scaled IPv6 addresses' => sub {
+    for my $ip (@ip_scale)
     {
-	next if $l >= $i;
-	unless (ok($ip_scale[$i]->numeric > $ip_scale[$l]->numeric,
-		   "[$i, $l] $scale[$i] > $scale[$l]"))
-	{
-	    diag "assertion [$i]: " . $ip_scale[$i]->numeric .
-		" > " . $ip_scale[$l]->numeric;
-	}
+        isa_ok($ip, 'NetAddr::IP::Lite');
     }
+};
 
-    next if $i == $#ip_scale;
-
-    for my $l ($i + 1 .. $#ip_scale)
+subtest 'numeric values for IPv6 network/mask pairs' => sub {
+    for my $p (@pairs)
     {
-	next if $l <= $i;
-	unless (ok($ip_scale[$i]->numeric < $ip_scale[$l]->numeric,
-		   "[$i, $l] $scale[$i] < $scale[$l]"))
-	{
-	    diag "assertion [$i]: " . $ip_scale[$i]->numeric .
-		" < " . $ip_scale[$l]->numeric;
-	}
+        my $a = NetAddr::IP::Lite->new($p->[0]);
+        isa_ok($a, 'NetAddr::IP::Lite');
+        is($a->numeric, $p->[1], "$p->[0] Scalar numeric ok");
+        is(($a->numeric)[0], $p->[1], "$p->[0] Array numeric ok for network");
+        is(($a->numeric)[1], $p->[2], "$p->[0] Array numeric ok for mask");
     }
-}
+};
+
+subtest 'numeric ordering of scaled IPv6 addresses' => sub {
+    for my $i (0 .. $#ip_scale)
+    {
+        for my $l (0 .. $i - 1)
+        {
+            unless (ok($ip_scale[$i]->numeric > $ip_scale[$l]->numeric,
+                       "[$i, $l] $scale[$i] > $scale[$l]"))
+            {
+                diag "assertion [$i]: " . $ip_scale[$i]->numeric .
+                    " > " . $ip_scale[$l]->numeric;
+            }
+        }
+
+        next if $i == $#ip_scale;
+
+        for my $l ($i + 1 .. $#ip_scale)
+        {
+            unless (ok($ip_scale[$i]->numeric < $ip_scale[$l]->numeric,
+                       "[$i, $l] $scale[$i] < $scale[$l]"))
+            {
+                diag "assertion [$i]: " . $ip_scale[$i]->numeric .
+                    " < " . $ip_scale[$l]->numeric;
+            }
+        }
+    }
+};
+
+done_testing;

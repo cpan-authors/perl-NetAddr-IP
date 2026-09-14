@@ -1,122 +1,66 @@
+#!/usr/bin/env perl
 
-#use diagnostics;
-use NetAddr::IP::Lite;
+use Test2::V1 -ipP;
 
-$| = 1;
+use NetAddr::IP::Lite ();
 
-print "1..14\n";
+my $four    = NetAddr::IP::Lite->new('0.0.0.4');
+my $four120 = NetAddr::IP::Lite->new('::4/120');
 
-my $test = 1;
-sub ok() {
-  print 'ok ',$test++,"\n";
-}
+my $t432  = '0.0.0.4/32';
+my $t4120 = '0:0:0:0:0:0:0:4/120';
 
-my $four	= new NetAddr::IP::Lite('0.0.0.4');		# same as 0.0.0.4/32
-my $four120	= new NetAddr::IP::Lite('::4/120');	# same as 0.0.0.4/24
+my $five = NetAddr::IP::Lite->new('0.0.0.5');
+my $t532 = '0.0.0.5/32';
 
-my $t432	= '0.0.0.4/32';
-my $t4120	= '0:0:0:0:0:0:0:4/120';
+subtest 'string overloading and eq/ne' => sub {
+    ## test '""' overload
+    my $txt = sprintf('%s', $four120);
+    is($txt, $t4120, 'string overloading of ::4/120');
 
-my $five	= new NetAddr::IP::Lite('0.0.0.5');
-my $t532	= '0.0.0.5/32';
+    ## test '""' again
+    $txt = sprintf('%s', $four);
+    is($txt, $t432, 'string overloading of 0.0.0.4');
 
+    ## test 'eq' to scalar
+    ok($four eq $t432, 'eq object to scalar');
 
-# 1
-## test '""' overload
-my $txt = sprintf ("%s",$four120);
+    ## test scalar 'eq' to
+    ok($t432 eq $four, 'eq scalar to object');
 
-print "got: $txt, exp: $t4120\nnot "
-	unless $txt eq $t4120;
-&ok;
+    ## test 'eq' to self
+    ok($four eq $four, 'eq object to self');
 
-# 2
-## test '""' again
-$txt = sprintf ("%s",$four);
+    ## test 'ne' to scalar
+    ok($four120 ne $t432, 'ne object to scalar');
 
-print "got: $txt, exp: $t432\nnot "
-	unless $txt eq $t432;
-&ok;
+    ## test scalar 'ne' to
+    ok($t432 ne $four120, 'ne scalar to object');
 
-# 3
-## test 'eq' to scalar
-print 'failed ',$four," eq $t432\nnot "
-	unless $four eq $t432;
-&ok;
+    ## test 'ne' to cidr
+    ok($four ne $four120, 'ne different cidr objects');
+};
 
-# 4
-## test scalar 'eq' to
-print "failed $t432 eq ",$four,"\nnot "
-	unless $t432 eq $four;
-&ok;
+subtest 'numeric comparisons' => sub {
+    ## test '==' not for scalars
+    ok(!($t432 == $four), '== not for scalar');
 
-# 5
-## test 'eq' to self
-print 'failed ',$four,' eq ', $four,"\nnot "
-	unless $four eq $four;
-&ok;
+    ## test '==' not for scalar, reversed args
+    ok(!($four == $t432), '== not for scalar, reversed args');
 
-# 6
-## test 'eq' cidr !=
-print 'failed ',$four,' should not eq ',$four120,"\nnot "
-	if $four eq $four120;
-&ok;
+    ## test '!=' not for scalar, reversed args
+    my $rv = $five != $four ? 1 : 0;
+    ok($rv, '!= object to object');
 
-# 7
-## test '==' not for scalars
-print "failed scalar $t432 should not == ",$four,"\nnot "
-	if $t432 == $four;
-&ok;
+    no warnings 'numeric';
 
-# 8
-## test '== not for scalar, reversed args
-print 'failed scalar ',$four," should not == $t432\nnot "
-	if $four == $t432;
-&ok;
+    ## test '!=' not for scalars
+    $rv = $t432 != $five ? 1 : 0;
+    ok($rv, '!= scalar to object');
 
-# ==========================================
-#
-# test "ne" and "!="
-#
-# 9
-## test 'ne' to scalar
-print 'failed ',$four120," ne $t432\nnot "
-	unless $four120 ne $t432;
-&ok;
+    ## since both of these are string scalars, the != should fail
+    $rv = $t532 != $t432 ? 1 : 0;
+    ok(!$rv, '!= scalar to scalar should be false');
+};
 
-# 10
-## test scalar 'ne' to
-print "failed $t432 ne ",$four120,"\nnot "
-	unless $t432 ne $four120;
-&ok;
-
-# 11
-## test 'ne' to cidr
-print 'failed ',$four,' ne ', $four120,"\nnot "
-	unless $four ne $four120;
-&ok;
-
-# 12
-## test '!=' not for scalar, reversed args
-$rv = $five != $four ? 1 : 0;
-#print "rv=$rv\n";
-print "failed scalar $five != $four\nnot "
-	unless $rv;
-&ok;
-
-# unblessed scalars not welcome
-undef local $^W;
-# 13
-## test '!=' not for scalars
-my $rv = $t432 != $five ? 1 : 0;
-#print "rv=$rv\n";
-print "failed scalar $t432  != ",$five,"\nnot "
-	unless $rv;
-&ok;
-
-# 14
-# since both of these are string scalars, the != should fail
-$rv = $t532 != $t432 ? 1 : 0;
-#print "rv = $rv\n";
-print "failed scalar $t532 != $t432\nnot "
-	if $rv;
-&ok;
+done_testing;

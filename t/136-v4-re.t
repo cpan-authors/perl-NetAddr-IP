@@ -1,38 +1,30 @@
-use Test::More;
+#!/usr/bin/env perl
 
-# $Id: v4-re.t,v 1.1.1.1 2006/08/14 15:36:06 lem Exp $
+use Test2::V1 -ipP;
+use Test2::Tools::Exception qw( lives );
 
-my @ips = qw!
+my @ips = qw(
     10.11.12.13
     10.11.12/24
     10.11.0/27
-    !;
+);
 
-plan tests => 299;
+use NetAddr::IP ();
 
-die "# Cannot continue without NetAddr::IP\n"
-    unless use_ok('NetAddr::IP');
-
-my @addrs = map { new NetAddr::IP $_ } @ips;
-
-for my $a (@addrs)
-{
+for my $input (@ips) {
+    my $a = NetAddr::IP->new($input);
     isa_ok($a, 'NetAddr::IP');
     my $re = $a->re;
     my $rx;
 
-    eval { $rx = qr/$re/ };
-    diag "Compilation of the resulting regular expression failed: $@"
-	unless ok(!$@, "Compilation of the resulting regular expression");
+    ok(lives { $rx = qr/$re/ }, 'Compilation of the resulting regular expression');
 
-    for (my $ip = $a->network;
-	 $ip < $a->broadcast && $a->masklen != 32;
-	 $ip ++)
-    {
-	ok($a->addr =~ m/$rx/, "Match of $ip in $a");
+    for (my $ip = $a->network; $ip < $a->broadcast && $a->masklen != 32; $ip++) {
+        ok($a->addr =~ m/$rx/, "Match of $ip in $a");
     }
 
     ok($a->broadcast->addr =~ m/$rx/, "Match of broadcast of $a");
-    ok(NetAddr::IP->new('default') !~ m/$rx/, "0/0 does not match");
+    ok(NetAddr::IP->new('default') !~ m/$rx/, '0/0 does not match');
 }
 
+done_testing;

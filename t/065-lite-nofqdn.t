@@ -1,29 +1,28 @@
+#!/usr/bin/env perl
 
+use Test2::V1 -ipP;
+use Test2::Require::Internet;
 
-use NetAddr::IP::Lite
+use NetAddr::IP::Lite ();
 
-$| = 1;
+my $skip;
 
-print "1..2\n";
+subtest 'DNS resolution check' => sub {
+    my $ip = NetAddr::IP::Lite->new('arin.net');
+    if (defined $ip) {
+        pass("resolved $ip");
+    }
+    else {
+        pass('resolver not working');
+    }
+    $skip = !defined $ip;
+};
 
-my $test = 1;
-sub ok() {
-  print 'ok ',$test++,"\n";
+if (!$skip) {
+    import NetAddr::IP::Lite qw(:nofqdn);
+
+    my $ip = NetAddr::IP::Lite->new('arin.net');
+    ok(!defined $ip, 'unexpected response with :nofqdn');
 }
 
-
-my $ip = new NetAddr::IP::Lite('arin.net');
-if (defined $ip) {
-  print "ok $test	# Skipped, resolved $ip\n";
-  $test++;
-} else {
-  print "ok $test	# Skipped, resolver not working\n";
-  $test++;
-}
-
-import NetAddr::IP::Lite qw(:nofqdn);
-
-$ip = new NetAddr::IP::Lite('arin.net');
-print "unexpected response with :nofqdn\nnot "
-	if defined $ip;
-&ok;
+done_testing;

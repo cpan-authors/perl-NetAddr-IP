@@ -1,11 +1,12 @@
+#!/usr/bin/env perl
 
-#use diagnostics;
-use Test::More tests => 2;
+use Test2::V1 -ipP;
 
-use_ok ('NetAddr::IP', qw(:lower));
+use NetAddr::IP qw(:lower);
 
 my $exp = 'ff:0:0:0:0:0:0:eeaa/128';
-my $ip = new NetAddr::IP('FF::eeAA');
+my $ip  = NetAddr::IP->new('FF::eeAA');
 my $got = sprintf $ip;
-ok ($got eq $exp,"lower case $got");
+cmp_ok($got, 'eq', $exp, "lower case $got");
 
+done_testing;

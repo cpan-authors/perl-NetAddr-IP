@@ -1,33 +1,25 @@
+#!/usr/bin/env perl
 
-#use diagnostics;
-use NetAddr::IP::Lite;
+use Test2::V1 -ipP;
 
-$| = 1;
+use NetAddr::IP::Lite ();
 
-sub ok() {
-  print 'ok ',$test++,"\n";
-}
-
-my @try = qw(
-	10/32		1
-	10/31		2
-	10/30		2
-	::1/128		1
-	::1/127		2
-	::1/126		2
-	1.2.3.11/29	6
-	FF::8B/125	6
+my %try = (
+    '10/32'       => 1,
+    '10/31'       => 2,
+    '10/30'       => 2,
+    '::1/128'     => 1,
+    '::1/127'     => 2,
+    '::1/126'     => 2,
+    '1.2.3.11/29' => 6,
+    'FF::8B/125'  => 6,
 );
 
-print '1..',(@try/2),"\n";
+for my $input (sort keys %try) {
+    my $ip = NetAddr::IP::Lite->new($input);
+    my $exp = $try{$input};
 
-$test = 1;
-
-foreach(my $i = 0;$i <=$#try;$i+= 2) {
-  my $ip = NetAddr::IP::Lite->new($try[$i]);
-  my $exp = $try[$i +1];
-
-  print "got: $_, exp: $exp\nnot "
-	unless ($_ = $ip->num) == $exp;
-  &ok;
+    is($ip->num, $exp, "$input has num $exp");
 }
+
+done_testing;

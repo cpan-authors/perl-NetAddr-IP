@@ -1,32 +1,8 @@
-# Before `make install' is performed this script should be runnable with
-# `make test'. After `make install' it should work as `perl test.pl'
+#!/usr/bin/env perl
 
-######################### We start with some black magic to print on failure.
-# Change 1..1 below to 1..last_test_to_print .
-# (It may become useful if the test is moved to ./t subdirectory.)
+use Test2::V1 -ipP;
 
-BEGIN { $| = 1; print "1..49\n"; }
-END {print "not ok 1\n" unless $loaded;}
-
-use NetAddr::IP::Util qw(
-	inet_any2n
-	notcontiguous
-);
-
-$loaded = 1;
-print "ok 1\n";
-######################### End of black magic.
-
-# Insert your test code below (better if it prints "ok 13"
-# (correspondingly "not ok 13") depending on the success of chunk 13
-# of the test code):
-
-$test = 2;
-
-sub ok {
-  print "ok $test\n";
-  ++$test;
-}
+use NetAddr::IP::Util qw( inet_any2n notcontiguous );
 
 my @num = #	input				    expected	spur
 qw(
@@ -56,17 +32,15 @@ qw(
 	A000::						3	1
 );
 
-for (my $i=0;$i < @num;$i+=3) {
-  my $bstr = inet_any2n($num[$i]);
-  my $rv;
-  my $xcidr = $num[$i+1];
-  my $xspur = $num[$i+2];
-  my($spur,$cidr) = notcontiguous($bstr);
-  print "cidr: $cidr, exp: $xcidr\nnot "
-	 unless $cidr == $xcidr;
-  &ok;
-  $spur = 1 if $spur;
-  print "spur: $spur, exp: $xspur\nnot "
-	unless $spur == $xspur;
-  &ok;
+for (my $i = 0; $i < @num; $i += 3) {
+	my $bstr   = inet_any2n($num[$i]);
+	my $xcidr  = $num[$i + 1];
+	my $xspur  = $num[$i + 2];
+	my ($spur, $cidr) = notcontiguous($bstr);
+
+	is($cidr, $xcidr, "cidr for $num[$i]");
+	$spur = 1 if $spur;
+	is($spur, $xspur, "spur for $num[$i]");
 }
+
+done_testing;

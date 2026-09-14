@@ -1,85 +1,48 @@
+#!/usr/bin/env perl
 
-#use diagnostics;
-use NetAddr::IP::Lite 0.10;
+use Test2::V1 -ipP;
+
+use NetAddr::IP::Lite 0.10 qw( Ones );
+use NetAddr::IP::Util qw( shiftleft );
+
 *Ones = \&NetAddr::IP::Lite::Ones;
-use NetAddr::IP::Util qw(
-	ipv6_aton
-	shiftleft
-);
-$| = 1;
 
-print "1..8\n";
+my $ip24 = '192.0.2.4/24';
+my $o    = NetAddr::IP::Lite->new($ip24);
+my $c    = $o;
 
-my $test = 1;
-sub ok() {
-  print 'ok ',$test++,"\n";
-}
+my $txto = sprintf('%s', $o);
+my $txtc = sprintf('%s', $c);
 
-my $ip24 = '1.2.3.4/24';
-my $o = new NetAddr::IP::Lite($ip24);
-my $c = $o;
+is($txto, $ip24, 'orig... validate original');
+is($txtc, $ip24, 'copy... validate copy');
 
-## test 1	validate original
-my $txto = sprintf("%s",$o);
-my $txtc = sprintf("%s",$c);
-print "orig... got: $txto, exp: $ip24\nnot "
-	unless $txto eq $ip24;
-&ok;
-
-## test 2
-print "copy... got: $txtc, exp: $ip24\nnot "
-	unless $txtc eq $ip24;
-&ok;
-
-my $ip28 = '1.2.3.4/28';
-my $mask = shiftleft(Ones(),32 - 28);
+my $ip28 = '192.0.2.4/28';
+my $mask = shiftleft(Ones(), 32 - 28);
 
 $c->{mask} = $mask;
-$txto = sprintf("%s",$o);
-$txtc = sprintf("%s",$c);
+$txto = sprintf('%s', $o);
+$txtc = sprintf('%s', $c);
 
-## overload does not unlink originals in this case
-## test 3	validate original
-$txto = sprintf("%s",$o);
-$txtc = sprintf("%s",$c);
-print "orig... got: $txto, exp: $ip28\nnot "
-	unless $txto eq $ip28;
-&ok;
+is($txto, $ip28, 'orig... overload does not unlink originals');
+is($txtc, $ip28, 'copy... overload does not unlink originals');
 
-## test 4
-print "copy... got: $txtc, exp: $ip28\nnot "
-	unless $txtc eq $ip28;
-&ok;
+my $ip265 = '192.0.2.5/26';
+my $ip285 = '192.0.2.5/28';
+$mask = shiftleft(Ones(), 32 - 26);
 
-my $ip265 = '1.2.3.5/26';
-my $ip285 = '1.2.3.5/28';
-$mask = shiftleft(Ones(),32 - 26);
-
-## test 5	overload seperates variables
 $c++;
-##		validate original
-$txto = sprintf("%s",$o);
-$txtc = sprintf("%s",$c);
-print "orig... got: $txto, exp: $ip28\nnot "
-	unless $txto eq $ip28;
-&ok;
+$txto = sprintf('%s', $o);
+$txtc = sprintf('%s', $c);
 
-## test 6	check mutated copy
-print "copy... got: $txtc, exp: $ip285\nnot "
-	unless $txtc eq $ip285;
-&ok;
+is($txto, $ip28,  'orig... overload separates variables');
+is($txtc, $ip285, 'copy... mutated copy');
 
-## test 7	check seperation
 $c->{mask} = $mask;
-##		validate original
-$txto = sprintf("%s",$o);
-$txtc = sprintf("%s",$c);
-print "orig... got: $txto, exp: $ip28\nnot "
-	unless $txto eq $ip28;
-&ok;
+$txto = sprintf('%s', $o);
+$txtc = sprintf('%s', $c);
 
-## test 8	check mutated copy
-print "copy... got: $txtc, exp: $ip265\nnot "
-	unless $txtc eq $ip265;
-&ok;
+is($txto, $ip28,  'orig... separation after copy mutation');
+is($txtc, $ip265, 'copy... mutated copy after separation');
 
+done_testing;

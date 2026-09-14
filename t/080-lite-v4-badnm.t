@@ -1,9 +1,9 @@
-# I know this does not look like -*- perl -*-, but I swear it is...
+#!/usr/bin/env perl
 
 use strict;
-use Test::More;
+use Test2::V1 -ipP;
 
-$| = 1;
+use NetAddr::IP::Lite ();
 
 my @badnets = (
     '10.10.10.10/255.255.0.255',
@@ -18,25 +18,21 @@ my @badnets = (
     '10.10.10.10/255.0.0.1',
     '10.10.10.10/255.129.0.1',
     '10.10.10.10/0.255.0.255',
-    '58.26.0.0-58.27.127.255',	# Taken from APNIC's WHOIS case
+    '58.26.0.0-58.27.127.255',    # Taken from APNIC's WHOIS case
 );
 
 my @goodnets = ();
-
 push @goodnets, "10.0.0.1/$_" for (0 .. 32);
-push @goodnets, "10.0.0.1/255.255.255.255";
+push @goodnets, '10.0.0.1/255.255.255.255';
 
-plan tests => 1 + @badnets + @goodnets;
+subtest 'bad nets' => sub {
+    ok(!defined NetAddr::IP::Lite->new($_), "new $_ should fail")
+        for @badnets;
+};
 
-die "# Cannot continue without NetAddr::IP::Lite\n"
-    unless use_ok('NetAddr::IP::Lite');
+subtest 'good nets' => sub {
+    ok(defined NetAddr::IP::Lite->new($_), "new $_ should work")
+        for @goodnets;
+};
 
-my $count = 1;
-
-ok(! defined NetAddr::IP::Lite->new($_), "new $_ should fail")
-    for @badnets;
-
-ok(defined NetAddr::IP::Lite->new($_), "new $_ should work")
-    for @goodnets;
-
-
+done_testing;
