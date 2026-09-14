@@ -589,7 +589,7 @@ sub _inet_ntop {
 
 This function optimizes and rfc 1884 IPv6 hex address to reduce the number of
 long strings of zero bits as specified in rfc 1884, 2.2 (2) by substituting
-B<::> for the first occurence of the longest string of zeros in the address.
+B<::> for the first occurrence of the longest string of zeros in the address.
 
 =cut
 

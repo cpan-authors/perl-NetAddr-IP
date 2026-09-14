@@ -186,7 +186,7 @@ Un-tar the distribution in an appropriate directory and type:
 
 B<NetAddr::IP> depends on B<NetAddr::IP::Util> which installs by
 default with its primary functions compiled using Perl's XS extensions
-to build a C library. If you do not have a C complier available or
+to build a C library. If you do not have a C compiler available or
 would like the slower Pure Perl version for some other reason, then
 type:
 
@@ -1359,7 +1359,7 @@ To use the old behavior for C<-E<gt>nth($index)> and C<-E<gt>num()>:
   NetAddr::IP->new('10/30')->nth(3) == 10.0.0.3/30
 
 Note that in each case, the broadcast address is represented in the
-output set and that the 'zero'th index is alway undef except for   
+output set and that the 'zero'th index is always undef except for   
 a point-to-point /31 or /127 network where there are exactly two   
 addresses in the network.
 
