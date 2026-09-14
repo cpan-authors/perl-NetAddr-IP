@@ -2,7 +2,6 @@ Artistic
 Changes
 Copying
 docs/rfc1884.txt
-IP.bs
 lib/NetAddr/IP.pm
 lib/NetAddr/IP/InetBase.pm
 lib/NetAddr/IP/Lite.pm
