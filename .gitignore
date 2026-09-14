@@ -23,4 +23,6 @@ xs/config.h
 xs/config.log
 xs/config.status
 xs/localperl.h
-lib/NetAddr/IP/Util_IS.pm
+/lib/NetAddr/IP/Util_IS.pm
+/lib/NetAddr/IP/Util.c
+/lib/NetAddr/IP/Util.c.xsc
