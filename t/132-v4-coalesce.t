@@ -48,4 +48,30 @@ subtest 'default imports' => sub {
     };
 }
 
+subtest 'result order is deterministic' => sub {
+    my @h;
+    for my $o (0 .. 5) {
+        push @h, NetAddr::IP->new("10.0.$o.$_/32") for 1 .. 3;
+    }
+
+    my $r = Coalesce(24, 2, @h);
+    is(scalar @$r, 6, 'six /24 nets are returned');
+
+    my @got = map { "$_" } @$r;
+    my @exp = map { "10.0.$_.0/24" } 0 .. 5;
+    is(join(',', @got), join(',', @exp), 'coalesce results are in address order');
+
+    my $rev = Coalesce(24, 2, reverse @h);
+    is(join(',', map { "$_" } @$rev), join(',', @got),
+       'reversing the argument list does not change the result');
+
+    # pass through nets and counted nets are ordered together
+    $r = Coalesce(24, 2, NetAddr::IP->new('10.0.9.0/23'), @h);
+    @got = map { "$_" } @$r;
+    @exp = ('10.0.0.0/24', '10.0.1.0/24', '10.0.2.0/24', '10.0.3.0/24',
+            '10.0.4.0/24', '10.0.5.0/24', '10.0.8.0/23');
+    is(join(',', @got), join(',', @exp),
+       'a pass through net is sorted in with the counted nets');
+};
+
 done_testing;
