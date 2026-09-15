@@ -1,5 +1,6 @@
 /blib/
 /.build/
+/NetAddr-IP-*
 _build/
 cover_db/
 inc/

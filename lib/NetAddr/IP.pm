@@ -1,12 +1,16 @@
-#!/usr/bin/perl -w
+#!/bin/false
+# ABSTRACT: Manages IPv4 and IPv6 addresses and subnets
+# PODNAME: NetAddr::IP
+
+use strict;
+use warnings;
 
 package NetAddr::IP;
 
-use strict;
 #use diagnostics;
 use Carp;
-use NetAddr::IP::Lite 1.57 qw(Zero Zeros Ones V4mask V4net);
-use NetAddr::IP::Util 1.53 qw(
+use NetAddr::IP::Lite qw(Zero Zeros Ones V4mask V4net);
+use NetAddr::IP::Util qw(
 	sub128
 	inet_aton
 	inet_any2n
@@ -26,7 +30,6 @@ use vars qw(
 	@EXPORT_OK
 	@EXPORT_FAIL
 	@ISA
-	$VERSION
 	$_netlimit
 	$rfc3021
 );
@@ -37,11 +40,8 @@ require Exporter;
 
 @ISA = qw(Exporter NetAddr::IP::Lite);
 
-$VERSION = do { sprintf " %d.%03d", (q$Revision: 4.79 $ =~ /\d+/g) };
-
 $rfc3021 = 0;
 
-=pod
 
 =encoding UTF-8
 
@@ -71,8 +71,8 @@ NetAddr::IP - Manages IPv4 and IPv6 addresses and subnets
   NOTE: NetAddr::IP::Util has a full complement of network address
 	utilities to convert back and forth between binary and text.
 
-	inet_aton, inet_ntoa, ipv6_aton, ipv6_ntoa 
-	ipv6_n2x, ipv6_n2d inet_any2d, inet_n2dx, 
+	inet_aton, inet_ntoa, ipv6_aton, ipv6_ntoa
+	ipv6_n2x, ipv6_n2d inet_any2d, inet_n2dx,
 	inet_n2ad, inetanyto6, ipv6to4
 
 See L<NetAddr::IP::Util>
@@ -222,7 +222,6 @@ use overload
 	return [ $_[0]->hostenum ];
     };
 
-=pod
 
 =over
 
@@ -333,7 +332,6 @@ of auto-incrementing it, as you would expect.
 
 # Preloaded methods go here.
 
-=pod
 
 =back
 
@@ -518,7 +516,6 @@ sub do_prefix ($$$) {
     }
 }
 
-=pod
 
 =head2 Methods
 
@@ -532,14 +529,14 @@ sub do_prefix ($$$) {
 
 =item C<-E<gt>new_from_aton($netaddr)>
 
-=item new_cis and new_cis6 are DEPRECATED 
+=item new_cis and new_cis6 are DEPRECATED
 
 =item C<-E<gt>new_cis("$addr $mask)>
 
 =item C<-E<gt>new_cis6("$addr $mask)>
 
 The first two methods create a new address with the supplied address in
-C<$addr> and an optional netmask C<$mask>, which can be omitted to get 
+C<$addr> and an optional netmask C<$mask>, which can be omitted to get
 a /32 or /128 netmask for IPv4 / IPv6 addresses respectively.
 
 The third method C<new_no> is exclusively for IPv4 addresses and filters
@@ -732,7 +729,6 @@ sub nprefix($) {
     return do_prefix $mask, \@faddr, \@laddr;
 }
 
-=pod
 
 =item C<-E<gt>numeric()>
 
@@ -774,7 +770,6 @@ sub wildcard($) {
   return $copy->addr;
 }
 
-=pod
 
 =item C<-E<gt>short()>
 
@@ -870,7 +865,7 @@ sub short($) {
 =item C<-E<gt>canon()>
 
 Returns the address part in canonical notation as a string.  For
-ipV4, this is dotted quad, and is the same as the return value from 
+ipV4, this is dotted quad, and is the same as the return value from
 "->addr()".  For ipV6 it is as per RFC5952, and is the same as the LOWER CASE value
 returned by "->short()".
 
@@ -899,7 +894,7 @@ To force ipV4 addresses into full ipV6 format use:
 Returns the address part in FULL ipV6 notation
 
 =item C<-E<gt>full6m()>
-   
+
 Returns the mask part in FULL ipV6 notation
 
 =item C<$me-E<gt>contains($other)>
@@ -926,7 +921,7 @@ Returns true when C<$me> is an RFC 1918 address.
 =item C<-E<gt>is_local()>
 
 Returns true when C<$me> is a local network address.
-   
+
         i.e.    ipV4    127.0.0.0 - 127.255.255.255
   or            ipV6    === ::1
 
@@ -1128,7 +1123,6 @@ sub _splitref {
   return \@ret;
 }
 
-=pod
 
 =item C<-E<gt>hostenum()>
 
@@ -1146,7 +1140,6 @@ sub hostenum ($) {
     return @{$_[0]->hostenumref};
 }
 
-=pod
 
 =item C<-E<gt>hostenumref()>
 
@@ -1160,7 +1153,7 @@ useable hosts for use in point-to-point networks, use B<:rfc3021> tag.
 
 This will cause hostenum and hostenumref to return two (2) useable hosts in
 a /31 network.
- 
+
 =item C<$me-E<gt>compact($addr1, $addr2, ...)>
 
 =item C<@compacted_object_list = Compact(@object_list)>
@@ -1248,7 +1241,6 @@ sub compactref($) {
   return \@r;
 }
 
-=pod
 
 =item C<$me-E<gt>coalesce($masklen, $number, @list_of_subnets)>
 
@@ -1322,7 +1314,6 @@ sub coalesce
     return [ sort @ret ];
 }
 
-=pod
 
 =item C<-E<gt>first()>
 
@@ -1361,8 +1352,8 @@ To use the old behavior for C<-E<gt>nth($index)> and C<-E<gt>num()>:
   NetAddr::IP->new('10/30')->nth(3) == 10.0.0.3/30
 
 Note that in each case, the broadcast address is represented in the
-output set and that the 'zero'th index is always undef except for   
-a point-to-point /31 or /127 network where there are exactly two   
+output set and that the 'zero'th index is always undef except for
+a point-to-point /31 or /127 network where there are exactly two
 addresses in the network.
 
   new behavior:
@@ -1370,11 +1361,11 @@ addresses in the network.
   NetAddr::IP->new('10.1/32'->nth(0) == 10.0.0.1/32
   NetAddr::IP->new('10/31')->nth(0)  == 10.0.0.0/31
   NetAddr::IP->new('10/31')->nth(1)  == 10.0.0.1/31
-  NetAddr::IP->new('10/30')->nth(0) == 10.0.0.1/30 
-  NetAddr::IP->new('10/30')->nth(1) == 10.0.0.2/30 
+  NetAddr::IP->new('10/30')->nth(0) == 10.0.0.1/30
+  NetAddr::IP->new('10/30')->nth(1) == 10.0.0.2/30
   NetAddr::IP->new('10/30')->nth(2) == undef
 
-Note that a /32 net always has 1 usable address while a /31 has exactly 
+Note that a /32 net always has 1 usable address while a /31 has exactly
 two usable addresses for point-to-point addressing. The first
 index (0) returns the address immediately following the network address
 except for a /31 or /127 when it return the network address.
@@ -1382,11 +1373,11 @@ except for a /31 or /127 when it return the network address.
 =item C<-E<gt>num()>
 
 As of version 4.42 of NetAddr::IP and version 1.27 of NetAddr::IP::Lite
-a /31 and /127 with return a net B<num> value of 2 instead of 0 (zero) 
+a /31 and /127 with return a net B<num> value of 2 instead of 0 (zero)
 for point-to-point networks.
 
 Version 4.00 of NetAddr::IP and version 1.00 of NetAddr::IP::Lite
-return the number of usable IP addresses within the subnet, 
+return the number of usable IP addresses within the subnet,
 not counting the broadcast or network address.
 
 Previous versions worked only for ipV4 addresses, returned a
@@ -1401,7 +1392,7 @@ To use the old behavior for C<-E<gt>nth($index)> and C<-E<gt>num()>:
 WARNING:
 
 NetAddr::IP will calculate and return a numeric string for network
-ranges as large as 2**128. These values are TEXT strings and perl 
+ranges as large as 2**128. These values are TEXT strings and perl
 can treat them as integers for numeric calculations.
 
 Perl on 32 bit platforms only handles integer numbers up to 2**32
@@ -1409,7 +1400,7 @@ and on 64 bit platforms to 2**64.
 
 If you wish to manipulate numeric strings returned by NetAddr::IP
 that are larger than 2**32 or 2**64, respectively,  you must load
-additional modules such as Math::BigInt, bignum or some similar  
+additional modules such as Math::BigInt, bignum or some similar
 package to do the integer math.
 
 =item C<-E<gt>re()>
@@ -1564,14 +1555,13 @@ sub re6($) {
 }
 
 sub mod_version {
-  return $VERSION;
+  return $NetAddr::IP::VERSION;
   &Compact;			# suppress warnings about these symbols
   &Coalesce;
   &STORABLE_freeze;
   &STORABLE_thaw;
 }
 
-=pod
 
 =back
 
@@ -1645,11 +1635,6 @@ along with this program in the file named "Copying". If not, write to the
 or visit their web page on the internet at:
 
         http://www.gnu.org/copyleft/gpl.html.
-
-=head1 SEE ALSO
-
-  perl(1) L<NetAddr::IP::Lite>, L<NetAddr::IP::Util>,
-L<NetAddr::IP::InetBase>
 
 =cut
 

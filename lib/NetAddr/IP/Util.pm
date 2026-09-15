@@ -1,11 +1,14 @@
-#!/usr/bin/perl
-package NetAddr::IP::Util;
+#!/bin/false
+# ABSTRACT: Native C and pure perl implementations of IPv4 and IPv6 address utilities
+# PODNAME: NetAddr::IP::Util
 
 use strict;
+
+package NetAddr::IP::Util;
 #use diagnostics;
 #use lib qw(blib/lib);
 
-use vars qw($VERSION @EXPORT_OK @ISA %EXPORT_TAGS $Mode);
+use vars qw(@EXPORT_OK @ISA %EXPORT_TAGS $Mode);
 use AutoLoader qw(AUTOLOAD);
 use NetAddr::IP::Util_IS;
 use NetAddr::IP::InetBase qw(
@@ -20,8 +23,6 @@ require DynaLoader;
 require Exporter;
 
 @ISA = qw(Exporter DynaLoader);
-
-$VERSION = do { my @r = (q$Revision: 1.53 $ =~ /\d+/g); sprintf "%d."."%02d" x $#r, @r };
 
 @EXPORT_OK = qw(
 	inet_aton
@@ -128,7 +129,7 @@ $VERSION = do { my @r = (q$Revision: 1.53 $ =~ /\d+/g); sprintf "%d."."%02d" x $
 
 if (NetAddr::IP::Util_IS->not_pure) {
   eval {		## attempt to load 'C' version of utilities
-	bootstrap NetAddr::IP::Util $VERSION;
+	bootstrap NetAddr::IP::Util $NetAddr::IP::Util::VERSION;
   };
 }
 if (NetAddr::IP::Util_IS->pure || $@) {	## load the pure perl version if 'C' lib missing
@@ -315,16 +316,16 @@ NetAddr::IP::Util -- IPv4/6 and 128 bit number utilities
   use NetAddr::IP::Util qw(:all :inet :ipv4 :ipv6 :math)
 
   :inet	  =>	inet_aton, inet_ntoa, ipv6_aton
-		ipv6_ntoa, ipv6_n2x, ipv6_n2d, 
-		inet_any2n, inet_n2dx, inet_n2ad, 
-		inet_pton, inet_ntop, inet_4map6, 
+		ipv6_ntoa, ipv6_n2x, ipv6_n2d,
+		inet_any2n, inet_n2dx, inet_n2ad,
+		inet_pton, inet_ntop, inet_4map6,
 		ipv4to6, mask4to6, ipanyto6, packzeros
 		maskanyto6, ipv6to4, naip_gethostbyname
 
   :ipv4	  =>	inet_aton, inet_ntoa
 
-  :ipv6	  =>	ipv6_aton, ipv6_ntoa, ipv6_n2x, 
-		ipv6_n2d, inet_any2n, inet_n2dx, 
+  :ipv6	  =>	ipv6_aton, ipv6_ntoa, ipv6_n2x,
+		ipv6_n2d, inet_any2n, inet_n2dx,
 		inet_n2ad, inet_pton, inet_ntop,
 		inet_4map6, ipv4to6, mask4to6,
 		ipanyto6, maskanyto6, ipv6to4,
@@ -495,7 +496,7 @@ This allows the implementation of logical functions of the form of:
 
 This function returns an ipV6 network address with the first 80 bits
 set to zero and the next 16 bits set to one, while the last 32 bits
-are filled with the ipV4 address. 
+are filled with the ipV4 address.
 
   input:	ipV4 netaddr
 	    or	ipV6 netaddr
@@ -516,7 +517,7 @@ portion of the 128 bit string and false otherwise.
   i.e.	the address must be of the form - ::d.d.d.d
 
 Note: this is an old and deprecated ipV4 compatible ipV6 address
-	
+
 =item * $rv = isNewIPv4($bits128);
 
 This function return true if the IPv6 128 bit string is of the form
@@ -556,7 +557,7 @@ argument.
 =item * $hex_text = inet_ntop($AF_family,$netaddr);
 
 This function takes and IP address in binary format and converts it into
-text format. The type of IP address conversion is controlled by the FAMILY 
+text format. The type of IP address conversion is controlled by the FAMILY
 argument.
 
 NOTE: inet_ntop ALWAYS returns lowercase characters.
@@ -954,10 +955,6 @@ along with this program in the file named "Copying". If not, write to the
 or visit their web page on the internet at:
 
         http://www.gnu.org/copyleft/gpl.html.
-
-=head1 AUTHOR
-
-Michael Robinton <michael@bizsystems.com>
 
 =head1 SEE ALSO
 
