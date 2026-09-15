@@ -73,4 +73,12 @@ for my $a (@a) {
     }
 }
 
+## issue #5 – trailing newline accepted, leading whitespace rejected
+
+is(NetAddr::IP::Lite->new("10.0.0.1\n"), "10.0.0.1/32", 'trailing newline accepted');
+is(NetAddr::IP::Lite->new(" 10.0.0.1"), "10.0.0.1/32", 'leading space accepted');
+is(NetAddr::IP::Lite->new("10.0.0.1 "), "10.0.0.1/32", 'trailing space accepted');
+is(NetAddr::IP::Lite->new("10.0.0.1/24\n"), "10.0.0.1/24", 'trailing newline with CIDR accepted');
+is(NetAddr::IP::Lite->new("  "), undef, 'whitespace-only returns undef');
+
 done_testing;
