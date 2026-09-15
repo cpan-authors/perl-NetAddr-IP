@@ -778,6 +778,14 @@ sub _xnew($$;$$) {
 
   $ip = lc $ip;
 
+# strip surrounding whitespace so "10.0.0.1\n" and " 10.0.0.1" are treated alike.
+# skipped in :aton mode because a raw 4 or 16 byte address may begin or end with a whitespace byte
+  unless ($Accept_Binary_IP) {
+    $ip =~ s/^\s+//;
+    $ip =~ s/\s+\z//;
+    return undef if $ip eq '';
+  }
+
   while (1) {
 # process IP's with no CIDR or that have the CIDR as part of the IP argument string
     unless (@_) {
