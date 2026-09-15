@@ -52,13 +52,13 @@ typedef union
   unsigned char c[16];
 } n128;
 
-char * is_ipv6to4 = "ipv6to4", * is_shiftleft = "shiftleft", * is_comp128 = "comp128";
-char * is_sub128 = "sub128", * is_add128 = "add128";
-char * is_hasbits = "hasbits";
+const char * is_ipv6to4 = "ipv6to4", * is_shiftleft = "shiftleft", * is_comp128 = "comp128";
+const char * is_sub128 = "sub128", * is_add128 = "add128";
+const char * is_hasbits = "hasbits";
 /* , * is_isIPv4 = "isIPv4"; */
-char * is_bcd2bin = "bcd2bin", * is_simple_pack = "simple_pack", * is_bcdn2bin = "bcdn2bin";
-char * is_mask4to6 = "mask4to6", * is_ipv4to6 = "ipv4to6";
-char * is_maskanyto6 = "maskanyto6", * is_ipanyto6 = "ipanyto6";
+const char * is_bcd2bin = "bcd2bin", * is_simple_pack = "simple_pack", * is_bcdn2bin = "bcdn2bin";
+const char * is_mask4to6 = "mask4to6", * is_ipv4to6 = "ipv4to6";
+const char * is_maskanyto6 = "maskanyto6", * is_ipanyto6 = "ipanyto6";
 
 typedef struct bcdstuff
 {		/*	character array of 40 bytes			*/
@@ -485,7 +485,7 @@ ALIAS:
 	NetAddr::IP::Util::shiftleft = 1
 PREINIT:
 	unsigned char * ap;
-	char * subname;
+	const char * subname;
 	u_int32_t wa[4];
 	STRLEN len;
 	int i;
@@ -498,8 +498,8 @@ PPCODE:
 	    subname = is_shiftleft;
 	  else
 	    subname = is_comp128;
-	  croak("Bad arg length for %s%s, length is %d, should be %d",
-		"NetAddr::IP::Util::",subname,len *8,128);
+	  croak("Bad arg length for %s%s, length is %" UVuf ", should be %d",
+		"NetAddr::IP::Util::",subname,(UV)(len *8),128);
 	}
 	if (ix == 2) {
 	  XPUSHs(sv_2mortal(newSVpvn((char *)(ap +12),4)));
@@ -540,7 +540,7 @@ ALIAS:
 	NetAddr::IP::Util::sub128 = 1
 PREINIT:
 	unsigned char * ap, *bp;
-	char * subname;
+	const char * subname;
 	u_int32_t wa[4], wb[4];
 	n128 a128;
 	STRLEN len;
@@ -552,8 +552,8 @@ PPCODE:
 	    subname = is_sub128;
 	  else
 	    subname = is_add128;
-	  croak("Bad arg length for %s%s, length is %d, should be %d",
-		"NetAddr::IP::Util::",subname,len *8,128);
+	  croak("Bad arg length for %s%s, length is %" UVuf ", should be %d",
+		"NetAddr::IP::Util::",subname,(UV)(len *8),128);
 	}
 
 	bp = (unsigned char *) SvPV(bs,len);
@@ -588,8 +588,8 @@ PREINIT:
 PPCODE:
 	ap = (unsigned char *) SvPV(s,len);
 	if (len != 16) {
-	  croak("Bad arg length for %s, length is %d, should be %d",
-		"NetAddr::IP::Util::addconst",len *8,128);
+	  croak("Bad arg length for %s, length is %" UVuf ", should be %d",
+		"NetAddr::IP::Util::addconst",(UV)(len *8),128);
 	}
 	netswap_copy(wa,ap,4);
 	XPUSHs(sv_2mortal(newSViv((I32)addercon(wa,wb,&a128,cnst))));
@@ -606,14 +606,14 @@ hasbits(s)
 	SV * s
 PREINIT:
 	unsigned char * bp;
-	char * subname;
+	const char * subname;
 	STRLEN len;
 CODE:
 	bp = (unsigned char *) SvPV(s,len);
 	if (len != 16) {
 	  subname = is_hasbits;
-	  croak("Bad arg length for %s%s, length is %d, should be %d",
-		"NetAddr::IP::Util::",subname,len *8,128);
+	  croak("Bad arg length for %s%s, length is %" UVuf ", should be %d",
+		"NetAddr::IP::Util::",subname,(UV)(len *8),128);
 	}
 	RETVAL = have128(bp);
 OUTPUT:
@@ -633,23 +633,23 @@ PPCODE:
 	cp = (unsigned char *) SvPV(s,len);
 	if (ix == 0) {
 	  if (len != 16) {
-	    croak("Bad arg length for %s, length is %d, should be %d",
-		"NetAddr::IP::Util::bin2bcd",len *8,128);
+	    croak("Bad arg length for %s, length is %" UVuf ", should be %d",
+		"NetAddr::IP::Util::bin2bcd",(UV)(len *8),128);
 	  }
 	  (void) _bin2bcd(cp,&n);
 	  XPUSHs(sv_2mortal(newSVpvn((char *)n.txt,_bcd2txt((unsigned char *)n.bcd,&n))));
 	}
 	else if (ix == 1) {
 	  if (len != 16) {
-	    croak("Bad arg length for %s, length is %d, should be %d",
-		"NetAddr::IP::Util::bin2bcdn",len *8,128);
+	    croak("Bad arg length for %s, length is %" UVuf ", should be %d",
+		"NetAddr::IP::Util::bin2bcdn",(UV)(len *8),128);
 	  }
 	  XPUSHs(sv_2mortal(newSVpvn((char *)n.bcd,_bin2bcd(cp,&n))));
 	}
 	else {
 	  if (len != 20) {
-	    croak("Bad arg length for %s, length is %d, should be %d digits",
-		"NetAddr::IP::Util::bcdn2txt",len *2,40);
+	    croak("Bad arg length for %s, length is %" UVuf ", should be %d digits",
+		"NetAddr::IP::Util::bcdn2txt",(UV)(len *2),40);
 	  }
 	  XPUSHs(sv_2mortal(newSVpvn((char *)n.txt,_bcd2txt(cp,&n))));
 	}
@@ -671,7 +671,7 @@ PREINIT:
 	BCD n;
 	n128 c128, a128;
 	unsigned char * cp, badc;
-	char * subname;
+	const char * subname;
 	int digits;
 	STRLEN len;
 PPCODE:
@@ -684,8 +684,8 @@ PPCODE:
 	  subname = is_bcdn2bin;
 	if (len > 40 || len < 1) {
     Badigits:
-	  croak("Bad arg length for %s%s, length is %d, should be 1 to 40 digits",
-		"NetAddr::IP::Util::",subname,len);
+	  croak("Bad arg length for %s%s, length is %" UVuf ", should be 1 to 40 digits",
+		"NetAddr::IP::Util::",subname,(UV)len);
 	}
 	if (ix == 2) {
 	  if (len > 20) {
@@ -731,8 +731,8 @@ PREINIT:
 PPCODE:
 	ap = (unsigned char *) SvPV(s,len);
 	if (len != 16) {
-	  croak("Bad arg length for %s, length is %d, should be %d",
-		"NetAddr::IP::Util::countbits",len *8,128);
+	  croak("Bad arg length for %s, length is %" UVuf ", should be %d",
+		"NetAddr::IP::Util::notcontiguous",(UV)(len *8),128);
 	}
 	netswap_copy(wa,ap,4);
 	count = _countbits(wa);
@@ -750,7 +750,7 @@ ALIAS:
 	NetAddr::IP::Util::mask4to6 = 1
 PREINIT:
 	unsigned char * ip;
-	char * subname;
+	const char * subname;
 	u_int32_t wa[4];
 	STRLEN len;
 PPCODE:
@@ -760,8 +760,8 @@ PPCODE:
 	    subname = is_mask4to6;
 	  else
 	    subname = is_ipv4to6;
-	  croak("Bad arg length for %s%s, length is %d, should be 32",
-		"NetAddr::IP::Util::",subname,len *8);
+	  croak("Bad arg length for %s%s, length is %" UVuf ", should be 32",
+		"NetAddr::IP::Util::",subname,(UV)(len *8));
 	}
 	if (ix == 0)
 	  extendipv4(ip, wa);
@@ -777,7 +777,7 @@ ALIAS:
 	NetAddr::IP::Util::maskanyto6 = 1
 PREINIT:
 	unsigned char * ip;
-	char * subname;
+	const char * subname;
 	u_int32_t wa[4];
 	STRLEN len;
 PPCODE:
@@ -796,8 +796,8 @@ PPCODE:
 	    subname = is_maskanyto6;
 	  else
 	    subname = is_ipanyto6;
-	  croak("Bad arg length for %s%s, length is %d, should be 32 or 128",
-		"NetAddr::IP::Util::",subname,len *8);
+	  croak("Bad arg length for %s%s, length is %" UVuf ", should be 32 or 128",
+		"NetAddr::IP::Util::",subname,(UV)(len *8));
 	}
 	XSRETURN(1);
 
