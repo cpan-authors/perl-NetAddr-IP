@@ -1,0 +1,179 @@
+---
+name: dzil build and test
+
+on:
+  push:
+    branches:
+      - "master"
+  pull_request:
+    branches:
+      - "*"
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    name: Build distribution
+    runs-on: ubuntu-latest
+    strategy:
+      max-parallel: 1
+    container:
+      image: perldocker/perl-tester:5.42
+    steps:
+      - uses: actions/checkout@v6
+      - name: Allow for file ownership conflicts with Docker and GitHub Actions
+        run: git config --global --add safe.directory '*'
+      - name: Run Tests with coverage
+        env:
+          AUTHOR_TESTING: 1
+          CODECOV_TOKEN: ${{secrets.CODECOV_TOKEN}}
+          RELEASE_TESTING: 1
+        run: auto-build-and-test-dist
+      - uses: actions/upload-artifact@v7
+        with:
+          name: build_dir
+          path: build_dir
+  test_linux:
+    runs-on: ubuntu-latest
+    name: Perl ${{ matrix.perl-version }} on ubuntu-latest
+    needs: build
+    strategy:
+      fail-fast: false
+      matrix:
+        perl-version:
+          - "5.10"
+          - "5.12"
+          - "5.14"
+          - "5.16"
+          - "5.18"
+          - "5.20"
+          - "5.22"
+          - "5.24"
+          - "5.26"
+          - "5.28"
+          - "5.30"
+          - "5.32"
+          - "5.34"
+          - "5.36"
+          - "5.38"
+          - "5.40"
+          - "5.42"
+    container:
+      image: perldocker/perl-tester:${{ matrix.perl-version }}
+      env:
+        AUTHOR_TESTING: 1
+    steps:
+      - name: Decide if we need to install recommended modules
+        id: with-recommends
+        if: matrix.perl-version >= 5.14
+        run: echo '::set-output name=flag::--with-recommends'
+      - uses: actions/download-artifact@v8
+        with:
+          name: build_dir
+          path: .
+      - uses: perl-actions/setup-cpm@v1
+        with:
+          version: compat
+      - name: Install deps
+        if: success()
+        run: >
+          cpm install -g
+          --cpanfile cpanfile
+          --with-develop
+          ${{ steps.with-recommends.outputs.flag }}
+          --with-suggests
+          --show-build-log-on-failure
+      - name: Run Tests
+        if: success()
+        run: prove -lr --jobs 2 t
+  test_macos:
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: ["macos-latest"]
+        perl-version:
+          - "5.24"
+          - "5.26"
+          - "5.28"
+          - "5.30"
+          - "5.32"
+          - "5.34"
+          - "5.36"
+          - "5.38"
+          - "5.40"
+          - "5.42"
+    name: Perl ${{ matrix.perl-version }} on ${{ matrix.os }}
+    needs: build
+    steps:
+      - uses: actions/checkout@v6
+      - name: Set Up Perl
+        uses: shogo82148/actions-setup-perl@v1
+        with:
+          perl-version: ${{ matrix.perl-version }}
+      - name: Decide if we need to install recommended modules
+        id: with-recommends
+        if: matrix.perl-version >= 5.14
+        run: echo '::set-output name=flag::--with-recommends'
+      - uses: actions/download-artifact@v8
+        with:
+          name: build_dir
+          path: .
+      - run: perl -V
+      - uses: perl-actions/setup-cpm@v1
+        with:
+          version: compat
+      - name: install deps using cpanm
+        run: >
+          cpm install -g --cpanfile cpanfile
+          --with-develop
+          ${{ steps.with-recommends.outputs.flag }}
+          --with-suggests
+          --with-test
+          --mirror https://cpan.metacpan.org
+      - run: prove -lr t
+        env:
+          AUTHOR_TESTING: 1
+  test_windows:
+    if: false  # temporarily disabled
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: ["windows-latest"]
+        perl-version:
+          # https://github.com/shogo82148/actions-setup-perl/issues/223
+          # - "5.10"
+          # - "5.12"
+          - "5.24"
+          - "5.26"
+          - "5.28"
+          - "5.30"
+          # As of 2022-06-06 5.32 is the latest Strawberry Perl
+          # - "5.32"
+          # - "5.34"
+    name: Perl ${{ matrix.perl-version }} on ${{ matrix.os }}
+    needs: build
+    steps:
+      - uses: actions/checkout@v6
+      - name: Set Up Perl
+        uses: shogo82148/actions-setup-perl@v1
+        with:
+          perl-version: ${{ matrix.perl-version }}
+          distribution: strawberry
+      - uses: actions/download-artifact@v8
+        with:
+          name: build_dir
+          path: .
+      - uses: perl-actions/setup-cpm@v1
+        with:
+          version: compat
+      - name: install deps using cpanm
+        run: cpm install -g --cpanfile cpanfile --mirror https://cpan.metacpan.org
+      - run: perl -V
+      - run: prove -lr t
+        env:
+          AUTHOR_TESTING: 1
