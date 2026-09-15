@@ -363,11 +363,9 @@ sub import
 	};
 	*{STORABLE_thaw} = sub
 	{
-	    my $self	= shift;
-	    my $cloning	= shift;	# Not used
-	    my $serial	= shift;
+        my ($self, undef, $serial) = @_;
 
-	    my $ip = new NetAddr::IP $serial;
+	    my $ip = NetAddr::IP->new($serial);
 	    $self->{addr} = $ip->{addr};
 	    $self->{mask} = $ip->{mask};
 	    $self->{isv6} = $ip->{isv6};
