@@ -98,4 +98,24 @@ like(dies { shiftleft('1234567890123456', -1) }, qr/Bad/, 'shiftleft dies on neg
 
 like(dies { shiftleft('1234567890123456', 129) }, qr/Bad/, 'shiftleft dies on shift count too large');
 
+## bcd2bin – empty string
+
+like(dies { bcd2bin('') }, qr/Bad/, 'bcd2bin dies on empty string');
+
+## simple_pack – empty string
+
+like(dies { simple_pack('') }, qr/Bad/, 'simple_pack dies on empty string');
+
+## bcdn2txt – empty string
+
+like(dies { bcdn2txt('') }, qr/Bad/, 'bcdn2txt dies on empty string');
+
+## bcdn2bin – empty string
+
+like(dies { bcdn2bin('', 40) }, qr/Bad/, 'bcdn2bin dies on empty string');
+
+## bcdn2bin – digit count larger than packed string
+
+like(dies { bcdn2bin("\x12", 40) }, qr/Bad/, 'bcdn2bin dies on digit count larger than input');
+
 done_testing;

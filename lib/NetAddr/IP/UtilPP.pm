@@ -597,8 +597,8 @@ sub bcdn2bin {
   $dc = 0 unless $dc;
   die "Bad argument length for ".__PACKAGE__.":bcdn2txt, is ".(2 * length($bcd)).", should be 1 to 40 digits"
 	if length($bcd) > 20;
-  die "Bad digit count for ".__PACKAGE__.":bcdn2bin, is $dc, should be 1 to 40 digits"
-	if $dc < 1 || $dc > 40;
+  die "Bad digit count for ".__PACKAGE__.":bcdn2bin, is $dc, should be 1 to ".(2 * length($bcd))." digits"
+	if $dc < 1 || $dc > 2 * length($bcd);
   return _bcd2bin(unpack("H$dc",$bcd));
 }
 
