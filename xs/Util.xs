@@ -647,8 +647,8 @@ PPCODE:
 	  XPUSHs(sv_2mortal(newSVpvn((char *)n.bcd,_bin2bcd(cp,&n))));
 	}
 	else {
-	  if (len > 20) {
-	    croak("Bad arg length for %s, length is %d, should %d digits or less",
+	  if (len != 20) {
+	    croak("Bad arg length for %s, length is %d, should be %d digits",
 		"NetAddr::IP::Util::bcdn2txt",len *2,40);
 	  }
 	  XPUSHs(sv_2mortal(newSVpvn((char *)n.txt,_bcd2txt(cp,&n))));
@@ -672,40 +672,42 @@ PREINIT:
 	n128 c128, a128;
 	unsigned char * cp, badc;
 	char * subname;
+	int digits;
 	STRLEN len;
 PPCODE:
 	cp = (unsigned char *) SvPV(s,len);
-	if (len > 40) {
-	  if (ix == 0)
-	    subname = is_bcd2bin;
-	  else if (ix ==1)
-	    subname = is_simple_pack;
+	if (ix == 0)
+	  subname = is_bcd2bin;
+	else if (ix == 1)
+	  subname = is_simple_pack;
+	else
+	  subname = is_bcdn2bin;
+	if (len > 40 || len < 1) {
     Badigits:
-	  croak("Bad arg length for %s%s, length is %d, should be %d digits or less",
-		"NetAddr::IP::Util::",subname,len,40);
+	  croak("Bad arg length for %s%s, length is %d, should be 1 to 40 digits",
+		"NetAddr::IP::Util::",subname,len);
 	}
 	if (ix == 2) {
 	  if (len > 20) {
 	    len <<= 1;		/*	times 2	*/
-	    subname = is_bcdn2bin;
 	    goto Badigits;
 	  }
 	  if (items < 2) {
 	    croak("Bad usage, should have %s('packedbcd,length)",
 		"NetAddr::IP::Util::bcdn2bin");
 	  }
-	  len = SvIV(ST(1));
-	  _bcdn2bin(cp,&a128,&c128,(int)len);
+	  digits = SvIV(ST(1));
+	  if (digits < 1 || digits > (int)(len << 1)) {
+	    croak("Bad digit count for %s%s, is %d, should be 1 to %d",
+		"NetAddr::IP::Util::",subname,digits,(int)(len << 1));
+	  }
+	  _bcdn2bin(cp,&a128,&c128,digits);
 	  netswap(a128.u,4);
 	  XPUSHs(sv_2mortal(newSVpvn((char *)a128.c,16)));
 	  XSRETURN(1);
 	}
 	badc = _simple_pack(cp,(int)len, &n);
 	if (badc) {
-	  if (ix == 1)
-	    subname = is_simple_pack;
-	  else
-	    subname = is_bcd2bin;
 	  croak("Bad char in string for %s%s, character is '%c', allowed are 0-9",
 		"NetAddr::IP::Util::",subname,badc);
 	}
