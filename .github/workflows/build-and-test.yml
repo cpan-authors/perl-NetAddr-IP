@@ -28,7 +28,9 @@ jobs:
         run: git config --global --add safe.directory '*'
       - name: Install Dist::Zilla deps
         run: |
-          cpanm --notest Dist::Zilla
+          cpanm -n Dist::Zilla
+          dzil authordeps --missing | cpanm -n
+          dzil listdeps --develop --missing | cpanm -n
       - name: Build distribution
         run: dzil build
       - uses: actions/upload-artifact@v7
