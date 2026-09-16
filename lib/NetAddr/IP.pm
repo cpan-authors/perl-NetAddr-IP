@@ -78,17 +78,15 @@ NetAddr::IP - Manages IPv4 and IPv6 addresses and subnets
 See L<NetAddr::IP::Util>
 
 
-  my $ip = new NetAddr::IP '127.0.0.1';
-	 or if you prefer
-  my $ip = NetAddr::IP->new('127.0.0.1);
+  my $ip = NetAddr::IP->new('127.0.0.1');
 	or from a packed IPv4 address
-  my $ip = new_from_aton NetAddr::IP (inet_aton('127.0.0.1'));
+  my $ip = NetAddr::IP->new_from_aton(inet_aton('127.0.0.1'));
 	or from an octal filtered IPv4 address
-  my $ip = new_no NetAddr::IP '127.012.0.0';
+  my $ip = NetAddr::IP->new_no('127.012.0.0');
 
   print "The address is ", $ip->addr, " with mask ", $ip->mask, "\n" ;
 
-  if ($ip->within(new NetAddr::IP "127.0.0.0", "255.0.0.0")) {
+  if ($ip->within(NetAddr::IP->new("203.0.113.0", "255.255.255.224"))) {
       print "Is a loopback address\n";
   }
 
@@ -241,10 +239,10 @@ B<C<-E<gt>copy()>> actually creates a new object when called.
 
 An object can be used just as a string. For instance, the following code
 
-	my $ip = new NetAddr::IP '192.168.1.123';
+	my $ip = NetAddr::IP->new('192.0.2.123');
 	print "$ip\n";
 
-Will print the string 192.168.1.123/32.
+Will print the string 192.0.2.123/32.
 
 =item B<Equality>
 
@@ -252,7 +250,7 @@ You can test for equality with either C<eq> or C<==>. C<eq> allows
 comparison with arbitrary strings as well as NetAddr::IP objects. The
 following example:
 
-    if (NetAddr::IP->new('127.0.0.1','255.0.0.0') eq '127.0.0.1/8')
+    if (NetAddr::IP->new('198.51.100.1','255.255.255.224') eq '198.51.100.1/27')
        { print "Yes\n"; }
 
 will print out "Yes".
@@ -285,14 +283,14 @@ Add a 32 bit signed constant to the address part of a NetAddr object.
 This operation changes the address part to point so many hosts above the
 current objects start address. For instance, this code:
 
-    print NetAddr::IP->new('127.0.0.1/8') + 5;
+    print NetAddr::IP->new('198.51.100.1/24') + 255;
 
-will output 127.0.0.6/8. The address will wrap around at the broadcast
+will output 198.51.100.0/24. The address will wrap around at the broadcast
 back to the network address. This code:
 
-    print NetAddr::IP->new('10.0.0.1/24') + 255;
+    print NetAddr::IP->new('203.0.113.1/24') + 255;
 
-    outputs 10.0.0.0/24.
+    outputs 203.0.113.0/24.
 
 Returns the the unchanged object when the constant is missing or out of
 range.
@@ -773,7 +771,7 @@ sub wildcard($) {
 
 Returns the address part in a short or compact notation.
 
-  (ie, 127.0.0.1 becomes 127.1).
+  (ie, 10.0.0.1 becomes 10.1).
 
 Works with both, V4 and V6.
 
@@ -953,20 +951,20 @@ splitting off the first parts of the list, a "best fits" list of remaining
 objects will be returned based on an increasing sort of the CIDR values of
 the C<bits> list.
 
-  i.e.	my $ip = new NetAddr::IP('192.168.0.0/24');
+  i.e.	my $ip = NetAddr::IP->new('192.0.2.0/24');
 	my $objptr = $ip->split(28, 29, 28, 29, 26);
 
    has split plan 28 29 28 29 26 26 26 28
    and returns this list of objects
 
-	192.168.0.0/28
-	192.168.0.16/29
-	192.168.0.24/28
-	192.168.0.40/29
-	192.168.0.48/26
-	192.168.0.112/26
-	192.168.0.176/26
-	192.168.0.240/28
+	192.0.2.0/28
+	192.0.2.16/29
+	192.0.2.24/28
+	192.0.2.40/29
+	192.0.2.48/26
+	192.0.2.112/26
+	192.0.2.176/26
+	192.0.2.240/28
 
 NOTE: that /26 replicates twice beyond the original request and /28 fills
 the remaining return object requirement.
@@ -976,20 +974,20 @@ the remaining return object requirement.
 C<-E<gt>rsplitref> is the same as C<-E<gt>splitref> above except that the split plan is
 applied to the original object in reverse order.
 
-  i.e.	my $ip = new NetAddr::IP('192.168.0.0/24');
+  i.e.	my $ip = NetAddr::IP->new('192.0.2.0/24');
 	my @objects = $ip->split(28, 29, 28, 29, 26);
 
    has split plan 28 26 26 26 29 28 29 28
    and returns this list of objects
 
-	192.168.0.0/28
-	192.168.0.16/26
-	192.168.0.80/26
-	192.168.0.144/26
-	192.168.0.208/29
-	192.168.0.216/28
-	192.168.0.232/29
-	192.168.0.240/28
+	192.0.2.0/28
+	192.0.2.16/26
+	192.0.2.80/26
+	192.0.2.144/26
+	192.0.2.208/29
+	192.0.2.216/28
+	192.0.2.232/29
+	192.0.2.240/28
 
 =item C<-E<gt>split($bits,[optional $bits1,$bits2,...])>
 
@@ -1307,7 +1305,7 @@ sub coalesce
     }
 
     # Now add to @ret all the subnets with more than $number hits
-    for my $c (map { new NetAddr::IP $_ }
+    for my $c (map { NetAddr::IP->new($_) }
 	       grep { $ret{$_} >= $number }
 	       sort keys %ret)
     {
@@ -1349,11 +1347,11 @@ To use the old behavior for C<-E<gt>nth($index)> and C<-E<gt>num()>:
   NetAddr::IP->new('10/32')->nth(0) == undef
   NetAddr::IP->new('10/32')->nth(1) == undef
   NetAddr::IP->new('10/31')->nth(0) == undef
-  NetAddr::IP->new('10/31')->nth(1) == 10.0.0.1/31
+  NetAddr::IP->new('10/31')->nth(1) == 203.0.113.1/31
   NetAddr::IP->new('10/30')->nth(0) == undef
-  NetAddr::IP->new('10/30')->nth(1) == 10.0.0.1/30
-  NetAddr::IP->new('10/30')->nth(2) == 10.0.0.2/30
-  NetAddr::IP->new('10/30')->nth(3) == 10.0.0.3/30
+  NetAddr::IP->new('10/30')->nth(1) == 203.0.113.1/30
+  NetAddr::IP->new('10/30')->nth(2) == 203.0.113.2/30
+  NetAddr::IP->new('10/30')->nth(3) == 203.0.113.3/30
 
 Note that in each case, the broadcast address is represented in the
 output set and that the 'zero'th index is always undef except for
@@ -1361,12 +1359,12 @@ a point-to-point /31 or /127 network where there are exactly two
 addresses in the network.
 
   new behavior:
-  NetAddr::IP->new('10/32')->nth(0)  == 10.0.0.0/32
-  NetAddr::IP->new('10.1/32'->nth(0) == 10.0.0.1/32
-  NetAddr::IP->new('10/31')->nth(0)  == 10.0.0.0/31
-  NetAddr::IP->new('10/31')->nth(1)  == 10.0.0.1/31
-  NetAddr::IP->new('10/30')->nth(0) == 10.0.0.1/30
-  NetAddr::IP->new('10/30')->nth(1) == 10.0.0.2/30
+  NetAddr::IP->new('10/32')->nth(0)  == 203.0.113.0/32
+  NetAddr::IP->new('10.1/32'->nth(0) == 203.0.113.1/32
+  NetAddr::IP->new('10/31')->nth(0)  == 203.0.113.0/31
+  NetAddr::IP->new('10/31')->nth(1)  == 203.0.113.1/31
+  NetAddr::IP->new('10/30')->nth(0) == 203.0.113.1/30
+  NetAddr::IP->new('10/30')->nth(1) == 203.0.113.2/30
   NetAddr::IP->new('10/30')->nth(2) == undef
 
 Note that a /32 net always has 1 usable address while a /31 has exactly
