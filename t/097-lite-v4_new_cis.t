@@ -60,16 +60,16 @@ subtest 'v4 new_cis' => sub {
         [ $binword,       '255.255.0.0' ],
     );
 
-    for my $a (@a) {
+    for my $entry (@a) {
         for my $m (@m) {
-            my $ip = NetAddr::IP::Lite->new_cis("$a->[0] $m->[0]");
+            my $ip = NetAddr::IP::Lite->new_cis("$entry->[0] $m->[0]");
             SKIP: {
-                skip "Failed to make an object for $a->[0]/$m->[0]", 4
+                skip "Failed to make an object for $entry->[0]/$m->[0]", 4
                     unless defined $ip;
-                is($ip->addr, $a->[1], "$a->[0] / $m->[0] is $a->[1]");
-                is($ip->mask, $m->[1], "$a->[0] / $m->[0] is $m->[1]");
-                is($ip->bits, 32, "$a->[0] / $m->[0] is 32 bits wide");
-                is($ip->version, 4, "$a->[0] / $m->[0] is version 4");
+                is($ip->addr, $entry->[1], "$entry->[0] / $m->[0] is $entry->[1]");
+                is($ip->mask, $m->[1], "$entry->[0] / $m->[0] is $m->[1]");
+                is($ip->bits, 32, "$entry->[0] / $m->[0] is 32 bits wide");
+                is($ip->version, 4, "$entry->[0] / $m->[0] is version 4");
             };
         }
     }

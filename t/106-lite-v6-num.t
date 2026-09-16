@@ -37,10 +37,10 @@ my %nets = (
     '0.0.0.6'   => [32,  '1'],
 );
 
-for my $a (sort keys %nets) {
-    my $nc = $nets{$a}->[1];
-    my $ip = NetAddr::IP::Lite->new($a, $nets{$a}->[0]);
-    is($ip->num, $nc, "$a prefix=$nets{$a}->[0] num=$nc");
+for my $key (sort keys %nets) {
+    my $nc = $nets{$key}->[1];
+    my $ip = NetAddr::IP::Lite->new($key, $nets{$key}->[0]);
+    is($ip->num, $nc, "$key prefix=$nets{$key}->[0] num=$nc");
 }
 
 done_testing;
