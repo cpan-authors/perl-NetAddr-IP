@@ -682,16 +682,15 @@ PPCODE:
 	  subname = is_simple_pack;
 	else
 	  subname = is_bcdn2bin;
+	/* bcdn2bin takes packed bcd, two digits per byte; the others take one digit per byte */
+	if (ix == 2)
+	  len <<= 1;
 	if (len > 40 || len < 1) {
-    Badigits:
 	  croak("Bad arg length for %s%s, length is %" UVuf ", should be 1 to 40 digits",
 		"NetAddr::IP::Util::",subname,(UV)len);
 	}
 	if (ix == 2) {
-	  if (len > 20) {
-	    len <<= 1;		/*	times 2	*/
-	    goto Badigits;
-	  }
+	  len >>= 1;
 	  if (items < 2) {
 	    croak("Bad usage, should have %s('packedbcd,length)",
 		"NetAddr::IP::Util::bcdn2bin");
