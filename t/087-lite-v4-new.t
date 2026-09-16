@@ -101,4 +101,18 @@ is(NetAddr::IP::Lite->new("\x{0969}\x{0969}\x{0969}\x{0969}"), undef,
 is(NetAddr::IP::Lite->new("\x{FF13}\x{FF13}\x{FF13}\x{FF13}"), undef,
     'Fullwidth digits rejected');
 
+## issue #4 – 0b and 0x literals
+
+is(NetAddr::IP::Lite->new("0b101"), "0.0.0.5/32", 'binary 0b101 parses correctly');
+is(NetAddr::IP::Lite->new("0x1f"), "0.0.0.31/32", 'hex 0x1f parses correctly');
+is(NetAddr::IP::Lite->new("0x10"), "0.0.0.16/32", 'hex 0x10 parses correctly');
+is(NetAddr::IP::Lite->new("0xdeadbeef"), "222.173.190.239/32", 'hex 0xdeadbeef parses correctly');
+is(NetAddr::IP::Lite->new("0b101", 8), "5.0.0.0/8", 'binary 0b101 with mask parses correctly');
+is(NetAddr::IP::Lite->new("0x1f", 8), "31.0.0.0/8", 'hex 0x1f with mask parses correctly');
+is(NetAddr::IP::Lite->new("-0b101"), "255.255.255.251/32", 'negative binary parses correctly');
+is(NetAddr::IP::Lite->new("0b12"), undef, 'invalid binary 0b12 rejected');
+is(NetAddr::IP::Lite->new("-0b12"), undef, 'invalid negative binary -0b12 rejected');
+is(NetAddr::IP::Lite->new("0b12", 8), undef, 'invalid binary 0b12 with mask rejected');
+is(NetAddr::IP::Lite->new("0xzz"), undef, 'invalid hex 0xzz rejected');
+
 done_testing;
