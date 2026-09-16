@@ -746,7 +746,7 @@ sub new_cis6($;$$) {
 sub _no_octal {
 #  $_[0] =~ m/^(\d+)\.(\d+)\.(\d+)\.(\d+)$/;
 #  return sprintf("%d.%d.%d.%d",$1,$2,$3,$4);
-  (my $rv = $_[0]) =~ s#\b0*([1-9]\d*/?|0/?)#$1#g;	# suppress leading zeros
+  (my $rv = $_[0]) =~ s#\b0*([1-9][0-9]*/?|0/?)#$1#g;	# suppress leading zeros
   $rv;
 }
 
@@ -868,7 +868,7 @@ sub _xnew($$;$$) {
       if ($isV6) {
 	if ($isCIDR) {
 	  my($dq1,$dq2,$dq3,$dq4);
-	  if ($ip =~ /^(\d+)(?:|\.(\d+)(?:|\.(\d+)(?:|\.(\d+))))$/ &&
+	  if ($ip =~ /^([0-9]+)(?:|\.([0-9]+)(?:|\.([0-9]+)(?:|\.([0-9]+))))$/ &&
 	    do {$dq1 = $1;
 		$dq2 = $2 || 0;
 		$dq3 = $3 || 0;
@@ -921,7 +921,7 @@ sub _xnew($$;$$) {
 	$ip = $try;
 	last;
       }
-    } elsif ($mask =~ m/^\d+\.\d+\.\d+\.\d+$/) { # ipv4 form of mask
+    } elsif ($mask =~ m/^[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+$/) { # ipv4 form of mask
       $mask = _no_octal($mask) if $noctal;	# filter for octal
       return undef unless defined ($mask = inet_aton($mask));
       $mask = mask4to6($mask);
@@ -938,28 +938,28 @@ sub _xnew($$;$$) {
 # process remaining IP's
 
     if (index($ip,':') < 0) {				# ipv4 address
-      if ($ip =~ m/^(\d+)\.(\d+)\.(\d+)\.(\d+)$/) {
+      if ($ip =~ m/^([0-9]+)\.([0-9]+)\.([0-9]+)\.([0-9]+)$/) {
 	;	# the common case
       }
       elsif (grep($ip eq $_,(qw(default any broadcast loopback)))) {
 	return undef unless defined ($ip = $fip4{$ip});
 	last;
       }
-      elsif ($ip =~ m/^(\d+)\.(\d+)$/) {
+      elsif ($ip =~ m/^([0-9]+)\.([0-9]+)$/) {
 	$ip = ($hasmask)
 		? "${1}.${2}.0.0"
 		: "${1}.0.0.${2}";
       }
-      elsif ($ip =~ m/^(\d+)\.(\d+)\.(\d+)$/) {
+      elsif ($ip =~ m/^([0-9]+)\.([0-9]+)\.([0-9]+)$/) {
 	$ip = ($hasmask)
 		? "${1}.${2}.${3}.0"
 		: "${1}.${2}.0.${3}";
       }
-      elsif ($ip =~ /^(\d+)$/ && $hasmask && $1 >= 0 and $1 < 256) { # pure numeric
+      elsif ($ip =~ /^([0-9]+)$/ && $hasmask && $1 >= 0 and $1 < 256) { # pure numeric
 	$ip = sprintf("%d.0.0.0",$1);
       }
-#      elsif ($ip =~ /^\d+$/ && !$hasmask) {	# a big integer
-      elsif ($ip =~ /^\d+$/ ) {	# a big integer
+#      elsif ($ip =~ /^[0-9]+$/ && !$hasmask) {	# a big integer
+      elsif ($ip =~ /^[0-9]+$/ ) {	# a big integer
 	$ip = bcd2bin($ip);
 	last;
       }
@@ -968,7 +968,7 @@ sub _xnew($$;$$) {
 		($tmp = oct($ip)) < 256) {
         $ip = sprintf("%d.0.0.0",$tmp);
       }
-      elsif ($ip =~ /^-?\d+$/) {
+      elsif ($ip =~ /^-?[0-9]+$/) {
 	$ip += 2 ** 32 if $ip < 0;
 	$ip = pack('L3N',0,0,0,$ip);
 	last;
@@ -982,36 +982,36 @@ sub _xnew($$;$$) {
 
 #	notations below include an implicit mask specification
 
-      elsif ($ip =~ m/^(\d+)\.$/) {
+      elsif ($ip =~ m/^([0-9]+)\.$/) {
 	$ip = "${1}.0.0.0";
 	$mask = $ff000000;
       }
-      elsif ($ip =~ m/^(\d+)\.(\d+)-(\d+)\.?$/ && $2 <= $3 && $3 < 256) {
+      elsif ($ip =~ m/^([0-9]+)\.([0-9]+)-([0-9]+)\.?$/ && $2 <= $3 && $3 < 256) {
 	$ip = "${1}.${2}.0.0";
 	$mask = pack('L3C4',0xffffffff,0xffffffff,0xffffffff,255,_obits($2,$3),0,0);
       }
-      elsif ($ip =~ m/^(\d+)-(\d+)\.?$/ and $1 <= $2 && $2 < 256) {
+      elsif ($ip =~ m/^([0-9]+)-([0-9]+)\.?$/ and $1 <= $2 && $2 < 256) {
 	$ip = "${1}.0.0.0";
 	$mask = pack('L3C4',0xffffffff,0xffffffff,0xffffffff,_obits($1,$2),0,0,0)
       }
-      elsif ($ip =~ m/^(\d+)\.(\d+)\.$/) {
+      elsif ($ip =~ m/^([0-9]+)\.([0-9]+)\.$/) {
 	$ip = "${1}.${2}.0.0";
 	$mask = $ffff0000;
       }
-      elsif ($ip =~ m/^(\d+)\.(\d+)\.(\d+)-(\d+)\.?$/ && $3 <= $4 && $4 < 256) {
+      elsif ($ip =~ m/^([0-9]+)\.([0-9]+)\.([0-9]+)-([0-9]+)\.?$/ && $3 <= $4 && $4 < 256) {
 	$ip = "${1}.${2}.${3}.0";
 	$mask = pack('L3C4',0xffffffff,0xffffffff,0xffffffff,255,255,_obits($3,$4),0);
       }
-      elsif ($ip =~ m/^(\d+)\.(\d+)\.(\d+)\.$/) {
+      elsif ($ip =~ m/^([0-9]+)\.([0-9]+)\.([0-9]+)\.$/) {
 	$ip = "${1}.${2}.${3}.0";
 	$mask = $ffffff00;
       }
-      elsif ($ip =~ m/^(\d+)\.(\d+)\.(\d+)\.(\d+)-(\d+)$/ && $4 <= $5 && $5 < 256) {
+      elsif ($ip =~ m/^([0-9]+)\.([0-9]+)\.([0-9]+)\.([0-9]+)-([0-9]+)$/ && $4 <= $5 && $5 < 256) {
 	$ip = "${1}.${2}.${3}.${4}";
 	$mask = pack('L3C4',0xffffffff,0xffffffff,0xffffffff,255,255,255,_obits($4,$5));
       }
-      elsif ($ip =~ m/^(\d+\.\d+\.\d+\.\d+)
-		\s*-\s*(\d+\.\d+\.\d+\.\d+)$/x) {
+      elsif ($ip =~ m/^([0-9]+\.[0-9]+\.[0-9]+\.[0-9]+)
+		\s*-\s*([0-9]+\.[0-9]+\.[0-9]+\.[0-9]+)$/x) {
 #	if ($noctal) {
 #	  return undef unless ($ip = inet_aton(_no_octal($1)));
 #	  return undef unless ($tmp = inet_aton(_no_octal($2)));
@@ -1273,12 +1273,12 @@ set my \$no_mbi_emu = 1 in t/bigint.t to remove this warning\n\n";
 # tests to see if the object is a hash or a signed scalar
 
 sub _bi_stfy {
-  "$_[0]" =~ /(\d+)/;		# stringify and remove '+' if present
+  "$_[0]" =~ /([0-9]+)/;		# stringify and remove '+' if present
   $1;
 }
 
 sub _fakebi2strg {
-  ${$_[0]} =~ /(\d+)/;
+  ${$_[0]} =~ /([0-9]+)/;
   $1;
 }
 

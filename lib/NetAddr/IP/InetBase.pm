@@ -169,7 +169,7 @@ sub ipv6_n2d {
 sub fillIPv4 {
   my $host = $_[0];
   return undef unless defined $host;
-  if ($host =~ /^(\d+)(?:|\.(\d+)(?:|\.(\d+)(?:|\.(\d+))))$/) {
+  if ($host =~ /^([0-9]+)(?:|\.([0-9]+)(?:|\.([0-9]+)(?:|\.([0-9]+))))$/) {
     if (defined $4) {
       return undef unless
         $1 >= 0 && $1 < 256 &&
@@ -409,7 +409,7 @@ sub ipv6_aton {
   my($ipv6) = @_;
   return undef unless $ipv6;
   local($1,$2,$3,$4,$5);
-  if ($ipv6 =~ /^(.*:)(\d{1,3})\.(\d{1,3})\.(\d{1,3})\.(\d{1,3})$/) {	# mixed hex, dot-quad
+  if ($ipv6 =~ /^(.*:)([0-9]{1,3})\.([0-9]{1,3})\.([0-9]{1,3})\.([0-9]{1,3})$/) {	# mixed hex, dot-quad
     return undef if $2 > 255 || $3 > 255 || $4 > 255 || $5 > 255;
     $ipv6 = sprintf("%s%X%02X:%X%02X",$1,$2,$3,$4,$5);			# convert to pure hex
   }
@@ -599,13 +599,13 @@ sub _packzeros {
   my $x6 = shift;
   if ($x6 =~ /\:\:/) {				# already contains ::
 # then re-optimize
-    $x6 = ($x6 =~ /\:\d+\.\d+\.\d+\.\d+/)	# ipv4 notation ?
+    $x6 = ($x6 =~ /\:[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+/)	# ipv4 notation ?
 	? ipv6_n2d(ipv6_aton($x6))
 	: ipv6_n2x(ipv6_aton($x6));
   }
   $x6 = ':'. lc $x6;				# prefix : & always lower case
   my $d = '';
-  if ($x6 =~ /(.+\:)(\d+\.\d+\.\d+\.\d+)/) {	# if contains dot quad
+  if ($x6 =~ /(.+\:)([0-9]+\.[0-9]+\.[0-9]+\.[0-9]+)/) {	# if contains dot quad
     $x6 = $1;					# save hex piece
     $d = $2;					# and dot quad piece
   }
