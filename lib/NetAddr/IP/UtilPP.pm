@@ -639,7 +639,7 @@ sub _bcdcheck {
   die "Bad bcd number length $_ ".__PACKAGE__.":simple_pack, should be 1 to 40 digits"
 	if $len > 40 || $len < 1;
   die "Bad character in decimal input string '$1' for ".__PACKAGE__.":simple_pack"
-	if $bcd =~ /(\D)/;
+	if $bcd =~ /([^0-9])/;
 }
 
 sub simple_pack {
