@@ -1490,7 +1490,7 @@ sub re6($) {
     my $b = $brd[$_];
     my $m;
     if ($n.'' eq $b.'') {
-      if ($n =~ /\d/) {
+      if ($n =~ /[0-9]/) {
 	push @dig, $n;
       } else {
 	push @dig, '['.(lc $n).$n.']';
@@ -1501,14 +1501,14 @@ sub re6($) {
       if ($n.'' eq 0 && $b =~ /F/) {
 	push @dig, 'x';
       }
-      elsif ($n =~ /\d/ && $b =~ /\d/) {
+      elsif ($n =~ /[0-9]/ && $b =~ /[0-9]/) {
 	push @dig, '['.$n.'-'.$b.']';
       }
       elsif ($n =~ /[A-F]/ && $b =~ /[A-F]/) {
 	$n .= '-'.$b;
 	push @dig, '['.(lc $n).$n.']';
       }
-      elsif ($n =~ /\d/ && $b =~ /[A-F]/) {
+      elsif ($n =~ /[0-9]/ && $b =~ /[A-F]/) {
 	$m = ($n == 9) ? 9 : $n .'-9';
 	if ($b =~ /A/) {
 	  $m .= 'aA';
@@ -1518,7 +1518,7 @@ sub re6($) {
 	}
 	push @dig, '['.$m.']';
       }
-      elsif ($n =~ /[A-F]/ && $b =~ /\d/) {
+      elsif ($n =~ /[A-F]/ && $b =~ /[0-9]/) {
 	if ($n =~ /A/) {
 	  $m = 'aA';
 	} else {
