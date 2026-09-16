@@ -115,4 +115,14 @@ is(NetAddr::IP::Lite->new("-0b12"), undef, 'invalid negative binary -0b12 reject
 is(NetAddr::IP::Lite->new("0b12", 8), undef, 'invalid binary 0b12 with mask rejected');
 is(NetAddr::IP::Lite->new("0xzz"), undef, 'invalid hex 0xzz rejected');
 
+## non-ASCII digits must not match in IPv4 parsing contexts
+
+is(NetAddr::IP::Lite->new("\x{0663}0.0.1"), undef, 'Arabic-Indic in dotted quad rejected');
+is(NetAddr::IP::Lite->new("10.\x{0969}0.0.1"), undef, 'Devanagari in dotted quad rejected');
+is(NetAddr::IP::Lite->new("\x{FF13}0.0.1/24"), undef, 'Fullwidth in dotted quad with mask rejected');
+is(NetAddr::IP::Lite->new("10.0.0.\x{0663}/24"), undef, 'Arabic-Indic in last octet rejected');
+is(NetAddr::IP::Lite->new("\x{0663}0-\x{0663}5"), undef, 'Arabic-Indic in range notation rejected');
+is(NetAddr::IP::Lite->new("\x{0663}0.\x{0663}0."), undef, 'Arabic-Indic in implicit /16 rejected');
+is(NetAddr::IP::Lite->new("\x{0663}0."), undef, 'Arabic-Indic in implicit /8 rejected');
+
 done_testing;
