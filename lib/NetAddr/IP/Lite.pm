@@ -784,13 +784,16 @@ sub _xnew($$;$$) {
     $ip =~ s/^\s+//;
     $ip =~ s/\s+\z//;
     return undef if $ip eq '';
+    # reject non-ASCII digits (Arabic-Indic, Devanagari, Fullwidth, etc.)
+    (my $ipcore = $ip) =~ s{/[^/]+$}{};
+    return undef if $ipcore =~ /[^\x00-\x7F]/;
   }
 
   while (1) {
 # process IP's with no CIDR or that have the CIDR as part of the IP argument string
     unless (@_) {
 #      if ($ip =~ m!^(.+)/(.+)$!) {
-      if ($ip !~ /\D/) {		# binary number notation
+      if ($ip !~ /[^0-9]/) {		# binary number notation
 	$ip = bcd2bin($ip);
 	$mask = Ones;
 	$isV6 = 1 unless isIPv4($ip);
@@ -845,7 +848,7 @@ sub _xnew($$;$$) {
 #
     my $try;
     $isV6 = 1 if	# check big bcd and IPv6 rfc1884
-	( $ip !~ /\D/ && 				  # ip is all decimal
+	( $ip !~ /[^0-9]/ && 				  # ip is all decimal
 	  (length($ip) > 3 || $ip > 255) &&		  # exclude a single digit in the range of zero to 255, could be funny IPv4
 	  ($try = bcd2bin($ip)) && ! isIPv4($try)) ||	  # precedence so $try is not corrupted
 	(index($ip,':') >= 0 && ($try = ipv6_aton($ip))); # fails if not an rfc1884 address
@@ -860,7 +863,7 @@ sub _xnew($$;$$) {
 
     $mask = lc $mask;
 
-    if ($mask !~ /\D/) {				# bcd or CIDR notation
+    if ($mask !~ /[^0-9]/) {				# bcd or CIDR notation
       my $isCIDR = length($mask) < 4 && $mask < 129;
       if ($isV6) {
 	if ($isCIDR) {
