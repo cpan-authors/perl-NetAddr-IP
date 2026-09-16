@@ -793,6 +793,7 @@ sub _xnew($$;$$) {
       if ($ip !~ /\D/) {		# binary number notation
 	$ip = bcd2bin($ip);
 	$mask = Ones;
+	$isV6 = 1 unless isIPv4($ip);
 	last;
       }
       elsif ($ip =~ m!^([a-z0-9.:-]+)(?:/|\s+)([a-z0-9.:-]+)$! ||
