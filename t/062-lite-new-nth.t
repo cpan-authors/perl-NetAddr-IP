@@ -38,4 +38,19 @@ subtest 'nth tests' => sub {
     is($num, 2, 'num() returns 2 for /31');
 }
 
+## issue #10 – non-integer indices must be rejected
+
+my $net = NetAddr::IP::Lite->new('10.0.0.0/24');
+
+is($net->nth(1.5), undef, 'nth(1.5) returns undef');
+is($net->nth(1.9), undef, 'nth(1.9) returns undef');
+is($net->nth(0.1), undef, 'nth(0.1) returns undef');
+is($net->nth("2.5"), undef, 'nth("2.5") returns undef');
+is($net->nth("abc"), undef, 'nth("abc") returns undef');
+is($net->nth(undef), undef, 'nth(undef) returns undef');
+is(defined $net->nth(0), 1, 'nth(0) is defined');
+is(defined $net->nth(1), 1, 'nth(1) is defined');
+is(defined $net->nth(-1), '', 'nth(-1) is undef');
+is(defined $net->nth(254), '', 'nth(254) is undef');
+
 done_testing;
