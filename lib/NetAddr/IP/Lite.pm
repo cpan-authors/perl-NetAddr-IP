@@ -1514,6 +1514,8 @@ sub nth ($$) {
   my $self    = shift;
   my $count   = shift;
 
+  return undef unless defined $count && $count =~ /^-?[0-9]+$/;
+
   my $slash31 = ! hasbits($self->{mask} ^ $_cidr127);
   if ($Old_nth) {
     return undef if $slash31 && $count != 1;
