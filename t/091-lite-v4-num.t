@@ -16,12 +16,12 @@ my %nets = (
 my $new = 1;
 
 subtest 'new numeric returns' => sub {
-    for my $a (keys %nets) {
-        my $nc = $nets{$a}->[1] - $new;
+    for my $key (keys %nets) {
+        my $nc = $nets{$key}->[1] - $new;
         $nc = 1 if $nc < 0;
-        $nc = 2 if $new && $nets{$a}->[0] == 31;
-        my $ip = NetAddr::IP::Lite->new($a, $nets{$a}->[0]);
-        cmp_ok($ip->num, '==', $nc, "$a num");
+        $nc = 2 if $new && $nets{$key}->[0] == 31;
+        my $ip = NetAddr::IP::Lite->new($key, $nets{$key}->[0]);
+        cmp_ok($ip->num, '==', $nc, "$key num");
     }
 };
 
@@ -29,12 +29,12 @@ import NetAddr::IP::Lite qw(:old_nth);
 $new = 0;
 
 subtest 'old numeric returns' => sub {
-    for my $a (keys %nets) {
-        my $nc = $nets{$a}->[1] - $new;
+    for my $key (keys %nets) {
+        my $nc = $nets{$key}->[1] - $new;
         $nc = 1 if $nc < 0;
-        $nc = 2 if $new && $nets{$a}->[0] == 31;
-        my $ip = NetAddr::IP::Lite->new($a, $nets{$a}->[0]);
-        cmp_ok($ip->num, '==', $nc, "$a num (old)");
+        $nc = 2 if $new && $nets{$key}->[0] == 31;
+        my $ip = NetAddr::IP::Lite->new($key, $nets{$key}->[0]);
+        cmp_ok($ip->num, '==', $nc, "$key num (old)");
     }
 };
 

@@ -13,10 +13,10 @@ my @addr = (
     [ 'dead:beef::1', 124, 127,  8 ],
 );
 
-for my $a (@addr) {
-    my $ip = NetAddr::IP->new($a->[0], $a->[1]);
-    my $r  = $ip->splitref($a->[2]);
-    is(@$r, $a->[3]);
+for my $row (@addr) {
+    my $ip = NetAddr::IP->new($row->[0], $row->[1]);
+    my $r  = $ip->splitref($row->[2]);
+    is(@$r, $row->[3]);
 }
 
 done_testing;
