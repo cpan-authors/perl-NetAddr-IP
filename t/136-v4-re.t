@@ -20,7 +20,7 @@ for my $input (@ips) {
     ok(lives { $rx = qr/$re/ }, 'Compilation of the resulting regular expression');
 
     for (my $ip = $a->network; $ip < $a->broadcast && $a->masklen != 32; $ip++) {
-        ok($a->addr =~ m/$rx/, "Match of $ip in $a");
+        ok($ip->addr =~ m/$rx/, "Match of $ip in $a");
     }
 
     ok($a->broadcast->addr =~ m/$rx/, "Match of broadcast of $a");
