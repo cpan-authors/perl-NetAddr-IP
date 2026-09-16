@@ -87,9 +87,12 @@ jobs:
           ${{ steps.with-recommends.outputs.flag }}
           --with-suggests
           --show-build-log-on-failure
-      - name: Run Tests
+      - name: Build and test the distribution
         if: success()
-        run: prove -lr --jobs 2 t
+        run: |
+          perl Makefile.PL
+          make
+          make test
   test_macos:
     runs-on: ${{ matrix.os }}
     strategy:
@@ -135,7 +138,11 @@ jobs:
           --with-suggests
           --with-test
           --mirror https://cpan.metacpan.org
-      - run: prove -lr t
+      - name: Build and test the distribution
+        run: |
+          perl Makefile.PL
+          make
+          make test
         env:
           AUTHOR_TESTING: 1
   test_windows:
@@ -172,6 +179,10 @@ jobs:
       - name: install deps using cpanm
         run: cpm install -g --cpanfile cpanfile --mirror https://cpan.metacpan.org
       - run: perl -V
-      - run: prove -lr t
+      - name: Build and test the distribution
+        run: |
+          perl Makefile.PL
+          gmake
+          gmake test
         env:
           AUTHOR_TESTING: 1
