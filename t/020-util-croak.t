@@ -118,4 +118,11 @@ like(dies { bcdn2bin('', 40) }, qr/Bad/, 'bcdn2bin dies on empty string');
 
 like(dies { bcdn2bin("\x12", 40) }, qr/Bad/, 'bcdn2bin dies on digit count larger than input');
 
+## bcdn2bin - over-long packed input reports its length in digits, like every other length croak
+
+like(dies { bcdn2bin("\x12" x 21, 40) }, qr/Bad.*length.*42.*should be 1 to 40 digits/,
+    'bcdn2bin reports 21 packed bytes as 42 digits');
+like(dies { bcdn2bin("\x12" x 41, 40) }, qr/Bad.*length.*82.*should be 1 to 40 digits/,
+    'bcdn2bin reports 41 packed bytes as 82 digits');
+
 done_testing;
