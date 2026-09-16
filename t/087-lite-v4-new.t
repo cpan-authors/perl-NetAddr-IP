@@ -92,4 +92,13 @@ my $small = NetAddr::IP::Lite->new(4294967295);
 is($small->version, 4, 'new(4294967295) is version 4');
 is($small->{isv6}, 0, 'new(4294967295) has isv6 false');
 
+## non-ASCII digits must be rejected, not treated as decimal numbers
+
+is(NetAddr::IP::Lite->new("\x{0663}\x{0663}\x{0663}\x{0663}"), undef,
+    'Arabic-Indic digits rejected');
+is(NetAddr::IP::Lite->new("\x{0969}\x{0969}\x{0969}\x{0969}"), undef,
+    'Devanagari digits rejected');
+is(NetAddr::IP::Lite->new("\x{FF13}\x{FF13}\x{FF13}\x{FF13}"), undef,
+    'Fullwidth digits rejected');
+
 done_testing;

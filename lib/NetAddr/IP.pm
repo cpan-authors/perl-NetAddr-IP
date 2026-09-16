@@ -169,7 +169,7 @@ $_netlimit = 2 ** 16;			# default
 
 sub netlimit($) {
   return undef unless $_[0];
-  return undef if $_[0] =~ /\D/;
+  return undef if $_[0] =~ /[^0-9]/;
   return undef if $_[0] < 16;
   return undef if $_[0] > 24;
   $_netlimit = 2 ** $_[0];
