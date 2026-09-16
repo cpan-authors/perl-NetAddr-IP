@@ -15,9 +15,9 @@ my @addr = qw(
 );
 
 subtest 'CIDR round-trip' => sub {
-    for my $a (@addr) {
-        my $ip = NetAddr::IP::Lite->new($a);
-        is($ip->cidr, $a, "CIDR for $a");
+    for my $addr (@addr) {
+        my $ip = NetAddr::IP::Lite->new($addr);
+        is($ip->cidr, $addr, "CIDR for $addr");
     }
 };
 

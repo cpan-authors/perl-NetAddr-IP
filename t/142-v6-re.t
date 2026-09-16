@@ -39,24 +39,24 @@ for my $m (@mask) {
 }
 
 subtest 're6 regex compilation and matching' => sub {
-    for my $a (@addrs) {
-        ok($a->isa('NetAddr::IP'), 'isa NetAddr::IP');
-        my $re = $a->re6;
+    for my $subnet (@addrs) {
+        ok($subnet->isa('NetAddr::IP'), 'isa NetAddr::IP');
+        my $re = $subnet->re6;
         my $rx;
 
         ok(lives { $rx = qr/$re/ }, 'Compilation of the resulting regular expression');
 
-        for (my $ip = $a->network;
-             $ip < $a->broadcast && $a->masklen != 128;
+        for (my $ip = $subnet->network;
+             $ip < $subnet->broadcast && $subnet->masklen != 128;
              $ip++)
         {
-            ok($ip->addr =~ m/$rx/, "Match of $ip in $a");
+            ok($ip->addr =~ m/$rx/, "Match of $ip in $subnet");
         }
 
-        ok($a->broadcast->addr =~ m/$rx/, "Match of broadcast of $a");
-        my $under = $a->network->copy;
+        ok($subnet->broadcast->addr =~ m/$rx/, "Match of broadcast of $subnet");
+        my $under = $subnet->network->copy;
         $under->{addr} = (addconst($under->{addr}, -1))[1];
-        my $over = $a->broadcast->copy;
+        my $over = $subnet->broadcast->copy;
         $over->{addr} = (addconst($over->{addr}, 1))[1];
         ok($under !~ m/$rx/, "$under does not match");
         ok($over !~ m/$rx/, "$over does not match");
