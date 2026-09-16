@@ -963,10 +963,9 @@ sub _xnew($$;$$) {
 	$ip = bcd2bin($ip);
 	last;
       }
-# these next three might be broken??? but they have been in the code a long time and no one has complained
-      elsif ($ip =~ /^0[xb]\d+$/ && $hasmask &&
-		(($tmp = eval "$ip") || 1) &&
-		$tmp >= 0 && $tmp < 256) {
+# binary and hex literals, 0b[01]+ or 0x[0-9a-f]+ ($ip is already lower case)
+      elsif ($ip =~ /^(?:0b[01]+|0x[0-9a-f]+)$/ && $hasmask &&
+		($tmp = oct($ip)) < 256) {
         $ip = sprintf("%d.0.0.0",$tmp);
       }
       elsif ($ip =~ /^-?\d+$/) {
@@ -974,8 +973,9 @@ sub _xnew($$;$$) {
 	$ip = pack('L3N',0,0,0,$ip);
 	last;
       }
-      elsif ($ip =~ /^-?0[xb]\d+$/) {
-	$ip = eval "$ip";
+      elsif ($ip =~ /^(-?)(0b[01]+|0x[0-9a-f]+)$/) {
+	$ip = oct($2);
+	$ip = 2 ** 32 - $ip if $1 && $ip;
 	$ip = pack('L3N',0,0,0,$ip);
 	last;
       }
