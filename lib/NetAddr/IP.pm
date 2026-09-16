@@ -1251,6 +1251,12 @@ C<@list_of_subnets> are found to be contained in said subnet.
 Subnets from C<@list_of_subnets> with a mask shorter than C<$masklen>
 are passed "as is" to the return list.
 
+Subnets from C<@list_of_subnets> with a mask exactly equal to
+C<$masklen> are passed "as is" to the return list, as their network
+address. They are not counted towards C<$number>, so an equal length
+subnet is returned exactly once whatever C<$number> is set to, and is
+never dropped for failing to reach it.
+
 Subnets from C<@list_of_subnets> with a mask longer than C<$masklen>
 will be counted (actually, the number of IP addresses is counted)
 towards C<$number>.
