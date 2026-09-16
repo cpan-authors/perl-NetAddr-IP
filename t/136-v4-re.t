@@ -4,9 +4,9 @@ use Test2::V1 -ipP;
 use Test2::Tools::Exception qw( lives );
 
 my @ips = qw(
-    10.11.12.13
-    10.11.12/24
-    10.11.0/27
+    198.51.100.13
+    198.51.100.0/24
+    198.51.100.0/27
 );
 
 use NetAddr::IP ();
