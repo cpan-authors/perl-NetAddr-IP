@@ -61,11 +61,11 @@ subtest 'isa_ok for scaled IPv6 addresses' => sub {
 subtest 'numeric values for IPv6 network/mask pairs' => sub {
     for my $p (@pairs)
     {
-        my $a = NetAddr::IP::Lite->new($p->[0]);
-        isa_ok($a, 'NetAddr::IP::Lite');
-        is($a->numeric, $p->[1], "$p->[0] Scalar numeric ok");
-        is(($a->numeric)[0], $p->[1], "$p->[0] Array numeric ok for network");
-        is(($a->numeric)[1], $p->[2], "$p->[0] Array numeric ok for mask");
+        my $ip = NetAddr::IP::Lite->new($p->[0]);
+        isa_ok($ip, 'NetAddr::IP::Lite');
+        is($ip->numeric, $p->[1], "$p->[0] Scalar numeric ok");
+        is(($ip->numeric)[0], $p->[1], "$p->[0] Array numeric ok for network");
+        is(($ip->numeric)[1], $p->[2], "$p->[0] Array numeric ok for mask");
     }
 };
 
