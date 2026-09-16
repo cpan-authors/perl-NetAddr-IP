@@ -12,18 +12,18 @@ my @ips = qw(
 use NetAddr::IP ();
 
 for my $input (@ips) {
-    my $a = NetAddr::IP->new($input);
-    isa_ok($a, 'NetAddr::IP');
-    my $re = $a->re;
+    my $subnet = NetAddr::IP->new($input);
+    isa_ok($subnet, 'NetAddr::IP');
+    my $re = $subnet->re;
     my $rx;
 
     ok(lives { $rx = qr/$re/ }, 'Compilation of the resulting regular expression');
 
-    for (my $ip = $a->network; $ip < $a->broadcast && $a->masklen != 32; $ip++) {
-        ok($ip->addr =~ m/$rx/, "Match of $ip in $a");
+    for (my $ip = $subnet->network; $ip < $subnet->broadcast && $subnet->masklen != 32; $ip++) {
+        ok($ip->addr =~ m/$rx/, "Match of $ip in $subnet");
     }
 
-    ok($a->broadcast->addr =~ m/$rx/, "Match of broadcast of $a");
+    ok($subnet->broadcast->addr =~ m/$rx/, "Match of broadcast of $subnet");
     ok(NetAddr::IP->new('default') !~ m/$rx/, '0/0 does not match');
 }
 
