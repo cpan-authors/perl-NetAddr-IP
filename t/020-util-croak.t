@@ -25,8 +25,11 @@ for my $input (
 	'1234:',
 	'a1234',
 	'&1234',
+	"\x{0663}\x{0663}\x{0663}\x{0663}",	# Arabic-Indic digits
+	"\x{0969}\x{0969}\x{0969}\x{0969}",	# Devanagari digits
+	"\x{FF13}\x{FF13}\x{FF13}\x{FF13}",	# Fullwidth digits
 ) {
-	like(dies { simple_pack($input) }, qr/Bad/, "simple_pack dies on '$input'");
+	like(dies { simple_pack($input) }, qr/Bad/, "simple_pack dies on non-ASCII digit input");
 }
 
 ## bcd2bin – bad character input
