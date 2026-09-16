@@ -81,4 +81,15 @@ is(NetAddr::IP::Lite->new("10.0.0.1 "), "10.0.0.1/32", 'trailing space accepted'
 is(NetAddr::IP::Lite->new("10.0.0.1/24\n"), "10.0.0.1/24", 'trailing newline with CIDR accepted');
 is(NetAddr::IP::Lite->new("  "), undef, 'whitespace-only returns undef');
 
+## issue #31 – large decimal integers should be recognized as IPv6
+
+my $big = NetAddr::IP::Lite->new(4294967296);
+is($big->version, 6, 'new(4294967296) is version 6');
+is("$big", '0:0:0:0:0:1:0:0/128', 'new(4294967296) stringifies as IPv6');
+is($big->{isv6}, 1, 'new(4294967296) has isv6 set');
+
+my $small = NetAddr::IP::Lite->new(4294967295);
+is($small->version, 4, 'new(4294967295) is version 4');
+is($small->{isv6}, 0, 'new(4294967295) has isv6 false');
+
 done_testing;
