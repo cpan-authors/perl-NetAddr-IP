@@ -50,7 +50,7 @@ subtest 're6 regex compilation and matching' => sub {
              $ip < $a->broadcast && $a->masklen != 128;
              $ip++)
         {
-            ok($a->addr =~ m/$rx/, "Match of $ip in $a");
+            ok($ip->addr =~ m/$rx/, "Match of $ip in $a");
         }
 
         ok($a->broadcast->addr =~ m/$rx/, "Match of broadcast of $a");
