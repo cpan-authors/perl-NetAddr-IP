@@ -14,11 +14,11 @@ my @addr = (
     [ '10.0.0.0', 31, 32, 2 ],
 );
 
-for my $a (@addr) {
-    my $ip = NetAddr::IP->new($a->[0], $a->[1]);
-    my $r  = $ip->splitref($a->[2]);
+for my $row (@addr) {
+    my $ip = NetAddr::IP->new($row->[0], $row->[1]);
+    my $r  = $ip->splitref($row->[2]);
 
-    is(scalar @$r, $a->[3]);
+    is(scalar @$r, $row->[3]);
 }
 
 done_testing;

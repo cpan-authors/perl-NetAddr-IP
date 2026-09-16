@@ -25,16 +25,16 @@ ok(NetAddr::IP::Lite->new('::')->contains(NetAddr::IP::Lite->new('::')),
 subtest 'contains and within pairs' => sub {
     for my $name (sort keys %yes_pairs) {
         my ($a_val, $b_val) = @{$yes_pairs{$name}};
-        my $a = NetAddr::IP::Lite->new($a_val);
-        my $b = NetAddr::IP::Lite->new($b_val);
+        my $net = NetAddr::IP::Lite->new($a_val);
+        my $host = NetAddr::IP::Lite->new($b_val);
 
-        isa_ok($a, ['NetAddr::IP::Lite'], "$a_val");
-        isa_ok($b, ['NetAddr::IP::Lite'], "$b_val");
+        isa_ok($net, ['NetAddr::IP::Lite'], "$a_val");
+        isa_ok($host, ['NetAddr::IP::Lite'], "$b_val");
 
-        ok($a->contains($b), "->contains $a_val, $b_val is true");
-        ok($b->within($a), "->within $b_val, $a_val is true");
-        ok(!$b->contains($a), "->contains $b_val, $a_val is false");
-        ok(!$a->within($b), "->within $a_val, $b_val is false");
+        ok($net->contains($host), "->contains $a_val, $b_val is true");
+        ok($host->within($net), "->within $b_val, $a_val is true");
+        ok(!$host->contains($net), "->contains $b_val, $a_val is false");
+        ok(!$net->within($host), "->within $a_val, $b_val is false");
     }
 };
 

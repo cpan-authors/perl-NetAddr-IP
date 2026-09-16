@@ -57,9 +57,9 @@ for my $invalid (qw(
     );
 }
 
-for my $a (@a) {
+for my $entry (@a) {
     for my $m (@m) {
-        my ($input,      $expected_addr) = %$a;
+        my ($input,      $expected_addr) = %$entry;
         my ($mask_input, $expected_mask) = %$m;
         my $ip = NetAddr::IP::Lite->new($input, $mask_input);
     SKIP: {

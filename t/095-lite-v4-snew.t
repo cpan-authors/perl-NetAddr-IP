@@ -23,10 +23,10 @@ my %w = (
     '10.10.10'      => [ '10.10.0.10',      '255.255.255.255' ],
 );
 
-for my $a (keys %w) {
-    my $ip = NetAddr::IP::Lite->new($a);
-    is($ip->addr, $w{$a}->[0], 'Matching ->addr()');
-    is($ip->mask, $w{$a}->[1], 'Matching ->mask()');
+for my $key (keys %w) {
+    my $ip = NetAddr::IP::Lite->new($key);
+    is($ip->addr, $w{$key}->[0], 'Matching ->addr()');
+    is($ip->mask, $w{$key}->[1], 'Matching ->mask()');
 }
 
 done_testing;

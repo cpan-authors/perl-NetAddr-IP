@@ -35,30 +35,30 @@ my @cmp = (
 );
 
 subtest 'greater than' => sub {
-    for my $a (@gt) {
-        my $a_ip = NetAddr::IP::Lite->new($a->[0]);
-        my $b_ip = NetAddr::IP::Lite->new($a->[1]);
+    for my $spec (@gt) {
+        my $a_ip = NetAddr::IP::Lite->new($spec->[0]);
+        my $b_ip = NetAddr::IP::Lite->new($spec->[1]);
 
         ok($a_ip > $b_ip, "$a_ip > $b_ip");
     }
 };
 
 subtest 'not greater than' => sub {
-    for my $a (@ngt) {
-        my $a_ip = NetAddr::IP::Lite->new($a->[0]);
-        my $b_ip = NetAddr::IP::Lite->new($a->[1]);
+    for my $spec (@ngt) {
+        my $a_ip = NetAddr::IP::Lite->new($spec->[0]);
+        my $b_ip = NetAddr::IP::Lite->new($spec->[1]);
 
         ok(!($a_ip > $b_ip), "$a_ip !> $b_ip");
     }
 };
 
 subtest 'comparison operators' => sub {
-    for my $a (@cmp) {
-        my $a_ip = NetAddr::IP::Lite->new($a->[0]);
-        my $b_ip = NetAddr::IP::Lite->new($a->[1]);
+    for my $spec (@cmp) {
+        my $a_ip = NetAddr::IP::Lite->new($spec->[0]);
+        my $b_ip = NetAddr::IP::Lite->new($spec->[1]);
 
-        is($a_ip <=> $b_ip, $a->[2], "$a_ip <=> $b_ip is $a->[2]");
-        is($a_ip cmp $b_ip, $a->[2], "$a_ip cmp $b_ip is $a->[2]");
+        is($a_ip <=> $b_ip, $spec->[2], "$a_ip <=> $b_ip is $spec->[2]");
+        is($a_ip cmp $b_ip, $spec->[2], "$a_ip cmp $b_ip is $spec->[2]");
     }
 };
 

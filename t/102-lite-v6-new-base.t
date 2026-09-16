@@ -30,15 +30,15 @@ my @addr = (
 );
 
 subtest 'basic v6 functionality' => sub {
-    for my $a (@addr) {
-        my $ip = NetAddr::IP::Lite->new($a->[0]);
-        (my $short = $a->[0]) =~ s,/\d+,,;
+    for my $entry (@addr) {
+        my $ip = NetAddr::IP::Lite->new($entry->[0]);
+        (my $short = $entry->[0]) =~ s,/\d+,,;
         isa_ok($ip, ['NetAddr::IP::Lite'], "$short ");
         is($ip->bits, 128, 'bits == 128');
         is($ip->version, 6, 'version == 6');
-        my $index = $a->[1];
-        if ($a->[3]) {
-            is(uc $ip->nth($index), $a->[2], "nth $short, $index");
+        my $index = $entry->[1];
+        if ($entry->[3]) {
+            is(uc $ip->nth($index), $entry->[2], "nth $short, $index");
         }
         else {
             ok(!$ip->nth($index), "nth $short, undef");
