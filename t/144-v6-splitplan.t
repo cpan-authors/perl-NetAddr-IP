@@ -1,6 +1,7 @@
 #!/usr/bin/env perl
 
 use Test2::V1 -ipP;
+use Test2::Tools::Exception qw( dies lives );
 
 use NetAddr::IP ();
 
@@ -57,8 +58,7 @@ subtest 'splitplan failing cases' => sub {
     ($plan, $masks) = $ip->_splitplan(47);
     ok(!$plan, 'failing because of 47 overrange');
 
-    ($plan, $masks) = $ip->_splitplan(65);
-    ok(!$plan, 'failing too many nets 65-48 = 2**17');
+    like(dies { $ip->_splitplan(65) }, qr/^netlimit exceeded/, 'netlimit exceeded for 65-48 = 2**17');
 
     ($plan, $masks) = $ip->_splitplan(49, 49, 49);
     ok(!$plan, 'failing because of 3 * 49 overrange');
@@ -78,11 +78,9 @@ subtest 'splitplan with netlimit' => sub {
     ($plan, $masks) = $ip->_splitplan(50);
     ok($plan, "plan of 4 50's");
 
-    ($plan, $masks) = $ip->_splitplan(50, 50, 50, 50, 51);
-    ok(!$plan, "fail plan of 4 50's + 51");
+    like(dies { $ip->_splitplan(50, 50, 50, 50, 51) }, qr/^netlimit exceeded/, "netlimit exceeded for plan of 4 50's + 51");
 
-    ($plan, $masks) = $ip->_splitplan(51);
-    ok(!$plan, "fail plan of 8 51's");
+    like(dies { $ip->_splitplan(51) }, qr/^netlimit exceeded/, "netlimit exceeded for plan of 8 51's");
 };
 
 done_testing;
