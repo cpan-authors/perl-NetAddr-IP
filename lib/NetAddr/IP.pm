@@ -1066,23 +1066,29 @@ sub _splitplan {
   my @plan;
   my $idx = 0;
   $denom = 2 ** $denom;
+  {
+    # pre-compute required plan size and croak if it exceeds netlimit
+    my $minw = $denom;
+    $minw = $nets{$_} < $minw ? $nets{$_} : $minw for keys %nets;
+    croak('netlimit exceeded') if int(($denom + $minw - 1) / $minw) > $_netlimit;
+  }
   PLAN:
   while ($denom > 0) {				# make a net plan
     my $nexmask = ($idx < $#bits) ? $bits[$idx] : $bits[$#bits];
     ++$idx;
     unless (($denom -= $nets{$nexmask}) < 0) {
-      return () if (push @plan, $nexmask) > $_netlimit;
+      croak('netlimit exceeded') if (push @plan, $nexmask) > $_netlimit;
       next;
     }
 # a fractional net is needed that is not in the mask list or the replicant
     $denom += $nets{$nexmask};			# restore mistake
   TRY:
-    foreach (sort { $a <=> $b } keys %nets) {
-      next TRY if $nexmask > $_;
+    foreach my $try_mask (sort { $a <=> $b } keys %nets) {
+      next TRY if $nexmask > $try_mask;
       do {
-	next TRY if $denom - $nets{$_} < 0;
-	return () if (push @plan, $_) > $_netlimit;
-	$denom -= $nets{$_};
+	next TRY if $denom - $nets{$try_mask} < 0;
+	croak('netlimit exceeded') if (push @plan, $try_mask) > $_netlimit;
+	$denom -= $nets{$try_mask};
       } while $denom;
     }
     die 'ERROR: miscalculated weights' if $denom;
