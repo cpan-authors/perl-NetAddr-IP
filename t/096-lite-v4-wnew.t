@@ -1,7 +1,7 @@
 #!/usr/bin/env perl
 
 use Test2::V1 -ipP;
-use Test2::Require::Internet ();
+use Test2::Require::Internet;
 
 use NetAddr::IP::Lite ();
 
