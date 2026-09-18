@@ -78,9 +78,14 @@ subtest 'splitplan with netlimit' => sub {
     ($plan, $masks) = $ip->_splitplan(50);
     ok($plan, "plan of 4 50's");
 
-    like(dies { $ip->_splitplan(50, 50, 50, 50, 51) }, qr/^netlimit exceeded/, "netlimit exceeded for plan of 4 50's + 51");
+    ($plan, $masks) = $ip->_splitplan(50, 50, 50, 50, 51);
+    ok(!$plan, "plan of 4 50's + 51 is overrange, not a netlimit failure");
 
     like(dies { $ip->_splitplan(51) }, qr/^netlimit exceeded/, "netlimit exceeded for plan of 8 51's");
+
+    ($plan, $masks) = $ip->_splitplan(49, 50, 51, 51);
+    ok($plan, "plan of 49, 50, 51, 51 fits netlimit 4 although 8 51's would not");
+    is(scalar @{$plan}, 4, 'that plan has 4 items');
 };
 
 done_testing;
