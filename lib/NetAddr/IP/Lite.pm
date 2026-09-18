@@ -19,6 +19,7 @@ use NetAddr::IP::InetBase qw(
 	fillIPv4
 );
 use NetAddr::IP::Util qw(
+	add128
 	addconst
 	sub128
 	ipv6to4
@@ -359,7 +360,7 @@ done by comparing
 
 =item B<Addition of a constant (C<+>)>
 
-Add a 32 bit signed constant to the address part of a NetAddr object.
+Add a signed integer constant to the address part of a NetAddr object.
 This operation changes the address part to point so many hosts above the
 current objects start address. For instance, this code:
 
@@ -372,9 +373,10 @@ back to the network address. This code:
 
 outputs 203.0.113.0/24.
 
-Returns the the unchanged object when the constant is missing or out of range.
-
-    2147483647 <= constant >= -2147483648
+Returns a copy of the object when the constant is missing or zero. The
+constant must be an integer with a magnitude below 2**64; anything else
+croaks. Values above 2**53 must be passed as integers (IV or UV), since a
+floating point value that large has no unit precision and is rejected.
 
 =cut
 
@@ -382,9 +384,13 @@ sub plus {
     my $ip	= shift;
     my $const	= shift;
 
-    return $ip unless $const &&
-		$const < 2147483648 &&
-		$const > -2147483649;
+    return $ip->copy unless $const;
+    # integer, unit precision (rejects floats above 2**53), below 2**64
+    croak 'constant must be an exact integer with magnitude below 2**64'
+	unless $const == int($const)
+		&& ($const > 0 ? $const - 1 != $const : $const + 1 != $const)
+		&& $const <= 18446744073709551615
+		&& $const >= -18446744073709551615;
 
     my $a = $ip->{addr};
     my $m = $ip->{mask};
@@ -392,9 +398,36 @@ sub plus {
     my $lo = $a & ~$m;
     my $hi = $a & $m;
 
-    my $new = ((addconst($lo,$const))[1] & ~$m) | $hi;
+    my $new;
+    if ($const < 2147483648 && $const > -2147483649) {
+	$new = (addconst($lo,$const))[1];
+    } else {
+	my $mag = _const2bin(abs($const));
+	$new = ($const > 0)
+		? (add128($lo,$mag))[1]
+		: (sub128($lo,$mag))[1];
+    }
+    $new = ($new & ~$m) | $hi;
 
     return _new($ip,$new,$m);
+}
+
+# 128 bit string for a non-negative integer constant below 2**64.
+# Bit operators give exact results on a 64 bit perl; the division
+# fallback is exact up to 2**53 on a 32 bit perl.
+sub _const2bin {
+    my $c = shift;
+    my($hi,$lo);
+    if ($c <= 4294967295) {
+	($hi,$lo) = (0,$c);
+    } elsif (~0 > 4294967295) {
+	$hi = $c >> 32;
+	$lo = $c & 4294967295;
+    } else {
+	$hi = int($c / 4294967296);
+	$lo = $c - $hi * 4294967296;
+    }
+    return pack('N4',0,0,$hi,$lo);
 }
 
 =item B<Subtraction of a constant (C<->)>

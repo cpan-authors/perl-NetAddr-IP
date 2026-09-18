@@ -279,7 +279,7 @@ done by comparing
 
 =item B<Addition of a constant (C<+>)>
 
-Add a 32 bit signed constant to the address part of a NetAddr object.
+Add a signed integer constant to the address part of a NetAddr object.
 This operation changes the address part to point so many hosts above the
 current objects start address. For instance, this code:
 
@@ -292,10 +292,10 @@ back to the network address. This code:
 
     outputs 203.0.113.0/24.
 
-Returns the the unchanged object when the constant is missing or out of
-range.
-
-    2147483647 <= constant >= -2147483648
+Returns a copy of the object when the constant is missing or zero. The
+constant must be an integer with a magnitude below 2**64; anything else
+croaks. Values above 2**53 must be passed as integers (IV or UV), since a
+floating point value that large has no unit precision and is rejected.
 
 =item B<Subtraction of a constant (C<->)>
 
