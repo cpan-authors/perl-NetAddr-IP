@@ -1,6 +1,7 @@
 #!/usr/bin/env perl
 
 use Test2::V1 -ipP;
+use Test2::Tools::Exception qw(dies lives);
 
 use NetAddr::IP::Lite ();
 
@@ -45,5 +46,9 @@ subtest 'loop tests' => sub {
         $ipx += 256;
     }
 };
+
+like(dies { 10 - $ip80 },
+    qr/cannot subtract.*from a constant/,
+    'constant minus object croaks');
 
 done_testing;
