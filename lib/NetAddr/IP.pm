@@ -1069,12 +1069,6 @@ sub _splitplan {
   my @plan;
   my $idx = 0;
   $denom = 2 ** $denom;
-  {
-    # pre-compute required plan size and croak if it exceeds netlimit
-    my $minw = $denom;
-    $minw = $nets{$_} < $minw ? $nets{$_} : $minw for keys %nets;
-    croak('netlimit exceeded') if int(($denom + $minw - 1) / $minw) > $_netlimit;
-  }
   PLAN:
   while ($denom > 0) {				# make a net plan
     my $nexmask = ($idx < $#bits) ? $bits[$idx] : $bits[$#bits];
