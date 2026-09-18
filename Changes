@@ -2,12 +2,57 @@ Revision history for Perl extension NetAddr::IP
 
 {{$NEXT}}
 
-    Fix coalesce to return results in deterministic address order GH#41
-    Consolidate sub-distributions into conventional Perl layout
-	Fix POD spelling mistakes
-	Swap shebang to /bin/false
-	Convert to Dist::Zilla
-	Convert unit tests to Test2
+    Preserve caller $@ and $SIG{__DIE__} on oversized decimal in new() (GH#59)
+
+    Prevent re() from matching addresses embedded in longer dotted strings (GH#35)
+
+    Reject cross-family and non-object arguments in within() and contains() (GH#28)
+
+    Remove faulty _splitplan pre-check that rejected valid short plans (GH#58)
+
+    Fix Compact merging v4 with v6 and mutating arguments (GH#15)
+
+    Fix compactref on subclasses (GH#16)
+
+    Reject bracket-enclosed IPv4 literals (GH#60)
+
+    Assert mode() matches Makefile.PL build choice (GH#61)
+
+    Reject empty string mask in constructor (GH#3)
+
+    Croak on swapped subtraction constant - object (GH#24)
+
+    Fix plus() alias for zero and silent no-op outside 32-bit range (GH#25)
+
+    Detect overflow in decimal integers, return undef in constructor (GH#19)
+
+    Support [addr]/mask URI bracket notation (GH#2)
+
+    Fix _splitplan netlimit pre-check and croak (GH#17)
+
+    Reject non-integer indices in nth() (GH#10)
+
+    Fix 0b/0x literal parsing using oct() instead of string eval (GH#4)
+
+    Reject non-ASCII digits in IP parsing
+
+    Fix version() for large decimal integers (GH#31)
+
+    Document coalesce() behavior for equal-length masks (GH#45)
+
+    Fix bcdn2bin length check to report digits not bytes (GH#53)
+
+    Make Socket6 an optional recommends, not hard prereq (GH#54)
+
+    Modernize POD: indirect object syntax and RFC 5737 doc addresses
+
+    Bump perl requirement to 5.014 and fix Test2 imports (GH#57)
+
+    Remove Perl 5.10 and 5.12 from CI matrix (GH#57)
+
+    Consolidate sub-distributions into conventional Dist::Zilla layout
+
+    Convert all test files to Test2::V1
 
 4.079 Fri Mar 25 16:18:26 PDT 2016
     correct non-suppression of leading zeros in certain instances of
@@ -59,7 +104,7 @@ Revision history for Perl extension NetAddr::IP
 	Lite v1.51, add new6FFFF, RFC4291 compliant ipv4->ipV6 new
 
 4.069 Sat May 25 15:10:45 PDT 2013
-	IN Lite.pm v1.50, add =encoding UTF-8
+	In Lite.pm v1.50, add =encoding UTF-8
 	In Util.pm v1.50
 	changed Makefile.PL to check for config.h when building for XS
 	with 'gcc', try building with 'cc', and check again.
