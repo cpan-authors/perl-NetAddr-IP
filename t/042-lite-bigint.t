@@ -91,7 +91,12 @@ sub run {
         $mbi     = $mbi + 1;
         like($mbi, qr/(?:0|$exp[$ptr + 4])/);
         $ip = NetAddr::IP::Lite->new($mbi);
-        is($ip, $exp[$ptr + 3]);
+        if ($exp[$ptr+1] eq '340282366920938463463374607431768211455') {
+            is($ip, undef);			# 2**128 - 1 plus one does not fit in 128 bits
+        }
+        else {
+            is($ip, $exp[$ptr + 3]);
+        }
         pass('ignore mask for these tests');
         $ptr += 3;
     }

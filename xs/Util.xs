@@ -276,8 +276,9 @@ _countbits(void *ap)
 }
 
 /*	multiply 128 bit number x 2
+	returns non-zero if the result overflowed 128 bits
  */
-void
+int
 _128x2(u_int32_t * ap)
 {
   register u_int32_t * p = ap +3, tmpc, carry = 0;
@@ -289,39 +290,46 @@ _128x2(u_int32_t * ap)
       *p += 1;
     carry = tmpc;
   } while (p-- > ap);
+  return carry ? 1 : 0;		/*	bit shifted out the top	*/
 /* printf("2o %04X:%04X:%04X:%04X\n",*(ap),*(ap +1),*(ap +2),*(ap +3)); */
 }
 
 /*	multiply 128 bit number X10
+	returns non-zero if the result overflowed 128 bits
  */
-void
+int
 _128x10(n128 * ap128, n128 * tp128)
 {
   register u_int32_t * ap = ap128->u, * tp = tp128->u;
-  _128x2(ap);					/*	multiply by two		*/
+  int overflow;
+  overflow = _128x2(ap);					/*	multiply by two		*/
   *tp		= *ap;				/*	temp save		*/
   *(tp +1)	= *(ap +1);
   *(tp +2)	= *(ap +2);
   *(tp +3)	= *(ap +3);
-  _128x2(ap);
-  _128x2(ap);					/*	times 8			*/
-  (void) adder128(ap,tp,ap128,0);
+  overflow |= _128x2(ap);
+  overflow |= _128x2(ap);					/*	times 8			*/
+  overflow |= adder128(ap,tp,ap128,0);
+  return overflow;
 /* printf("x  %04X:%04X:%04X:%04X\n",*((u_int32_t *)ap),*((u_int32_t *)ap +1),*((u_int32_t *)ap +2),*((u_int32_t *)ap +3)); */
 }
 
 /*	multiply 128 bit number by 10, add bcd digit to result
+	returns non-zero if the result overflowed 128 bits
  */
-void
+int
 _128x10plusbcd(n128 * ap128, n128 * tp128, char digit)
 {
   register u_int32_t * ap = ap128->u, * tp = tp128->u;
+  int overflow;
 /* printf("digit %X + %X = ",digit,*(ap +3)); */
-  _128x10(ap128,tp128);
+  overflow = _128x10(ap128,tp128);
   *tp		= 0;
   *(tp + 1)	= 0;
   *(tp + 2)	= 0;
   *(tp + 3)	= digit;
-  (void) adder128(ap,tp,ap128,0);
+  overflow |= adder128(ap,tp,ap128,0);
+  return overflow;
 /* printf("%d %04X:%04X:%04X:%04X\n",digit,*((u_int32_t *)ap),*((u_int32_t *)ap +1),*((u_int32_t *)ap +2),*((u_int32_t *)ap +3)); */
 }
 
@@ -356,11 +364,12 @@ _simple_pack(void * str,int len, BCD * n)
 }
 
 /*	convert a packed bcd string to 128 bit binary string
+	returns non-zero if the value does not fit in 128 bits
  */
-void
+int
 _bcdn2bin(void * bp, n128 * ap128, n128 * cp128, int len)
 {
-  int i = 0, hasdigits = 0, lo;
+  int i = 0, hasdigits = 0, lo, overflow = 0;
   register unsigned char c, * cp = (unsigned char *)bp;
 
   memset(ap128->c, 0, 16);
@@ -371,7 +380,7 @@ _bcdn2bin(void * bp, n128 * ap128, n128 * cp128, int len)
     for (lo=0;lo<2;lo+=1) {
       if (lo) {
 	if (hasdigits)			/*	suppress leading zero multiplications	*/
-	  _128x10plusbcd(ap128, cp128, c & 0xF);
+	  overflow |= _128x10plusbcd(ap128, cp128, c & 0xF);
 	else {
 	  if (c & 0xF) {
 	    hasdigits = 1;
@@ -381,7 +390,7 @@ _bcdn2bin(void * bp, n128 * ap128, n128 * cp128, int len)
       }
       else {
 	if (hasdigits)			/*	suppress leading zero multiplications	*/
-	  _128x10plusbcd(ap128, cp128, c >> 4);
+	  overflow |= _128x10plusbcd(ap128, cp128, c >> 4);
 	else {
 	  if (c & 0XF0) {
 	    hasdigits = 1;
@@ -394,6 +403,7 @@ _bcdn2bin(void * bp, n128 * ap128, n128 * cp128, int len)
 	break;
     }
   }
+  return overflow;
 }
 
 /*	convert a 128 bit number string to a bcd number string
@@ -700,7 +710,9 @@ PPCODE:
 	    croak("Bad digit count for %s%s, is %d, should be 1 to %d",
 		"NetAddr::IP::Util::",subname,digits,(int)(len << 1));
 	  }
-	  _bcdn2bin(cp,&a128,&c128,digits);
+	  subname = is_bcdn2bin;
+	  if (_bcdn2bin(cp,&a128,&c128,digits))
+	    goto Overflow;
 	  netswap(a128.u,4);
 	  XPUSHs(sv_2mortal(newSVpvn((char *)a128.c,16)));
 	  XSRETURN(1);
@@ -711,7 +723,12 @@ PPCODE:
 		"NetAddr::IP::Util::",subname,badc);
 	}
 	if (ix == 0) {
-	  _bcdn2bin((void *)n.bcd,&a128,&c128,40);
+	  subname = is_bcd2bin;
+	  if (_bcdn2bin((void *)n.bcd,&a128,&c128,40)) {
+    Overflow:
+	    croak("Bad arg value for %s%s, number is larger than 128 bits",
+		"NetAddr::IP::Util::",subname);
+	  }
 	  netswap(a128.u,4);
 	  XPUSHs(sv_2mortal(newSVpvn((char *)a128.c,16)));
 	}
