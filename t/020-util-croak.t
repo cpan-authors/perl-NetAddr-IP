@@ -128,4 +128,16 @@ like(dies { bcdn2bin("\x12" x 21, 40) }, qr/Bad.*length.*42.*should be 1 to 40 d
 like(dies { bcdn2bin("\x12" x 41, 40) }, qr/Bad.*length.*82.*should be 1 to 40 digits/,
     'bcdn2bin reports 41 packed bytes as 82 digits');
 
+## bcd2bin – values that do not fit in 128 bits must die
+
+like(dies { bcd2bin('340282366920938463463374607431768211456') },
+    qr/larger than 128 bits/, 'bcd2bin dies on 2**128');
+like(dies { bcd2bin('9' x 40) },
+    qr/larger than 128 bits/, 'bcd2bin dies on 40 nines');
+
+## bcdn2bin – values that do not fit in 128 bits must die
+
+like(dies { bcdn2bin(simple_pack('340282366920938463463374607431768211456'), 40) },
+    qr/larger than 128 bits/, 'bcdn2bin dies on 2**128');
+
 done_testing;
