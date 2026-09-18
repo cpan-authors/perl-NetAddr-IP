@@ -712,7 +712,8 @@ PPCODE:
 	  }
 	  subname = is_bcdn2bin;
 	  if (_bcdn2bin(cp,&a128,&c128,digits))
-	    goto Overflow;
+	    croak("Bad arg value for %s%s, number is larger than 128 bits",
+		"NetAddr::IP::Util::",subname);
 	  netswap(a128.u,4);
 	  XPUSHs(sv_2mortal(newSVpvn((char *)a128.c,16)));
 	  XSRETURN(1);
@@ -724,11 +725,9 @@ PPCODE:
 	}
 	if (ix == 0) {
 	  subname = is_bcd2bin;
-	  if (_bcdn2bin((void *)n.bcd,&a128,&c128,40)) {
-    Overflow:
+	  if (_bcdn2bin((void *)n.bcd,&a128,&c128,40))
 	    croak("Bad arg value for %s%s, number is larger than 128 bits",
 		"NetAddr::IP::Util::",subname);
-	  }
 	  netswap(a128.u,4);
 	  XPUSHs(sv_2mortal(newSVpvn((char *)a128.c,16)));
 	}
