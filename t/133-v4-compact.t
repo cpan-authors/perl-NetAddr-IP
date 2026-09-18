@@ -67,13 +67,43 @@ subtest '->compactref([])' => sub {
     ok(compact_ips2_check($ips2[0]->compactref([@ips2[1 .. $#ips2]])), '->compactref([]) ips2');
 };
 
+subtest 'subclass compactref' => sub {
+    @My::Sub::ISA = ('NetAddr::IP');
+
+    my $base = NetAddr::IP->new('192.0.2.0/29');
+    my $sub  = bless { %$base }, 'My::Sub';
+    isa_ok($sub, 'NetAddr::IP');
+
+    my $r = $sub->compactref([ NetAddr::IP->new('203.0.113.0/24') ]);
+    is(ref $r, 'ARRAY', 'subclass compactref returns an array ref');
+    is(scalar @$r, 2, 'subclass compactref returns invocant plus the one list item');
+    is(join(' ', map { "$_" } @$r), '192.0.2.0/29 203.0.113.0/24',
+      'subclass compactref result is the invocant and the list item');
+
+    # the same call on the parent class, for comparison
+    my $p = $base->compactref([ NetAddr::IP->new('203.0.113.0/24') ]);
+    is(join(' ', map { "$_" } @$p), join(' ', map { "$_" } @$r),
+      'subclass compactref agrees with NetAddr::IP compactref');
+
+    # non-adjacent nets given through the list are kept separate
+    $r = $sub->compactref([ NetAddr::IP->new('198.51.100.0/29') ]);
+    is(scalar @$r, 2, 'subclass compactref keeps non-adjacent nets separate');
+    is(join(' ', map { "$_" } @$r), '192.0.2.0/29 198.51.100.0/29',
+      'subclass compactref non-adjacent nets are unchanged');
+
+    # ->compact(@list) on a subclass
+    my @c = $sub->compact(NetAddr::IP->new('198.51.100.0/29'));
+    is(join(' ', map { "$_" } @c), '192.0.2.0/29 198.51.100.0/29',
+      'subclass compact keeps non-adjacent nets separate');
+};
+
 subtest 'duplicate IP' => sub {
     my @dup;
-    for my $ip (qw(1.1.1.1 1.1.1.1 1.1.1.1 1.1.1.1)) {
+    for my $ip (qw(198.51.100.111 198.51.100.111 198.51.100.111 198.51.100.111)) {
         push @dup, NetAddr::IP->new($ip);
     }
     my @c = NetAddr::IP::compact(@dup);
-    ok(@c == 1 && $c[0]->cidr() eq '1.1.1.1/32', 'duplicate IP compacts to single /32');
+    ok(@c == 1 && $c[0]->cidr() eq '198.51.100.111/32', 'duplicate IP compacts to single /32');
 };
 
 done_testing;
