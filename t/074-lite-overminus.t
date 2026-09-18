@@ -18,10 +18,10 @@ my $ipmin = $ip80 - $maxminus;
 ok(($rv = sprintf('%s', $ipmin)) eq '0:0:0:0:0:1:0:0/80', "ip80 maxminus\x{FFFD} eq $rv eq 0:0:0:0:0:1:0:0/80");
 
 my $over = $maxplus + 1;
-ok(($rv = sprintf('%s', $ip80 + $over)) eq '0:0:0:0:0:1:8000:0/80', "ip80 +overange unchanged, $rv");
+ok(($rv = sprintf('%s', $ip80 + $over)) eq '0:0:0:0:0:2:0:0/80', "ip80 + 2**31 eq $rv eq 0:0:0:0:0:2:0:0/80");
 
 $over = $maxminus + 1;
-ok(($rv = sprintf('%s', $ip80 - $over)) eq '0:0:0:0:0:1:8000:0/80', "ip80 -overange unchanged, $rv");
+ok(($rv = sprintf('%s', $ip80 - $over)) eq '0:0:0:0:0:0:FFFF:FFFF/80', "ip80 - (2**31+1) eq $rv eq 0:0:0:0:0:0:FFFF:FFFF/80");
 
 ok(($rv = sprintf('%s', $ip80)) eq '0:0:0:0:0:1:8000:0/80', "ip80 eq $rv eq 0:0:0:0:0:1:8000:0/80");
 ok(($rv = sprintf('%s', $ip7f)) eq '0:0:0:0:0:1:7FFF:FFFF/80', "ip7f eq $rv eq 0:0:0:0:0:1:7FFF:FFFF/80");
