@@ -106,4 +106,44 @@ subtest 'duplicate IP' => sub {
     ok(@c == 1 && $c[0]->cidr() eq '198.51.100.111/32', 'duplicate IP compacts to single /32');
 };
 
+subtest 'mixed v4/v6' => sub {
+    # Compact must not merge IPv4 with IPv6 objects
+    my $v4 = NetAddr::IP->new('192.0.2.0/24');
+    my $v6 = NetAddr::IP->new6('2001:db8::100/120');
+
+    my @r = Compact($v4, $v6);
+    is(scalar @r, 2, 'Compact keeps a v4 and a v6 net apart');
+    is("$r[0]", '192.0.2.0/24', 'Compact mixed: v4 net is returned unchanged');
+    is("$r[1]", '2001:DB8:0:0:0:0:0:100/120', 'Compact mixed: v6 net is returned unchanged');
+    ok(!$r[0]->{isv6}, 'Compact mixed: first result is v4');
+    ok($r[1]->{isv6}, 'Compact mixed: second result is v6');
+
+    # each family merges within itself
+    @r = Compact(
+        NetAddr::IP->new('2001:db8::/33'),
+        NetAddr::IP->new('192.0.2.0/25'),
+        NetAddr::IP->new('2001:db8:8000::/33'),
+        NetAddr::IP->new('192.0.2.128/25'),
+    );
+    is(scalar @r, 2, 'Compact mixed: each family merges within itself');
+    is("$r[0]", '192.0.2.0/24', 'Compact mixed: v4 halves merge to /24');
+    is("$r[1]", '2001:DB8:0:0:0:0:0:0/32', 'Compact mixed: v6 halves merge to /32');
+};
+
+subtest 'argument preservation' => sub {
+    # input objects are left alone
+    my @in = (NetAddr::IP->new('192.0.2.0/25'), NetAddr::IP->new('192.0.2.128/25'));
+    my @out = Compact(@in);
+    is("$in[0]", '192.0.2.0/25', 'Compact does not modify its first argument');
+    is("$in[1]", '192.0.2.128/25', 'Compact does not modify its second argument');
+    is(scalar @out, 1, 'Compact merges the two adjacent /25 nets');
+    is("$out[0]", '192.0.2.0/24', 'Compact merged result is 192.0.2.0/24');
+
+    # compactref does not modify the invocant
+    my $me = NetAddr::IP->new('192.0.2.33/27');
+    my $ref = $me->compactref([ NetAddr::IP->new('192.0.2.65/27') ]);
+    is("$me", '192.0.2.33/27', 'compactref does not modify the invocant');
+    is(scalar @$ref, 2, 'compactref returns the two non-adjacent nets');
+};
+
 done_testing;
