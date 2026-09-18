@@ -18,6 +18,15 @@ subtest 'bad addresses' => sub {
     }
 };
 
+subtest 'oversized decimal leaves the caller error state alone' => sub {
+    eval { die "caller error\n" };
+    my $hits = 0;
+    local $SIG{__DIE__} = sub { $hits++ };
+    ok(!NetAddr::IP::Lite->new('340282366920938463463374607431768211456'), '2**128 returns undef');
+    is($@, "caller error\n", 'caller $@ is preserved');
+    is($hits, 0, 'caller $SIG{__DIE__} is not invoked');
+};
+
 subtest 'bad masks' => sub {
     my %bad = (
 	# empty / whitespace, non-numeric, out-of-range CIDR for IPv4

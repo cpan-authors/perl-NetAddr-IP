@@ -792,8 +792,8 @@ sub _no_octal {
 # croak to undef here.
 #
 sub _bcd2bin_or_undef {
-  my $rv = eval { bcd2bin($_[0]) };
-  return $rv;
+  local ($@, $SIG{__DIE__});		# keep the croak out of the caller's error state
+  return scalar eval { bcd2bin($_[0]) };
 }
 
 sub _xnew($$;$$) {
