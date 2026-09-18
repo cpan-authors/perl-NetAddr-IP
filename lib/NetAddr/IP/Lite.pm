@@ -1421,9 +1421,17 @@ The complement of C<-E<gt>contains()>. Returns true when C<$me> is
 completely contained within C<$other>, undef if C<$me> and C<$other>
 are not both C<NetAddr::IP::Lite> objects.
 
+An IPv4 object and an IPv6 object never contain each other, even when
+the IPv6 address is the IPv4 address in C<::a.b.c.d> or C<::ffff:a.b.c.d>
+form. Compare C<-E<gt>addr()> of the two to see why: they print as
+different addresses.
+
 =cut
 
 sub within ($$) {
+  return undef unless UNIVERSAL::isa($_[0],__PACKAGE__)
+		   && UNIVERSAL::isa($_[1],__PACKAGE__);
+  return 0 if ($_[0]->{isv6} ? 1 : 0) != ($_[1]->{isv6} ? 1 : 0);	# different address families
   return 1 unless hasbits($_[1]->{mask});	# 0x0 contains everything
   my $netme	= $_[0]->{addr} & $_[0]->{mask};
   my $brdme	= $_[0]->{addr} | ~ $_[0]->{mask};
