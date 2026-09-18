@@ -845,9 +845,13 @@ sub _xnew($$;$$) {
 	$isV6 = 1 unless isIPv4($ip);
 	last;
       }
-      elsif ($ip =~ m!^([a-z0-9.:-]+)(?:/|\s+)([a-z0-9.:-]+)$! ||
-	     $ip =~ m!^[\[]{1}([a-z0-9.:-]+)(?:/|\s+)([a-z0-9.:-]+)[\]]{1}$! ||
+      elsif ($ip =~ m!^([a-z0-9.:-]+)(?:/|\s+)([a-z0-9.:-]+)$!) {
+	$ip	= $1;
+	$mask	= $2;
+      }
+      elsif ($ip =~ m!^\[([a-z0-9.:-]+)(?:/|\s+)([a-z0-9.:-]+)\]$! ||
 	     $ip =~ m!^\[([a-z0-9.:-]+)\](?:/|\s+)([a-z0-9.:-]+)$!) {
+	return undef if index($1, ':') < 0;	# RFC 3986 brackets enclose an IPv6 literal only
 	$ip	= $1;
 	$mask	= $2;
       } elsif (grep($ip eq $_,(qw(default any broadcast loopback unspecified)))) {
