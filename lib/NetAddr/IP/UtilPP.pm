@@ -624,7 +624,7 @@ sub _bcd2bin {
     $digit[3] = $bcd;
     $overflow |= _sa128(\@hbits,\@digit,0);
   }
-  die 'Bad bcd number value for '.__PACKAGE__.':bcd2bin, number is larger than 128 bits'
+  die 'Bad arg value for '.__PACKAGE__.'::bcd2bin, number is larger than 128 bits'
 	if $overflow;
   return pack('N4',@hbits);
 }
