@@ -1196,7 +1196,7 @@ sub compactref($) {
     my $unr  = [];
     my $args = $_[0];
 
-    if (ref $_[0] eq __PACKAGE__ and ref $_[1] eq 'ARRAY') {
+    if (UNIVERSAL::isa($_[0], __PACKAGE__) and ref $_[1] eq 'ARRAY') {
       # ->compactref(\@list)
       #
       $unr = [$_[0], @{$_[1]}]; # keeping structures intact
