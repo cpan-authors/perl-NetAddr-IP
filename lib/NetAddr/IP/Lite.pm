@@ -748,6 +748,15 @@ sub _no_octal {
   $rv;
 }
 
+# bcd2bin croaks on input that is too long, has a non-digit, or is larger
+# than 128 bits. The constructor returns undef for bad input, so map the
+# croak to undef here.
+#
+sub _bcd2bin_or_undef {
+  my $rv = eval { bcd2bin($_[0]) };
+  return $rv;
+}
+
 sub _xnew($$;$$) {
   my $noctal	= 0;
   my $isV6	= shift;
@@ -792,7 +801,7 @@ sub _xnew($$;$$) {
     unless (@_) {
 #      if ($ip =~ m!^(.+)/(.+)$!) {
       if ($ip !~ /[^0-9]/) {		# binary number notation
-	$ip = bcd2bin($ip);
+	return undef unless defined ($ip = _bcd2bin_or_undef($ip));
 	$mask = Ones;
 	$isV6 = 1 unless isIPv4($ip);
 	last;
@@ -849,7 +858,7 @@ sub _xnew($$;$$) {
     $isV6 = 1 if	# check big bcd and IPv6 rfc1884
 	( $ip !~ /[^0-9]/ && 				  # ip is all decimal
 	  (length($ip) > 3 || $ip > 255) &&		  # exclude a single digit in the range of zero to 255, could be funny IPv4
-	  ($try = bcd2bin($ip)) && ! isIPv4($try)) ||	  # precedence so $try is not corrupted
+	  ($try = _bcd2bin_or_undef($ip)) && ! isIPv4($try)) ||	  # precedence so $try is not corrupted
 	(index($ip,':') >= 0 && ($try = ipv6_aton($ip))); # fails if not an rfc1884 address
 
 # if either of the above conditions is true, $try contains the NetAddr 128 bit address
@@ -896,7 +905,7 @@ sub _xnew($$;$$) {
 	    $mask = Ones();
 	  }
 	} else {
-	  $mask = bcd2bin($mask);
+	  return undef unless defined ($mask = _bcd2bin_or_undef($mask));
 	}
       }
       elsif ($isCIDR && $mask < 33) {		# is V4
@@ -909,11 +918,11 @@ sub _xnew($$;$$) {
 	elsif ( $mask == 32) {
 	  $mask = Ones;
 	} else {
-	  $mask = bcd2bin($mask);
+	  return undef unless defined ($mask = _bcd2bin_or_undef($mask));
 	  $mask |= $_v4mask;			# v4 always
 	}
       } else {					# also V4
-	$mask = bcd2bin($mask);
+	return undef unless defined ($mask = _bcd2bin_or_undef($mask));
 	$mask |= $_v4mask;
       }
       if ($try) {				# is a big number
@@ -959,7 +968,7 @@ sub _xnew($$;$$) {
       }
 #      elsif ($ip =~ /^[0-9]+$/ && !$hasmask) {	# a big integer
       elsif ($ip =~ /^[0-9]+$/ ) {	# a big integer
-	$ip = bcd2bin($ip);
+	return undef unless defined ($ip = _bcd2bin_or_undef($ip));
 	last;
       }
 # binary and hex literals, 0b[01]+ or 0x[0-9a-f]+ ($ip is already lower case)

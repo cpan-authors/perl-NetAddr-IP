@@ -161,24 +161,28 @@ sub hasbits {
 =cut
 
 # multiply x 2
+# returns true if the result overflowed 128 bits
 #
 sub _128x2 {
   my $inp = shift;
+  my $carry = ($$inp[0] & 0x80000000) ? 1 : 0;	# bit shifted out the top
   $$inp[0] = ($$inp[0] << 1 & 0xffffffff) + (($$inp[1] & 0x80000000) ? 1:0);
   $$inp[1] = ($$inp[1] << 1 & 0xffffffff) + (($$inp[2] & 0x80000000) ? 1:0);
   $$inp[2] = ($$inp[2] << 1 & 0xffffffff) + (($$inp[3] & 0x80000000) ? 1:0);
   $$inp[3] = $$inp[3] << 1 & 0xffffffff;
+  $carry;
 }
 
-# multiply x 10
+# multiply x 10, returns true if the result overflowed 128 bits
 #
 sub _128x10 {
   my($a128p) = @_;
-  _128x2($a128p);		# x2
+  my $overflow = _128x2($a128p);	# x2
   my @x2 = @$a128p;		# save the x2 value
-  _128x2($a128p);
-  _128x2($a128p);		# x8
-  _sa128($a128p,\@x2,0);	# add for x10
+  $overflow |= _128x2($a128p);
+  $overflow |= _128x2($a128p);	# x8
+  $overflow |= _sa128($a128p,\@x2,0);	# add for x10
+  $overflow;
 }
 
 sub shiftleft {
@@ -607,6 +611,7 @@ sub _bcd2bin {
   my @hbits = (0,0,0,0);
   my @digit = (0,0,0,0);
   my $found = 0;
+  my $overflow = 0;
   foreach(@bcd) {
     my $bcd = $_ & 0xf;		# just the nibble
     unless ($found) {
@@ -615,10 +620,12 @@ sub _bcd2bin {
       $hbits[3] = $bcd;		# set the first digit, no x10 necessary
       next;
     }
-    _128x10(\@hbits);
+    $overflow |= _128x10(\@hbits);
     $digit[3] = $bcd;
-    _sa128(\@hbits,\@digit,0);
+    $overflow |= _sa128(\@hbits,\@digit,0);
   }
+  die 'Bad bcd number value for '.__PACKAGE__.':bcd2bin, number is larger than 128 bits'
+	if $overflow;
   return pack('N4',@hbits);
 }
 
