@@ -905,9 +905,12 @@ are not both C<NetAddr::IP> objects.
 =item C<$me-E<gt>within($other)>
 
 The complement of C<-E<gt>contains()>. Returns true when C<$me> is
-completely contained within C<$other>.
+completely contained within C<$other>, undef if C<$me> and C<$other>
+are not both C<NetAddr::IP> objects.
 
-Note that C<$me> and C<$other> must be C<NetAddr::IP> objects.
+An IPv4 object and an IPv6 object never contain each other, even when
+the IPv6 address is the IPv4 address in C<::a.b.c.d> or C<::ffff:a.b.c.d>
+form.
 
 =item C-E<gt>is_rfc1918()>
 
