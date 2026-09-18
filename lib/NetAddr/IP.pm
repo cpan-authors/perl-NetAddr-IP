@@ -301,6 +301,9 @@ floating point value that large has no unit precision and is rejected.
 
 The complement of the addition of a constant.
 
+The object must be the left operand. Subtracting an object from a
+constant (C<10 - $ip>) has no meaning and croaks.
+
 =item B<Difference (C<->)>
 
 Returns the difference between the address parts of two NetAddr::IP
