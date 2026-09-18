@@ -412,9 +412,9 @@ sub import
 }
 
 sub compact {
-    return (ref $_[0] eq 'ARRAY')
-	? compactref($_[0])	# Compact(\@list)
-	: @{compactref(\@_)};	# Compact(@list)  or ->compact(@list)
+    # a reference in, a reference out; a list in, a list out
+    return compactref($_[0]) if ref $_[0] eq 'ARRAY';
+    return @{compactref(\@_)};
 }
 
 *Compact = \&compact;
@@ -1174,9 +1174,13 @@ returned.
 
 Note that C<$me> and all C<$addr>'s must be C<NetAddr::IP> objects.
 
+IPv4 and IPv6 objects are compacted separately. The returned list holds the
+IPv4 results followed by the IPv6 results. The objects passed in are not
+modified; the results are new objects.
+
 =item C<$me-E<gt>compactref(\@list)>
 
-=item C<$compacted_object_list = Compact(\@list)>
+=item C<$list_ref = Compact(\@list)>
 
 As usual, a faster version of C<-E<gt>compact()> that returns a
 reference to a list. Note that this method takes a reference to a list
@@ -1187,35 +1191,34 @@ Note that C<$me> must be a C<NetAddr::IP> object.
 =cut
 
 sub compactref($) {
-#  my @r = sort { NetAddr::IP::Lite::comp_addr_mask($a,$b) } @{$_[0]}		# use overload 'cmp' function
-#	or return [];
-#  return [] unless @r;
+    my ($first, $rest) = @_;
 
-  my @r;
-  {
-    my $unr  = [];
-    my $args = $_[0];
-
-    if (UNIVERSAL::isa($_[0], __PACKAGE__) and ref $_[1] eq 'ARRAY') {
-      # ->compactref(\@list)
-      #
-      $unr = [$_[0], @{$_[1]}]; # keeping structures intact
-    }
-    else {
-      # Compact(@list) or ->compact(@list) or Compact(\@list)
-      #
-      $unr = $args;
-    }
-
+    # a method call compacts the invocant with the list, a function call the list alone
+    my $unr = UNIVERSAL::isa($first, __PACKAGE__) && ref $rest eq 'ARRAY'
+        ? [$first, @$rest]
+        : $first;
     return [] unless @$unr;
 
-    foreach(@$unr) {
-      $_->{addr} = $_->network->{addr};
+  # work on network copies so the caller's objects are not modified, and
+  # keep the address families apart: a 128 bit mask comparison would
+  # otherwise merge 0.0.0.0/24 with ::100/120
+  my(@v4,@v6);
+  foreach my $entry (@$unr) {
+    my $net = $entry->network;
+    if ($net->{isv6}) {
+      push @v6, $net;
+    } else {
+      push @v4, $net;
     }
-
-    @r = sort @$unr;
   }
+  return [ _merge_sorted(sort @v4), _merge_sorted(sort @v6) ];
+}
 
+# input:	sorted list of network objects of one address family
+# returns:	the compacted list
+#
+sub _merge_sorted {
+  my @r = @_;
   my $changed;
   do {
     $changed = 0;
@@ -1243,7 +1246,7 @@ sub compactref($) {
       }
     }
   } while $changed;
-  return \@r;
+  return @r;
 }
 
 
