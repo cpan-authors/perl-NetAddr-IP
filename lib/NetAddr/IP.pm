@@ -1482,8 +1482,10 @@ sub re ($)
 	}
     }
 
-    ### no digit before nor after (look-behind, look-ahead)
-    return "(?:(?<![0-9])$r[0]\\.$r[1]\\.$r[2]\\.$r[3](?![0-9]))";
+    ### no digit, and no digit followed by a dot, before nor after
+    ### (look-behind, look-ahead) so that an address embedded in a longer
+    ### dotted string such as 1.10.1.2.3 does not match
+    return "(?:(?<![0-9])(?<![0-9]\\.)$r[0]\\.$r[1]\\.$r[2]\\.$r[3](?![0-9])(?!\\.[0-9]))";
 }
 
 =item C<-E<gt>re6()>
