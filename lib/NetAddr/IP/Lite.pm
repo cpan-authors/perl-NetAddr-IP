@@ -879,6 +879,8 @@ sub _xnew($$;$$) {
       }
 # extract mask
       $mask = $_[0];
+      # an empty mask argument is a caller error, not a /0
+      return undef if $mask eq '';
     }
 ###
 ### process mask
