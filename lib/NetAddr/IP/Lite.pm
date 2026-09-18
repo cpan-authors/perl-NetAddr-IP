@@ -434,6 +434,9 @@ sub _const2bin {
 
 The complement of the addition of a constant.
 
+The object must be the left operand. Subtracting an object from a
+constant (C<10 - $ip>) has no meaning and croaks.
+
 =item B<Difference (C<->)>
 
 Returns the difference between the address parts of two NetAddr::IP::Lite
@@ -448,6 +451,9 @@ my $_smsk = pack('L3N',0xffffffff,0xffffffff,0xffffffff,0x80000000);
 sub minus {
     my $ip	= shift;
     my $arg	= shift;
+    my $swapped	= shift;
+    croak 'cannot subtract a NetAddr::IP::Lite object from a constant'
+	if $swapped;
     unless (ref $arg) {
 	return plus($ip, -$arg);
     }
