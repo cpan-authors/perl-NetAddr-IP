@@ -5,6 +5,7 @@
 use strict;
 
 package NetAddr::IP::InetBase;
+# VERSION
 
 #use diagnostics;
 #use lib qw(blib lib);

@@ -6,6 +6,7 @@ use strict;
 use warnings;
 
 package NetAddr::IP;
+# VERSION
 
 #use diagnostics;
 use Carp;
