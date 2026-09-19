@@ -1024,7 +1024,9 @@ sub _xnew($$;$$) {
         $ip = sprintf("%d.0.0.0",$tmp);
       }
       elsif ($ip =~ /^-?[0-9]+$/) {
-	$ip += 2 ** 32 if $ip < 0;
+	# negative values in -1 .. -(2**32) are accepted as 2's complement
+	$ip += 2 ** 32;
+	return undef if $ip < 0;		# would wrap in pack
 	$ip = pack('L3N',0,0,0,$ip);
 	last;
       }
