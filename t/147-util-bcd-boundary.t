@@ -9,7 +9,6 @@ use NetAddr::IP::Util qw(
 	bcdn2txt
 	bin2bcd
 	bin2bcdn
-	mode
 	simple_pack
 );
 
@@ -20,8 +19,6 @@ my $BIN_BYTES        = 16;	# bytes of a 128 bit address
 my $two127_39 = '170141183460469231731687303715884105728';	# 2**127, 39 digits
 my $two127_40 = '0' . $two127_39;				# same, padded to the max width
 my $two127_bin = "\x80" . ("\0" x 15);
-
-my $is_xs = mode() =~ /XS/;
 
 sub hex_of { return unpack 'H*', shift }
 
@@ -120,13 +117,11 @@ subtest 'bcdn2bin checks the caller digit count against the buffer it was given'
 
 # ------------------------------------------------------------ croak names
 
-SKIP: {
-    skip 'croak names are XS specific, pure-Perl naming is issue 23', 4 unless $is_xs;
-
+subtest 'croak names name the correct function' => sub {
     like(dies { bcdn2bin('1' x ($BCD_DIGITS_MAX + 1)) }, qr/bcdn2bin/, 'the over-long bcdn2bin croak names bcdn2bin');
     like(dies { bcdn2bin('1' x ($BCD_PACKED_BYTES + 1)) }, qr/bcdn2bin/, 'the over-long packed bcdn2bin croak names bcdn2bin');
-    like(dies { bcd2bin('1' x ($BCD_DIGITS_MAX + 1)) }, qr/bcd2bin/, 'the over-long bcd2bin croak names bcdn2bin');
+    like(dies { bcd2bin('1' x ($BCD_DIGITS_MAX + 1)) }, qr/bcd2bin/, 'the over-long bcd2bin croak names bcd2bin');
     like(dies { simple_pack('1' x ($BCD_DIGITS_MAX + 1)) }, qr/simple_pack/, 'the over-long simple_pack croak names simple_pack');
-}
+};
 
 done_testing;
