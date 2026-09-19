@@ -115,6 +115,13 @@ is(NetAddr::IP::Lite->new("-0b12"), undef, 'invalid negative binary -0b12 reject
 is(NetAddr::IP::Lite->new("0b12", 8), undef, 'invalid binary 0b12 with mask rejected');
 is(NetAddr::IP::Lite->new("0xzz"), undef, 'invalid hex 0xzz rejected');
 
+## negative integers
+
+is(NetAddr::IP::Lite->new("-1"), "255.255.255.255/32", 'negative -1 parses as 2s complement');
+is(NetAddr::IP::Lite->new("-4294967296"), "0.0.0.0/32", 'negative -4294967296 parses as 0.0.0.0');
+is(NetAddr::IP::Lite->new("-4294967297"), undef, 'negative below -(2**32) rejected');
+is(NetAddr::IP::Lite->new("-5000000000"), undef, 'negative -5000000000 rejected');
+
 ## non-ASCII digits must not match in IPv4 parsing contexts
 
 is(NetAddr::IP::Lite->new("\x{0663}0.0.1"), undef, 'Arabic-Indic in dotted quad rejected');
