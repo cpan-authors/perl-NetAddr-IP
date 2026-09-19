@@ -9,6 +9,11 @@ package NetAddr::IP::Util;
 #use lib qw(blib/lib);
 
 use vars qw(@EXPORT_OK @ISA %EXPORT_TAGS $Mode);
+
+require DynaLoader;
+require Exporter;
+
+@ISA = qw(Exporter DynaLoader);
 use AutoLoader qw(AUTOLOAD);
 use NetAddr::IP::Util_IS;
 use NetAddr::IP::InetBase qw(
@@ -18,11 +23,6 @@ use NetAddr::IP::InetBase qw(
 
 *NetAddr::IP::Util::upper = \&NetAddr::IP::InetBase::upper;
 *NetAddr::IP::Util::lower = \&NetAddr::IP::InetBase::lower;
-
-require DynaLoader;
-require Exporter;
-
-@ISA = qw(Exporter DynaLoader);
 
 @EXPORT_OK = qw(
 	inet_aton
@@ -127,17 +127,19 @@ require Exporter;
 	)],
 );
 
+my $xs_ok;
 if (NetAddr::IP::Util_IS->not_pure) {
+  my $xs_err;
   eval {		## attempt to load 'C' version of utilities
-	bootstrap NetAddr::IP::Util $NetAddr::IP::Util::VERSION;
+	__PACKAGE__->bootstrap;
   };
+  $xs_err = $@;
+  $xs_ok  = ! $xs_err;
+  warn "XS bootstrap failed with: $xs_err\n" if $xs_err;
 }
-if (NetAddr::IP::Util_IS->pure || $@) {	## load the pure perl version if 'C' lib missing
+if (NetAddr::IP::Util_IS->pure || ! $xs_ok) {	## load the pure perl version if 'C' lib missing
   require NetAddr::IP::UtilPP;
   import NetAddr::IP::UtilPP qw( :all );
-#  require Socket;
-#  import Socket qw(inet_ntoa);
-#  *yinet_aton = \&Socket::inet_aton;
   $Mode = 'Pure Perl';
 }
 else {
