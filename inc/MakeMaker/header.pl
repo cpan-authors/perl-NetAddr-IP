@@ -160,6 +160,7 @@ close F;
 our @mm_args;
 if ($useXS) {
     @mm_args = (
+        NAME   => 'NetAddr::IP::Util',
         XS     => { 'xs/Util.xs' => 'lib/NetAddr/IP/Util.c' },
         C      => ['lib/NetAddr/IP/Util.c'],
         OBJECT => 'lib/NetAddr/IP/Util.o',
