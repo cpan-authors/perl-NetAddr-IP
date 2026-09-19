@@ -588,7 +588,8 @@ To accept addresses in that format, invoke the module as in
 
   use NetAddr::IP ':aton'
 
-If called with no arguments, 'default' is assumed.
+If called with no arguments, 'default' is assumed. An explicit undef
+argument returns undef.
 
 If called with an empty string as the argument, returns 'undef'
 
@@ -630,7 +631,8 @@ may be disabled with:
 
 	use NetAddr::IP::Lite ':nofqdn';
 
-If called with no arguments, 'default' is assumed.
+If called with no arguments, 'default' is assumed. An explicit undef
+argument returns undef.
 
 If called with an empty string as the argument, returns 'undef'
 
