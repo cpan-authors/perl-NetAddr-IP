@@ -88,4 +88,34 @@ subtest 'splitplan with netlimit' => sub {
     is(scalar @{$plan}, 4, 'that plan has 4 items');
 };
 
+subtest 'invalid masks return no plan' => sub {
+    my ($plan, $masks);
+
+    ($plan, $masks) = $ip->_splitplan(-24);
+    ok(!$plan, '_splitplan(-24) returns no plan');
+
+    ($plan, $masks) = $ip->_splitplan('d');
+    ok(!$plan, '_splitplan(d) returns no plan');
+
+    ($plan, $masks) = $ip->_splitplan('dd');
+    ok(!$plan, '_splitplan(dd) returns no plan');
+};
+
+subtest 'invalid masks die on split' => sub {
+    my @s;
+
+    @s = eval { $ip->split(-24) };
+    like($@, qr/^netmask error/, 'split(-24) dies with netmask error');
+    is(scalar @s, 0, 'split(-24) returns nothing');
+
+    @s = eval { $ip->split(28, -30) };
+    like($@, qr/^netmask error/, 'split(28, -30) dies with netmask error');
+
+    @s = eval { $ip->split('d') };
+    like($@, qr/^netmask error/, 'split(d) dies with netmask error');
+
+    @s = eval { $ip->split('dd') };
+    like($@, qr/^netmask error/, 'split(dd) dies with netmask error');
+};
+
 done_testing;
