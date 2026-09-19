@@ -1030,28 +1030,25 @@ sub _splitplan {
   my $denom = 0;
 
   my($x,$maddr);
-  foreach(@bits) {
-    if (ref $_) {	# is a NetAddr::IP
-      $x = $_->{isv6} ? $_->{addr} : $_->{addr} | V4mask;
+  foreach my $mask(@bits) {
+    if (ref $mask) {	# is a NetAddr::IP
+      $x = $mask->{isv6} ? $mask->{addr} : $mask->{addr} | V4mask;
       ($x,$maddr) = notcontiguous($x);
       return () if $x;	# spurious bits
-      $_ = $isV6 ? $maddr : $maddr - 96;
+      $mask = $isV6 ? $maddr : $maddr - 96;
     }
-    elsif ( $_ =~ /^d+$/ ) {		# is a negative number of the form -nnnn
-	;
-    }
-    elsif ($_ = NetAddr::IP->new($addr,$_,$isV6)) { # will be undefined if bad mask and will fall into oops!
-      $_ = $_->masklen();
+    elsif ($mask = NetAddr::IP->new($addr,$mask,$isV6)) { # will be undefined if bad mask and will fall into oops!
+      $mask = $mask->masklen();
     }
     else {
       return ();	# oops!
     }
-    $dif = $_ - $basem;			# for normalization
+    $dif = $mask - $basem;			# for normalization
     return () if $dif < 0;		# overange nets not allowed
     return (\@bits,undef) unless ($dif || $#bits);	# return if original net = mask alone
     $denom = $dif if $dif > $denom;
-    next if exists $nets{$_};
-    $nets{$_} = $_ - $basem;		# for normalization
+    next if exists $nets{$mask};
+    $nets{$mask} = $mask - $basem;		# for normalization
   }
 
 # $denom is the normalization denominator, since these are all exponents
