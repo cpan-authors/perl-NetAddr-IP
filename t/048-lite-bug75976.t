@@ -7,7 +7,7 @@ use NetAddr::IP::Lite ();
 my $ud = undef;
 my @bugtest = (
 	0	=> '0.0.0.0/32', '0:0:0:0:0:0:0:0/128',
-	$ud	=> '0.0.0.0/0',  '0:0:0:0:0:0:0:0/0',
+	$ud	=> 'undef',      'undef',
 	""	=> 'undef',      'undef',
 );
 

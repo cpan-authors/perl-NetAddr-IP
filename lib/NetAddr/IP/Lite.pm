@@ -625,7 +625,8 @@ To accept addresses in that format, invoke the module as in
 
 ###### USE new_from_aton instead ##########################
 
-If called with no arguments, 'default' is assumed.
+If called with no arguments, 'default' is assumed. An explicit undef
+argument returns undef.
 
 If called with an empty string as the argument, returns 'undef'
 
@@ -671,7 +672,8 @@ may be disabled with:
 
 	use NetAddr::IP::Lite ':nofqdn';
 
-If called with no arguments, 'default' is assumed.
+If called with no arguments, 'default' is assumed. An explicit undef
+argument returns undef.
 
 If called with and empty string as the argument, 'undef' is returned;
 
@@ -807,16 +809,14 @@ sub _xnew($$;$$) {
   }
   my $proto	= shift;
   my $class	= ref $proto || $proto || __PACKAGE__;
-  my $ip	= shift;
+  my $ip	= @_ ? shift : 'default';	# no argument at all means default
 
   if ($ip && $noctal && $ip !~ m|(?:[^\s0123456789/. -])|) {		# octal suppression required if not an IPv4 address
     $ip = _no_octal($ip);
   }
 
-# fix for bug #75976
-  return undef if defined $ip && $ip eq '';
-
-  $ip = 'default' unless defined $ip;
+# fix for bug #75976, and an explicit undef is a missing value, not a route
+  return undef unless defined $ip && $ip ne '';
   $ip = _retMBIstring($ip)		# treat as big bcd string
 	if ref $ip && ref $ip eq 'Math::BigInt';	# can /CIDR notation
   my $hasmask = 1;
