@@ -31,6 +31,7 @@ use NetAddr::IP::Util qw(
 	bcd2bin
 	mask4to6
 	ipv4to6
+	isAnyIPv4
 	naip_gethostbyname
 	havegethostbyname2
 );
@@ -1479,16 +1480,31 @@ Returns true when C<$me> is a local network address.
 
 	i.e.	ipV4	127.0.0.0 - 127.255.255.255
   or		ipV6	=== ::1
+  or		ipV6	::127.0.0.0 - ::127.255.255.255
+  or		ipV6	::ffff:127.0.0.0 - ::ffff:127.255.255.255
+
+An IPv4 loopback address held in an IPv6 object (from C<new6>, or an
+IPv4 mapped address) is local, the same as its IPv4 form.
 
 =cut
 
 my $_lclhost6	= NetAddr::IP::Lite->new('::1');
 my $_lclnet	= NetAddr::IP::Lite->new('127/8');
+my $_lclnetn	= $_lclnet->{addr};
+my $_lclnetb	= $_lclnetn | ~ $_lclnet->{mask};
 
 sub is_local ($) {
-  return ($_[0]->{isv6})
-	? $_[0] == $_lclhost6
-	: $_[0]->within($_lclnet);
+  my $self = $_[0];
+  my $addr = $self->{addr};
+  if ($self->{isv6}) {
+    return 1 if $self == $_lclhost6;
+    return 0 unless isAnyIPv4($addr);	# ::a.b.c.d or ::ffff:a.b.c.d
+    $addr &= ~ $_ipv4FFFF;		# drop the mapped prefix
+  }
+  my $netme = $addr & $self->{mask};
+  my $brdme = $addr | ~ $self->{mask};
+  return (sub128($netme,$_lclnetn) && sub128($_lclnetb,$brdme))
+	? 1 : 0;
 }
 
 =item C<-E<gt>first()>
