@@ -5,6 +5,7 @@
 use strict;
 
 package NetAddr::IP::Lite;
+# VERSION
 
 use Carp;
 #use diagnostics;
