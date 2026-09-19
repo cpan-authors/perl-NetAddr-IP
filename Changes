@@ -2,6 +2,16 @@ Revision history for Perl extension NetAddr::IP
 
 {{$NEXT}}
 
+    new(undef) returns undef instead of the default route (GH#29)
+
+    Fix is_local for IPv4 loopback held in IPv6 objects (GH#27)
+
+    Fix pure-Perl _bcdcheck error messages (GH#23)
+
+    Remove dead branch in _splitplan, use named loop variable (GH#18)
+
+    Add BCD boundary input test suite (GH#51)
+
     Preserve caller $@ and $SIG{__DIE__} on oversized decimal in new() (GH#59)
 
     Prevent re() from matching addresses embedded in longer dotted strings (GH#35)
