@@ -5,6 +5,7 @@
 use strict;
 
 package NetAddr::IP::UtilPP;
+# VERSION
 #use diagnostics;
 #use lib qw(blib lib);
 
