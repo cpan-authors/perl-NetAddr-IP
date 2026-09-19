@@ -644,9 +644,9 @@ sub _bcdcheck {
   my($bcd) = @_;;
   my $sub = (caller(1))[3];
   my $len = length($bcd);
-  die "Bad bcd number length $_ ".__PACKAGE__.":simple_pack, should be 1 to 40 digits"
+  die "Bad bcd number length $len for $sub, should be 1 to 40 digits"
 	if $len > 40 || $len < 1;
-  die "Bad character in decimal input string '$1' for ".__PACKAGE__.":simple_pack"
+  die "Bad character in decimal input string '$1' for $sub"
 	if $bcd =~ /([^0-9])/;
 }
 
