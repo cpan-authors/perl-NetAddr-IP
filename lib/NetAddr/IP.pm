@@ -1433,6 +1433,14 @@ sub re ($)
 Returns a Perl regular expression that will match an IP address within
 the given subnet. Always returns an ipV6 regex.
 
+Both C<-E<gt>re> and C<-E<gt>re6> return a non-capturing group, so that
+embedding either one in a larger pattern does not change the numbering of
+the caller's own capture groups. Wrap the result yourself if you want the
+matched text:
+
+  my $re = $ip->re6;
+  if ($text =~ /addr=($re)\\s/) { print "matched $1\\n" }
+
 =cut
 
 sub re6($) {
@@ -1511,7 +1519,7 @@ sub re6($) {
     }
     push @grp, $grp;
   } while @dig > 0;
-  return '('. join(':',@grp) .')';
+  return '(?:'. join(':',@grp) .')';
 }
 
 sub mod_version {
