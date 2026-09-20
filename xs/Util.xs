@@ -62,7 +62,7 @@ const char * is_maskanyto6 = "maskanyto6", * is_ipanyto6 = "ipanyto6";
 
 typedef struct bcdstuff
 {		/*	character array of 40 bytes			*/
-  char		txt[21];	/*	20 bytes + string terminator	*/
+  char		txt[41];	/*	40 digits + string terminator	*/
   u_int32_t	bcd[5];		/*	20 bytes, 40 digits		*/
 } BCD;
 
