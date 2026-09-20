@@ -1371,7 +1371,7 @@ if the address in not in ipV4 space.
 
 sub re ($)
 {
-    return &re6 unless isIPv4($_[0]->{addr});
+    return &re6 if $_[0]->{isv6} || !isIPv4($_[0]->{addr});
     my $self = shift->network;	# Insure a "zero" host part
     my ($addr, $mlen) = ($self->addr, $self->masklen);
     my @o = split('\.', $addr, 4);
