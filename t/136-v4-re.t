@@ -92,4 +92,15 @@ subtest 're handles mask length 0, 31 and 32' => sub {
     unlike('203.0.113.4.5', $rx32, 'slash 32 regex is not found inside five octet string');
 };
 
+subtest 're() returns a non-capturing group' => sub {
+    my $re = NetAddr::IP->new('192.0.2.0/24')->re;
+    like($re, qr/^\(\?:/, 're() starts with (?:');
+    my $rx = qr/$re/;
+    ok('192.0.2.1' =~ /^($re)$/, 'single capture group works');
+    is($1, '192.0.2.1', 'captured address is correct');
+    ok('192.0.2.1 port=80' =~ /^($re)\s+port=(\d+)$/, 'two caller groups with re');
+    is($1, '192.0.2.1', 'first group captures address');
+    is($2, '80', 'second group captures port');
+};
+
 done_testing;
