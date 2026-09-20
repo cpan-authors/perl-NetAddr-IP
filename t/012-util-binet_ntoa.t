@@ -1,6 +1,7 @@
 #!/usr/bin/env perl
 
 use Test2::V1 -ipP;
+use Test2::Plugin::NoWarnings;
 use Test2::Tools::Exception qw( dies );
 
 use NetAddr::IP::InetBase qw( AF_INET6 inet_pton ipv6_ntoa );

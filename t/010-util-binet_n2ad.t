@@ -1,6 +1,7 @@
 #!/usr/bin/env perl
 
 use Test2::V1 -ipP;
+use Test2::Plugin::NoWarnings;
 
 use NetAddr::IP::InetBase qw( inet_any2n inet_n2ad );
 
