@@ -406,8 +406,9 @@ sub import
     }
     if (grep { $_ eq ':rfc3021' } @_)
     {
-	$rfc3021 = 1;
-        @_ = grep { $_ ne ':rfc3021' } @_;
+	warnings::warnif('deprecated',
+	    ':rfc3021 is deprecated and no longer needed; hostenum now returns two hosts for /31 and /127 unconditionally');
+	@_ = grep { $_ ne ':rfc3021' } @_;
     }
     NetAddr::IP->export_to_level(1, @_);
 }
@@ -426,8 +427,9 @@ sub Coalesce {
 
 sub hostenumref($) {
   my $r = _splitref(0,$_[0]);
-  unless ((notcontiguous($_[0]->{mask}))[1] == 128 ||
-	  ($rfc3021 && $_[0]->masklen == 31) ) {
+# a /32 or /128 is one host, a /31 or /127 is two (RFC 3021), matching
+# first, last, nth and num in NetAddr::IP::Lite
+  unless ((notcontiguous($_[0]->{mask}))[1] >= 127) {
     splice(@$r, 0, 1);
     splice(@$r, scalar @$r - 1, 1);
   }
@@ -1147,14 +1149,13 @@ sub hostenum ($) {
 
 Faster version of C<-E<gt>hostenum()>, returning a reference to a list.
 
-NOTE: hostenum and hostenumref report zero (0) useable hosts in a /31
-network. This is the behavior expected prior to RFC 3021. To report 2
-useable hosts for use in point-to-point networks, use B<:rfc3021> tag.
+NOTE: hostenum and hostenumref report two (2) useable hosts in a /31 or
+/127 point-to-point network (RFC 3021), the same as C<first>, C<last>,
+C<nth> and C<num>. Versions before 4.080 reported zero hosts unless the
+B<:rfc3021> tag was imported. The tag is now deprecated and emits a
+warning if imported; it will be removed in a future version.
 
-	use NetAddr::IP qw(:rfc3021);
-
-This will cause hostenum and hostenumref to return two (2) useable hosts in
-a /31 network.
+	use NetAddr::IP qw(:rfc3021);	# deprecated, no longer needed
 
 =item C<$me-E<gt>compact($addr1, $addr2, ...)>
 
