@@ -5,6 +5,7 @@
 # without caring about the order of its arguments. -lem
 
 use Test2::V1 -ipP;
+use Test2::Plugin::NoWarnings;
 
 use NetAddr::IP qw( Compact );
 

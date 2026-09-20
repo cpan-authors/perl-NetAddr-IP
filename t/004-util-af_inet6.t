@@ -1,6 +1,7 @@
 #!/usr/bin/env perl
 
 use Test2::V1 -ipP;
+use Test2::Plugin::NoWarnings;
 use Config;
 
 use NetAddr::IP::InetBase qw( AF_INET AF_INET6 fake_AF_INET6 );
