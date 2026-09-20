@@ -1,6 +1,7 @@
 #!/usr/bin/env perl
 
 use Test2::V1 -ipP;
+use Test2::Plugin::NoWarnings;
 
 use NetAddr::IP::Util qw( bcdn2txt bin2bcd bin2bcdn ipv6_aton );
 
