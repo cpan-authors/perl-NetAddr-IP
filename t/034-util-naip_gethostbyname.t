@@ -2,7 +2,9 @@
 
 use Test2::V1 -ipP;
 use Test2::Plugin::NoWarnings;
+use Test2::Require::Internet;
 
+use NetAddr::IP ();
 use NetAddr::IP::Util qw(
     havegethostbyname2
     inet_ntoa
@@ -31,6 +33,18 @@ else {
             || eval { ipv6_n2x($got) };
     }
     ok(!$got, 'naip_gethostbyname returns undef when gethostbyname2 unavailable');
+}
+
+# GH#32: new6() must prefer AAAA over A when both exist
+SKIP: {
+    skip 'gethostbyname2 not available', 1
+        unless havegethostbyname2();
+
+    my $dual = NetAddr::IP->new6('google-public-dns-a.google.com');
+    skip 'DNS resolution unavailable', 1
+        unless defined $dual;
+
+    is($dual->version, 6, 'new6(dual-stack hostname) returns IPv6');
 }
 
 done_testing;
