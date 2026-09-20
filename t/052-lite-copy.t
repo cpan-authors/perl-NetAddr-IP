@@ -1,6 +1,7 @@
 #!/usr/bin/env perl
 
 use Test2::V1 -ipP;
+use Test2::Plugin::NoWarnings;
 
 use NetAddr::IP::Lite 0.10 qw( Ones );
 *Ones = \&NetAddr::IP::Lite::Ones;

@@ -1,6 +1,7 @@
 #!/usr/bin/env perl
 
 use Test2::V1 -ipP;
+use Test2::Plugin::NoWarnings;
 use Test2::Tools::Exception qw( dies );
 
 use NetAddr::IP::Util qw( inet_aton ipv4to6 ipv6_n2d mask4to6 );

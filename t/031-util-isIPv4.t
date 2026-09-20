@@ -1,6 +1,7 @@
 #!/usr/bin/env perl
 
 use Test2::V1 -ipP;
+use Test2::Plugin::NoWarnings;
 
 use NetAddr::IP::Util qw( ipv6_aton ipv6_n2x isAnyIPv4 isIPv4 isNewIPv4 );
 

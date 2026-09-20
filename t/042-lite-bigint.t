@@ -1,6 +1,7 @@
 #!/usr/bin/env perl
 
 use Test2::V1 -ipP;
+use Test2::Plugin::NoWarnings;
 
 plan skip_all => 'Math::BigInt not found'
     unless eval { require Math::BigInt };
