@@ -1,14 +1,12 @@
 #!/usr/bin/env perl
 
 use Test2::V1 -ipP;
+use Test2::Tools::Warnings qw(no_warnings);
 
 use NetAddr::IP::Lite ();
 
 my $binword;
-{
-    local $SIG{__WARN__} = sub {};
-    $binword = eval "0b11111111111111110000000000000000";
-}
+my $wn = no_warnings { $binword = eval "0b11111111111111110000000000000000" };
 if ($@) {
     $binword = 0xffff0000;
     note(
