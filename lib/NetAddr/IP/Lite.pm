@@ -1351,7 +1351,7 @@ sub _bi_fake {
 # v1.70 and up  CALC::_new takes a scalar, returns and array, MBI returns a hash ref
 
 sub _loadMBI {						# load Math::BigInt on demand
-  if (eval {$no_mbi_emu && require Math::BigInt}) {	# any version should work, three known
+  if (eval { local $SIG{__DIE__}; $no_mbi_emu && require Math::BigInt}) {	# any version should work, three known
     import Math::BigInt;
     $biloaded = \&Math::BigInt::new;
     $bi2strng = \&_bi_stfy;
