@@ -1087,6 +1087,11 @@ sub _xnew($$;$$) {
 	return undef if hasbits($ip & $tmp);
 	last;
       }
+# check for resolvable IPv6 hosts first when an IPv6 object was requested
+      elsif ($isV6 && ! $NoFQDN && $ip !~ /[^a-zA-Z0-9\._-]/ && havegethostbyname2() && ($tmp = naip_gethostbyname($ip))) {
+	$ip = $tmp;
+	last;
+      }
 # check for resolvable IPv4 hosts
       elsif (! $NoFQDN && $ip !~ /[^a-zA-Z0-9\._-]/ && ($tmp = gethostbyname(fillIPv4($ip))) && $tmp ne $_v4zero && $tmp ne $_zero ) {
 	$ip = ipv4to6($tmp);
