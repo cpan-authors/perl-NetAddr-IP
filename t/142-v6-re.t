@@ -65,4 +65,15 @@ subtest 're6 regex compilation and matching' => sub {
     }
 };
 
+subtest 're6() returns a non-capturing group' => sub {
+    my $re = NetAddr::IP->new('2001:db8::/32')->re6;
+    like($re, qr/^\(\?:/, 're6() starts with (?:');
+    my $rx = qr/$re/;
+    ok('2001:db8:0:0:0:0:0:1' =~ /^($re)$/, 'single capture group works');
+    is($1, '2001:db8:0:0:0:0:0:1', 'captured address is correct');
+    ok('2001:db8:0:0:0:0:0:1 port=80' =~ /^($re)\s+port=(\d+)$/, 'two caller groups with re6');
+    is($1, '2001:db8:0:0:0:0:0:1', 'first group captures address');
+    is($2, '80', 'second group captures port');
+};
+
 done_testing;
