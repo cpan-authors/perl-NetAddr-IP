@@ -1,6 +1,7 @@
 #!/usr/bin/env perl
 
 use Test2::V1 -ipP;
+use Test2::Tools::Warnings qw(warning);
 
 use NetAddr::IP ();
 
@@ -23,12 +24,8 @@ is("$hosts[1]", '2001:DB8:0:0:0:0:0:1/128', 'second host is 2001:DB8::1/128');
 is(scalar @hosts, 2, '/30 still drops network and broadcast');
 is("$hosts[0]", '192.0.2.9/32', 'first host is 192.0.2.9/32');
 
-my @w;
-{
-    local $SIG{__WARN__} = sub { push @w, @_ };
-    NetAddr::IP->import(qw(:rfc3021));
-}
-like($w[0], qr/:rfc3021.*deprecated/, ':rfc3021 import emits deprecation warning');
+my $w = warning { NetAddr::IP->import(qw(:rfc3021)) };
+like($w, qr/:rfc3021.*deprecated/, ':rfc3021 import emits deprecation warning');
 
 @hosts = $ip->hostenum;
 is(scalar @hosts, 2, ':rfc3021 tag is accepted and changes nothing');
