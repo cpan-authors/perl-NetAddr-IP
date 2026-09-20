@@ -785,73 +785,12 @@ Works with both, V4 and V6.
 
 =cut
 
-sub _compact_v6 ($) {
-    my $addr = shift;
-
-    my @o = split /:/, $addr;
-    return $addr unless @o and grep { $_ =~ m/^0+$/ } @o;
-
-    my @candidates	= ();
-    my $start		= undef;
-
-    for my $i (0 .. $#o)
-    {
-	if (defined $start)
-	{
-	    if ($o[$i] !~ m/^0+$/)
-	    {
-		push @candidates, [ $start, $i - $start ];
-		$start = undef;
-	    }
-	}
-	else
-	{
-	    $start = $i if $o[$i] =~ m/^0+$/;
-	}
-    }
-
-    push @candidates, [$start, 8 - $start] if defined $start;
-
-    my $l = (sort { $b->[1] <=> $a->[1] } @candidates)[0];
-
-    return $addr unless defined $l;
-
-    $addr = $l->[0] == 0 ? '' : join ':', @o[0 .. $l->[0] - 1];
-    $addr .= '::';
-    $addr .= join ':', @o[$l->[0] + $l->[1] .. $#o];
-    $addr =~ s/(^|:)0{1,3}/$1/g;
-
-    return $addr;
-}
-
-
-#sub _old_compV6 {
-#  my @addr = split(':',shift);
-#  my $found = 0;
-#  my $v;
-#  foreach(0..$#addr) {
-#    ($v = $addr[$_]) =~ s/^0+//;
-#    $addr[$_] = $v || 0;
-#  }
-#  @_ = reverse(1..$#addr);
-#  foreach(@_) {
-#    if ($addr[$_] || $addr[$_ -1]) {
-#      last if $found;
-#      next;
-#    }
-#    $addr[$_] = $addr[$_ -1] = '';
-#    $found = '1';
-#  }
-#  (my $rv = join(':',@addr)) =~ s/:+:/::/;
-#  return $rv;
-#}
-
 # thanks to Rob Riepel <riepel@networking.Stanford.EDU>
 # for this faster and more compact solution 11-17-08
 sub _compV6 ($) {
     my $ip = shift;
     return $ip unless my @candidates = $ip =~ /((?:^|:)0(?::0)+(?::|$))/g;
-    my $longest = (sort { length($b) <=> length($a) } @candidates)[0];
+    my $longest = (sort { ($b =~ tr/0//) <=> ($a =~ tr/0//) } @candidates)[0];
     $ip =~ s/$longest/::/;
     return $ip;
 }
