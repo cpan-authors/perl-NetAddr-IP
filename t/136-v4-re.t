@@ -103,4 +103,15 @@ subtest 're() returns a non-capturing group' => sub {
     is($2, '80', 'second group captures port');
 };
 
+subtest 're() on an ipV6 object in ipV4 space returns an ipV6 regex' => sub {
+    for my $spec ('192.0.2.123', '::192.0.2.123') {
+        my $obj = NetAddr::IP->new6($spec);
+        isa_ok($obj, 'NetAddr::IP');
+        my $addr = $obj->addr;
+        my $re   = $obj->re;
+        like($addr, qr/:/, "new6($spec) reports a hex address");
+        ok($addr =~ /$re/, "re of new6($spec) matches its own address text");
+    }
+};
+
 done_testing;
