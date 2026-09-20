@@ -81,11 +81,11 @@ require Socket;
 
 *AF_INET = \&Socket::AF_INET;
 
-if (eval { AF_INET6() } ) {
+if (eval { local $SIG{__DIE__}; AF_INET6() } ) {
   *AF_INET6 = \&Socket::AF_INET6;
   $emulateAF_INET6 = -1;			# have it, remind below
 }
-if (eval{ require Socket6 } ) {
+if (eval{ local $SIG{__DIE__}; require Socket6 } ) {
   import Socket6 qw(
 	inet_pton
 	inet_ntop

@@ -132,6 +132,7 @@ my $xs_ok;
 if (NetAddr::IP::Util_IS->not_pure) {
   my $xs_err;
   eval {		## attempt to load 'C' version of utilities
+	local $SIG{__DIE__};
 	__PACKAGE__->bootstrap;
   };
   $xs_err = $@;
@@ -233,7 +234,7 @@ sub _end_gethostbyname {
   return @rv;
 }
 
-unless ( eval { require Socket6 }) {
+unless ( eval { local $SIG{__DIE__}; require Socket6 }) {
   $mygethostbyname = sub {
 # SEE NOTE above about broken BSD
 	my @tip = gethostbyname(NetAddr::IP::InetBase::fillIPv4($_[0]));
@@ -241,7 +242,7 @@ unless ( eval { require Socket6 }) {
   };
 } else {
   import Socket6 qw( gethostbyname2 getipnodebyname );
-  my $try = eval { my @try = gethostbyname2('127.0.0.1',NetAddr::IP::Util::AF_INET()); $try[4] };
+  my $try = eval { local $SIG{__DIE__}; my @try = gethostbyname2('127.0.0.1',NetAddr::IP::Util::AF_INET()); $try[4] };
   if (! $@ && $try && $try eq INADDR_LOOPBACK()) {
     *_ghbn2 = \&Socket6::gethostbyname2;
     $havegethostbyname2 = 1;
