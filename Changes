@@ -2,6 +2,8 @@ Revision history for Perl extension NetAddr::IP
 
 {{$NEXT}}
 
+4.080_01  2026-09-22 09:08:35+10:00 Australia/Sydney (TRIAL RELEASE)
+
     Validate masklen and number in coalesce, croak on bad arguments (GH#40)
 
     Fix coalesce on subclass objects (GH#38)
