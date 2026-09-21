@@ -1228,6 +1228,15 @@ sub coalesce
 
     # Addresses are at @_
     return [] unless @_;
+
+    croak("coalesce: masklen must be an integer from 0 to 128")
+	unless defined $masklen && $masklen =~ m|^[0-9]{1,3}$| && $masklen <= 128;
+    croak("coalesce: number must be a non-negative integer")
+	unless defined $number && $number =~ m|^[0-9]+$|;
+    croak("coalesce: arguments must be NetAddr::IP objects")
+	if grep { ! UNIVERSAL::isa($_,__PACKAGE__) } @_;
+    croak("coalesce: masklen $masklen exceeds the 32 bits of the IPv4 arguments")
+	if $masklen > 32 && grep { ! $_->{isv6} } @_;
     my %ret = ();
     my $type = $_[0]->{isv6};
     return [] unless defined $type;
