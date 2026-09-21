@@ -32,7 +32,6 @@ use vars qw(
 	@EXPORT_FAIL
 	@ISA
 	$_netlimit
-	$rfc3021
 );
 require Exporter;
 
@@ -40,8 +39,6 @@ require Exporter;
 @EXPORT_FAIL = qw($_netlimit);
 
 @ISA = qw(Exporter NetAddr::IP::Lite);
-
-$rfc3021 = 0;
 
 
 =encoding UTF-8
@@ -65,7 +62,7 @@ NetAddr::IP - Manages IPv4 and IPv6 addresses and subnets
 	:upper
 	:old_storable
 	:old_nth
-	:rfc3021
+	:rfc3021	DEPRECATED
 	:nofqdn
   );
 
