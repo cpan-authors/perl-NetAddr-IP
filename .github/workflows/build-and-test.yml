@@ -91,6 +91,44 @@ jobs:
           perl Makefile.PL
           make
           make test
+  test_linux_pureperl:
+    runs-on: ubuntu-latest
+    name: Perl ${{ matrix.perl-version }} on ubuntu-latest (pure Perl)
+    needs: build
+    strategy:
+      fail-fast: false
+      matrix:
+        perl-version:
+          - "5.14"
+          - "5.28"
+          - "5.42"
+    container:
+      image: perldocker/perl-tester:${{ matrix.perl-version }}
+      env:
+        AUTHOR_TESTING: 1
+    steps:
+      - uses: actions/download-artifact@v8
+        with:
+          name: build_dir
+          path: .
+      - uses: perl-actions/setup-cpm@v1
+        with:
+          version: compat
+      - name: Install deps
+        if: success()
+        run: >
+          cpm install -g
+          --cpanfile cpanfile
+          --with-develop
+          --with-recommends
+          --with-suggests
+          --show-build-log-on-failure
+      - name: Build and test the distribution without XS
+        if: success()
+        run: |
+          perl Makefile.PL -noxs
+          make
+          make test
   test_macos:
     runs-on: ${{ matrix.os }}
     strategy:
