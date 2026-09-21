@@ -52,4 +52,12 @@ like(dies { 10 - $ip80 },
     qr/cannot subtract.*from a constant/,
     'constant minus object croaks');
 
+like(dies { -$ip80 },
+    qr/cannot negate a NetAddr::IP::Lite object/,
+    'negate object croaks');
+
+like(dies { abs($ip80) },
+    qr/cannot take the absolute value of a NetAddr::IP::Lite object/,
+    'abs of object croaks');
+
 done_testing;
