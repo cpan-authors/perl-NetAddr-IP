@@ -234,6 +234,14 @@ use overload
 
     '--'	=> \&minusminus,
 
+    'neg'	=> sub {
+	croak 'cannot negate a ' . ref($_[0]) . ' object';
+    },
+
+    'abs'	=> sub {
+	croak 'cannot take the absolute value of a ' . ref($_[0]) . ' object';
+    },
+
     "="		=> \&copy,
 
     '""'	=> sub { $_[0]->cidr(); },
