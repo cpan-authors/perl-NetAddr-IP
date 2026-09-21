@@ -47,4 +47,8 @@ SKIP: {
     is($dual->version, 6, 'new6(dual-stack hostname) returns IPv6');
 }
 
+# GH#64: new6() on an IPv4-only literal returns the compatible form
+my $lit = NetAddr::IP->new6('192.0.2.123');
+is("$lit", '0:0:0:0:0:0:C000:27B/128', 'new6(literal IPv4) returns compatible form');
+
 done_testing;
