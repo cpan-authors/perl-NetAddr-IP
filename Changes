@@ -8,13 +8,15 @@ Revision history for Perl extension NetAddr::IP
 
     Anchor bracket notation match to reject text outside brackets (GH#68)
 
+    Fix licence metadata and restore Artistic text (GH#56)
+
     new6FFFF returns undef on invalid input instead of unblessed hash ref (GH#65)
 
     BREAKING: re() on IPv6 objects in IPv4 space no longer emits a broken regex (GH#34)
 
     BREAKING: re6() now returns a non-capturing group (?:...) (GH#50)
 
-    new6() now prefers AAAA over A for dual-stack hostnames (GH#32)
+    new6() now prefers AAAA over A for dual-stack hostnames, RT#119858 (GH#32)
 
     Deprecate :rfc3021 tag; hostenum/hostenumref return 2 hosts for /31 and /127 unconditionally (GH#26)
 
@@ -29,6 +31,10 @@ Revision history for Perl extension NetAddr::IP
     Add BCD boundary input test suite (GH#51)
 
     Preserve caller $@ and $SIG{__DIE__} on oversized decimal in new() (GH#59)
+
+    Localize $SIG{__DIE__} in module load eval probes, RT#130949 (GH#30)
+
+    Fix POD spelling mistakes: complier, alway, netowrk, occurence, RT#114239 (GH#47)
 
     Prevent re() from matching addresses embedded in longer dotted strings (GH#35)
 
@@ -62,7 +68,7 @@ Revision history for Perl extension NetAddr::IP
 
     Reject non-ASCII digits in IP parsing
 
-    Fix version() for large decimal integers (GH#31)
+    Fix version() for large decimal integers, RT#117995 (GH#31)
 
     Document coalesce() behavior for equal-length masks (GH#45)
 
@@ -79,6 +85,8 @@ Revision history for Perl extension NetAddr::IP
     Consolidate sub-distributions into conventional Dist::Zilla layout
 
     Convert all test files to Test2::V1
+
+    Fix :nofqdn import tag to actually set the flag, RT#111301 (GH#1)
 
 4.079 Fri Mar 25 16:18:26 PDT 2016
     correct non-suppression of leading zeros in certain instances of
