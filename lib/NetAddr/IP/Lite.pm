@@ -55,10 +55,6 @@ $Old_nth = 0;
 
 =encoding UTF-8
 
-=head1 NAME
-
-NetAddr::IP::Lite - Manages IPv4 and IPv6 addresses and subnets
-
 =head1 SYNOPSIS
 
   use NetAddr::IP::Lite qw(
@@ -1745,6 +1741,12 @@ sub import {
 =head1 SEE ALSO
 
 NetAddr::IP(3), NetAddr::IP::Util(3), NetAddr::IP::InetBase(3)
+
+=head1 ADDITIONAL LICENSE
+
+This file is also available to redistribute it and/or modify it under
+the terms of the "Artistic License" which comes with this distribution,
+in the file named "Artistic".
 
 =cut
 
