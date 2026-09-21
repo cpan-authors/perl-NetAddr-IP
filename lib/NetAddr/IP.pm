@@ -1219,7 +1219,7 @@ WARNING: the list of subnet must be the same type. i.e ipV4 or ipV6
 sub coalesce
 {
     my $masklen	= shift;
-    if (ref $masklen && ref $masklen eq __PACKAGE__ ) {	# if called as a method
+    if (UNIVERSAL::isa($masklen, __PACKAGE__)) {		# if called as a method
       push @_,$masklen;
       $masklen = shift;
     }

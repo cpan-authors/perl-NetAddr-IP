@@ -8,6 +8,9 @@ plan skip_all => 'LIGHTERIPTESTS = yes'
 
 use NetAddr::IP qw( Coalesce );
 
+package My::Sub { use parent 'NetAddr::IP'; }
+package main;
+
 my @ips;
 
 for my $o (0 .. 255) {
@@ -188,6 +191,27 @@ subtest 'coalesce IPv6' => sub {
     $r = Coalesce(120, 2, NetAddr::IP->new6('2001:db8::/119'), @h6);
     is(scalar @$r, 1, 'a shorter v6 net absorbs the counted v6 subnet');
     is("$r->[0]", '2001:DB8:0:0:0:0:0:0/119', 'the shorter v6 net is the only result');
+};
+
+subtest 'coalesce on a subclass' => sub {
+    my $base = NetAddr::IP->new('198.51.100.5/32');
+    my $sub  = bless { %$base }, 'My::Sub';
+    isa_ok($sub, 'NetAddr::IP');
+
+    my $r = $sub->coalesce(24, 2, NetAddr::IP->new('198.51.100.6/32'));
+    ref_ok($r, 'ARRAY', 'subclass coalesce returns an array ref');
+    is(scalar @$r, 1, 'subclass coalesce counts the invocant towards number');
+    is("$r->[0]", '198.51.100.0/24', 'subclass coalesce result is the containing /24');
+
+    my $p = $base->coalesce(24, 2, NetAddr::IP->new('198.51.100.6/32'));
+    is(join(',', map { "$_" } @$r), join(',', map { "$_" } @$p),
+       'subclass coalesce agrees with NetAddr::IP coalesce');
+
+    $r = $sub->coalesce(24, 2);
+    is(scalar @$r, 0, 'subclass coalesce with an empty list does not fire');
+
+    $r = $sub->coalesce(24, 1);
+    is(scalar @$r, 1, 'subclass coalesce with an empty list fires at number 1');
 };
 
 done_testing;
