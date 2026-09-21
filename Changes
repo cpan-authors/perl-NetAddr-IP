@@ -2,9 +2,23 @@ Revision history for Perl extension NetAddr::IP
 
 {{$NEXT}}
 
+    new6() returns compatible form for IPv4-only hosts, not mapped form (GH#64)
+
+    Add neg and abs overloads with clear error messages (GH#67)
+
+    Anchor bracket notation match to reject text outside brackets (GH#68)
+
+    new6FFFF returns undef on invalid input instead of unblessed hash ref (GH#65)
+
+    BREAKING: re() on IPv6 objects in IPv4 space no longer emits a broken regex (GH#34)
+
+    BREAKING: re6() now returns a non-capturing group (?:...) (GH#50)
+
+    new6() now prefers AAAA over A for dual-stack hostnames (GH#32)
+
     Deprecate :rfc3021 tag; hostenum/hostenumref return 2 hosts for /31 and /127 unconditionally (GH#26)
 
-    new(undef) returns undef instead of the default route (GH#29)
+    BREAKING: new(undef) returns undef instead of the default route (GH#29)
 
     Fix is_local for IPv4 loopback held in IPv6 objects (GH#27)
 
