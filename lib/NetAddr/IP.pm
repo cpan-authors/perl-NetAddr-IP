@@ -1205,8 +1205,8 @@ subnet is returned exactly once whatever C<$number> is set to, and is
 never dropped for failing to reach it.
 
 Subnets from C<@list_of_subnets> with a mask longer than C<$masklen>
-will be counted (actually, the number of IP addresses is counted)
-towards C<$number>.
+have their address count added towards C<$number>. The count is the
+size of the subnet, so a /25 counts 128 and a /32 counts 1.
 
 Called as a method, the array will include C<$me>.
 
@@ -1239,7 +1239,9 @@ sub coalesce
 	my $n = NetAddr::IP->new($ip->addr . '/' . $masklen)->network;
 	if ($ip->masklen > $masklen)
 	{
-	    $ret{$n} += $ip->num + $NetAddr::IP::Lite::Old_nth;
+	    # the size of the subnet, which is not ->num, since ->num
+	    # excludes the network and broadcast addresses
+	    $ret{$n} += 2 ** (($type ? 128 : 32) - $ip->masklen);
 	}
     }
 
