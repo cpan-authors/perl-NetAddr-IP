@@ -1123,7 +1123,10 @@ sub _xnew($$;$$) {
 ########## continuing
     else {						# ipv6 address
       $isV6 = 1;
-      $ip = $1 if $ip =~ /\[([^\]]+)\]/;		# transform URI notation
+      if (index($ip,'[') >= 0 || index($ip,']') >= 0) {	# transform URI notation
+	return undef unless $ip =~ /^\[([^[\]]+)\]$/;	# nothing may follow the closing bracket
+	$ip = $1;
+      }
       if (defined ($tmp = ipv6_aton($ip))) {
 	$ip = $tmp;
 	last;
