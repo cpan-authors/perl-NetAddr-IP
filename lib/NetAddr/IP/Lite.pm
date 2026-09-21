@@ -1096,8 +1096,12 @@ sub _xnew($$;$$) {
 	return undef if hasbits($ip & $tmp);
 	last;
       }
-# check for resolvable IPv6 hosts first when an IPv6 object was requested
-      elsif ($isV6 && ! $NoFQDN && $ip !~ /[^a-zA-Z0-9\._-]/ && havegethostbyname2() && ($tmp = naip_gethostbyname($ip))) {
+# check for resolvable IPv6 hosts first when an IPv6 object was requested.
+# naip_gethostbyname falls back to an A lookup and maps the result, so accept
+# its answer only when it really is an IPv6 address, else let the IPv4 branch
+# below produce the ::a.b.c.d form that new6 documents
+      elsif ($isV6 && ! $NoFQDN && $ip !~ /[^a-zA-Z0-9\._-]/ && havegethostbyname2()
+	     && ($tmp = naip_gethostbyname($ip)) && ! isAnyIPv4($tmp)) {
 	$ip = $tmp;
 	last;
       }
