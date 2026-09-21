@@ -113,4 +113,81 @@ subtest 'coalesce counts subnet addresses, not usable hosts' => sub {
     is(scalar @$r, 1, 'two /25 nets reach a threshold of 256 under :old_nth');
 };
 
+subtest 'coalesce empty address list' => sub {
+    my $r = Coalesce(24, 2);
+    ref_ok($r, 'ARRAY', 'an empty address list gives an array ref');
+    is(scalar @$r, 0, 'the result is empty');
+};
+
+subtest 'coalesce pass through nets' => sub {
+    # shorter nets pass through
+    my $r = Coalesce(24, 2, NetAddr::IP->new('203.0.113.9/23'));
+    is(scalar @$r, 1, 'a shorter net passes through even below the threshold');
+    is("$r->[0]", '203.0.112.0/23', 'a shorter net passes through as its network');
+
+    # equal nets pass through
+    $r = Coalesce(24, 1000, NetAddr::IP->new('192.0.2.9/24'));
+    is(scalar @$r, 1, 'a net of exactly masklen passes through');
+    is("$r->[0]", '192.0.2.0/24', 'a net of exactly masklen passes as its network');
+
+    # a pass through net absorbs counted subnets
+    my @h24 = map { NetAddr::IP->new("198.51.100.$_/32") } 1 .. 4;
+    $r = Coalesce(24, 2, NetAddr::IP->new('198.51.100.0/22'), @h24);
+    is(scalar @$r, 1, 'a containing pass through net absorbs a counted subnet');
+    is("$r->[0]", '198.51.100.0/22', 'the containing net is the only result');
+
+    # default route absorbs everything
+    $r = Coalesce(24, 2, NetAddr::IP->new('default'), @h24);
+    is(scalar @$r, 1, 'a default route pass through absorbs everything');
+    is("$r->[0]", '0.0.0.0/0', 'the default route is the only result');
+
+    # duplicate pass through nets collapse
+    $r = Coalesce(24, 2, NetAddr::IP->new('203.0.113.1/23'), NetAddr::IP->new('203.0.113.5/23'));
+    is(scalar @$r, 1, 'two args in the same shorter net give one result');
+
+    # unrelated pass through nets are kept
+    $r = Coalesce(24, 2, NetAddr::IP->new('192.0.2.0/23'), @h24);
+    is(scalar @$r, 2, 'an unrelated pass through net is kept alongside');
+};
+
+subtest 'coalesce method form' => sub {
+    my $me = NetAddr::IP->new('203.0.113.5/32');
+    my $r = $me->coalesce(24, 2, NetAddr::IP->new('203.0.113.6/32'));
+    is(scalar @$r, 1, 'the invocant counts towards masklen');
+    is("$r->[0]", '203.0.113.0/24', 'the method call result is the containing /24');
+    is(scalar @{$me->coalesce(24, 3, NetAddr::IP->new('203.0.113.6/32'))}, 0,
+       'the invocant is counted once, not twice');
+    my @method = map { "$_" } @{$me->coalesce(24, 2, NetAddr::IP->new('203.0.113.6/32'))};
+    my @func   = map { "$_" } @{Coalesce(24, 2, $me, NetAddr::IP->new('203.0.113.6/32'))};
+    is(join(',', @method), join(',', @func),
+       'the method form and the function form agree');
+};
+
+subtest 'coalesce does not modify arguments' => sub {
+    my @in = (NetAddr::IP->new('192.0.2.7/23'), NetAddr::IP->new('192.0.2.25/23'));
+    Coalesce(24, 2, @in);
+    is("$in[0]", '192.0.2.7/23', 'coalesce does not modify its first argument');
+    is("$in[1]", '192.0.2.25/23', 'coalesce does not modify its second argument');
+
+    my $me = NetAddr::IP->new('203.0.113.1/32');
+    Coalesce(24, 2, $me);
+    is("$me", '203.0.113.1/32', 'coalesce does not modify the invocant');
+};
+
+subtest 'coalesce IPv6' => sub {
+    # RFC 3849: 2001:db8::/32
+    my @h6 = map { NetAddr::IP->new6(sprintf '2001:db8::%x/128', $_) } 1 .. 4;
+    my $r = Coalesce(120, 4, @h6);
+    is(scalar @$r, 1, 'four v6 /128 nets in one /120 give one result');
+    is("$r->[0]", '2001:DB8:0:0:0:0:0:0/120', 'the v6 result is the containing /120');
+    ok($r->[0]->{isv6}, 'the v6 result is an IPv6 object');
+    is(scalar @{Coalesce(120, 5, @h6)}, 0, 'a v6 threshold above the count does not fire');
+    $r = Coalesce(120, 256, NetAddr::IP->new6('2001:db8::/121'),
+                  NetAddr::IP->new6('2001:db8::80/121'));
+    is(scalar @$r, 1, 'two v6 /121 nets count the full 256 addresses of the /120');
+    $r = Coalesce(120, 2, NetAddr::IP->new6('2001:db8::/119'), @h6);
+    is(scalar @$r, 1, 'a shorter v6 net absorbs the counted v6 subnet');
+    is("$r->[0]", '2001:DB8:0:0:0:0:0:0/119', 'the shorter v6 net is the only result');
+};
+
 done_testing;
