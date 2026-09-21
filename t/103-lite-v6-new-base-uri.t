@@ -81,4 +81,16 @@ subtest 'URI bracket notation [addr]/mask' => sub {
        '0:0:0:0:0:FFFF:C000:263/96', 'IPv4-mapped IPv6 literal in brackets accepted');
 };
 
+subtest 'URI bracket notation rejects text outside brackets' => sub {
+    for my $input ('[2001:db8::1]:8080', '[2001:db8::1]:80/64',
+                   'junk[2001:db8::1]tail', '[2001:db8::1',
+                   '2001:db8::1]',
+                   '[2001:db8::1] extra', '[2001:db8::1][',
+                   '[[2001:db8::1]', '][2001:db8::1]',
+                   '[2001:db8::1]2001:db8::2',
+                   '[2001:db8::1]/[2001:db8::2]') {
+        ok(!defined NetAddr::IP::Lite->new($input), "$input rejected");
+    }
+};
+
 done_testing;
