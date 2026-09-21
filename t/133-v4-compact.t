@@ -76,7 +76,7 @@ subtest 'subclass compactref' => sub {
     isa_ok($sub, 'NetAddr::IP');
 
     my $r = $sub->compactref([ NetAddr::IP->new('203.0.113.0/24') ]);
-    is(ref $r, 'ARRAY', 'subclass compactref returns an array ref');
+    ref_ok($r, 'ARRAY', 'subclass compactref returns an array ref');
     is(scalar @$r, 2, 'subclass compactref returns invocant plus the one list item');
     is(join(' ', map { "$_" } @$r), '192.0.2.0/29 203.0.113.0/24',
       'subclass compactref result is the invocant and the list item');
