@@ -2,6 +2,12 @@ Revision history for Perl extension NetAddr::IP
 
 {{$NEXT}}
 
+    Validate masklen and number in coalesce, croak on bad arguments (GH#40)
+
+    Fix coalesce on subclass objects (GH#38)
+
+    Fix coalesce to count subnet addresses, not usable hosts (GH#37)
+
     new6() returns compatible form for IPv4-only hosts, not mapped form (GH#64)
 
     Add neg and abs overloads with clear error messages (GH#67)
