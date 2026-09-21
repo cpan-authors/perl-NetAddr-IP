@@ -75,4 +75,42 @@ subtest 'result order is deterministic' => sub {
        'a pass through net is sorted in with the counted nets');
 };
 
+subtest 'coalesce counts subnet addresses, not usable hosts' => sub {
+    # RFC 5737 test ranges: 192.0.2.0/24, 198.51.100.0/24, 203.0.113.0/24
+    my @two25 = (NetAddr::IP->new('198.51.100.0/25'), NetAddr::IP->new('198.51.100.128/25'));
+    my @four26 = map { NetAddr::IP->new("203.0.113." . ($_ * 64) . "/26") } 0 .. 3;
+    my @all30 = map { NetAddr::IP->new("192.0.2." . ($_ * 4) . "/30") } 0 .. 63;
+    my @all32 = map { NetAddr::IP->new("203.0.113.$_/32") } 0 .. 255;
+
+    my $r = Coalesce(24, 256, @two25);
+    is(scalar @$r, 1, 'two /25 nets reach a threshold of 256');
+    is("$r->[0]", '198.51.100.0/24', 'two /25 nets coalesce to 198.51.100.0/24');
+
+    $r = Coalesce(24, 256, @four26);
+    is(scalar @$r, 1, 'four /26 nets reach a threshold of 256');
+
+    $r = Coalesce(24, 256, @all30);
+    is(scalar @$r, 1, 'sixty four /30 nets reach a threshold of 256');
+
+    $r = Coalesce(24, 256, @all32);
+    is(scalar @$r, 1, 'two hundred and fifty six /32 nets reach a threshold of 256');
+
+    $r = Coalesce(24, 256, NetAddr::IP->new('203.0.113.0/25'));
+    is(scalar @$r, 0, 'one /25 net does not reach a threshold of 256');
+    $r = Coalesce(24, 128, NetAddr::IP->new('192.0.2.0/25'));
+    is(scalar @$r, 1, 'one /25 net reaches a threshold of 128');
+    $r = Coalesce(24, 129, NetAddr::IP->new('198.51.100.0/25'));
+    is(scalar @$r, 0, 'one /25 net does not reach a threshold of 129');
+
+    $r = Coalesce(24, 257, @two25);
+    is(scalar @$r, 0, 'two /25 nets do not reach a threshold of 257');
+    $r = Coalesce(24, 257, @all32);
+    is(scalar @$r, 0, 'two hundred and fifty six /32 nets do not reach 257');
+
+    import NetAddr::IP qw(:old_nth);
+    is($NetAddr::IP::Lite::Old_nth, 1, ':old_nth is in effect');
+    $r = Coalesce(24, 256, @two25);
+    is(scalar @$r, 1, 'two /25 nets reach a threshold of 256 under :old_nth');
+};
+
 done_testing;
