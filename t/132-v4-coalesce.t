@@ -1,6 +1,7 @@
 #!/usr/bin/env perl
 
 use Test2::V1 -ipP;
+use Test2::Tools::Exception qw(dies lives);
 use Test2::Plugin::NoWarnings;
 
 plan skip_all => 'LIGHTERIPTESTS = yes'
@@ -212,6 +213,38 @@ subtest 'coalesce on a subclass' => sub {
 
     $r = $sub->coalesce(24, 1);
     is(scalar @$r, 1, 'subclass coalesce with an empty list fires at number 1');
+};
+
+subtest 'coalesce validates masklen and number' => sub {
+    # RFC 5737 test ranges: 192.0.2.0/24, 198.51.100.0/24, 203.0.113.0/24
+    my @h = (NetAddr::IP->new('192.0.2.1/32'), NetAddr::IP->new('198.51.100.5/32'));
+
+    like(dies { Coalesce(undef, 2, @h) }, qr/masklen must be an integer/,
+	 'undef masklen croaks');
+    like(dies { Coalesce(-1, 2, @h) }, qr/masklen must be an integer/,
+	 'negative masklen croaks');
+    like(dies { Coalesce(24.7, 2, @h) }, qr/masklen must be an integer/,
+	 'fractional masklen croaks');
+    like(dies { Coalesce('abc', 2, @h) }, qr/masklen must be an integer/,
+	 'non numeric masklen croaks');
+    like(dies { Coalesce(129, 2, @h) }, qr/masklen must be an integer/,
+	 'masklen above 128 croaks');
+    like(dies { Coalesce(33, 2, @h) }, qr/exceeds the 32 bits/,
+	 'masklen above 32 with IPv4 croaks');
+
+    like(dies { Coalesce(24, undef, @h) }, qr/number must be a non-negative integer/,
+	 'undef number croaks');
+    like(dies { Coalesce(24, -5, @h) }, qr/number must be a non-negative integer/,
+	 'negative number croaks');
+    like(dies { Coalesce(24, 'abc', @h) }, qr/number must be a non-negative integer/,
+	 'non numeric number croaks');
+    like(dies { Coalesce(24, 2, $h[0], '192.0.2.9/32') },
+ qr/must be NetAddr::IP objects/,
+	 'a non object in the list croaks');
+
+    ok(lives { Coalesce(24, 0, @h) }, 'a threshold of 0 is valid');
+
+    ok(lives { Coalesce(24, 1000, @h) }, 'a threshold above the count is valid');
 };
 
 done_testing;
