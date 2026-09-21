@@ -380,7 +380,7 @@ sub import
     }
     if (grep { $_ eq ':nofqdn'} @_)
     {
-	$NetAddr::IP::NetAddr::IP::Lite::NoFQDN = 1;
+	$NetAddr::IP::Lite::NoFQDN = 1;
 	@_ = grep { $_ ne ':nofqdn' } @_;
     }
     if (grep { $_ eq ':lower' } @_)
