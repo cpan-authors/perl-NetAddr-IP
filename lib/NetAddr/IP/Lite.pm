@@ -762,6 +762,7 @@ sub new6($;$$) {
 
 sub new6FFFF($;$$) {
   my $ip = _xnew(1,@_);
+  return undef unless defined $ip;
   $ip->{addr} |= $_ipv4FFFF;
   return $ip;
 }
