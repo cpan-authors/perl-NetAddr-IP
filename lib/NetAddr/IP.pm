@@ -43,10 +43,6 @@ require Exporter;
 
 =encoding UTF-8
 
-=head1 NAME
-
-NetAddr::IP - Manages IPv4 and IPv6 addresses and subnets
-
 =head1 SYNOPSIS
 
   use NetAddr::IP qw(
@@ -1555,51 +1551,11 @@ See the Changes file
 
 =back
 
-=head1 AUTHORS
+=head1 ADDITIONAL LICENSE
 
-Luis E. Muñoz E<lt>luismunoz@cpan.orgE<gt>,
-Michael Robinton E<lt>michael@bizsystems.comE<gt>
-
-=head1 WARRANTY
-
-This software comes with the same warranty as Perl itself (ie, none),
-so by using it you accept any and all the liability.
-
-=head1 COPYRIGHT
-
-This software is (c) Luis E. Muñoz, 1999 - 2007, and (c) Michael
-Robinton, 2006 - 2014.
-
-All rights reserved.
-
-This program is free software; you can redistribute it and/or modify
-it under the terms of either:
-
-  a) the GNU General Public License as published by the Free
-  Software Foundation; either version 2, or (at your option) any
-  later version, or
-
-  b) the "Artistic License" which comes with this distribution.
-
-This program is distributed in the hope that it will be useful,
-but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See either
-the GNU General Public License or the Artistic License for more details.
-
-You should have received a copy of the Artistic License with this
-distribution, in the file named "Artistic".  If not, I'll be glad to provide
-one.
-
-You should also have received a copy of the GNU General Public License
-along with this program in the file named "Copying". If not, write to the
-
-	Free Software Foundation, Inc.
-	51 Franklin Street, Fifth Floor
-	Boston, MA 02110-1301 USA.
-
-or visit their web page on the internet at:
-
-        http://www.gnu.org/copyleft/gpl.html.
+This file is also available to redistribute it and/or modify it under
+the terms of the "Artistic License" which comes with this distribution,
+in the file named "Artistic".
 
 =cut
 
