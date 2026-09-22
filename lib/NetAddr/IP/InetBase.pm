@@ -11,6 +11,13 @@ package NetAddr::IP::InetBase;
 #use lib qw(blib lib);
 
 use vars qw(@EXPORT_OK @ISA %EXPORT_TAGS $Mode);
+use NetAddr::IP::Constants qw(
+	$IPV6_BITS
+	$MAX_OCTET
+	$OCTET_BITS
+	$V4_PACKED_BYTES
+	$V6_PACKED_BYTES
+);
 require Exporter;
 
 @ISA = qw(Exporter);
@@ -135,19 +142,19 @@ sub upper { $n2x_format = uc($n2x_format); $n2d_format = uc($n2d_format); $case 
 sub lower { $n2x_format = lc($n2x_format); $n2d_format = lc($n2d_format); $case = 0; }
 
 sub ipv6_n2x {
-  die "Bad arg length for 'ipv6_n2x', length is ". length($_[0]) ." should be 16"
-	unless length($_[0]) == 16;
+  die sprintf('Bad arg length for \'ipv6_n2x\', length is %d should be %d', length($_[0]), $V6_PACKED_BYTES)
+	unless length($_[0]) == $V6_PACKED_BYTES;
   return sprintf($n2x_format,unpack("n8",$_[0]));
 }
 
 sub ipv6_n2d {
-  die "Bad arg length for 'ipv6_n2d', length is ". length($_[0]) ." should be 16"
-	unless length($_[0]) == 16;
+  die sprintf('Bad arg length for \'ipv6_n2d\', length is %d should be %d', length($_[0]), $V6_PACKED_BYTES)
+	unless length($_[0]) == $V6_PACKED_BYTES;
   my @hex = (unpack("n8",$_[0]));
-  $hex[9] = $hex[7] & 0xff;
-  $hex[8] = $hex[7] >> 8;
-  $hex[7] = $hex[6] & 0xff;
-  $hex[6] >>= 8;
+  $hex[9] = $hex[7] & $MAX_OCTET;
+  $hex[8] = $hex[7] >> $OCTET_BITS;
+  $hex[7] = $hex[6] & $MAX_OCTET;
+  $hex[6] >>= $OCTET_BITS;
   return sprintf($n2d_format,@hex);
 }
 
@@ -247,9 +254,9 @@ my $_zero = pack('L4',0,0,0,0);
 my $_ipv4mask = pack('L4',0xffffffff,0xffffffff,0xffffffff,0);
 
 sub isIPv4 {
-  if (length($_[0]) != 16) {
+  if (length($_[0]) != $V6_PACKED_BYTES) {
     my $sub = (caller(1))[3] || (caller(0))[3];
-    die "Bad arg length for $sub, length is ". (length($_[0]) *8) .", should be 128";
+    die "Bad arg length for $sub, length is ". (length($_[0]) * $OCTET_BITS) .", should be $IPV6_BITS";
   }
   return ($_[0] & $_ipv4mask) eq $_zero
 	? 1 : 0;
@@ -372,13 +379,13 @@ Convert a packed IPv4 network address to a dot-quad IP address.
 =cut
 
 sub inet_ntoa {
-  die 'Bad arg length for '. __PACKAGE__ ."::inet_ntoa, length is ". length($_[0]) ." should be 4"
-        unless length($_[0]) == 4;
+  die 'Bad arg length for '. __PACKAGE__ ."::inet_ntoa, length is ". length($_[0]) ." should be $V4_PACKED_BYTES"
+        unless length($_[0]) == $V4_PACKED_BYTES;
   my @hex = (unpack("n2",$_[0]));
-  $hex[3] = $hex[1] & 0xff;
-  $hex[2] = $hex[1] >> 8;
-  $hex[1] = $hex[0] & 0xff;
-  $hex[0] >>= 8;
+  $hex[3] = $hex[1] & $MAX_OCTET;
+  $hex[2] = $hex[1] >> $OCTET_BITS;
+  $hex[1] = $hex[0] & $MAX_OCTET;
+  $hex[0] >>= $OCTET_BITS;
   return sprintf("%d.%d.%d.%d",@hex);
 }
 

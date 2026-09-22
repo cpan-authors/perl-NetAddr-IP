@@ -12,6 +12,16 @@ package NetAddr::IP::UtilPP;
 
 use vars qw(@EXPORT_OK @ISA %EXPORT_TAGS);
 use Carp qw(croak);
+use NetAddr::IP::Constants qw(
+	$IPV4_BITS
+	$IPV6_BITS
+	$MAX_BCD_DIGITS
+	$MAX_SHIFTLEFT
+	$OCTET_BITS
+	$PACKED_BCD_BYTES
+	$V4_PACKED_BYTES
+	$V6_PACKED_BYTES
+);
 require Exporter;
 
 
@@ -119,19 +129,19 @@ This allows the implementation of logical functions of the form of:
 
 sub _deadlen {
   my($len,$should) = @_;
-  $len *= 8;
-  $should = 128 unless $should;
+  $len *= $OCTET_BITS;
+  $should = $IPV6_BITS unless $should;
   my $sub = _callersub();
   croak "Bad arg length for $sub, length is $len, should be $should";
 }
 
 sub hasbits {
   _deadlen(length($_[0]))
-	if length($_[0]) != 16;
-  return 1 if vec($_[0],0,32);
-  return 1 if vec($_[0],1,32);
-  return 1 if vec($_[0],2,32);
-  return 1 if vec($_[0],3,32);
+	if length($_[0]) != $V6_PACKED_BYTES;
+  return 1 if vec($_[0],0,$IPV4_BITS);
+  return 1 if vec($_[0],1,$IPV4_BITS);
+  return 1 if vec($_[0],2,$IPV4_BITS);
+  return 1 if vec($_[0],3,$IPV4_BITS);
   return 0;
 }
 
@@ -189,11 +199,11 @@ sub _128x10 {
 
 sub shiftleft {
   _deadlen(length($_[0]))
-	if length($_[0]) != 16;
+	if length($_[0]) != $V6_PACKED_BYTES;
   my($bits,$shifts) = @_;
   return $bits unless $shifts;
-  croak "Bad arg value for NetAddr::IP::Util::shiftleft, is $shifts, should be 0 thru 128"
-	if $shifts < 0 || $shifts > 128;
+  croak "Bad arg value for NetAddr::IP::Util::shiftleft, is $shifts, should be 0 thru $MAX_SHIFTLEFT"
+	if $shifts < 0 || $shifts > $MAX_SHIFTLEFT;
   my @uint32t = unpack('N4',$bits);
   do {
     $bits = _128x2(\@uint32t);
@@ -257,7 +267,7 @@ Add a signed constant to a 128 bit string variable.
 sub addconst {
   my($a128,$const) = @_;
   _deadlen(length($a128))
-	if length($a128) != 16;
+	if length($a128) != $V6_PACKED_BYTES;
   unless ($const) {
     return (wantarray) ? ($const,$a128) : $const;
   }
@@ -283,9 +293,9 @@ Add two 128 bit string variables.
 sub add128 {
   my($a128,$b128) = @_;
   _deadlen(length($a128))
-	if length($a128) != 16;
+	if length($a128) != $V6_PACKED_BYTES;
   _deadlen(length($b128))
-	if length($b128) != 16;
+	if length($b128) != $V6_PACKED_BYTES;
   @_ = ($a128,$b128,0);
 # perl 5.8.4 fails with this operation. see perl bug [ 23429]
 #  goto &slowadd128;
@@ -312,9 +322,9 @@ B<NOT borrow>.
 
 sub sub128 {
   _deadlen(length($_[0]))
-	if length($_[0]) != 16;
+	if length($_[0]) != $V6_PACKED_BYTES;
   _deadlen(length($_[1]))
-	if length($_[1]) != 16;
+	if length($_[1]) != $V6_PACKED_BYTES;
   my $a128 = $_[0];
   my $b128 = ~$_[1];
   @_ = ($a128,$b128,1);
@@ -339,10 +349,10 @@ rightmost '0's are removed.
 
 sub notcontiguous {
   _deadlen(length($_[0]))
-	if length($_[0]) != 16;
+	if length($_[0]) != $V6_PACKED_BYTES;
   my @ua = unpack('N4', ~$_[0]);
   my $count;
-  for ($count = 128;$count > 0; $count--) {
+  for ($count = $IPV6_BITS;$count > 0; $count--) {
 	last unless $ua[3] & 1;
 	$ua[3] >>= 1;
 	$ua[3] |= 0x80000000 if $ua[2] & 1;
@@ -368,8 +378,8 @@ Convert an ipv4 network address into an ipv6 network address.
 =cut
 
 sub ipv4to6 {
-  _deadlen(length($_[0]),32)
-        if length($_[0]) != 4;
+  _deadlen(length($_[0]),$IPV4_BITS)
+        if length($_[0]) != $V4_PACKED_BYTES;
 #  return pack('L3H8',0,0,0,unpack('H8',$_[0]));
   return pack('L3a4',0,0,0,$_[0]);
 }
@@ -386,8 +396,8 @@ NOTE: returns the high 96 bits as one's
 =cut
 
 sub mask4to6 {
-  _deadlen(length($_[0]),32)
-        if length($_[0]) != 4;
+  _deadlen(length($_[0]),$IPV4_BITS)
+        if length($_[0]) != $V4_PACKED_BYTES;
 #  return pack('L3H8',0xffffffff,0xffffffff,0xffffffff,unpack('H8',$_[0]));
   return pack('L3a4',0xffffffff,0xffffffff,0xffffffff,$_[0]);
 }
@@ -405,10 +415,10 @@ input and always returns a 128 bit IPv6 network address.
 sub ipanyto6 {
   my $naddr = shift;
   my $len = length($naddr);
-  return $naddr if $len == 16;
+  return $naddr if $len == $V6_PACKED_BYTES;
 #  return pack('L3H8',0,0,0,unpack('H8',$naddr))
   return pack('L3a4',0,0,0,$naddr)
-	if $len == 4;
+	if $len == $V4_PACKED_BYTES;
   _deadlen($len,'32 or 128');
 }
 
@@ -425,10 +435,10 @@ netmask and always returns a 128 bit IPv6 netmask.
 sub maskanyto6 {
   my $naddr = shift;
   my $len = length($naddr);
-  return $naddr if $len == 16;
+  return $naddr if $len == $V6_PACKED_BYTES;
 #  return pack('L3H8',0xffffffff,0xffffffff,0xffffffff,unpack('H8',$naddr))
   return pack('L3a4',0xffffffff,0xffffffff,0xffffffff,$naddr)
-	if $len == 4;
+	if $len == $V4_PACKED_BYTES;
   _deadlen($len,'32 or 128');
 }
 
@@ -445,7 +455,7 @@ Truncate the upper 96 bits of a 128 bit address and return the lower
 sub ipv6to4 {
   my $naddr = shift;
 _deadlen(length($naddr))
-	if length($naddr) != 16;
+	if length($naddr) != $V6_PACKED_BYTES;
   @_ = unpack('L3H8',$naddr);
   return pack('H8',@{_}[3..10]);
 }
@@ -583,8 +593,8 @@ sub _bin2bcdn {
 #=cut
 
 sub bcdn2txt {
-  croak "Bad arg length for NetAddr::IP::Util::bcdn2txt, length is ".(2 * length($_[0])).", should be 40 digits"
-	if length($_[0]) != 20;
+  croak "Bad arg length for NetAddr::IP::Util::bcdn2txt, length is ".(2 * length($_[0])).", should be $MAX_BCD_DIGITS digits"
+	if length($_[0]) != $PACKED_BCD_BYTES;
   (unpack('H40',$_[0])) =~ /^0*(.+)/;
   $1;
 }
@@ -604,8 +614,8 @@ sub bcdn2bin {
 	if @_ < 2;
   $dc = 0 unless $dc;
   my $digits = 2 * length($bcd);
-  croak "Bad arg length for NetAddr::IP::Util::bcdn2bin, length is $digits, should be 1 to 40 digits"
-	if length($bcd) > 20;
+  croak "Bad arg length for NetAddr::IP::Util::bcdn2bin, length is $digits, should be 1 to $MAX_BCD_DIGITS digits"
+	if length($bcd) > $PACKED_BCD_BYTES;
   croak "Bad digit count for NetAddr::IP::Util::bcdn2bin, is $dc, should be 1 to $digits digits"
 	if $dc < 1 || $dc > $digits;
   return _bcd2bin(unpack("H$dc",$bcd));
@@ -649,8 +659,8 @@ sub _bcd2bin {
 sub _bcdcheck {
   my($bcd) = @_;
   my $len = length($bcd);
-  croak sprintf("Bad arg length for %s, length is %d, should be 1 to 40 digits", _callersub(), $len)
-	if $len > 40 || $len < 1;
+  croak sprintf("Bad arg length for %s, length is %d, should be 1 to $MAX_BCD_DIGITS digits", _callersub(), $len)
+	if $len > $MAX_BCD_DIGITS || $len < 1;
   croak sprintf("Bad char in string for %s, character is '%s', allowed are 0-9", _callersub(), $1)
 	if $bcd =~ /([^0-9])/;
 }
@@ -658,7 +668,7 @@ sub _bcdcheck {
 sub simple_pack {
   &_bcdcheck;
   my($bcd) = @_;
-  while (length($bcd) < 40) {
+  while (length($bcd) < $MAX_BCD_DIGITS) {
     $bcd = '0'. $bcd;
   }
   return pack('H40',$bcd);
