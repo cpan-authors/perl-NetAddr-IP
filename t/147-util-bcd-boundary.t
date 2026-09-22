@@ -125,4 +125,39 @@ subtest 'croak names name the correct function' => sub {
     like(dies { simple_pack('1' x ($BCD_DIGITS_MAX + 1)) }, qr/simple_pack/, 'the over-long simple_pack croak names simple_pack');
 };
 
+# -------------------------------------------------- exact error messages
+
+subtest 'bcd2bin produces the same error text in both implementations' => sub {
+    like(dies { bcd2bin('1' x 41) },
+	qr/^Bad arg length for NetAddr::IP::Util::bcd2bin, length is 41, should be 1 to 40 digits/,
+	'the over-long bcd2bin croak is the same text in both implementations');
+};
+
+subtest 'simple_pack produces the same error text in both implementations' => sub {
+    like(dies { simple_pack('1' x 41) },
+	qr/^Bad arg length for NetAddr::IP::Util::simple_pack, length is 41, should be 1 to 40 digits/,
+	'the over-long simple_pack croak is the same text in both implementations');
+    like(dies { simple_pack('12a4') },
+	qr/^Bad char in string for NetAddr::IP::Util::simple_pack, character is 'a', allowed are 0-9/,
+	'the bad char simple_pack croak is the same text in both implementations');
+};
+
+subtest 'bcdn2txt produces the same error text in both implementations' => sub {
+    like(dies { bcdn2txt("\x11" x 21) },
+	qr/^Bad arg length for NetAddr::IP::Util::bcdn2txt, length is 42, should be 40 digits/,
+	'the over-long bcdn2txt croak is the same text in both implementations');
+};
+
+subtest 'bcdn2bin produces the same error text in both implementations' => sub {
+    like(dies { bcdn2bin("\x11" x 21, 40) },
+	qr/^Bad arg length for NetAddr::IP::Util::bcdn2bin, length is 42, should be 1 to 40 digits/,
+	'the over-long bcdn2bin croak is the same text in both implementations');
+    like(dies { bcdn2bin("\x12") },
+	qr/^Bad usage, should have NetAddr::IP::Util::bcdn2bin\('packedbcd','length'\)/,
+	'the missing-arg bcdn2bin croak is the same text in both implementations');
+    like(dies { bcdn2bin("\x12", 0) },
+	qr/^Bad digit count for NetAddr::IP::Util::bcdn2bin, is 0, should be 1 to 2 digits/,
+	'the zero-count bcdn2bin croak is the same text in both implementations');
+};
+
 done_testing;

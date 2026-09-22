@@ -11,6 +11,7 @@ package NetAddr::IP::UtilPP;
 
 
 use vars qw(@EXPORT_OK @ISA %EXPORT_TAGS);
+use Carp qw(croak);
 require Exporter;
 
 
@@ -42,6 +43,11 @@ require Exporter;
 );
 
 sub DESTROY {};
+
+sub _callersub {
+  (my $sub = (caller(1))[3]) =~ s/UtilPP::/Util::/;	# callers use NetAddr::IP::Util
+  return $sub;
+}
 
 1;
 
@@ -115,8 +121,8 @@ sub _deadlen {
   my($len,$should) = @_;
   $len *= 8;
   $should = 128 unless $should;
-  my $sub = (caller(1))[3];
-  die "Bad argument length for $sub, is $len, should be $should";
+  my $sub = _callersub();
+  croak "Bad arg length for $sub, length is $len, should be $should";
 }
 
 sub hasbits {
@@ -186,7 +192,7 @@ sub shiftleft {
 	if length($_[0]) != 16;
   my($bits,$shifts) = @_;
   return $bits unless $shifts;
-  die "Bad arg value for ".__PACKAGE__.":shiftleft, length should be 0 thru 128"
+  croak "Bad arg value for NetAddr::IP::Util::shiftleft, is $shifts, should be 0 thru 128"
 	if $shifts < 0 || $shifts > 128;
   my @uint32t = unpack('N4',$bits);
   do {
@@ -577,7 +583,7 @@ sub _bin2bcdn {
 #=cut
 
 sub bcdn2txt {
-  die "Bad argument length for ".__PACKAGE__.":bcdn2txt, is ".(2 * length($_[0])).", should be exactly 40 digits"
+  croak "Bad arg length for NetAddr::IP::Util::bcdn2txt, length is ".(2 * length($_[0])).", should be 40 digits"
 	if length($_[0]) != 20;
   (unpack('H40',$_[0])) =~ /^0*(.+)/;
   $1;
@@ -594,11 +600,14 @@ sub bcdn2txt {
 
 sub bcdn2bin {
   my($bcd,$dc) = @_;
+  croak "Bad usage, should have NetAddr::IP::Util::bcdn2bin('packedbcd','length')"
+	if @_ < 2;
   $dc = 0 unless $dc;
-  die "Bad arg length for ".__PACKAGE__.":bcdn2bin, length is ".(2 * length($bcd)).", should be 1 to 40 digits"
+  my $digits = 2 * length($bcd);
+  croak "Bad arg length for NetAddr::IP::Util::bcdn2bin, length is $digits, should be 1 to 40 digits"
 	if length($bcd) > 20;
-  die "Bad digit count for ".__PACKAGE__.":bcdn2bin, is $dc, should be 1 to ".(2 * length($bcd))." digits"
-	if $dc < 1 || $dc > 2 * length($bcd);
+  croak "Bad digit count for NetAddr::IP::Util::bcdn2bin, is $dc, should be 1 to $digits digits"
+	if $dc < 1 || $dc > $digits;
   return _bcd2bin(unpack("H$dc",$bcd));
 }
 
@@ -620,8 +629,10 @@ sub _bcd2bin {
     $digit[3] = $bcd;
     $overflow |= _sa128(\@hbits,\@digit,0);
   }
-  die 'Bad arg value for '.__PACKAGE__.'::bcd2bin, number is larger than 128 bits'
-	if $overflow;
+  if ($overflow) {
+    my $sub = _callersub();
+    croak "Bad arg value for $sub, number is larger than 128 bits";
+  }
   return pack('N4',@hbits);
 }
 
@@ -636,12 +647,11 @@ sub _bcd2bin {
 #Similar to pack("H*", $bcdtext);
 #
 sub _bcdcheck {
-  my($bcd) = @_;;
-  my $sub = (caller(1))[3];
+  my($bcd) = @_;
   my $len = length($bcd);
-  die "Bad bcd number length $len for $sub, should be 1 to 40 digits"
+  croak sprintf("Bad arg length for %s, length is %d, should be 1 to 40 digits", _callersub(), $len)
 	if $len > 40 || $len < 1;
-  die "Bad character in decimal input string '$1' for $sub"
+  croak sprintf("Bad char in string for %s, character is '%s', allowed are 0-9", _callersub(), $1)
 	if $bcd =~ /([^0-9])/;
 }
 
