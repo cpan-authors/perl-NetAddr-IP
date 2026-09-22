@@ -702,12 +702,12 @@ PPCODE:
 	if (ix == 2) {
 	  len >>= 1;
 	  if (items < 2) {
-	    croak("Bad usage, should have %s('packedbcd,length)",
+	    croak("Bad usage, should have %s('packedbcd','length')",
 		"NetAddr::IP::Util::bcdn2bin");
 	  }
 	  digits = SvIV(ST(1));
 	  if (digits < 1 || digits > (int)(len << 1)) {
-	    croak("Bad digit count for %s%s, is %d, should be 1 to %d",
+	    croak("Bad digit count for %s%s, is %d, should be 1 to %d digits",
 		"NetAddr::IP::Util::",subname,digits,(int)(len << 1));
 	  }
 	  subname = is_bcdn2bin;
