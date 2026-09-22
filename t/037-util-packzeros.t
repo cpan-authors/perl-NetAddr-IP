@@ -4,6 +4,12 @@ use Test2::V1 -ipP;
 use Test2::Plugin::NoWarnings;
 
 use NetAddr::IP::Util qw( packzeros );
+use NetAddr::IP::InetBase ();
+
+# packzeros honours the process wide case setting, and loading
+# NetAddr::IP::Util imports :upper (GH#7), so ask for the case this file
+# expects rather than relying on whatever was imported first
+NetAddr::IP::InetBase::lower();
 
 my %addr = (
     'D0:00:0000:0000:000:b00:0000:000' => 'd0::b00:0:0',
