@@ -9,7 +9,7 @@ package NetAddr::IP::UtilPP;
 #use diagnostics;
 #use lib qw(blib lib);
 
-use AutoLoader qw(AUTOLOAD);
+
 use vars qw(@EXPORT_OK @ISA %EXPORT_TAGS);
 require Exporter;
 
@@ -44,7 +44,6 @@ require Exporter;
 sub DESTROY {};
 
 1;
-__END__
 
 =head1 SYNOPSIS
 

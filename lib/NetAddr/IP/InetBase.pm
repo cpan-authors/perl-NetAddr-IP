@@ -11,7 +11,6 @@ package NetAddr::IP::InetBase;
 #use lib qw(blib lib);
 
 use vars qw(@EXPORT_OK @ISA %EXPORT_TAGS $Mode);
-use AutoLoader qw(AUTOLOAD);
 require Exporter;
 
 @ISA = qw(Exporter);
@@ -281,8 +280,6 @@ sub import {
 }
 
 1;
-
-__END__
 
 =head1 SYNOPSIS
 
