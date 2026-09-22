@@ -370,10 +370,10 @@ Add a signed integer constant to the address part of a NetAddr object.
 This operation changes the address part to point so many hosts above the
 current objects start address. For instance, this code:
 
-    print NetAddr::IP::Lite->new('203.0.113.1/24') + 255;
+    print NetAddr::IP::Lite->new('203.0.113.1/24') + 5;
 
-will output 203.0.113.0/24. The address will wrap around at the broadcast
-back to the network address. This code:
+will output 203.0.113.6/24. The address wraps around at the broadcast back
+to the network address, so this code:
 
     print NetAddr::IP::Lite->new('203.0.113.1/24') + 255;
 
@@ -1577,28 +1577,26 @@ To use the old behavior for C<-E<gt>nth($index)> and C<-E<gt>num()>:
   use NetAddr::IP::Lite qw(:old_nth);
 
   old behavior:
-  NetAddr::IP->new('10/32')->nth(0) == undef
-  NetAddr::IP->new('10/32')->nth(1) == undef
-  NetAddr::IP->new('10/31')->nth(0) == undef
-  NetAddr::IP->new('10/31')->nth(1) == 203.0.113.1/31
-  NetAddr::IP->new('10/30')->nth(0) == undef
-  NetAddr::IP->new('10/30')->nth(1) == 203.0.113.1/30
-  NetAddr::IP->new('10/30')->nth(2) == 203.0.113.2/30
-  NetAddr::IP->new('10/30')->nth(3) == 203.0.113.3/30
+  NetAddr::IP::Lite->new('192.0.2.0/32')->nth(0) == undef
+  NetAddr::IP::Lite->new('192.0.2.0/32')->nth(1) == undef
+  NetAddr::IP::Lite->new('192.0.2.0/31')->nth(0) == undef
+  NetAddr::IP::Lite->new('192.0.2.0/31')->nth(1) == 192.0.2.1/31
+  NetAddr::IP::Lite->new('192.0.2.0/30')->nth(0) == undef
+  NetAddr::IP::Lite->new('192.0.2.0/30')->nth(1) == 192.0.2.1/30
+  NetAddr::IP::Lite->new('192.0.2.0/30')->nth(2) == 192.0.2.2/30
+  NetAddr::IP::Lite->new('192.0.2.0/30')->nth(3) == 192.0.2.3/30
 
 Note that in each case, the broadcast address is represented in the
-output set and that the 'zero'th index is always undef except for
-a point-to-point /31 or /127 network where there are exactly two
-addresses in the network.
+output set and that the 'zero'th index is always undef.
 
   new behavior:
-  NetAddr::IP->new('10/32')->nth(0)  == 203.0.113.0/32
-  NetAddr::IP->new('10.1/32'->nth(0) == 203.0.113.1/32
-  NetAddr::IP->new('10/31')->nth(0)  == 203.0.113.0/31
-  NetAddr::IP->new('10/31')->nth(1)  == 203.0.113.1/31
-  NetAddr::IP->new('10/30')->nth(0) == 203.0.113.1/30
-  NetAddr::IP->new('10/30')->nth(1) == 203.0.113.2/30
-  NetAddr::IP->new('10/30')->nth(2) == undef
+  NetAddr::IP::Lite->new('192.0.2.0/32')->nth(0) == 192.0.2.0/32
+  NetAddr::IP::Lite->new('192.0.2.1/32')->nth(0) == 192.0.2.1/32
+  NetAddr::IP::Lite->new('192.0.2.0/31')->nth(0) == 192.0.2.0/31
+  NetAddr::IP::Lite->new('192.0.2.0/31')->nth(1) == 192.0.2.1/31
+  NetAddr::IP::Lite->new('192.0.2.0/30')->nth(0) == 192.0.2.1/30
+  NetAddr::IP::Lite->new('192.0.2.0/30')->nth(1) == 192.0.2.2/30
+  NetAddr::IP::Lite->new('192.0.2.0/30')->nth(2) == undef
 
 Note that a /32 net always has 1 usable address while a /31 has exactly
 two usable addresses for point-to-point addressing. The first
