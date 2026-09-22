@@ -15,7 +15,6 @@ require DynaLoader;
 require Exporter;
 
 @ISA = qw(Exporter DynaLoader);
-use AutoLoader qw(AUTOLOAD);
 use NetAddr::IP::Util_IS;
 use NetAddr::IP::InetBase qw(
 	:upper
@@ -272,8 +271,6 @@ sub naip_gethostbyname {
 }
 
 1;
-
-__END__
 
 =head1 SYNOPSIS
 

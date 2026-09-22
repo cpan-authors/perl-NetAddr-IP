@@ -25,7 +25,6 @@ use NetAddr::IP::Util qw(
 	notcontiguous
 );
 
-use AutoLoader qw(AUTOLOAD);
 
 use vars qw(
 	@EXPORT_OK
@@ -481,7 +480,6 @@ sub full6m($) {
 sub DESTROY {};
 
 1;
-__END__
 
 sub do_prefix ($$$) {
     my $mask	= shift;
