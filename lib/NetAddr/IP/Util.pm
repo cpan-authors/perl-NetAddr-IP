@@ -15,6 +15,7 @@ require DynaLoader;
 require Exporter;
 
 @ISA = qw(Exporter DynaLoader);
+use NetAddr::IP::Constants qw($V4_PACKED_BYTES $V6_PACKED_BYTES);
 use NetAddr::IP::Util_IS;
 use NetAddr::IP::InetBase qw(
 	:upper
@@ -158,10 +159,10 @@ my $_newV4compat = pack('N4',0,0,0xffff,0);
 
 sub inet_4map6 {
   my $naddr = shift;
-  if (length($naddr) == 4) {
+  if (length($naddr) == $V4_PACKED_BYTES) {
     $naddr = ipv4to6($naddr);
   }
-  elsif (length($naddr) == 16) {
+  elsif (length($naddr) == $V6_PACKED_BYTES) {
     ;	# is OK
     return undef unless isAnyIPv4($naddr);
   } else {
@@ -219,13 +220,13 @@ sub _end_gethostbyname {
     @rv = ();
   }
 # length = rv[3]
-  elsif ($rv[3] && $rv[3] == 4) {
+  elsif ($rv[3] && $rv[3] == $NetAddr::IP::Util::V4_PACKED_BYTES) {
     foreach (4..$#rv) {
       $rv[$_] = NetAddr::IP::Util::inet_4map6(NetAddr::IP::Util::ipv4to6($rv[$_]));
     }
-    $rv[3] = 16;	# unconditionally set length to 16
+    $rv[3] = $NetAddr::IP::Util::V6_PACKED_BYTES;	# unconditionally set length to 16
   }
-  elsif ($rv[3] == 16) {
+  elsif ($rv[3] == $NetAddr::IP::Util::V6_PACKED_BYTES) {
     ;	# is ok
   } else {
     @rv = ();
