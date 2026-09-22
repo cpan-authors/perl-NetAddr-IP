@@ -55,7 +55,7 @@ require Exporter;
 sub DESTROY {};
 
 sub _callersub {
-  (my $sub = (caller(1))[3]) =~ s/UtilPP::/Util::/;	# callers use NetAddr::IP::Util
+  (my $sub = (caller(2))[3]) =~ s/UtilPP::/Util::/;	# callers use NetAddr::IP::Util
   return $sub;
 }
 
