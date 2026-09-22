@@ -10,6 +10,7 @@ package NetAddr::IP::Lite;
 use Carp;
 #use diagnostics;
 #use warnings;
+use NetAddr::IP::Constants qw($IPV6_BITS $IPV4_BITS $IPV4_OFFSET $V6_PACKED_BYTES $V4_PACKED_BYTES);
 use NetAddr::IP::InetBase qw(
 	inet_any2n
 	isIPv4
@@ -924,7 +925,7 @@ sub _xnew($$;$$) {
     $mask = lc $mask;
 
     if ($mask !~ /[^0-9]/) {				# bcd or CIDR notation
-      my $isCIDR = length($mask) < 4 && $mask < 129;
+      my $isCIDR = length($mask) < 4 && $mask <= $IPV6_BITS;
       if ($isV6) {
 	if ($isCIDR) {
 	  my($dq1,$dq2,$dq3,$dq4);
@@ -942,17 +943,17 @@ sub _xnew($$;$$) {
 	  ) {	# corner condition of IPv4 with isV6
 	    $ip = join('.',$dq1,$dq2,$dq3,$dq4);
 	    $try = ipv4to6(inet_aton($ip));
-	    if ($mask < 32) {
-	      $mask = shiftleft(Ones,32 -$mask);
+	    if ($mask < $IPV4_BITS) {
+	      $mask = shiftleft(Ones,$IPV4_BITS -$mask);
 	    }
-	    elsif ($mask == 32) {
+	    elsif ($mask == $IPV4_BITS) {
 	      $mask = Ones;
 	    } else {
 	      return undef;			# undoubtably an error
 	    }
 	  }
-	  elsif ($mask < 128) {
-	    $mask = shiftleft(Ones,128 -$mask);	# small cidr
+	  elsif ($mask < $IPV6_BITS) {
+	    $mask = shiftleft(Ones,$IPV6_BITS -$mask);	# small cidr
 	  } else {
 	    $mask = Ones();
 	  }
@@ -964,10 +965,10 @@ sub _xnew($$;$$) {
 #	if ($ip && $noctal && $ip !~ m|(?:[^\s0123456789.])|) {              # octal suppression required if not an IPv4 address
 #	  $mask = _no_octal($mask);
 #	}
-	if ($mask < 32) {
-	  $mask = shiftleft(Ones,32 -$mask);
+	if ($mask < $IPV4_BITS) {
+	  $mask = shiftleft(Ones,$IPV4_BITS -$mask);
 	}
-	elsif ( $mask == 32) {
+	elsif ( $mask == $IPV4_BITS) {
 	  $mask = Ones;
 	} else {
 	  return undef unless defined ($mask = _bcd2bin_or_undef($mask));
@@ -1030,14 +1031,14 @@ sub _xnew($$;$$) {
       }
       elsif ($ip =~ /^-?[0-9]+$/) {
 	# negative values in -1 .. -(2**32) are accepted as 2's complement
-	$ip += 2 ** 32;
+	$ip += 2 ** $IPV4_BITS;
 	return undef if $ip < 0;		# would wrap in pack
 	$ip = pack('L3N',0,0,0,$ip);
 	last;
       }
       elsif ($ip =~ /^(-?)(0b[01]+|0x[0-9a-f]+)$/) {
 	$ip = oct($2);
-	$ip = 2 ** 32 - $ip if $1 && $ip;
+	$ip = 2 ** $IPV4_BITS - $ip if $1 && $ip;
 	$ip = pack('L3N',0,0,0,$ip);
 	last;
       }
@@ -1113,9 +1114,9 @@ sub _xnew($$;$$) {
 	last;
       }
       elsif ($Accept_Binary_IP && ! $hasmask) {
-	if (length($ip) == 4) {
+	if (length($ip) == $V4_PACKED_BYTES) {
 	  $ip = ipv4to6($ip);
-	} elsif (length($ip) == 16) {
+	} elsif (length($ip) == $V6_PACKED_BYTES) {
 	  $isV6 = 1;
 	} else {
 	  return undef;
@@ -1224,7 +1225,7 @@ sub masklen ($) {
   return 0 unless $len;
   return $len if $_[0]->{isv6};
   return isIPv4($_[0]->{addr})
-	? $len -96
+	? $len -$IPV4_OFFSET
 	: $len;
 }
 
@@ -1235,7 +1236,7 @@ Returns the width of the address in bits. Normally 32 for v4 and 128 for v6.
 =cut
 
 sub bits {
-  return $_[0]->{isv6} ? 128 : 32;
+  return $_[0]->{isv6} ? $IPV6_BITS : $IPV4_BITS;
 }
 
 =item C<-E<gt>version()>
