@@ -10,6 +10,16 @@ package NetAddr::IP;
 
 #use diagnostics;
 use Carp;
+use NetAddr::IP::Constants qw(
+	$DEFAULT_NETLIMIT_EXP
+	$IPV4_BITS
+	$IPV4_OFFSET
+	$IPV6_BITS
+	$MAX_NETLIMIT_EXP
+	$OCTET_BITS
+	$OCTET_COUNT
+	$RFC3021_THRESHOLD
+);
 use NetAddr::IP::Lite qw(Zero Zeros Ones V4mask V4net);
 use NetAddr::IP::Util qw(
 	sub128
@@ -156,13 +166,13 @@ Returns true on success, otherwise C<undef>.
 
 =cut
 
-$_netlimit = 2 ** 16;			# default
+$_netlimit = 2 ** $DEFAULT_NETLIMIT_EXP;	# default
 
 sub netlimit($) {
   return undef unless $_[0];
   return undef if $_[0] =~ /[^0-9]/;
-  return undef if $_[0] < 16;
-  return undef if $_[0] > 24;
+  return undef if $_[0] < $DEFAULT_NETLIMIT_EXP;
+  return undef if $_[0] > $MAX_NETLIMIT_EXP;
   $_netlimit = 2 ** $_[0];
 };
 
@@ -421,7 +431,7 @@ sub hostenumref($) {
   my $r = _splitref(0,$_[0]);
 # a /32 or /128 is one host, a /31 or /127 is two (RFC 3021), matching
 # first, last, nth and num in NetAddr::IP::Lite
-  unless ((notcontiguous($_[0]->{mask}))[1] >= 127) {
+  unless ((notcontiguous($_[0]->{mask}))[1] >= $RFC3021_THRESHOLD) {
     splice(@$r, 0, 1);
     splice(@$r, scalar @$r - 1, 1);
   }
@@ -486,22 +496,22 @@ sub do_prefix ($$$) {
     my $faddr	= shift;
     my $laddr	= shift;
 
-    if ($mask > 24) {
+    if ($mask > $OCTET_BITS * 3) {
 	return "$faddr->[0].$faddr->[1].$faddr->[2].$faddr->[3]-$laddr->[3]";
     }
-    elsif ($mask == 24) {
+    elsif ($mask == $OCTET_BITS * 3) {
 	return "$faddr->[0].$faddr->[1].$faddr->[2].";
     }
-    elsif ($mask > 16) {
+    elsif ($mask > $OCTET_BITS * 2) {
 	return "$faddr->[0].$faddr->[1].$faddr->[2]-$laddr->[2].";
     }
-    elsif ($mask == 16) {
+    elsif ($mask == $OCTET_BITS * 2) {
 	return "$faddr->[0].$faddr->[1].";
     }
-    elsif ($mask > 8) {
+    elsif ($mask > $OCTET_BITS) {
 	return "$faddr->[0].$faddr->[1]-$laddr->[1].";
     }
-    elsif ($mask == 8) {
+    elsif ($mask == $OCTET_BITS) {
 	return "$faddr->[0].";
     }
     else {
@@ -700,8 +710,8 @@ address in the encoding.
 sub prefix($) {
     return undef if $_[0]->{isv6};
     my $mask = (notcontiguous($_[0]->{mask}))[1];
-    return $_[0]->addr if $mask == 128;
-    $mask -= 96;
+    return $_[0]->addr if $mask == $IPV6_BITS;
+    $mask -= $IPV4_OFFSET;
     my @faddr = split (/\./, $_[0]->first->addr);
     my @laddr = split (/\./, $_[0]->broadcast->addr);
     return do_prefix $mask, \@faddr, \@laddr;
@@ -717,8 +727,8 @@ Just as C<-E<gt>prefix()>, but does not include the broadcast address.
 sub nprefix($) {
     return undef if $_[0]->{isv6};
     my $mask = (notcontiguous($_[0]->{mask}))[1];
-    return $_[0]->addr if $mask == 128;
-    $mask -= 96;
+    return $_[0]->addr if $mask == $IPV6_BITS;
+    $mask -= $IPV4_OFFSET;
     my @faddr = split (/\./, $_[0]->first->addr);
     my @laddr = split (/\./, $_[0]->last->addr);
     return do_prefix $mask, \@faddr, \@laddr;
@@ -956,7 +966,7 @@ sub _splitplan {
   my $addr = $ip->addr();
   my $isV6 = $ip->{isv6};
   unless (@bits) {
-    $bits[0] = $isV6 ? 128 : 32;
+    $bits[0] = $isV6 ? $IPV6_BITS : $IPV4_BITS;
   }
   my $basem = $ip->masklen();
 
@@ -995,7 +1005,7 @@ sub _splitplan {
 # @bits contains the masks in the order the user actually wants them
 #
   my %masks;					# calculate masks
-  my $maskbase = $isV6 ? 128 : 32;
+  my $maskbase = $isV6 ? $IPV6_BITS : $IPV4_BITS;
   foreach( keys %nets ) {
     $nets{$_} = 2 ** ($denom - $nets{$_});
     $masks{$_} = shiftleft(Ones, $maskbase - $_);
@@ -1227,14 +1237,14 @@ sub coalesce
     # Addresses are at @_
     return [] unless @_;
 
-    croak("coalesce: masklen must be an integer from 0 to 128")
-	unless defined $masklen && $masklen =~ m|^[0-9]{1,3}$| && $masklen <= 128;
+    croak("coalesce: masklen must be an integer from 0 to $IPV6_BITS")
+	unless defined $masklen && $masklen =~ m|^[0-9]{1,3}$| && $masklen <= $IPV6_BITS;
     croak("coalesce: number must be a non-negative integer")
 	unless defined $number && $number =~ m|^[0-9]+$|;
     croak("coalesce: arguments must be NetAddr::IP objects")
 	if grep { ! UNIVERSAL::isa($_,__PACKAGE__) } @_;
-    croak("coalesce: masklen $masklen exceeds the 32 bits of the IPv4 arguments")
-	if $masklen > 32 && grep { ! $_->{isv6} } @_;
+    croak("coalesce: masklen $masklen exceeds the $IPV4_BITS bits of the IPv4 arguments")
+	if $masklen > $IPV4_BITS && grep { ! $_->{isv6} } @_;
     my %ret = ();
     my $type = $_[0]->{isv6};
     return [] unless defined $type;
@@ -1248,7 +1258,7 @@ sub coalesce
 	{
 	    # the size of the subnet, which is not ->num, since ->num
 	    # excludes the network and broadcast addresses
-	    $ret{$n} += 2 ** (($type ? 128 : 32) - $ip->masklen);
+	    $ret{$n} += 2 ** (($type ? $IPV6_BITS : $IPV4_BITS) - $ip->masklen);
 	}
     }
 
@@ -1374,7 +1384,7 @@ sub re ($)
     return &re6 if $_[0]->{isv6} || !isIPv4($_[0]->{addr});
     my $self = shift->network;	# Insure a "zero" host part
     my ($addr, $mlen) = ($self->addr, $self->masklen);
-    my @o = split('\.', $addr, 4);
+    my @o = split('\.', $addr, $OCTET_COUNT);
 
     my $octet= '(?:[0-9]|[1-9][0-9]|1[0-9][0-9]|2[0-4][0-9]|25[0-5])';
     my @r = @o;
@@ -1385,27 +1395,27 @@ sub re ($)
 #	warn "# $self: $r[$i] == $o[$i]\n";
 #    }
 
-    if ($mlen != 32)
+    if ($mlen != $IPV4_BITS)
     {
-	if ($mlen > 24)
+	if ($mlen > $OCTET_BITS * 3)
 	{
-	     $d	= 2 ** (32 - $mlen) - 1;
+	     $d	= 2 ** ($IPV4_BITS - $mlen) - 1;
 	     $r[3] = '(?:' . join('|', ($o[3]..$o[3] + $d)) . ')';
 	}
 	else
 	{
 	    $r[3] = $octet;
-	    if ($mlen > 16)
+	    if ($mlen > $OCTET_BITS * 2)
 	    {
-		$d = 2 ** (24 - $mlen) - 1;
+		$d = 2 ** ($OCTET_BITS * 3 - $mlen) - 1;
 		$r[2] = '(?:' . join('|', ($o[2]..$o[2] + $d)) . ')';
 	    }
 	    else
 	    {
 		$r[2] = $octet;
-		if ($mlen > 8)
+		if ($mlen > $OCTET_BITS)
 		{
-		    $d = 2 ** (16 - $mlen) - 1;
+		    $d = 2 ** ($OCTET_BITS * 2 - $mlen) - 1;
 		    $r[1] = '(?:' . join('|', ($o[1]..$o[1] + $d)) . ')';
 		}
 		else
@@ -1413,7 +1423,7 @@ sub re ($)
 		    $r[1] = $octet;
 		    if ($mlen > 0)
 		    {
-			$d = 2 ** (8 - $mlen) - 1;
+			$d = 2 ** ($OCTET_BITS - $mlen) - 1;
 			$r[0] = '(?:' . join('|', ($o[0] .. $o[0] + $d)) . ')';
 		    }
 		    else { $r[0] = $octet; }
