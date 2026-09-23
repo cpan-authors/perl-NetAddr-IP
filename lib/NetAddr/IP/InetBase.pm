@@ -411,7 +411,7 @@ sub ipv6_aton {
   return undef unless $ipv6;
   local($1,$2,$3,$4,$5);
   if ($ipv6 =~ /^(.*:)([0-9]{1,3})\.([0-9]{1,3})\.([0-9]{1,3})\.([0-9]{1,3})$/) {	# mixed hex, dot-quad
-    return undef if $2 > 255 || $3 > 255 || $4 > 255 || $5 > 255;
+    return undef if $2 > $MAX_OCTET || $3 > $MAX_OCTET || $4 > $MAX_OCTET || $5 > $MAX_OCTET;
     $ipv6 = sprintf("%s%X%02X:%X%02X",$1,$2,$3,$4,$5);			# convert to pure hex
   }
   my $c;

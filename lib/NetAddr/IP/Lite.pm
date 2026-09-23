@@ -751,7 +751,7 @@ sub new_from_aton($$) {
   my $ip = shift;
   return undef unless defined $ip;
   my $addrlen = length($ip);
-  return undef unless $addrlen == 4;
+  return undef unless $addrlen == $V4_PACKED_BYTES;
   my $self = {
 	addr    => ipv4to6($ip),
 	mask    => &Ones,
