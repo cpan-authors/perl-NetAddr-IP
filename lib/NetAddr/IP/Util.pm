@@ -6,8 +6,6 @@ use strict;
 
 package NetAddr::IP::Util;
 # VERSION
-#use diagnostics;
-#use lib qw(blib/lib);
 
 use vars qw(@EXPORT_OK @ISA %EXPORT_TAGS $Mode);
 
