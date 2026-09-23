@@ -271,9 +271,7 @@ sub addconst {
   my $sign = ($const < 0) ? 0xffffffff : 0;
   my $b128 = pack('N4',$sign,$sign,$sign,$const);
   @_ = ($a128,$b128,0);
-# perl 5.8.4 fails with this operation. see perl bug [ 23429]
-#  goto &slowadd128;
-  slowadd128(@_);
+  goto &slowadd128;
 }
 
 =item * add128($ipv6naddr1,$ipv6naddr2);
@@ -294,9 +292,7 @@ sub add128 {
   _deadlen(length($b128))
 	if length($b128) != $V6_PACKED_BYTES;
   @_ = ($a128,$b128,0);
-# perl 5.8.4 fails with this operation. see perl bug [ 23429]
-#  goto &slowadd128;
-  slowadd128(@_);
+  goto &slowadd128;
 }
 
 =item * sub128($ipv6naddr1,$ipv6naddr2);
@@ -325,9 +321,7 @@ sub sub128 {
   my $a128 = $_[0];
   my $b128 = ~$_[1];
   @_ = ($a128,$b128,1);
-# perl 5.8.4 fails with this operation. see perl bug [ 23429]
-#  goto &slowadd128;
-  slowadd128(@_);
+  goto &slowadd128;
 }
 
 =item * ($spurious,$cidr) = notcontiguous($mask128);
@@ -377,7 +371,6 @@ Convert an ipv4 network address into an ipv6 network address.
 sub ipv4to6 {
   _deadlen(length($_[0]),$IPV4_BITS)
         if length($_[0]) != $V4_PACKED_BYTES;
-#  return pack('L3H8',0,0,0,unpack('H8',$_[0]));
   return pack('L3a4',0,0,0,$_[0]);
 }
 
@@ -395,7 +388,6 @@ NOTE: returns the high 96 bits as one's
 sub mask4to6 {
   _deadlen(length($_[0]),$IPV4_BITS)
         if length($_[0]) != $V4_PACKED_BYTES;
-#  return pack('L3H8',0xffffffff,0xffffffff,0xffffffff,unpack('H8',$_[0]));
   return pack('L3a4',0xffffffff,0xffffffff,0xffffffff,$_[0]);
 }
 
@@ -413,7 +405,6 @@ sub ipanyto6 {
   my $naddr = shift;
   my $len = length($naddr);
   return $naddr if $len == $V6_PACKED_BYTES;
-#  return pack('L3H8',0,0,0,unpack('H8',$naddr))
   return pack('L3a4',0,0,0,$naddr)
 	if $len == $V4_PACKED_BYTES;
   _deadlen($len,"$IPV4_BITS or $IPV6_BITS");
@@ -433,7 +424,6 @@ sub maskanyto6 {
   my $naddr = shift;
   my $len = length($naddr);
   return $naddr if $len == $V6_PACKED_BYTES;
-#  return pack('L3H8',0xffffffff,0xffffffff,0xffffffff,unpack('H8',$naddr))
   return pack('L3a4',0xffffffff,0xffffffff,0xffffffff,$naddr)
 	if $len == $V4_PACKED_BYTES;
   _deadlen($len,"$IPV4_BITS or $IPV6_BITS");
@@ -484,9 +474,7 @@ Convert a bcd text string to 128 bit string variable
 
 sub bcd2bin {
   &_bcdcheck;
-# perl 5.8.4 fails with this operation. see perl bug [ 23429]
-#  goto &_bcd2bin;
-  &_bcd2bin;
+  goto &_bcd2bin;
 }
 
 
@@ -528,9 +516,7 @@ sub comp128 {
 sub bin2bcdn {
   _deadlen(length($_[0]))
 	if length($_[0]) != $V6_PACKED_BYTES;
-# perl 5.8.4 fails with this operation. see perl bug [ 23429]
-#  goto &_bin2bcdn;
-  &_bin2bcdn;
+  goto &_bin2bcdn;
 }
 
 sub _bin2bcdn {

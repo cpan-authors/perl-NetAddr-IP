@@ -439,14 +439,12 @@ sub hostenumref($) {
 
 sub splitref {
   unshift @_, 0;	# mark as no reverse
-# perl 5.8.4 fails with this operation. see perl bug [ 23429]
-  &_splitref;
+  goto &_splitref;
 }
 
 sub rsplitref {
   unshift @_, 1;	# mark as reversed
-# perl 5.8.4 fails with this operation. see perl bug [ 23429]
-  &_splitref;
+  goto &_splitref;
 }
 
 sub split {
