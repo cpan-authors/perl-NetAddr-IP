@@ -7,8 +7,8 @@ use strict;
 package NetAddr::IP::UtilPP;
 # VERSION
 
-use vars qw(@EXPORT_OK @ISA %EXPORT_TAGS);
-use Carp qw(croak);
+use parent 'Exporter';
+use Carp qw( croak );
 use NetAddr::IP::Constants qw(
 	$IPV4_BITS
 	$IPV6_BITS
@@ -19,12 +19,8 @@ use NetAddr::IP::Constants qw(
 	$V4_PACKED_BYTES
 	$V6_PACKED_BYTES
 );
-require Exporter;
 
-
-@ISA = qw(Exporter);
-
-@EXPORT_OK = qw(
+our @EXPORT_OK = qw(
 	hasbits
 	shiftleft
 	addconst
@@ -44,8 +40,7 @@ require Exporter;
 	bcdn2bin
 	simple_pack
 );
-
-%EXPORT_TAGS = (
+our %EXPORT_TAGS = (
 	all	=> [@EXPORT_OK],
 );
 
