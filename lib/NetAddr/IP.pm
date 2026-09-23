@@ -799,7 +799,7 @@ sub _compV6 ($) {
 sub short($) {
   my $addr = $_[0]->addr;
   if (! $_[0]->{isv6} && isIPv4($_[0]->{addr})) {
-    my @o = split(/\./, $addr, 4);
+    my @o = split(/\./, $addr, $OCTET_COUNT);
     splice(@o, 1, 2) if $o[1] == 0 and $o[2] == 0;
     return join '.', @o;
   }
@@ -979,7 +979,7 @@ sub _splitplan {
       $x = $mask->{isv6} ? $mask->{addr} : $mask->{addr} | V4mask;
       ($x,$maddr) = notcontiguous($x);
       return () if $x;	# spurious bits
-      $mask = $isV6 ? $maddr : $maddr - 96;
+      $mask = $isV6 ? $maddr : $maddr - $IPV4_OFFSET;
     }
     elsif ($mask = NetAddr::IP->new($addr,$mask,$isV6)) { # will be undefined if bad mask and will fall into oops!
       $mask = $mask->masklen();
