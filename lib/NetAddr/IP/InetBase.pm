@@ -7,7 +7,7 @@ use strict;
 package NetAddr::IP::InetBase;
 # VERSION
 
-use vars qw(@EXPORT_OK @ISA %EXPORT_TAGS $Mode);
+use parent 'Exporter';
 use NetAddr::IP::Constants qw(
 	$IPV6_BITS
 	$MAX_OCTET
@@ -15,11 +15,8 @@ use NetAddr::IP::Constants qw(
 	$V4_PACKED_BYTES
 	$V6_PACKED_BYTES
 );
-require Exporter;
 
-@ISA = qw(Exporter);
-
-@EXPORT_OK = qw(
+our @EXPORT_OK = qw(
 	inet_aton
 	inet_ntoa
 	ipv6_aton
@@ -40,8 +37,7 @@ require Exporter;
 	fake_AF_INET6
 	fillIPv4
 );
-
-%EXPORT_TAGS = (
+our %EXPORT_TAGS = (
 	all     => [@EXPORT_OK],
 	ipv4	=> [qw(
 		inet_aton
@@ -61,6 +57,7 @@ require Exporter;
 		packzeros
 	)],
 );
+our $Mode;
 
 # prototypes
 sub inet_ntoa;
@@ -127,8 +124,8 @@ sub fake_AF_INET6 {
 }
 
 # allow user to choose upper or lower case
+our ($n2x_format, $n2d_format);
 BEGIN {
-  use vars qw($n2x_format $n2d_format);
   $n2x_format = "%x:%x:%x:%x:%x:%x:%x:%x";
   $n2d_format = "%x:%x:%x:%x:%x:%x:%d.%d.%d.%d";
 }

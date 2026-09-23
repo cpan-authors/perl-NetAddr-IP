@@ -8,7 +8,9 @@ use warnings;
 package NetAddr::IP;
 # VERSION
 
-use Carp;
+use parent qw(Exporter NetAddr::IP::Lite);
+use Carp qw( croak );
+
 use NetAddr::IP::Constants qw(
 	$DEFAULT_NETLIMIT_EXP
 	$IPV4_BITS
@@ -19,34 +21,14 @@ use NetAddr::IP::Constants qw(
 	$OCTET_COUNT
 	$RFC3021_THRESHOLD
 );
-use NetAddr::IP::Lite qw(Zero Zeros Ones V4mask V4net);
-use NetAddr::IP::Util qw(
-	sub128
-	inet_aton
-	inet_any2n
-	ipv6_aton
-	isIPv4
-	ipv4to6
-	mask4to6
-	shiftleft
-	addconst
-	hasbits
-	notcontiguous
-);
+use NetAddr::IP::Lite qw( Ones V4mask V4net Zero Zeros );
+use NetAddr::IP::Util qw( hasbits isIPv4 notcontiguous shiftleft sub128 );
 
 
-use vars qw(
-	@EXPORT_OK
-	@EXPORT_FAIL
-	@ISA
-	$_netlimit
-);
-require Exporter;
 
-@EXPORT_OK = qw(Compact Coalesce Zero Zeros Ones V4mask V4net netlimit);
-@EXPORT_FAIL = qw($_netlimit);
-
-@ISA = qw(Exporter NetAddr::IP::Lite);
+our @EXPORT_OK = qw(Compact Coalesce Zero Zeros Ones V4mask V4net netlimit);
+our @EXPORT_FAIL = qw($_netlimit);
+our $_netlimit;
 
 
 =encoding UTF-8
