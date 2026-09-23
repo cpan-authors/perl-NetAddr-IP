@@ -1431,13 +1431,21 @@ sub re ($)
 Returns a Perl regular expression that will match an IP address within
 the given subnet. Always returns an ipV6 regex.
 
+The regex matches the address written in full or with one C<::> run, with
+or without leading zeros in each group. Case is ignored. It does not match
+the dotted quad forms C<::1.2.3.4> or C<::ffff:1.2.3.4>. Anchor the regex
+when matching a whole string:
+
+  my $re = NetAddr::IP->new('2001:db8::/32')->re6;
+  print "in\n" if '2001:db8::1' =~ /^$re$/;
+
 Both C<-E<gt>re> and C<-E<gt>re6> return a non-capturing group, so that
 embedding either one in a larger pattern does not change the numbering of
 the caller's own capture groups. Wrap the result yourself if you want the
 matched text:
 
   my $re = $ip->re6;
-  if ($text =~ /addr=($re)\\s/) { print "matched $1\\n" }
+  if ($text =~ /addr=($re)\s/) { print "matched $1\n" }
 
 =cut
 
@@ -1474,12 +1482,12 @@ sub re6($) {
 	$m = ($n == 9) ? 9 : $n .'-9';
 	if ($b =~ /A/) {
 	  $m .= 'aA';
-	} else {
+} else {
 	  $b = 'A-'. $b;
 	  $m .= (lc $b). $b;
 	}
 	push @dig, '['.$m.']';
-      }
+       }
       elsif ($n =~ /[A-F]/ && $b =~ /[0-9]/) {
 	if ($n =~ /A/) {
 	  $m = 'aA';
@@ -1496,28 +1504,45 @@ sub re6($) {
       }
     }
   }
+  my @zok = map { join('',@net[$_*4 .. $_*4+3]) eq '0000' ? 1 : 0 } 0..7;
+
   my @grp;
   do {
-    my $grp = join('',splice(@dig,0,4));
-    if ($grp =~ /^(0+)/) {
-      my $l = length($1);
-      if ($l == 4) {
-	$grp = '0{1,4}';
-      } else {
-	$grp =~ s/^${1}/0\{0,$l\}/;
-      }
+    my @g = splice(@dig,0,4);
+    my $zeros = 0;
+    while (@g and $g[0] eq '0') {
+      shift @g;
+      ++$zeros;
     }
-    if ($grp =~ /(x+)$/) {
-      my $l = length($1);
-      if ($l == 4) {
-	$grp = '[0-9a-fA-F]{1,4}';
-      } else {
-	$grp =~ s/x+/\[0\-9a\-fA\-F\]\{$l\}/;
-      }
+    my $wild = 0;
+    while (@g and $g[-1] eq 'x') {
+      pop @g;
+      ++$wild;
     }
+    my $grp;
+    if (!@g) {
+      $grp = $wild ? "[0-9a-fA-F]{1,$wild}" : '0{1,4}';
+    }
+    elsif ($wild and @g == 1 and $g[0] =~ /^\[0/) {
+      $grp = '(?:'. $g[0] .'[0-9a-fA-F]{'. $wild .'}|[0-9a-fA-F]{1,'. $wild .'})';
+    }
+    else {
+      $grp = join('',@g);
+      $grp .= "[0-9a-fA-F]{$wild}" if $wild;
+    }
+    $grp = "0{0,$zeros}". $grp if $zeros and $grp ne '0{1,4}';
     push @grp, $grp;
   } while @dig > 0;
-  return '(?:'. join(':',@grp) .')';
+
+  my @alt = (join(':',@grp));
+  foreach my $i (0..$#grp) {
+    next unless $zok[$i];
+    foreach my $j ($i..$#grp) {
+      last unless $zok[$j];
+      push @alt, join(':',@grp[0..$i-1]) .'::'. join(':',@grp[$j+1..$#grp]);
+    }
+  }
+  return '(?:'. join('|',@alt) .')';
 }
 
 sub mod_version {
