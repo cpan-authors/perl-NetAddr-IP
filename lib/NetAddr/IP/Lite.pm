@@ -8,7 +8,6 @@ package NetAddr::IP::Lite;
 # VERSION
 
 use Carp;
-#use diagnostics;
 #use warnings;
 use NetAddr::IP::Constants qw($IPV6_BITS $IPV4_BITS $IPV4_OFFSET $V6_PACKED_BYTES $V4_PACKED_BYTES);
 use NetAddr::IP::InetBase qw(
@@ -156,16 +155,6 @@ The supported operations are described below:
 
 my $parent = 'NetAddr::IP';
 
-# test function
-#
-# input:	subroutine name in NetAddr::IP
-# output:	t/f	if sub name exists in NetAddr::IP namespace
-#
-#sub sub_exists {
-#  my $other = $parent .'::';
-#  return exists ${$other}{$_[0]};
-#}
-
 sub DESTROY {};
 
 sub AUTOLOAD {
@@ -293,13 +282,6 @@ sub comp_addr_mask {
   return -1 unless $c;
   return hasbits($rv) ? 1 : 0;
 }
-
-#sub comp_addr {
-#  my($c,$rv) = sub128($_[0]->{addr},$_[1]->{addr});
-#  return -1 unless $c;
-#  return hasbits($rv) ? 1 : 0;
-#}
-
 
 =over
 
@@ -791,8 +773,6 @@ sub new_cis6($;$$) {
 }
 
 sub _no_octal {
-#  $_[0] =~ m/^(\d+)\.(\d+)\.(\d+)\.(\d+)$/;
-#  return sprintf("%d.%d.%d.%d",$1,$2,$3,$4);
   (my $rv = $_[0]) =~ s#\b0*([1-9][0-9]*/?|0/?)#$1#g;	# suppress leading zeros
   $rv;
 }
@@ -846,7 +826,6 @@ sub _xnew($$;$$) {
   while (1) {
 # process IP's with no CIDR or that have the CIDR as part of the IP argument string
     unless (@_) {
-#      if ($ip =~ m!^(.+)/(.+)$!) {
       if ($ip !~ /[^0-9]/) {		# binary number notation
 	return undef unless defined ($ip = _bcd2bin_or_undef($ip));
 	$mask = Ones;
@@ -885,9 +864,6 @@ sub _xnew($$;$$) {
 	  return undef unless $isV6;
 # add for ipv6 notation "12345, 1"
         }
-#	$mask = lc $_[0];
-#      } else {
-#	$mask = lc $_[0];
       }
 # extract mask
       $mask = $_[0];

@@ -7,9 +7,6 @@ use strict;
 package NetAddr::IP::InetBase;
 # VERSION
 
-#use diagnostics;
-#use lib qw(blib lib);
-
 use vars qw(@EXPORT_OK @ISA %EXPORT_TAGS $Mode);
 use NetAddr::IP::Constants qw(
 	$IPV6_BITS
@@ -160,18 +157,6 @@ sub ipv6_n2d {
 
 # if Socket lib is broken in some way, check for overange values
 #
-#my $overange = yinet_aton('256.1') ? 1:0;
-#my $overange = gethostbyname('256.1') ? 1:0;
-
-#sub inet_aton {
-#  unless (! $overange || $_[0] =~ /[^0-9\.]/) {	# hostname
-#    my @dq = split(/\./,$_[0]);
-#    foreach (@dq) {
-#      return undef if $_ > 255;
-#    }
-#  }
-#  scalar gethostbyname($_[0]);
-#}
 
 sub fillIPv4 {
   my $host = $_[0];
@@ -184,29 +169,20 @@ sub fillIPv4 {
         $3 >= 0 && $3 < 256 &&
         $4 >= 0 && $4 < 256;
       $host = $1.'.'.$2.'.'.$3.'.'.$4;
-#      return pack('C4',$1,$2,$3,$4);
-#      $host = ($1 << 24) + ($2 << 16) + ($3 << 8) + $4;
     } elsif (defined $3) {
       return undef unless
         $1 >= 0 && $1 < 256 &&
         $2 >= 0 && $2 < 256 &&
         $3 >= 0 && $3 < 256;
       $host = $1.'.'.$2.'.0.'.$3
-#      return pack('C4',$1,$2,0,$3);
-#      $host = ($1 << 24) + ($2 << 16) + $3;
     } elsif (defined $2) {
       return undef unless
         $1 >= 0 && $1 < 256 &&
         $2 >= 0 && $2 < 256;
       $host = $1.'.0.0.'.$2;
-#      return pack('C4',$1,0,0,$2);
-#      $host = ($1 << 24) + $2;
     } else {
       $host = '0.0.0.'.$1;
-#      return pack('C4',0,0,0,$1);
-#      $host = $1;
     }
-#    return pack('N',$host);
   }
   $host;
 }
@@ -215,40 +191,6 @@ sub inet_aton {
   my $host = fillIPv4($_[0]);
   return $host ? scalar gethostbyname($host) : undef;
 }
-
-#sub inet_aton {
-#  my $host = $_[0];
-#  return undef unless defined $host;
-#  if ($host =~ /^(\d+)(?:|\.(\d+)(?:|\.(\d+)(?:|\.(\d+))))$/) {
-#    if (defined $4) {
-#      return undef unless
-#        $1 >= 0 && $1 < 256 &&
-#        $2 >= 0 && $2 < 256 &&
-#        $3 >= 0 && $3 < 256 &&
-#        $4 >= 0 && $4 < 256;
-#      return pack('C4',$1,$2,$3,$4);
-##      $host = ($1 << 24) + ($2 << 16) + ($3 << 8) + $4;
-#    } elsif (defined $3) {
-#      return undef unless
-#        $1 >= 0 && $1 < 256 &&
-#        $2 >= 0 && $2 < 256 &&
-#        $3 >= 0 && $3 < 256;
-#      return pack('C4',$1,$2,0,$3);
-##      $host = ($1 << 24) + ($2 << 16) + $3;
-#    } elsif (defined $2) {
-#      return undef unless
-#        $1 >= 0 && $1 < 256 &&
-#        $2 >= 0 && $2 < 256;
-#      return pack('C4',$1,0,0,$2);
-##      $host = ($1 << 24) + $2;
-#    } else {
-#      return pack('C4',0,0,0,$1);
-##      $host = $1;
-#    }
-##    return pack('N',$host);
-#  }
-#  scalar gethostbyname($host);
-#}
 
 my $_zero = pack('L4',0,0,0,0);
 my $_ipv4mask = pack('L4',0xffffffff,0xffffffff,0xffffffff,0);

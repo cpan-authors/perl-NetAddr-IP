@@ -8,7 +8,6 @@ use warnings;
 package NetAddr::IP;
 # VERSION
 
-#use diagnostics;
 use Carp;
 use NetAddr::IP::Constants qw(
 	$DEFAULT_NETLIMIT_EXP
@@ -441,14 +440,12 @@ sub hostenumref($) {
 sub splitref {
   unshift @_, 0;	# mark as no reverse
 # perl 5.8.4 fails with this operation. see perl bug [ 23429]
-#  goto &_splitref;
   &_splitref;
 }
 
 sub rsplitref {
   unshift @_, 1;	# mark as reversed
 # perl 5.8.4 fails with this operation. see perl bug [ 23429]
-#  goto &_splitref;
   &_splitref;
 }
 
@@ -1048,13 +1045,11 @@ sub _splitref {
   my($plan,$masks) = &_splitplan;
 # bug report 82719
   croak("netmask error: overrange or spurious bits") unless defined $plan;
-#  return undef unless $plan;
   my $net = $_[0]->network();
   return [$net] unless $masks;
   my $addr = $net->{addr};
   my $isV6 = $net->{isv6};
   my @plan = $rev ? reverse @$plan : @$plan;
-# print "plan @plan\n";
 
 # create splits
   my @ret;
@@ -1389,11 +1384,6 @@ sub re ($)
     my $octet= '(?:[0-9]|[1-9][0-9]|1[0-9][0-9]|2[0-4][0-9]|25[0-5])';
     my @r = @o;
     my $d;
-
-#    for my $i (0 .. $#o)
-#    {
-#	warn "# $self: $r[$i] == $o[$i]\n";
-#    }
 
     if ($mlen != $IPV4_BITS)
     {
