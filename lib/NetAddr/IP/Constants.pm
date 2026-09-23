@@ -6,6 +6,7 @@ use strict;
 use warnings FATAL => 'all';
 
 package NetAddr::IP::Constants;
+# VERSION
 
 use Exporter qw(import);
 
