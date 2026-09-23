@@ -419,7 +419,7 @@ sub ipanyto6 {
 #  return pack('L3H8',0,0,0,unpack('H8',$naddr))
   return pack('L3a4',0,0,0,$naddr)
 	if $len == $V4_PACKED_BYTES;
-  _deadlen($len,'32 or 128');
+  _deadlen($len,"$IPV4_BITS or $IPV6_BITS");
 }
 
 =item * $ipv6naddr = maskanyto6($netaddr);
@@ -439,7 +439,7 @@ sub maskanyto6 {
 #  return pack('L3H8',0xffffffff,0xffffffff,0xffffffff,unpack('H8',$naddr))
   return pack('L3a4',0xffffffff,0xffffffff,0xffffffff,$naddr)
 	if $len == $V4_PACKED_BYTES;
-  _deadlen($len,'32 or 128');
+  _deadlen($len,"$IPV4_BITS or $IPV6_BITS");
 }
 
 =item * $netaddr = ipv6to4($pv6naddr);
@@ -471,8 +471,8 @@ Convert a 128 bit binary string into binary coded decimal text digits.
 
 sub bin2bcd {
   _deadlen(length($_[0]))
-	if length($_[0]) != 16;
-  unpack("H40",&_bin2bcdn) =~ /^0*(.+)/;
+	if length($_[0]) != $V6_PACKED_BYTES;
+  unpack("H$MAX_BCD_DIGITS",&_bin2bcdn) =~ /^0*(.+)/;
   $1;
 }
 
@@ -512,7 +512,7 @@ sub bcd2bin {
 
 sub comp128 {
   _deadlen(length($_[0]))
-	if length($_[0]) != 16;
+	if length($_[0]) != $V6_PACKED_BYTES;
   return ~ $_[0];
 }
 
@@ -530,7 +530,7 @@ sub comp128 {
 
 sub bin2bcdn {
   _deadlen(length($_[0]))
-	if length($_[0]) != 16;
+	if length($_[0]) != $V6_PACKED_BYTES;
 # perl 5.8.4 fails with this operation. see perl bug [ 23429]
 #  goto &_bin2bcdn;
   &_bin2bcdn;
@@ -595,7 +595,7 @@ sub _bin2bcdn {
 sub bcdn2txt {
   croak "Bad arg length for NetAddr::IP::Util::bcdn2txt, length is ".(2 * length($_[0])).", should be $MAX_BCD_DIGITS digits"
 	if length($_[0]) != $PACKED_BCD_BYTES;
-  (unpack('H40',$_[0])) =~ /^0*(.+)/;
+  (unpack("H$MAX_BCD_DIGITS",$_[0])) =~ /^0*(.+)/;
   $1;
 }
 
@@ -671,7 +671,7 @@ sub simple_pack {
   while (length($bcd) < $MAX_BCD_DIGITS) {
     $bcd = '0'. $bcd;
   }
-  return pack('H40',$bcd);
+  return pack("H$MAX_BCD_DIGITS",$bcd);
 }
 
 
