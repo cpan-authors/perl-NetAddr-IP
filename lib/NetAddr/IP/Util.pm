@@ -7,23 +7,11 @@ use strict;
 package NetAddr::IP::Util;
 # VERSION
 
-use vars qw(@EXPORT_OK @ISA %EXPORT_TAGS $Mode);
+use parent qw(Exporter DynaLoader);
+use DynaLoader ();
 
-require DynaLoader;
-require Exporter;
 
-@ISA = qw(Exporter DynaLoader);
-use NetAddr::IP::Constants qw($V4_PACKED_BYTES $V6_PACKED_BYTES);
-use NetAddr::IP::Util_IS;
-use NetAddr::IP::InetBase qw(
-	:upper
-	:all
-);
-
-*NetAddr::IP::Util::upper = \&NetAddr::IP::InetBase::upper;
-*NetAddr::IP::Util::lower = \&NetAddr::IP::InetBase::lower;
-
-@EXPORT_OK = qw(
+our @EXPORT_OK = qw(
 	inet_aton
 	inet_ntoa
 	ipv6_aton
@@ -64,8 +52,7 @@ use NetAddr::IP::InetBase qw(
 	naip_gethostbyname
 	havegethostbyname2
 );
-
-%EXPORT_TAGS = (
+our %EXPORT_TAGS = (
 	all     => [@EXPORT_OK],
 	inet	=> [qw(
 		inet_aton
@@ -125,6 +112,33 @@ use NetAddr::IP::InetBase qw(
 		naip_gethostbyname
 	)],
 );
+our $Mode;
+
+use NetAddr::IP::Constants qw($V4_PACKED_BYTES $V6_PACKED_BYTES);
+use NetAddr::IP::Util_IS ();
+use NetAddr::IP::InetBase qw(
+    :upper
+    AF_INET
+    AF_INET6
+    inet_any2n
+    inet_aton
+    inet_n2ad
+    inet_n2dx
+    inet_ntoa
+    inet_ntop
+    inet_pton
+    ipv6_aton
+    ipv6_n2d
+    ipv6_n2x
+    ipv6_ntoa
+    isAnyIPv4
+    isIPv4
+    isNewIPv4
+    packzeros
+);
+
+*NetAddr::IP::Util::upper = \&NetAddr::IP::InetBase::upper;
+*NetAddr::IP::Util::lower = \&NetAddr::IP::InetBase::lower;
 
 my $xs_ok;
 if (NetAddr::IP::Util_IS->not_pure) {
@@ -198,7 +212,15 @@ package NetAddr::IP::UtilPolluted;
 # we don't want them all, confine them to this name space.
 
 use strict;
-use Socket;
+use Socket qw(
+    AF_INET
+    AF_INET6
+    INADDR_LOOPBACK
+    inet_aton
+    inet_ntoa
+    inet_ntop
+    inet_pton
+);
 
 my $_v4zero = pack('L',0);
 my $_zero = pack('L4',0,0,0,0);

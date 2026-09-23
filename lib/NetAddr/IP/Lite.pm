@@ -7,51 +7,50 @@ use strict;
 package NetAddr::IP::Lite;
 # VERSION
 
-use Carp;
+use parent 'Exporter';
+use Carp qw( croak );
+
 #use warnings;
-use NetAddr::IP::Constants qw($IPV6_BITS $IPV4_BITS $IPV4_OFFSET $V6_PACKED_BYTES $V4_PACKED_BYTES);
+use NetAddr::IP::Constants qw(
+    $IPV6_BITS
+    $IPV4_BITS
+    $IPV4_OFFSET
+    $V6_PACKED_BYTES
+    $V4_PACKED_BYTES
+);
 use NetAddr::IP::InetBase qw(
-	inet_any2n
-	isIPv4
-	inet_n2dx
-	inet_aton
-	ipv6_aton
-	ipv6_n2x
-	fillIPv4
+    fillIPv4
+    inet_any2n
+    inet_aton
+    inet_n2dx
+    ipv6_aton
+    ipv6_n2x
+    isIPv4
 );
 use NetAddr::IP::Util qw(
-	add128
-	addconst
-	sub128
-	ipv6to4
-	notcontiguous
-	shiftleft
-	hasbits
-	bin2bcd
-	bcd2bin
-	mask4to6
-	ipv4to6
-	isAnyIPv4
-	naip_gethostbyname
-	havegethostbyname2
+    add128
+    addconst
+    bcd2bin
+    bin2bcd
+    hasbits
+    havegethostbyname2
+    ipv4to6
+    ipv6to4
+    isAnyIPv4
+    mask4to6
+    naip_gethostbyname
+    notcontiguous
+    shiftleft
+    sub128
 );
 
-use vars qw(@ISA @EXPORT_OK $Accept_Binary_IP $Old_nth $NoFQDN $AUTOLOAD *Zero);
+our @EXPORT_OK = qw(Zeros Zero Ones V4mask V4net);
+our $Accept_Binary_IP = 0;
+our $Old_nth = 0;
+our $NoFQDN;
+our $AUTOLOAD;
 
-require Exporter;
-
-@ISA = qw(Exporter);
-
-@EXPORT_OK = qw(Zeros Zero Ones V4mask V4net);
-
-# Set to true, to enable recognizing of ipV4 && ipV6 binary notation IP
-# addresses. Thanks to Steve Snodgrass for reporting. This can be done
-# at the time of use-ing the module. See docs for details.
-
-$Accept_Binary_IP = 0;
-$Old_nth = 0;
 *Zero = \&Zeros;
-
 
 =encoding UTF-8
 
