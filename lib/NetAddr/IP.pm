@@ -42,7 +42,7 @@ our $_netlimit;
 	Ones
 	V4mask
 	V4net
-	netlimit
+netlimit
 	:aton		DEPRECATED
 	:lower
 	:upper
@@ -52,32 +52,33 @@ our $_netlimit;
 	:nofqdn
   );
 
-  NOTE: NetAddr::IP::Util has a full complement of network address
-	utilities to convert back and forth between binary and text.
+NOTE: NetAddr::IP::Util has a full complement of network address
+utilities to convert back and forth between binary and text.
 
-	inet_aton, inet_ntoa, ipv6_aton, ipv6_ntoa
-	ipv6_n2x, ipv6_n2d inet_any2d, inet_n2dx,
-	inet_n2ad, inetanyto6, ipv6to4
+inet_aton, inet_ntoa, ipv6_aton, ipv6_ntoa
+ipv6_n2x, ipv6_n2d inet_any2d, inet_n2dx,
+inet_n2ad, inetanyto6, ipv6to4
 
 See L<NetAddr::IP::Util>
 
 
-  my $ip = NetAddr::IP->new('127.0.0.1');
-	or from a packed IPv4 address
-  my $ip = NetAddr::IP->new_from_aton(inet_aton('127.0.0.1'));
-	or from an octal filtered IPv4 address
-  my $ip = NetAddr::IP->new_no('127.012.0.0');
+my $ip = NetAddr::IP->new('192.0.2.1');
+# from a packed IPv4 address
+$ip = NetAddr::IP->new_from_aton(inet_aton('192.0.2.1'));
+# from an octal filtered IPv4 address
+$ip = NetAddr::IP->new_no('192.012.0.0');
 
-  print "The address is ", $ip->addr, " with mask ", $ip->mask, "\n" ;
+print "The address is ", $ip->addr, " with mask ", $ip->mask, "\n" ;
 
-  if ($ip->within(NetAddr::IP->new("203.0.113.0", "255.255.255.224"))) {
-      print "Is a loopback address\n";
-  }
+if ($ip->within(NetAddr::IP->new('192.0.2.0', '255.255.255.224'))) {
+    print "Is within 192.0.2.0/27\n";
+}
 
-				# This prints 127.0.0.1/32
-  print "You can also say $ip...\n";
+# This prints 192.0.2.1/32
+print "You can also say $ip...\n";
 
-* The following four functions return ipV6 representations of:
+* The following four functions return 128-bit vectors; the following shows
+their string form via C<ipv6_n2x()>:
 
   ::                                       = Zeros();
   FFFF:FFFF:FFFF:FFFF:FFFF:FFFF:FFFF:FFFF  = Ones();
@@ -85,7 +86,7 @@ See L<NetAddr::IP::Util>
   ::FFFF:FFFF                              = V4net();
 
   Will also return an ipV4 or ipV6 representation of a
-  resolvable Fully Qualified Domanin Name (FQDN).
+  resolvable Fully Qualified Domain Name (FQDN).
 
 ###### DEPRECATED, will be remove in version 5 ############
 
@@ -94,14 +95,14 @@ See L<NetAddr::IP::Util>
 
   use NetAddr::IP qw(:aton);
 
-###### USE new_from_aton instead ##########################
+  ###### USE new_from_aton instead ##########################
 
-* To enable usage of legacy data files containing NetAddr::IP
-objects stored using the L<Storable> module.
+  * To enable usage of legacy data files containing NetAddr::IP
+  objects stored using the L<Storable> module.
 
   use NetAddr::IP qw(:old_storable);
 
-* To compact many smaller subnets (see: C<$me-E<gt>compact($addr1,$addr2,...)>
+  * To compact many smaller subnets (see: C<$me-E<gt>compact($addr1,$addr2,...)>)
 
   @compacted_object_list = Compact(@object_list)
 
