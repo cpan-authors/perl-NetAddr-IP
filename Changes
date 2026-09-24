@@ -4,6 +4,36 @@ Revision history for Perl extension NetAddr::IP
 
 4.080_01  2026-09-22 09:08:35+10:00 Australia/Sydney (TRIAL RELEASE)
 
+    Fix re6() to support compressed IPv6 addresses (::) and shortened groups (GH#14)
+
+    Fix bcd2bin/bcdn2bin error messages to show correct function name (GH#78)
+
+    Add :all export tag to NetAddr::IP::Constants (GH#81)
+
+    Fix SYNOPSIS in IP.pm and Lite.pm (GH#74 items 3-9):
+        - Fix within() example, consolidate my $ip declarations
+        - Fix prose indentation, typo "Domanin" -> "Domain"
+        - Fix unbalanced parenthesis, fix Zeros/Ones/V4mask/V4net description
+
+    Fix comment in Lite.pm: 0xfffffffe is 2**32 - 2, not 2**32 - 1 (GH#79)
+
+    Fix module load without resolver: replace inet_aton('255.0.0.0') with pack() (GH#69)
+
+    Fix Storable hooks: install at file scope, :old_storable is sticky (GH#8)
+
+    Re-enable tail-call goto dispatches removed in commit 9743c94:
+        - IP.pm: splitref/rsplitref -> goto &_splitref
+        - UtilPP.pm: addconst/add128/sub128 -> goto &slowadd128
+        - UtilPP.pm: bcd2bin -> &_bcdcheck; goto &_bcd2bin
+        - UtilPP.pm: bin2bcdn -> goto &_bin2bcdn
+        - UtilPP.pm: comp128 restored to return ~ $_[0]
+
+    Convert @ISA + require Exporter to use parent in all modules
+
+    Replace use vars with our declarations, consolidate declaration + init
+
+    Convert tabs to spaces and fix POD indentation in IP.pm and Lite.pm
+
     Validate masklen and number in coalesce, croak on bad arguments (GH#40)
 
     Fix coalesce on subclass objects (GH#38)
