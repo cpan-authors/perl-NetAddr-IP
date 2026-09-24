@@ -1,7 +1,10 @@
-# re6 must match the compressed (::) and shortened forms of an address,
-# not only the full 8 group form with every digit present.
-use Test::More;
-use NetAddr::IP;
+#!/usr/bin/env perl
+
+use Test2::V1 -ipP;
+use Test2::Plugin::NoWarnings;
+use Test2::Tools::Exception qw(lives);
+
+use NetAddr::IP ();
 
 my @nets = qw(
   2001:db8::/32
@@ -42,25 +45,27 @@ my %out = (
   '::1/128'           => [qw(:: ::2 1::1)],
 );
 
-my $tests = 0;
-$tests += 2 + 3 * @{$in{$_}} + @{$out{$_}} for @nets;
-plan tests => $tests;
+my $MAX_RE_SIZE = 4_096;
 
-for my $n (@nets) {
-  my $net = NetAddr::IP->new($n);
-  my $re  = $net->re6;
-  my $rx;
-  eval { $rx = qr/^$re$/ };
-  ok(!$@, "re6($n) compiles") or diag $@;
-  ok(length($re) < 4096, "re6($n) is bounded in size (" . length($re) . ")");
+subtest 're6 compiles and matches in/out addresses' => sub {
+  for my $n (@nets) {
+    my $net = NetAddr::IP->new($n);
+    my $re  = $net->re6;
+    my $rx;
 
-  for my $a (@{$in{$n}}) {
-    ok($a =~ $rx, "re6($n) matches $a");
-    my $ip = NetAddr::IP->new($a);
-    ok($ip->addr =~ $rx,  "re6($n) matches full form " . $ip->addr);
-    ok($ip->canon =~ $rx, "re6($n) matches canon form " . $ip->canon);
+    ok(lives { $rx = qr/^$re$/ }, sprintf('re6(%s) compiles', $n)) or diag $@;
+    ok(length($re) < $MAX_RE_SIZE, sprintf('re6(%s) size < %d', $n, $MAX_RE_SIZE));
+
+    for my $addr (@{$in{$n}}) {
+      like($addr, $rx, sprintf('re6(%s) matches %s', $n, $addr));
+      my $ip = NetAddr::IP->new($addr);
+      like($ip->addr, $rx, sprintf('re6(%s) matches full form %s', $n, $ip->addr));
+      like($ip->canon, $rx, sprintf('re6(%s) matches canon form %s', $n, $ip->canon));
+    }
+    for my $addr (@{$out{$n}}) {
+      unlike($addr, $rx, sprintf('re6(%s) does not match %s', $n, $addr));
+    }
   }
-  for my $a (@{$out{$n}}) {
-    ok($a !~ $rx, "re6($n) does not match $a");
-  }
-}
+};
+
+done_testing;
