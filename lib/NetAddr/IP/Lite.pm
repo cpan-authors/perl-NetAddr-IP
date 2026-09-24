@@ -185,10 +185,10 @@ sub AUTOLOAD {
 # symmetrical, that extra internal processing can be skipped
 
 my $_v4zero = pack('L',0);
-my $_zero = pack('L4',0,0,0,0);
-my $_ones = ~$_zero;
+my $_zero   = pack('L4',0,0,0,0);
+my $_ones   = ~$_zero;
 my $_v4mask = pack('L4',0xffffffff,0xffffffff,0xffffffff,0);
-my $_v4net = ~ $_v4mask;
+my $_v4net  = ~ $_v4mask;
 my $_ipv4FFFF = pack('N4',0,0,0xffff,0);
 
 sub Zeros() {
@@ -455,8 +455,6 @@ sub minus {
     }
 }
 
-# Auto-increment an object
-
 =item B<Auto-increment>
 
 Auto-incrementing a NetAddr::IP::Lite object causes the address part to be
@@ -498,16 +496,16 @@ sub minusminus {
     return $ip;
 }
 
-                #############################################
-                # End of the overload methods.
-                #############################################
+#############################################
+# End of the overload methods.
+#############################################
 
 # Preloaded methods go here.
 
-                # This is a variant to ->new() that
-                # creates and blesses a new object
-                # without the fancy parsing of
-                # IP formats and shorthands.
+# This is a variant to ->new() that
+# creates and blesses a new object
+# without the fancy parsing of
+# IP formats and shorthands.
 
 # return a blessed IP object without parsing
 # input:    prototype, naddr, nmask
@@ -824,7 +822,7 @@ sub _xnew($$;$$) {
   }
 
   while (1) {
-# process IP's with no CIDR or that have the CIDR as part of the IP argument string
+    # process IP's with no CIDR or that have the CIDR as part of the IP argument string
     unless (@_) {
       if ($ip !~ /[^0-9]/) {        # binary number notation
     return undef unless defined ($ip = _bcd2bin_or_undef($ip));
@@ -853,7 +851,7 @@ sub _xnew($$;$$) {
     last;
       }
     }
-# process "ipv6" token and default IP's
+    # process "ipv6" token and default IP's
     elsif (defined $_[0]) {
       if ($_[0] =~ /ipv6/i || $isV6) {
     if (grep($ip eq $_,(qw(default any loopback unspecified)))) {
@@ -862,16 +860,16 @@ sub _xnew($$;$$) {
       last;
     } else {
       return undef unless $isV6;
-# add for ipv6 notation "12345, 1"
+        # add for ipv6 notation "12345, 1"
         }
       }
-# extract mask
+      # extract mask
       $mask = $_[0];
       # an empty mask argument is a caller error, not a /0
       return undef if $mask eq '';
     }
-###
-### process mask
+    ###
+    ### process mask
     unless (defined $mask) {
       $hasmask    = 0;
       $mask    = 'host';
@@ -890,14 +888,13 @@ sub _xnew($$;$$) {
       ($try = _bcd2bin_or_undef($ip)) && ! isIPv4($try)) ||      # precedence so $try is not corrupted
     (index($ip,':') >= 0 && ($try = ipv6_aton($ip))); # fails if not an rfc1884 address
 
-# if either of the above conditions is true, $try contains the NetAddr 128 bit address
+    # if either of the above conditions is true, $try contains the NetAddr 128 bit address
 
-# checkfor Math::BigInt mask
+    # checkfor Math::BigInt mask
     $mask = _retMBIstring($mask)                # treat as big bcd string
         if ref $mask && ref $mask eq 'Math::BigInt';
 
-# MASK to lower case AFTER ref test for Math::BigInt, 'lc' strips blessing
-
+    # MASK to lower case AFTER ref test for Math::BigInt, 'lc' strips blessing
     $mask = lc $mask;
 
     if ($mask !~ /[^0-9]/) {                # bcd or CIDR notation
@@ -972,8 +969,7 @@ sub _xnew($$;$$) {
       return undef unless defined ($mask = ipv6_aton($mask));    # try ipv6 form of mask
     }
 
-# process remaining IP's
-
+    # process remaining IP's
     if (index($ip,':') < 0) {                # ipv4 address
       if ($ip =~ m/^([0-9]+)\.([0-9]+)\.([0-9]+)\.([0-9]+)$/) {
     ;    # the common case
@@ -1000,7 +996,7 @@ sub _xnew($$;$$) {
     return undef unless defined ($ip = _bcd2bin_or_undef($ip));
     last;
       }
-# binary and hex literals, 0b[01]+ or 0x[0-9a-f]+ ($ip is already lower case)
+      # binary and hex literals, 0b[01]+ or 0x[0-9a-f]+ ($ip is already lower case)
       elsif ($ip =~ /^(?:0b[01]+|0x[0-9a-f]+)$/ && $hasmask &&
         ($tmp = oct($ip)) < 256) {
         $ip = sprintf("%d.0.0.0",$tmp);
@@ -1058,32 +1054,32 @@ sub _xnew($$;$$) {
       return undef unless ($ip = inet_aton($1));
       return undef unless ($tmp = inet_aton($2));
 #    }
-# check for left side greater than right side
-# save numeric difference in $mask
+    # check for left side greater than right side
+    # save numeric difference in $mask
     return undef if ($tmp = unpack('N',$tmp) - unpack('N',$ip)) < 0;
     $ip = ipv4to6($ip);
     $tmp = pack('L3N',0,0,0,$tmp);
     $mask = ~$tmp;
     return undef if notcontiguous($mask);
-# check for non-aligned left side
+    # check for non-aligned left side
     return undef if hasbits($ip & $tmp);
     last;
       }
-# check for resolvable IPv6 hosts first when an IPv6 object was requested.
-# naip_gethostbyname falls back to an A lookup and maps the result, so accept
-# its answer only when it really is an IPv6 address, else let the IPv4 branch
-# below produce the ::a.b.c.d form that new6 documents
+    # check for resolvable IPv6 hosts first when an IPv6 object was requested.
+    # naip_gethostbyname falls back to an A lookup and maps the result, so accept
+    # its answer only when it really is an IPv6 address, else let the IPv4 branch
+    # below produce the ::a.b.c.d form that new6 documents
       elsif ($isV6 && ! $NoFQDN && $ip !~ /[^a-zA-Z0-9\._-]/ && havegethostbyname2()
          && ($tmp = naip_gethostbyname($ip)) && ! isAnyIPv4($tmp)) {
     $ip = $tmp;
     last;
       }
-# check for resolvable IPv4 hosts
+      # check for resolvable IPv4 hosts
       elsif (! $NoFQDN && $ip !~ /[^a-zA-Z0-9\._-]/ && ($tmp = gethostbyname(fillIPv4($ip))) && $tmp ne $_v4zero && $tmp ne $_zero ) {
     $ip = ipv4to6($tmp);
     last;
       }
-# check for resolvable IPv6 hosts
+      # check for resolvable IPv6 hosts
       elsif (! $NoFQDN && $ip !~ /[^a-zA-Z0-9\._-]/ && havegethostbyname2() && ($tmp = naip_gethostbyname($ip))) {
     $ip = $tmp;
     $isV6 = 1;
@@ -1120,7 +1116,7 @@ sub _xnew($$;$$) {
         defined ($ip = $fip6{$ip});
       return undef;
     }
-  } # end while (1)
+  }
   return undef if notcontiguous($mask);            # invalid if not contiguous
 
   my $self = {
@@ -1443,23 +1439,23 @@ sub within ($$) {
 
 Returns true when C<$me> is an RFC 1918 address.
 
-     10.0.0.0        -   10.255.255.255  (10/8 prefix)
-     172.16.0.0      -   172.31.255.255  (172.16/12 prefix)
-     192.168.0.0     -   192.168.255.255 (192.168/16 prefix)
+  10.0.0.0        -   10.255.255.255  (10/8 prefix)
+  172.16.0.0      -   172.31.255.255  (172.16/12 prefix)
+  192.168.0.0     -   192.168.255.255 (192.168/16 prefix)
 
 =cut
 
-my $ip_10    = NetAddr::IP::Lite->new('10.0.0.0/8');
-my $ip_10n    = $ip_10->{addr};               # already the right value
-my $ip_10b    = $ip_10n | ~ $ip_10->{mask};
+my $ip_10   = NetAddr::IP::Lite->new('10.0.0.0/8');
+my $ip_10n  = $ip_10->{addr};               # already the right value
+my $ip_10b  = $ip_10n | ~ $ip_10->{mask};
 
-my $ip_172    = NetAddr::IP::Lite->new('172.16.0.0/12');
-my $ip_172n    = $ip_172->{addr};              # already the right value
-my $ip_172b    = $ip_172n | ~ $ip_172->{mask};
+my $ip_172  = NetAddr::IP::Lite->new('172.16.0.0/12');
+my $ip_172n = $ip_172->{addr};              # already the right value
+my $ip_172b = $ip_172n | ~ $ip_172->{mask};
 
-my $ip_192    = NetAddr::IP::Lite->new('192.168.0.0/16');
-my $ip_192n    = $ip_192->{addr};              # already the right value
-my $ip_192b    = $ip_192n | ~ $ip_192->{mask};
+my $ip_192  = NetAddr::IP::Lite->new('192.168.0.0/16');
+my $ip_192n = $ip_192->{addr};              # already the right value
+my $ip_192b = $ip_192n | ~ $ip_192->{mask};
 
 sub is_rfc1918 ($) {
   my $netme     = $_[0]->{addr} & $_[0]->{mask};
@@ -1474,20 +1470,20 @@ sub is_rfc1918 ($) {
 
 Returns true when C<$me> is a local network address.
 
-    i.e.    ipV4    127.0.0.0 - 127.255.255.255
-  or        ipV6    === ::1
-  or        ipV6    ::127.0.0.0 - ::127.255.255.255
-  or        ipV6    ::ffff:127.0.0.0 - ::ffff:127.255.255.255
+  i.e.    ipV4    127.0.0.0 - 127.255.255.255
+  or      ipV6    === ::1
+  or      ipV6    ::127.0.0.0 - ::127.255.255.255
+  or      ipV6    ::ffff:127.0.0.0 - ::ffff:127.255.255.255
 
 An IPv4 loopback address held in an IPv6 object (from C<new6>, or an
 IPv4 mapped address) is local, the same as its IPv4 form.
 
 =cut
 
-my $_lclhost6    = NetAddr::IP::Lite->new('::1');
-my $_lclnet    = NetAddr::IP::Lite->new('127/8');
-my $_lclnetn    = $_lclnet->{addr};
-my $_lclnetb    = $_lclnetn | ~ $_lclnet->{mask};
+my $_lclhost6 = NetAddr::IP::Lite->new('::1');
+my $_lclnet   = NetAddr::IP::Lite->new('127/8');
+my $_lclnetn  = $_lclnet->{addr};
+my $_lclnetb  = $_lclnetn | ~ $_lclnet->{mask};
 
 sub is_local ($) {
   my $self = $_[0];
@@ -1534,7 +1530,6 @@ sub last ($) {
   } else {
     return $_[0]->broadcast;
   }
-#  return $_[0]->broadcast - 1;
 }
 
 =item C<-E<gt>nth($index)>
@@ -1652,23 +1647,6 @@ sub num ($) {
     return bin2bcd($net);
   }
 }
-
-# deprecated
-#sub num ($) {
-#  my @net = unpack('L3N',$_[0]->{mask} ^ Ones);
-#  if ($Old_nth) {
-## number of ip's less broadcast
-#    return 0xfffffffe if $net[0] || $net[1] || $net[2]; # 2**32 - 2
-#    return $net[3] if $net[3];
-#  } else {    # returns 1 for /32 /128, 0 for /31 /127 else n-2 up to 2**32
-## number of usable IP's === number of ip's less broadcast & network addys
-#    return 0xfffffffd if $net[0] || $net[1] || $net[2]; # 2**32 -2
-#    return 1 unless $net[3];
-#    $net[3]--;
-#  }
-#  return $net[3];
-#}
-
 
 =back
 
