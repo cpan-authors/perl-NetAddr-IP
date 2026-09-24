@@ -331,26 +331,31 @@ objects stored using the L<Storable> module.
 my $full_format = "%04X:%04X:%04X:%04X:%04X:%04X:%D.%D.%D.%D";
 my $full6_format = "%04X:%04X:%04X:%04X:%04X:%04X:%04X:%04X";
 
+# Storable hooks live at file scope so that "require NetAddr::IP" and
+# "use NetAddr::IP" serialize the same way. The :old_storable tag removes them.
+sub STORABLE_freeze
+{
+    my $self = shift;
+    return $self->cidr();    # use stringification
+}
+
+sub STORABLE_thaw
+{
+    my ($self, undef, $serial) = @_;
+
+    my $ip = NetAddr::IP->new($serial);
+    $self->{addr} = $ip->{addr};
+    $self->{mask} = $ip->{mask};
+    $self->{isv6} = $ip->{isv6};
+    return;
+}
+
 sub import
 {
     if (grep { $_ eq ':old_storable' } @_) {
     @_ = grep { $_ ne ':old_storable' } @_;
-    } else {
-    *{STORABLE_freeze} = sub
-    {
-        my $self = shift;
-        return $self->cidr();    # use stringification
-    };
-    *{STORABLE_thaw} = sub
-    {
-        my ($self, undef, $serial) = @_;
-
-        my $ip = NetAddr::IP->new($serial);
-        $self->{addr} = $ip->{addr};
-        $self->{mask} = $ip->{mask};
-        $self->{isv6} = $ip->{isv6};
-        return;
-    };
+    delete $NetAddr::IP::{STORABLE_freeze};
+    delete $NetAddr::IP::{STORABLE_thaw};
     }
 
     if (grep { $_ eq ':aton' } @_)
