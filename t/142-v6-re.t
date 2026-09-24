@@ -77,3 +77,4 @@ subtest 're6() returns a non-capturing group' => sub {
 };
 
 done_testing;
+

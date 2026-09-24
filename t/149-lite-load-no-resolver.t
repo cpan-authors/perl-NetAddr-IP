@@ -17,3 +17,4 @@ is(NetAddr::IP->new('loopback')->cidr, '127.0.0.1/8',
     'the loopback mask built at load time is still 255.0.0.0');
 
 done_testing;
+
