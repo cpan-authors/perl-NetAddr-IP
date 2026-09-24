@@ -469,6 +469,7 @@ Convert a bcd text string to 128 bit string variable
 
 sub bcd2bin {
   &_bcdcheck;
+  push @_, 'NetAddr::IP::Util::bcd2bin';
   goto &_bcd2bin;
 }
 
@@ -596,10 +597,11 @@ sub bcdn2bin {
 	if length($bcd) > $PACKED_BCD_BYTES;
   croak "Bad digit count for NetAddr::IP::Util::bcdn2bin, is $dc, should be 1 to $digits digits"
 	if $dc < 1 || $dc > $digits;
-  return _bcd2bin(unpack("H$dc",$bcd));
+  return _bcd2bin(unpack("H$dc",$bcd), 'NetAddr::IP::Util::bcdn2bin');
 }
 
 sub _bcd2bin {
+  my $caller = $_[1] // 'NetAddr::IP::Util::_bcd2bin';
   my @bcd = split('',$_[0]);
   my @hbits = (0,0,0,0);
   my @digit = (0,0,0,0);
@@ -618,8 +620,7 @@ sub _bcd2bin {
     $overflow |= _sa128(\@hbits,\@digit,0);
   }
   if ($overflow) {
-    my $sub = _callersub();
-    croak "Bad arg value for $sub, number is larger than 128 bits";
+    croak "Bad arg value for $caller, number is larger than 128 bits";
   }
   return pack('N4',@hbits);
 }
