@@ -26,6 +26,7 @@ our @EXPORT_OK = qw(
     $V4_PACKED_BYTES
     $V6_PACKED_BYTES
 );
+our %EXPORT_TAGS = ( all => [@EXPORT_OK] );
 
 our $DEFAULT_NETLIMIT_EXP = 16;                        # 2**16 = 65536
 our $IPV4_BITS            = 32;                        # RFC 791
