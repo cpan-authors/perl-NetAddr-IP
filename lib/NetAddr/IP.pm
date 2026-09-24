@@ -12,44 +12,41 @@ use parent qw(Exporter NetAddr::IP::Lite);
 use Carp qw( croak );
 
 use NetAddr::IP::Constants qw(
-	$DEFAULT_NETLIMIT_EXP
-	$IPV4_BITS
-	$IPV4_OFFSET
-	$IPV6_BITS
-	$MAX_NETLIMIT_EXP
-	$OCTET_BITS
-	$OCTET_COUNT
-	$RFC3021_THRESHOLD
+    $DEFAULT_NETLIMIT_EXP
+    $IPV4_BITS
+    $IPV4_OFFSET
+    $IPV6_BITS
+    $MAX_NETLIMIT_EXP
+    $OCTET_BITS
+    $OCTET_COUNT
+    $RFC3021_THRESHOLD
 );
 use NetAddr::IP::Lite qw( Ones V4mask V4net Zero Zeros );
 use NetAddr::IP::Util qw( hasbits isIPv4 notcontiguous shiftleft sub128 );
 
-
-
 our @EXPORT_OK = qw(Compact Coalesce Zero Zeros Ones V4mask V4net netlimit);
 our @EXPORT_FAIL = qw($_netlimit);
 our $_netlimit;
-
 
 =encoding UTF-8
 
 =head1 SYNOPSIS
 
   use NetAddr::IP qw(
-	Compact
-	Coalesce
-	Zeros
-	Ones
-	V4mask
-	V4net
-netlimit
-	:aton		DEPRECATED
-	:lower
-	:upper
-	:old_storable
-	:old_nth
-	:rfc3021	DEPRECATED
-	:nofqdn
+    Compact
+    Coalesce
+    Zeros
+    Ones
+    V4mask
+    V4net
+    netlimit
+    :aton        DEPRECATED
+    :lower
+    :upper
+    :old_storable
+    :old_nth
+    :rfc3021    DEPRECATED
+    :nofqdn
   );
 
 NOTE: NetAddr::IP::Util has a full complement of network address
@@ -61,21 +58,20 @@ inet_n2ad, inetanyto6, ipv6to4
 
 See L<NetAddr::IP::Util>
 
+  my $ip = NetAddr::IP->new('192.0.2.1');
+  # from a packed IPv4 address
+  $ip = NetAddr::IP->new_from_aton(inet_aton('192.0.2.1'));
+  # from an octal filtered IPv4 address
+  $ip = NetAddr::IP->new_no('192.012.0.0');
 
-my $ip = NetAddr::IP->new('192.0.2.1');
-# from a packed IPv4 address
-$ip = NetAddr::IP->new_from_aton(inet_aton('192.0.2.1'));
-# from an octal filtered IPv4 address
-$ip = NetAddr::IP->new_no('192.012.0.0');
+  print 'The address is ', $ip->addr, ' with mask ', $ip->mask, "\n";
 
-print "The address is ", $ip->addr, " with mask ", $ip->mask, "\n" ;
+  if ($ip->within(NetAddr::IP->new('192.0.2.0', '255.255.255.224'))) {
+      print "Is within 192.0.2.0/27\n";
+  }
 
-if ($ip->within(NetAddr::IP->new('192.0.2.0', '255.255.255.224'))) {
-    print "Is within 192.0.2.0/27\n";
-}
-
-# This prints 192.0.2.1/32
-print "You can also say $ip...\n";
+  # This prints 192.0.2.1/32
+  print "You can also say $ip...\n";
 
 * The following four functions return 128-bit vectors; the following shows
 their string form via C<ipv6_n2x()>:
@@ -88,21 +84,21 @@ their string form via C<ipv6_n2x()>:
   Will also return an ipV4 or ipV6 representation of a
   resolvable Fully Qualified Domain Name (FQDN).
 
-###### DEPRECATED, will be remove in version 5 ############
+  ###### DEPRECATED, will be remove in version 5 ############
 
-  * To accept addresses in the format as returned by
+* To accept addresses in the format as returned by
   inet_aton, invoke the module as:
 
   use NetAddr::IP qw(:aton);
 
   ###### USE new_from_aton instead ##########################
 
-  * To enable usage of legacy data files containing NetAddr::IP
+* To enable usage of legacy data files containing NetAddr::IP
   objects stored using the L<Storable> module.
 
   use NetAddr::IP qw(:old_storable);
 
-  * To compact many smaller subnets (see: C<$me-E<gt>compact($addr1,$addr2,...)>)
+* To compact many smaller subnets (see: C<$me-E<gt>compact($addr1,$addr2,...)>)
 
   @compacted_object_list = Compact(@object_list)
 
@@ -117,10 +113,10 @@ addresses in uppercase.  To change that to lowercase:
 
 NOTE: the AUGUST 2010 RFC5952 states:
 
-    4.3. Lowercase
+  4.3. Lowercase
 
-      The characters "a", "b", "c", "d", "e", and "f" in an IPv6
-      address MUST be represented in lowercase.
+    The characters "a", "b", "c", "d", "e", and "f" in an IPv6
+    address MUST be represented in lowercase.
 
 It is recommended that all NEW applications using NetAddr::IP be
 invoked as shown on the next line.
@@ -148,7 +144,7 @@ Returns true on success, otherwise C<undef>.
 
 =cut
 
-$_netlimit = 2 ** $DEFAULT_NETLIMIT_EXP;	# default
+$_netlimit = 2 ** $DEFAULT_NETLIMIT_EXP;    # default
 
 sub netlimit($) {
   return undef unless $_[0];
@@ -162,10 +158,10 @@ sub netlimit($) {
 
 Un-tar the distribution in an appropriate directory and type:
 
-	perl Makefile.PL
-	make
-	make test
-	make install
+  perl Makefile.PL
+  make
+  make test
+  make install
 
 B<NetAddr::IP> depends on B<NetAddr::IP::Util> which installs by
 default with its primary functions compiled using Perl's XS extensions
@@ -173,10 +169,10 @@ to build a C library. If you do not have a C compiler available or
 would like the slower Pure Perl version for some other reason, then
 type:
 
-	perl Makefile.PL -noxs
-	make
-	make test
-	make install
+  perl Makefile.PL -noxs
+  make
+  make test
+  make install
 
 =head1 DESCRIPTION
 
@@ -194,16 +190,16 @@ Many operators have been overloaded, as described below:
 
 =cut
 
-				#############################################
-				# These are the overload methods, placed here
-				# for convenience.
-				#############################################
+#############################################
+# These are the overload methods, placed here
+# for convenience.
+#############################################
 
 use overload
 
-    '@{}'	=> sub {
-	return [ $_[0]->hostenum ];
-    };
+  '@{}'    => sub {
+    return [ $_[0]->hostenum ];
+  };
 
 
 =over
@@ -224,8 +220,8 @@ B<C<-E<gt>copy()>> actually creates a new object when called.
 
 An object can be used just as a string. For instance, the following code
 
-	my $ip = NetAddr::IP->new('192.0.2.123');
-	print "$ip\n";
+  my $ip = NetAddr::IP->new('192.0.2.123');
+  print "$ip\n";
 
 Will print the string 192.0.2.123/32.
 
@@ -235,8 +231,8 @@ You can test for equality with either C<eq> or C<==>. C<eq> allows
 comparison with arbitrary strings as well as NetAddr::IP objects. The
 following example:
 
-    if (NetAddr::IP->new('198.51.100.1','255.255.255.224') eq '198.51.100.1/27')
-       { print "Yes\n"; }
+  if (NetAddr::IP->new('198.51.100.1','255.255.255.224') eq '198.51.100.1/27')
+    { print "Yes\n"; }
 
 will print out "Yes".
 
@@ -253,14 +249,14 @@ corresponding operation. Comparisons are tried first on the address portion
 of the object and if that is equal then the NUMERIC cidr portion of the
 masks are compared. This leads to the counterintuitive result that
 
-	/24 > /16
+  /24 > /16
 
 Comparison should not be done on netaddr objects with different CIDR as
 this may produce indeterminate - unexpected results,
 rather the determination of which netblock is larger or smaller should be
 done by comparing
 
-	$ip1->masklen <=> $ip2->masklen
+  $ip1->masklen <=> $ip2->masklen
 
 =item B<Addition of a constant (C<+>)>
 
@@ -268,12 +264,12 @@ Add a signed integer constant to the address part of a NetAddr object.
 This operation changes the address part to point so many hosts above the
 current objects start address. For instance, this code:
 
-    print NetAddr::IP->new('198.51.100.1/24') + 5;
+  print NetAddr::IP->new('198.51.100.1/24') + 5;
 
 will output 198.51.100.6/24. The address wraps around at the broadcast back
 to the network address, so this code:
 
-    print NetAddr::IP->new('198.51.100.1/24') + 255;
+  print NetAddr::IP->new('198.51.100.1/24') + 255;
 
 outputs 198.51.100.0/24.
 
@@ -311,13 +307,11 @@ of auto-incrementing it, as you would expect.
 
 =cut
 
-				#############################################
-				# End of the overload methods.
-				#############################################
-
+#############################################
+# End of the overload methods.
+#############################################
 
 # Preloaded methods go here.
-
 
 =back
 
@@ -340,67 +334,67 @@ my $full6_format = "%04X:%04X:%04X:%04X:%04X:%04X:%04X:%04X";
 sub import
 {
     if (grep { $_ eq ':old_storable' } @_) {
-	@_ = grep { $_ ne ':old_storable' } @_;
+    @_ = grep { $_ ne ':old_storable' } @_;
     } else {
-	*{STORABLE_freeze} = sub
-	{
-	    my $self = shift;
-	    return $self->cidr();	# use stringification
-	};
-	*{STORABLE_thaw} = sub
-	{
+    *{STORABLE_freeze} = sub
+    {
+        my $self = shift;
+        return $self->cidr();    # use stringification
+    };
+    *{STORABLE_thaw} = sub
+    {
         my ($self, undef, $serial) = @_;
 
-	    my $ip = NetAddr::IP->new($serial);
-	    $self->{addr} = $ip->{addr};
-	    $self->{mask} = $ip->{mask};
-	    $self->{isv6} = $ip->{isv6};
-	    return;
-	};
+        my $ip = NetAddr::IP->new($serial);
+        $self->{addr} = $ip->{addr};
+        $self->{mask} = $ip->{mask};
+        $self->{isv6} = $ip->{isv6};
+        return;
+    };
     }
 
     if (grep { $_ eq ':aton' } @_)
     {
-	$NetAddr::IP::Lite::Accept_Binary_IP = 1;
-	@_ = grep { $_ ne ':aton' } @_;
+    $NetAddr::IP::Lite::Accept_Binary_IP = 1;
+    @_ = grep { $_ ne ':aton' } @_;
     }
     if (grep { $_ eq ':old_nth' } @_)
     {
-	$NetAddr::IP::Lite::Old_nth = 1;
-	@_ = grep { $_ ne ':old_nth' } @_;
+    $NetAddr::IP::Lite::Old_nth = 1;
+    @_ = grep { $_ ne ':old_nth' } @_;
     }
     if (grep { $_ eq ':nofqdn'} @_)
     {
-	$NetAddr::IP::Lite::NoFQDN = 1;
-	@_ = grep { $_ ne ':nofqdn' } @_;
+    $NetAddr::IP::Lite::NoFQDN = 1;
+    @_ = grep { $_ ne ':nofqdn' } @_;
     }
     if (grep { $_ eq ':lower' } @_)
     {
         $full_format = lc($full_format);
         $full6_format = lc($full6_format);
         NetAddr::IP::Util::lower();
-	@_ = grep { $_ ne ':lower' } @_;
+    @_ = grep { $_ ne ':lower' } @_;
     }
     if (grep { $_ eq ':upper' } @_)
     {
         $full_format = uc($full_format);
         $full6_format = uc($full6_format);
         NetAddr::IP::Util::upper();
-	@_ = grep { $_ ne ':upper' } @_;
+    @_ = grep { $_ ne ':upper' } @_;
     }
     if (grep { $_ eq ':rfc3021' } @_)
     {
-	warnings::warnif('deprecated',
-	    ':rfc3021 is deprecated and no longer needed; hostenum now returns two hosts for /31 and /127 unconditionally');
-	@_ = grep { $_ ne ':rfc3021' } @_;
+    warnings::warnif('deprecated',
+        ':rfc3021 is deprecated and no longer needed; hostenum now returns two hosts for /31 and /127 unconditionally');
+    @_ = grep { $_ ne ':rfc3021' } @_;
     }
     NetAddr::IP->export_to_level(1, @_);
 }
 
 sub compact {
     return (ref $_[0] eq 'ARRAY')
-	? compactref($_[0])	# Compact(\@list)
-	: @{compactref(\@_)};	# Compact(@list)  or ->compact(@list)
+    ? compactref($_[0])    # Compact(\@list)
+    : @{compactref(\@_)};    # Compact(@list)  or ->compact(@list)
 }
 
 *Compact = \&compact;
@@ -421,23 +415,23 @@ sub hostenumref($) {
 }
 
 sub splitref {
-  unshift @_, 0;	# mark as no reverse
+  unshift @_, 0;    # mark as no reverse
   goto &_splitref;
 }
 
 sub rsplitref {
-  unshift @_, 1;	# mark as reversed
+  unshift @_, 1;    # mark as reversed
   goto &_splitref;
 }
 
 sub split {
-  unshift @_, 0;	# mark as no reverse
+  unshift @_, 0;    # mark as no reverse
   my $rv = &_splitref;
   return $rv ? @$rv : ();
 }
 
 sub rsplit {
-  unshift @_, 1;	# mark as reversed
+  unshift @_, 1;    # mark as reversed
   my $rv = &_splitref;
   return $rv ? @$rv : ();
 }
@@ -470,30 +464,30 @@ sub DESTROY {};
 1;
 
 sub do_prefix ($$$) {
-    my $mask	= shift;
-    my $faddr	= shift;
-    my $laddr	= shift;
+    my $mask    = shift;
+    my $faddr    = shift;
+    my $laddr    = shift;
 
     if ($mask > $OCTET_BITS * 3) {
-	return "$faddr->[0].$faddr->[1].$faddr->[2].$faddr->[3]-$laddr->[3]";
+    return "$faddr->[0].$faddr->[1].$faddr->[2].$faddr->[3]-$laddr->[3]";
     }
     elsif ($mask == $OCTET_BITS * 3) {
-	return "$faddr->[0].$faddr->[1].$faddr->[2].";
+    return "$faddr->[0].$faddr->[1].$faddr->[2].";
     }
     elsif ($mask > $OCTET_BITS * 2) {
-	return "$faddr->[0].$faddr->[1].$faddr->[2]-$laddr->[2].";
+    return "$faddr->[0].$faddr->[1].$faddr->[2]-$laddr->[2].";
     }
     elsif ($mask == $OCTET_BITS * 2) {
-	return "$faddr->[0].$faddr->[1].";
+    return "$faddr->[0].$faddr->[1].";
     }
     elsif ($mask > $OCTET_BITS) {
-	return "$faddr->[0].$faddr->[1]-$laddr->[1].";
+    return "$faddr->[0].$faddr->[1]-$laddr->[1].";
     }
     elsif ($mask == $OCTET_BITS) {
-	return "$faddr->[0].";
+    return "$faddr->[0].";
     }
     else {
-	return "$faddr->[0]-$laddr->[0]";
+    return "$faddr->[0]-$laddr->[0]";
     }
 }
 
@@ -537,8 +531,8 @@ These methods are DEPRECATED because the functionality is now included
 in the other "new" methods
 
   i.e.  ->new_cis('1.2.3.0 24')
-        or
-        ->new_cis6('::1.2.3.0 120')
+  or
+  ->new_cis6('::1.2.3.0 120')
 
 C<-E<gt>new6> and
 C<-E<gt>new_cis6> mark the address as being in ipV6 address space even
@@ -548,7 +542,7 @@ if the format would suggest otherwise.
 
   addresses submitted to ->new in ipV6 notation will
   remain in that notation permanently. i.e.
-        ->new('::1.2.3.4') will result in ::102:304
+  ->new('::1.2.3.4') will result in ::102:304
   whereas new('1.2.3.4') would print out as 1.2.3.4
 
   See "STRINGIFICATION" below.
@@ -581,7 +575,7 @@ C<$addr> can be any of the following and possibly more...
   n.n.n
   n.n.n/mm
   n.n.n.n
-  n.n.n.n/mm		32 bit cidr notation
+  n.n.n.n/mm        32 bit cidr notation
   n.n.n.n/m.m.m.m
   loopback, localhost, broadcast, any, default
   x.x.x.x/host
@@ -592,7 +586,7 @@ C<$addr> can be any of the following and possibly more...
 Any RFC1884 notation
 
   ::n.n.n.n
-  ::n.n.n.n/mmm		128 bit cidr notation
+  ::n.n.n.n/mmm        128 bit cidr notation
   ::n.n.n.n/::m.m.m.m
   ::x:x
   ::x:x/mmm
@@ -610,7 +604,7 @@ A Fully Qualified Domain Name which returns an ipV4 address or an ipV6
 address, embodied in that order. This previously undocumented feature
 may be disabled with:
 
-	use NetAddr::IP::Lite ':nofqdn';
+  use NetAddr::IP::Lite ':nofqdn';
 
 If called with no arguments, 'default' is assumed. An explicit undef
 argument returns undef.
@@ -753,7 +747,6 @@ sub wildcard($) {
   return $copy->addr;
 }
 
-
 =item C<-E<gt>short()>
 
 Returns the address part in a short or compact notation.
@@ -806,7 +799,7 @@ ipV4 and ipV6 respectively.
   i.e. for ipV4
     0000:0000:0000:0000:0000:0000:127.0.0.1
 
-       for ipV6
+  for ipV6
     0000:0000:0000:0000:0000:0000:0000:0000
 
 To force ipV4 addresses into full ipV6 format use:
@@ -847,8 +840,8 @@ Returns true when C<$me> is an RFC 1918 address.
 
 Returns true when C<$me> is a local network address.
 
-        i.e.    ipV4    127.0.0.0 - 127.255.255.255
-  or            ipV6    === ::1
+  i.e.    ipV4    127.0.0.0 - 127.255.255.255
+  or      ipV6    === ::1
 
 =item C<-E<gt>splitref($bits,[optional $bits1,$bits2,...])>
 
@@ -880,20 +873,20 @@ splitting off the first parts of the list, a "best fits" list of remaining
 objects will be returned based on an increasing sort of the CIDR values of
 the C<bits> list.
 
-  i.e.	my $ip = NetAddr::IP->new('192.0.2.0/24');
-	my $objptr = $ip->splitref(28, 29, 28, 29, 26);
+  i.e.    my $ip = NetAddr::IP->new('192.0.2.0/24');
+    my $objptr = $ip->splitref(28, 29, 28, 29, 26);
 
-   has split plan 28 29 28 29 26 26 26 28
-   and returns this list of objects
+  has split plan 28 29 28 29 26 26 26 28
+  and returns this list of objects
 
-	192.0.2.0/28
-	192.0.2.16/29
-	192.0.2.24/28
-	192.0.2.40/29
-	192.0.2.48/26
-	192.0.2.112/26
-	192.0.2.176/26
-	192.0.2.240/28
+  192.0.2.0/28
+  192.0.2.16/29
+  192.0.2.24/28
+  192.0.2.40/29
+  192.0.2.48/26
+  192.0.2.112/26
+  192.0.2.176/26
+  192.0.2.240/28
 
 NOTE: that /26 replicates twice beyond the original request and /28 fills
 the remaining return object requirement.
@@ -903,20 +896,22 @@ the remaining return object requirement.
 C<-E<gt>rsplitref> is the same as C<-E<gt>splitref> above except that the split plan is
 applied to the original object in reverse order.
 
-  i.e.	my $ip = NetAddr::IP->new('192.0.2.0/24');
-	my $objptr = $ip->rsplitref(28, 29, 28, 29, 26);
+  i.e.
 
-   has split plan 28 26 26 26 29 28 29 28
-   and returns this list of objects
+  my $ip = NetAddr::IP->new('192.0.2.0/24');
+  my $objptr = $ip->rsplitref(28, 29, 28, 29, 26);
 
-	192.0.2.0/28
-	192.0.2.16/26
-	192.0.2.80/26
-	192.0.2.144/26
-	192.0.2.208/29
-	192.0.2.216/28
-	192.0.2.232/29
-	192.0.2.240/28
+  has split plan 28 26 26 26 29 28 29 28
+  and returns this list of objects
+
+  192.0.2.0/28
+  192.0.2.16/26
+  192.0.2.80/26
+  192.0.2.144/26
+  192.0.2.208/29
+  192.0.2.216/28
+  192.0.2.232/29
+  192.0.2.240/28
 
 =item C<-E<gt>split($bits,[optional $bits1,$bits2,...])>
 
@@ -932,12 +927,12 @@ expected.
 
 =cut
 
-# input:	$naip,
-#		@bits,		 list of masks for splits
+# input:    $naip,
+#        @bits,         list of masks for splits
 #
-#  returns:	empty array request will not fit in submitted net
-#		(\@bits,undef)	 if there is just one plan item i.e. return original net
-#		(\@bits,\%masks) for a real plan
+#  returns:    empty array request will not fit in submitted net
+#        (\@bits,undef)     if there is just one plan item i.e. return original net
+#        (\@bits,\%masks) for a real plan
 #
 sub _splitplan {
   my($ip,@bits) = @_;
@@ -953,24 +948,24 @@ sub _splitplan {
 
   my($x,$maddr);
   foreach my $mask(@bits) {
-    if (ref $mask) {	# is a NetAddr::IP
+    if (ref $mask) {    # is a NetAddr::IP
       $x = $mask->{isv6} ? $mask->{addr} : $mask->{addr} | V4mask;
       ($x,$maddr) = notcontiguous($x);
-      return () if $x;	# spurious bits
+      return () if $x;    # spurious bits
       $mask = $isV6 ? $maddr : $maddr - $IPV4_OFFSET;
     }
     elsif ($mask = NetAddr::IP->new($addr,$mask,$isV6)) { # will be undefined if bad mask and will fall into oops!
       $mask = $mask->masklen();
     }
     else {
-      return ();	# oops!
+      return ();    # oops!
     }
-    $dif = $mask - $basem;			# for normalization
-    return () if $dif < 0;		# overange nets not allowed
-    return (\@bits,undef) unless ($dif || $#bits);	# return if original net = mask alone
+    $dif = $mask - $basem;            # for normalization
+    return () if $dif < 0;        # overange nets not allowed
+    return (\@bits,undef) unless ($dif || $#bits);    # return if original net = mask alone
     $denom = $dif if $dif > $denom;
     next if exists $nets{$mask};
-    $nets{$mask} = $mask - $basem;		# for normalization
+    $nets{$mask} = $mask - $basem;        # for normalization
   }
 
 # $denom is the normalization denominator, since these are all exponents
@@ -982,7 +977,7 @@ sub _splitplan {
 # %masks values contain the actual masks for each split subnet
 # @bits contains the masks in the order the user actually wants them
 #
-  my %masks;					# calculate masks
+  my %masks;                    # calculate masks
   my $maskbase = $isV6 ? $IPV6_BITS : $IPV4_BITS;
   foreach( keys %nets ) {
     $nets{$_} = 2 ** ($denom - $nets{$_});
@@ -993,46 +988,46 @@ sub _splitplan {
   my $idx = 0;
   $denom = 2 ** $denom;
   PLAN:
-  while ($denom > 0) {				# make a net plan
+  while ($denom > 0) {                # make a net plan
     my $nexmask = ($idx < $#bits) ? $bits[$idx] : $bits[$#bits];
     ++$idx;
     unless (($denom -= $nets{$nexmask}) < 0) {
       croak('netlimit exceeded') if (push @plan, $nexmask) > $_netlimit;
       next;
     }
-# a fractional net is needed that is not in the mask list or the replicant
-    $denom += $nets{$nexmask};			# restore mistake
+    # a fractional net is needed that is not in the mask list or the replicant
+    $denom += $nets{$nexmask};            # restore mistake
   TRY:
     foreach my $try_mask (sort { $a <=> $b } keys %nets) {
       next TRY if $nexmask > $try_mask;
       do {
-	next TRY if $denom - $nets{$try_mask} < 0;
-	croak('netlimit exceeded') if (push @plan, $try_mask) > $_netlimit;
-	$denom -= $nets{$try_mask};
+    next TRY if $denom - $nets{$try_mask} < 0;
+    croak('netlimit exceeded') if (push @plan, $try_mask) > $_netlimit;
+    $denom -= $nets{$try_mask};
       } while $denom;
     }
     die 'ERROR: miscalculated weights' if $denom;
   }
-  return () if $idx < @bits;			# overrange original subnet request
+  return () if $idx < @bits;            # overrange original subnet request
   return (\@plan,\%masks);
 }
 
-# input:	$rev,	# t/f
-#		$naip,
-#		@bits	# list of masks for split
+# input:    $rev,    # t/f
+#        $naip,
+#        @bits    # list of masks for split
 #
 sub _splitref {
   my $rev = shift;
   my($plan,$masks) = &_splitplan;
-# bug report 82719
-  croak("netmask error: overrange or spurious bits") unless defined $plan;
+  # bug report 82719
+  croak('netmask error: overrange or spurious bits') unless defined $plan;
   my $net = $_[0]->network();
   return [$net] unless $masks;
   my $addr = $net->{addr};
   my $isV6 = $net->{isv6};
   my @plan = $rev ? reverse @$plan : @$plan;
 
-# create splits
+  # create splits
   my @ret;
   while ($_ = shift @plan) {
     my $mask = $masks->{$_};
@@ -1071,7 +1066,7 @@ C<nth> and C<num>. Versions before 4.080 reported zero hosts unless the
 B<:rfc3021> tag was imported. The tag is now deprecated and emits a
 warning if imported; it will be removed in a future version.
 
-	use NetAddr::IP qw(:rfc3021);	# deprecated, no longer needed
+  use NetAddr::IP qw(:rfc3021);    # deprecated, no longer needed
 
 =item C<$me-E<gt>compact($addr1, $addr2, ...)>
 
@@ -1135,8 +1130,8 @@ sub compactref($) {
   return [ _merge_sorted(sort @v4), _merge_sorted(sort @v6) ];
 }
 
-# input:	sorted list of network objects of one address family
-# returns:	the compacted list
+# input:    sorted list of network objects of one address family
+# returns:    the compacted list
 #
 sub _merge_sorted {
   my @r = @_;
@@ -1149,17 +1144,17 @@ sub _merge_sorted {
         ++$changed;
         --$i;
       }
-      elsif ((notcontiguous($r[$i]->{mask}))[1] == (notcontiguous($r[$i +1]->{mask}))[1]) {		# masks the same
-        if (hasbits($r[$i]->{addr} ^ $r[$i +1]->{addr})) {	# if not the same netblock
+      elsif ((notcontiguous($r[$i]->{mask}))[1] == (notcontiguous($r[$i +1]->{mask}))[1]) {        # masks the same
+        if (hasbits($r[$i]->{addr} ^ $r[$i +1]->{addr})) {    # if not the same netblock
           my $upnet = $r[$i]->copy;
           $upnet->{mask} = shiftleft($upnet->{mask},1);
-          if ($upnet->contains($r[$i +1])) {					# adjacent nets in next net up
+          if ($upnet->contains($r[$i +1])) {                    # adjacent nets in next net up
       $r[$i] = $upnet;
       splice(@r,$i +1,1);
       ++$changed;
       --$i;
           }
-        } else {									# identical nets
+        } else {                                    # identical nets
           splice(@r,$i +1,1);
           ++$changed;
           --$i;
@@ -1202,59 +1197,59 @@ WARNING: the list of subnet must be the same type. i.e ipV4 or ipV6
 
 sub coalesce
 {
-    my $masklen	= shift;
-    if (UNIVERSAL::isa($masklen, __PACKAGE__)) {		# if called as a method
+    my $masklen    = shift;
+    if (UNIVERSAL::isa($masklen, __PACKAGE__)) {        # if called as a method
       push @_,$masklen;
       $masklen = shift;
     }
 
-    my $number	= shift;
+    my $number    = shift;
 
     # Addresses are at @_
     return [] unless @_;
 
     croak("coalesce: masklen must be an integer from 0 to $IPV6_BITS")
-	unless defined $masklen && $masklen =~ m|^[0-9]{1,3}$| && $masklen <= $IPV6_BITS;
+    unless defined $masklen && $masklen =~ m|^[0-9]{1,3}$| && $masklen <= $IPV6_BITS;
     croak("coalesce: number must be a non-negative integer")
-	unless defined $number && $number =~ m|^[0-9]+$|;
+    unless defined $number && $number =~ m|^[0-9]+$|;
     croak("coalesce: arguments must be NetAddr::IP objects")
-	if grep { ! UNIVERSAL::isa($_,__PACKAGE__) } @_;
+    if grep { ! UNIVERSAL::isa($_,__PACKAGE__) } @_;
     croak("coalesce: masklen $masklen exceeds the $IPV4_BITS bits of the IPv4 arguments")
-	if $masklen > $IPV4_BITS && grep { ! $_->{isv6} } @_;
+    if $masklen > $IPV4_BITS && grep { ! $_->{isv6} } @_;
     my %ret = ();
     my $type = $_[0]->{isv6};
     return [] unless defined $type;
 
     for my $ip (@_)
     {
-	return [] unless $ip->{isv6} == $type;
-	$type = $ip->{isv6};
-	my $n = NetAddr::IP->new($ip->addr . '/' . $masklen)->network;
-	if ($ip->masklen > $masklen)
-	{
-	    # the size of the subnet, which is not ->num, since ->num
-	    # excludes the network and broadcast addresses
-	    $ret{$n} += 2 ** (($type ? $IPV6_BITS : $IPV4_BITS) - $ip->masklen);
-	}
+    return [] unless $ip->{isv6} == $type;
+    $type = $ip->{isv6};
+    my $n = NetAddr::IP->new($ip->addr . '/' . $masklen)->network;
+    if ($ip->masklen > $masklen)
+    {
+        # the size of the subnet, which is not ->num, since ->num
+        # excludes the network and broadcast addresses
+        $ret{$n} += 2 ** (($type ? $IPV6_BITS : $IPV4_BITS) - $ip->masklen);
+    }
     }
 
     my @ret = ();
 
     # Add to @ret any arguments with netmasks longer than our argument
     for my $c (sort { $a->masklen <=> $b->masklen }
-	       grep { $_->masklen <= $masklen } @_)
+           grep { $_->masklen <= $masklen } @_)
     {
-	next if grep { $_->contains($c) } @ret;
-	push @ret, $c->network;
+    next if grep { $_->contains($c) } @ret;
+    push @ret, $c->network;
     }
 
     # Now add to @ret all the subnets with more than $number hits
     for my $c (map { NetAddr::IP->new($_) }
-	       grep { $ret{$_} >= $number }
-	       sort keys %ret)
+           grep { $ret{$_} >= $number }
+           sort keys %ret)
     {
-	next if grep { $_->contains($c) } @ret;
-	push @ret, $c;
+    next if grep { $_->contains($c) } @ret;
+    push @ret, $c;
     }
 
     return [ sort @ret ];
@@ -1326,8 +1321,7 @@ not counting the broadcast or network address.
 
 Previous versions worked only for ipV4 addresses, returned a
 maximum span of 2**32 and returned the number of IP addresses
-not counting the broadcast address.
-        (one greater than the new behavior)
+not counting the broadcast address. (one greater than the new behavior)
 
 To use the old behavior for C<-E<gt>nth($index)> and C<-E<gt>num()>:
 
@@ -1358,7 +1352,7 @@ if the address in not in ipV4 space.
 sub re ($)
 {
     return &re6 if $_[0]->{isv6} || !isIPv4($_[0]->{addr});
-    my $self = shift->network;	# Insure a "zero" host part
+    my $self = shift->network;    # Insure a "zero" host part
     my ($addr, $mlen) = ($self->addr, $self->masklen);
     my @o = split('\.', $addr, $OCTET_COUNT);
 
@@ -1368,39 +1362,39 @@ sub re ($)
 
     if ($mlen != $IPV4_BITS)
     {
-	if ($mlen > $OCTET_BITS * 3)
-	{
-	     $d	= 2 ** ($IPV4_BITS - $mlen) - 1;
-	     $r[3] = '(?:' . join('|', ($o[3]..$o[3] + $d)) . ')';
-	}
-	else
-	{
-	    $r[3] = $octet;
-	    if ($mlen > $OCTET_BITS * 2)
-	    {
-		$d = 2 ** ($OCTET_BITS * 3 - $mlen) - 1;
-		$r[2] = '(?:' . join('|', ($o[2]..$o[2] + $d)) . ')';
-	    }
-	    else
-	    {
-		$r[2] = $octet;
-		if ($mlen > $OCTET_BITS)
-		{
-		    $d = 2 ** ($OCTET_BITS * 2 - $mlen) - 1;
-		    $r[1] = '(?:' . join('|', ($o[1]..$o[1] + $d)) . ')';
-		}
-		else
-		{
-		    $r[1] = $octet;
-		    if ($mlen > 0)
-		    {
-			$d = 2 ** ($OCTET_BITS - $mlen) - 1;
-			$r[0] = '(?:' . join('|', ($o[0] .. $o[0] + $d)) . ')';
-		    }
-		    else { $r[0] = $octet; }
-		}
-	    }
-	}
+    if ($mlen > $OCTET_BITS * 3)
+    {
+         $d    = 2 ** ($IPV4_BITS - $mlen) - 1;
+         $r[3] = '(?:' . join('|', ($o[3]..$o[3] + $d)) . ')';
+    }
+    else
+    {
+        $r[3] = $octet;
+        if ($mlen > $OCTET_BITS * 2)
+        {
+        $d = 2 ** ($OCTET_BITS * 3 - $mlen) - 1;
+        $r[2] = '(?:' . join('|', ($o[2]..$o[2] + $d)) . ')';
+        }
+        else
+        {
+        $r[2] = $octet;
+        if ($mlen > $OCTET_BITS)
+        {
+            $d = 2 ** ($OCTET_BITS * 2 - $mlen) - 1;
+            $r[1] = '(?:' . join('|', ($o[1]..$o[1] + $d)) . ')';
+        }
+        else
+        {
+            $r[1] = $octet;
+            if ($mlen > 0)
+            {
+            $d = 2 ** ($OCTET_BITS - $mlen) - 1;
+            $r[0] = '(?:' . join('|', ($o[0] .. $o[0] + $d)) . ')';
+            }
+            else { $r[0] = $octet; }
+        }
+        }
+    }
     }
 
     ### no digit, and no digit followed by a dot, before nor after
@@ -1444,46 +1438,46 @@ sub re6($) {
     my $m;
     if ($n.'' eq $b.'') {
       if ($n =~ /[0-9]/) {
-	push @dig, $n;
+    push @dig, $n;
       } else {
-	push @dig, '['.(lc $n).$n.']';
+    push @dig, '['.(lc $n).$n.']';
       }
     } else {
       my $n = $net[$_];
       my $b = $brd[$_];
       if ($n.'' eq 0 && $b =~ /F/) {
-	push @dig, 'x';
+    push @dig, 'x';
       }
       elsif ($n =~ /[0-9]/ && $b =~ /[0-9]/) {
-	push @dig, '['.$n.'-'.$b.']';
+    push @dig, '['.$n.'-'.$b.']';
       }
       elsif ($n =~ /[A-F]/ && $b =~ /[A-F]/) {
-	$n .= '-'.$b;
-	push @dig, '['.(lc $n).$n.']';
+    $n .= '-'.$b;
+    push @dig, '['.(lc $n).$n.']';
       }
       elsif ($n =~ /[0-9]/ && $b =~ /[A-F]/) {
-	$m = ($n == 9) ? 9 : $n .'-9';
-	if ($b =~ /A/) {
-	  $m .= 'aA';
+    $m = ($n == 9) ? 9 : $n .'-9';
+    if ($b =~ /A/) {
+      $m .= 'aA';
 } else {
-	  $b = 'A-'. $b;
-	  $m .= (lc $b). $b;
-	}
-	push @dig, '['.$m.']';
+      $b = 'A-'. $b;
+      $m .= (lc $b). $b;
+    }
+    push @dig, '['.$m.']';
        }
       elsif ($n =~ /[A-F]/ && $b =~ /[0-9]/) {
-	if ($n =~ /A/) {
-	  $m = 'aA';
-	} else {
-	  $n .= '-F';
-	  $m = (lc $n).$n;
-	}
-	if ($b == 9) {
-	  $m .= 9;
-	} else {
-	  $m .= $b .'-9';
-	}
-	push @dig, '['.$m.']';
+    if ($n =~ /A/) {
+      $m = 'aA';
+    } else {
+      $n .= '-F';
+      $m = (lc $n).$n;
+    }
+    if ($b == 9) {
+      $m .= 9;
+    } else {
+      $m .= $b .'-9';
+    }
+    push @dig, '['.$m.']';
       }
     }
   }
@@ -1530,7 +1524,7 @@ sub re6($) {
 
 sub mod_version {
   return $NetAddr::IP::VERSION;
-  &Compact;			# suppress warnings about these symbols
+  &Compact;            # suppress warnings about these symbols
   &Coalesce;
   &STORABLE_freeze;
   &STORABLE_thaw;
@@ -1541,13 +1535,13 @@ sub mod_version {
 
 =head1 EXPORT_OK
 
-	Compact
-	Coalesce
-	Zeros
-	Ones
-	V4mask
-	V4net
-	netlimit
+  Compact
+  Coalesce
+  Zeros
+  Ones
+  V4mask
+  V4net
+  netlimit
 
 =head1 NOTES / BUGS ... FEATURES
 
