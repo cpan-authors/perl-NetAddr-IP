@@ -665,11 +665,12 @@ If called with and empty string as the argument, 'undef' is returned;
 
 =cut
 
-my $lbmask = inet_aton('255.0.0.0');
 my $_p4broad	= inet_any2n('255.255.255.255');
 my $_p4loop	= inet_any2n('127.0.0.1');
-my $_p4mloop	= inet_aton('255.0.0.0');
-   $_p4mloop	= mask4to6($_p4mloop);
+# a literal mask must not need a resolver: InetBase::inet_aton is a
+# gethostbyname call, which fails at load time wherever the resolver cannot
+# answer a dotted quad
+my $_p4mloop	= mask4to6(pack('C4',255,0,0,0));
 my $_p6loop	= inet_any2n('::1');
 
 my %fip4 = (
