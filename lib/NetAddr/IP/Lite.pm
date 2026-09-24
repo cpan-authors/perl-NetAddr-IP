@@ -1640,7 +1640,7 @@ sub num ($) {
   if ($Old_nth) {
     my @net = unpack('L3N',$_[0]->{mask} ^ Ones);
 # number of ip's less broadcast
-    return 0xfffffffe if $net[0] || $net[1] || $net[2]; # 2**32 -1
+    return 0xfffffffe if $net[0] || $net[1] || $net[2]; # 2**32 - 2
     return $net[3] if $net[3];
   } else {	# returns 1 for /32 /128, 2 for /31 /127 else n-2 up to 2**32
     (undef, my $net) = addconst($_[0]->{mask},1);
@@ -1657,7 +1657,7 @@ sub num ($) {
 #  my @net = unpack('L3N',$_[0]->{mask} ^ Ones);
 #  if ($Old_nth) {
 ## number of ip's less broadcast
-#    return 0xfffffffe if $net[0] || $net[1] || $net[2]; # 2**32 -1
+#    return 0xfffffffe if $net[0] || $net[1] || $net[2]; # 2**32 - 2
 #    return $net[3] if $net[3];
 #  } else {	# returns 1 for /32 /128, 0 for /31 /127 else n-2 up to 2**32
 ## number of usable IP's === number of ip's less broadcast & network addys
