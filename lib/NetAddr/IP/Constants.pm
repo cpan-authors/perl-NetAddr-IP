@@ -47,10 +47,6 @@ our $RFC3021_THRESHOLD    = $IPV6_BITS - 1;            # 127, RFC 3021
 
 __END__
 
-=head1 NAME
-
-NetAddr::IP::Constants - Magic number constants for NetAddr::IP
-
 =head1 SYNOPSIS
 
   use NetAddr::IP::Constants qw($IPV6_BITS $IPV4_BITS $IPV4_OFFSET);
