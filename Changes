@@ -10,6 +10,9 @@ Revision history for Perl extension NetAddr::IP
 
     Add :all export tag to NetAddr::IP::Constants (GH#81)
 
+    Remove broken _bi_fake fallback in bigint(): Math::BigInt now required
+    for bigint() support, added to RuntimeRecommends (GH#44)
+
     Fix SYNOPSIS in IP.pm and Lite.pm (GH#74 items 3-9):
         - Fix within() example, consolidate my $ip declarations
         - Fix prose indentation, typo "Domanin" -> "Domain"

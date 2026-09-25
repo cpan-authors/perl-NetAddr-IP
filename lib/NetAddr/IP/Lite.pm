@@ -1324,17 +1324,6 @@ sub _bi_stfy {
   $1;
 }
 
-sub _fakebi2strg {
-  ${$_[0]} =~ /([0-9]+)/;
-  $1;
-}
-
-# fake new from bi string Math::BigInt 0.01
-#
-sub _bi_fake {
-  bless \('+'. $_[1]), 'Math::BigInt';
-}
-
 # as of this writing there are three known flavors of Math::BigInt
 # v0.01         MBI::new returns a scalar ref
 # v1.?? - 1.69  CALC::_new takes a reference to a scalar, returns an array, MBI returns a hash ref
@@ -1342,12 +1331,10 @@ sub _bi_fake {
 
 sub _loadMBI {                        # load Math::BigInt on demand
   if (eval { local $SIG{__DIE__}; $no_mbi_emu && require Math::BigInt}) {    # any version should work, three known
-    import Math::BigInt;
     $biloaded = \&Math::BigInt::new;
     $bi2strng = \&_bi_stfy;
   } else {
-    $biloaded = \&_bi_fake;
-    $bi2strng = \&_fakebi2strg;
+    croak "Math::BigInt is required for bigint() support";
   }
 }
 
