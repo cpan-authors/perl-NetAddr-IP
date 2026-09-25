@@ -65,77 +65,77 @@ caller if needed, but doing so is unsupported.
 
 =over 4
 
-=item B<DEFAULT_NETLIMIT_EXP>
+=item B<$DEFAULT_NETLIMIT_EXP>
 
- Power-of-two exponent for the default netlimit.  The default is
- C<2**16 = 65536> networks.  Value: C<16>.
+  Power-of-two exponent for the default netlimit.  The default is
+  C<2**16 = 65536> networks.  Value: C<16>.
 
-=item B<IPV4_BITS>
+=item B<$IPV4_BITS>
 
- IPv4 address width in bits.  Value: C<32>.
- RFC 791 s2.1.
+  IPv4 address width in bits.  Value: C<32>.
+  RFC 791 s2.1.
 
-=item B<IPV4_OFFSET>
+=item B<$IPV4_OFFSET>
 
- Offset of the IPv4-in-IPv6 mapped address in the 128-bit
- representation.  Value: C<96> (i.e. C<IPV6_BITS - IPV4_BITS>).
- RFC 4291 s2.5.5 (dual-stack, V4-mapped, V4-compatible).
+  Offset of the IPv4-in-IPv6 mapped address in the 128-bit
+  representation.  Value: C<96> (i.e. C<IPV6_BITS - IPV4_BITS>).
+  RFC 4291 s2.5.5 (dual-stack, V4-mapped, V4-compatible).
 
-=item B<IPV6_BITS>
+=item B<$IPV6_BITS>
 
- IPv6 address width in bits.  Value: C<128>.
- RFC 4291 s2.1.
+  IPv6 address width in bits.  Value: C<128>.
+  RFC 4291 s2.1.
 
-=item B<MAX_BCD_DIGITS>
+=item B<$MAX_BCD_DIGITS>
 
- Maximum number of BCD digits that can represent a 128-bit value.
- Value: C<40> (i.e. C<ceil(128 * log10(2))>).
+  Maximum number of BCD digits that can represent a 128-bit value.
+  Value: C<40> (i.e. C<ceil(128 * log10(2))>).
 
-=item B<MAX_NETLIMIT_EXP>
+=item B<$MAX_NETLIMIT_EXP>
 
- Power-of-two exponent for the maximum netlimit.  The maximum is
- C<2**24 = 16777216> networks.  Value: C<24>.
+  Power-of-two exponent for the maximum netlimit.  The maximum is
+  C<2**24 = 16777216> networks.  Value: C<24>.
 
-=item B<MAX_OCTET>
+=item B<$MAX_OCTET>
 
- Maximum value of a single IPv4 octet.  Value: C<255> (C<0xff>).
- RFC 791 s2.1.
+  Maximum value of a single IPv4 octet.  Value: C<255> (C<0xff>).
+  RFC 791 s2.1.
 
-=item B<MAX_SHIFTLEFT>
+=item B<$MAX_SHIFTLEFT>
 
- Maximum number of bits that can be shifted by C<shiftleft()>.
- Value: C<128> (i.e. C<IPV6_BITS>).
+  Maximum number of bits that can be shifted by C<shiftleft()>.
+  Value: C<128> (i.e. C<IPV6_BITS>).
 
-=item B<OCTET_BITS>
+=item B<$OCTET_BITS>
 
- Number of bits in a single IPv4 octet.  Value: C<8>.
- RFC 791 s2.1.
+  Number of bits in a single IPv4 octet.  Value: C<8>.
+  RFC 791 s2.1.
 
-=item B<OCTET_COUNT>
+=item B<$OCTET_COUNT>
 
- Number of octets in an IPv4 address.  Value: C<4>.
- RFC 791 s2.1.
+  Number of octets in an IPv4 address.  Value: C<4>.
+  RFC 791 s2.1.
 
-=item B<PACKED_BCD_BYTES>
+=item B<$PACKED_BCD_BYTES>
 
- Size of a packed BCD string holding B<MAX_BCD_DIGITS> digits.
- Value: C<20> (C<40/2>, two digits per byte).
+  Size of a packed BCD string holding B<MAX_BCD_DIGITS> digits.
+  Value: C<20> (C<40/2>, two digits per byte).
 
-=item B<RFC3021_THRESHOLD>
+=item B<$RFC3021_THRESHOLD>
 
- Point-to-point network boundary.  Networks of length /127 or /31
- are treated as having exactly two usable addresses per RFC 3021.
- Value: C<127> (i.e. C<IPV6_BITS - 1>).
+  Point-to-point network boundary.  Networks of length /127 or /31
+  are treated as having exactly two usable addresses per RFC 3021.
+  Value: C<127> (i.e. C<IPV6_BITS - 1>).
 
-=item B<V4_PACKED_BYTES>
+=item B<$V4_PACKED_BYTES>
 
- Size of a packed IPv4 address in bytes.  Value: C<4> (C<32/8>).
- RFC 791 s2.1.
+  Size of a packed IPv4 address in bytes.  Value: C<4> (C<32/8>).
+  RFC 791 s2.1.
 
-=item B<V6_PACKED_BYTES>
+=item B<$V6_PACKED_BYTES>
 
- Size of a packed IPv6 address in bytes.  Value: C<16> (C<128/8>).
- RFC 4291 s2.1.
+  Size of a packed IPv6 address in bytes.  Value: C<16> (C<128/8>).
+  RFC 4291 s2.1.
 
 =back
 
