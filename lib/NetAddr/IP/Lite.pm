@@ -1680,7 +1680,7 @@ sub import {
 
 =head1 SEE ALSO
 
-NetAddr::IP(3), NetAddr::IP::Util(3), NetAddr::IP::InetBase(3)
+L<NetAddr::IP>, L<NetAddr::IP::Util>, L<NetAddr::IP::InetBase>
 
 =head1 ADDITIONAL LICENSE
 
