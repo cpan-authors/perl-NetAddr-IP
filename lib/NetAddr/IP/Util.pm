@@ -943,7 +943,7 @@ in the file named "Artistic".
 
 =head1 SEE ALSO
 
-NetAddr::IP(3), NetAddr::IP::Lite(3), NetAddr::IP::InetBase(3)
+L<NetAddr::IP>, L<NetAddr::IP::Lite>, L<NetAddr::IP::InetBase>
 
 =cut
 
