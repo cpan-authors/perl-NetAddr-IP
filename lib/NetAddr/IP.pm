@@ -940,7 +940,7 @@ expected.
 #        (\@bits,\%masks) for a real plan
 #
 sub _splitplan {
-  my($ip,@bits) = @_;
+  my ($ip, @bits) = @_;
   my $addr = $ip->addr();
   my $isV6 = $ip->{isv6};
   unless (@bits) {
@@ -948,10 +948,10 @@ sub _splitplan {
   }
   my $basem = $ip->masklen();
 
-  my(%nets,$dif);
+  my (%nets, $dif);
   my $denom = 0;
 
-  my($x,$maddr);
+  my ($x, $maddr);
   foreach my $mask(@bits) {
     if (ref $mask) {    # is a NetAddr::IP
       $x = $mask->{isv6} ? $mask->{addr} : $mask->{addr} | V4mask;
@@ -1023,7 +1023,7 @@ sub _splitplan {
 #
 sub _splitref {
   my $rev = shift;
-  my($plan,$masks) = &_splitplan;
+  my ($plan, $masks) = &_splitplan;
   # bug report 82719
   croak('netmask error: overrange or spurious bits') unless defined $plan;
   my $net = $_[0]->network();
@@ -1123,7 +1123,7 @@ sub compactref($) {
   # work on network copies so the caller's objects are not modified, and
   # keep the address families apart: a 128 bit mask comparison would
   # otherwise merge 0.0.0.0/24 with ::100/120
-  my(@v4,@v6);
+  my (@v4, @v6);
   foreach my $entry (@$unr) {
     my $net = $entry->network;
     if ($net->{isv6}) {
