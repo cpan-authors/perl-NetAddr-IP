@@ -158,7 +158,7 @@ sub DESTROY {};
 
 sub AUTOLOAD {
   no strict;
-  my ($pkg,$func) = ($AUTOLOAD =~ /(.*)::([^:]+)$/);
+  my ($pkg, $func) = ($AUTOLOAD =~ /(.*)::([^:]+)$/);
   my $other = $parent .'::';
 
   if ($pkg =~ /^$other/o && exists ${$other}{$func}) {
@@ -274,7 +274,7 @@ use overload
     'cmp'    => \&comp_addr_mask;
 
 sub comp_addr_mask {
-  my($c,$rv) = sub128($_[0]->{addr},$_[1]->{addr});
+  my ($c, $rv) = sub128($_[0]->{addr},$_[1]->{addr});
   return -1 unless $c;
   return 1 if hasbits($rv);
   ($c,$rv) = sub128($_[0]->{mask},$_[1]->{mask});
@@ -405,7 +405,7 @@ sub plus {
 # fallback is exact up to 2**53 on a 32 bit perl.
 sub _const2bin {
     my $c = shift;
-    my($hi,$lo);
+    my ($hi, $lo);
     if ($c <= 4294967295) {
     ($hi,$lo) = (0,$c);
     } elsif (~0 > 4294967295) {
@@ -445,7 +445,7 @@ sub minus {
     unless (ref $arg) {
     return plus($ip, -$arg);
     }
-    my($carry,$dif) = sub128($ip->{addr},$arg->{addr});
+    my ($carry, $dif) = sub128($ip->{addr},$arg->{addr});
     if ($carry) {                    # value is positive
     return undef if hasbits($dif & $_smsk);        # all sign bits should be 0's
     return (unpack('L3N',$dif))[3];
@@ -709,7 +709,7 @@ my $ffff0000 = pack('L3N',0xffffffff,0xffffffff,0xffffffff,0xFFFF0000);
 my $ffffff00 = pack('L3N',0xffffffff,0xffffffff,0xffffffff,0xFFFFFF00);
 
 sub _obits ($$) {
-    my($lo,$hi) = @_;
+    my ($lo, $hi) = @_;
 
     return 0xFF if $lo == $hi;
     return (~ ($hi ^ $lo)) & 0xFF;
@@ -804,7 +804,7 @@ sub _xnew($$;$$) {
   $ip = _retMBIstring($ip)        # treat as big bcd string
     if ref $ip && ref $ip eq 'Math::BigInt';    # can /CIDR notation
   my $hasmask = 1;
-  my($mask,$tmp);
+  my ($mask, $tmp);
 
 # IP to lower case AFTER ref test for Math::BigInt. 'lc' strips blessing
 
@@ -901,7 +901,7 @@ sub _xnew($$;$$) {
       my $isCIDR = length($mask) < 4 && $mask <= $IPV6_BITS;
       if ($isV6) {
     if ($isCIDR) {
-      my($dq1,$dq2,$dq3,$dq4);
+      my ($dq1, $dq2, $dq3, $dq4);
       if ($ip =~ /^([0-9]+)(?:|\.([0-9]+)(?:|\.([0-9]+)(?:|\.([0-9]+))))$/ &&
         do {$dq1 = $1;
         $dq2 = $2 || 0;
@@ -1349,7 +1349,7 @@ sub _biRef {
 }
 
 sub bigint($) {
-  my($addr,$mask);
+  my ($addr, $mask);
   if (wantarray) {
     if (! $_[0]->{isv6} && isIPv4($_[0]->{addr})) {
       $addr = $_[0]->{addr}

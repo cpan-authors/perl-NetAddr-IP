@@ -108,7 +108,7 @@ print F q|#!/usr/bin/perl
 # EDIT THAT INSTEAD
 #
 package NetAddr::IP::Util_IS;
-use vars qw($VERSION);
+our $VERSION;
 $VERSION = 1.00;
 
 
@@ -139,11 +139,11 @@ Perl mode.
 
 =over 4
 
-=item * $rv = NetAddr::IP::Util_IS->pure;
+=item $rv = NetAddr::IP::Util_IS->pure;
 
 Returns true if PurePerl mode, else false.
 
-=item * $rv = NetAddr::IP::Util_IS->not_pure;
+=item $rv = NetAddr::IP::Util_IS->not_pure;
 
 Returns true if NOT PurePerl mode, else false
 

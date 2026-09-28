@@ -232,7 +232,7 @@ my $_zero = pack('L4',0,0,0,0);
 # we will use our own InetBase::inet_aton instead
 
 sub _end_gethostbyname {
-#  my ($name,$aliases,$addrtype,$length,@addrs) = @_;
+#  my ($name, $aliases, $addrtype, $length, @addrs) = @_;
   my @rv = @_;
 # first ip address = rv[4]
   my $tip = $rv[4];
@@ -791,7 +791,7 @@ Return IPv6 strings in uppercase.  This is the default.
   # convert any textual IP address into a 128 bit vector
   #
   sub text2vec {
-    my($anyIP,$anyMask) = @_;
+    my ($anyIP, $anyMask) = @_;
 
   # not IPv4 bit mask
     my $notiv4 = ipv6_aton('FFFF:FFFF:FFFF:FFFF:FFFF:FFFF::');
@@ -811,7 +811,7 @@ Return IPv6 strings in uppercase.  This is the default.
   ... alternate implementation, a little faster
 
   sub text2vec {
-    my($anyIP,$anyMask) = @_;
+    my ($anyIP, $anyMask) = @_;
 
   # not IPv4 bit mask
     my $notiv4 = ipv6_aton('FFFF:FFFF:FFFF:FFFF:FFFF:FFFF::');
@@ -838,7 +838,7 @@ Return IPv6 strings in uppercase.  This is the default.
   # return network and broadcast addresses from IP and Mask
   #
   sub netbroad {
-    my($nip) = shift;
+    my ($nip) = shift;
     my $notmask  = ~ $nip->{mask};
     my $bcast    = $nip->{addr} | $notmask;
     my $network  = $nip->{addr} & $nip->{mask};
@@ -848,9 +848,9 @@ Return IPv6 strings in uppercase.  This is the default.
   # check if address is within a network
   #
   sub within {
-    my($nip,$net) = @_;
+    my ($nip, $net) = @_;
     my $addr = $nip->{addr}
-    my($nw,$bc) = netbroad($net);
+    my ($nw, $bc) = netbroad($net);
   # arg1 >= arg2, sub128 returns true
     return (sub128($addr,$nw) && sub128($bc,$addr))
     ? 1 : 0;
@@ -862,7 +862,7 @@ Return IPv6 strings in uppercase.  This is the default.
   # 'addwrap' since 'addconst' will extend the sign bits
   #
   sub addwrap {
-    my($nip,$const) = @_;
+    my ($nip, $const) = @_;
     my $addr    = $nip->{addr};
     my $mask    = $nip->{mask};
     my $bits    = $nip->{bits};
