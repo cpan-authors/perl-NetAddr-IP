@@ -434,21 +434,21 @@ The IPv6 functions support all rfc1884 formats.
 
 =over 4
 
-=item * $dotquad = inet_ntoa($netaddr);
+=item $dotquad = inet_ntoa($netaddr);
 
 Convert a packed IPv4 network address to a dot-quad IP address.
 
   input:    packed network address
   returns:  IP address i.e. 10.4.12.123
 
-=item * $netaddr = inet_aton($dotquad);
+=item $netaddr = inet_aton($dotquad);
 
 Convert a dot-quad IP address into an IPv4 packed network address.
 
   input:    IP address i.e. 192.5.16.32
   returns:  packed network address
 
-=item * $ipv6addr = ipv6_aton($ipv6_text);
+=item $ipv6addr = ipv6_aton($ipv6_text);
 
 Takes an IPv6 address of the form described in rfc1884
 and returns a 128 bit binary RDATA string.
@@ -456,7 +456,7 @@ and returns a 128 bit binary RDATA string.
   input:    ipv6 text
   returns:  128 bit RDATA string
 
-=item * $ipv6_text = ipv6_ntoa($ipv6naddr);
+=item $ipv6_text = ipv6_ntoa($ipv6naddr);
 
 Convert a 128 bit binary IPv6 address to compressed rfc 1884
 text representation.
@@ -464,14 +464,14 @@ text representation.
   input:    128 bit RDATA string
   returns:  ipv6 text
 
-=item * $hex_text = ipv6_n2x($ipv6addr);
+=item $hex_text = ipv6_n2x($ipv6addr);
 
 Takes an IPv6 RDATA string and returns an 8 segment IPv6 hex address
 
   input:    128 bit RDATA string
   returns:  x:x:x:x:x:x:x:x
 
-=item * $dec_text = ipv6_n2d($ipv6addr);
+=item $dec_text = ipv6_n2d($ipv6addr);
 
 Takes an IPv6 RDATA string and returns a mixed hex - decimal IPv6 address
 with the 6 uppermost chunks in hex and the lower 32 bits in dot-quad
@@ -480,7 +480,7 @@ representation.
   input:    128 bit RDATA string
   returns:  x:x:x:x:x:x:d.d.d.d
 
-=item * $ipv6naddr = inet_any2n($dotquad or $ipv6_text);
+=item $ipv6naddr = inet_any2n($dotquad or $ipv6_text);
 
 This function converts a text IPv4 or IPv6 address in text format in any
 standard notation into a 128 bit IPv6 string address. It prefixes any
@@ -489,7 +489,7 @@ dot-quad address (if found) with '::' and passes it to B<ipv6_aton>.
   input:    dot-quad or rfc1844 address
   returns:  128 bit IPv6 string
 
-=item * $rv = hasbits($bits128);
+=item $rv = hasbits($bits128);
 
 This function returns true if there are one's present in the 128 bit string
 and false if all the bits are zero.
@@ -510,7 +510,7 @@ This allows the implementation of logical functions of the form of:
   input:    128 bit IPv6 string
   returns:  true if any bits are present
 
-=item * $ipv6naddr = inet_4map6($netaddr or $ipv6naddr
+=item $ipv6naddr = inet_4map6($netaddr or $ipv6naddr
 
 This function returns an ipV6 network address with the first 80 bits
 set to zero and the next 16 bits set to one, while the last 32 bits
@@ -527,7 +527,7 @@ mapped address spaces. i.e.
 
   ::ffff::d.d.d.d    or    ::d.d.d.d
 
-=item * $rv = isIPv4($bits128);
+=item $rv = isIPv4($bits128);
 
 This function returns true if there are no on bits present in the IPv6
 portion of the 128 bit string and false otherwise.
@@ -536,19 +536,19 @@ portion of the 128 bit string and false otherwise.
 
 Note: this is an old and deprecated ipV4 compatible ipV6 address
 
-=item * $rv = isNewIPv4($bits128);
+=item $rv = isNewIPv4($bits128);
 
 This function return true if the IPv6 128 bit string is of the form
 
   ::ffff::d.d.d.d
 
-=item * $rv = isAnyIPv4($bits128);
+=item $rv = isAnyIPv4($bits128);
 
 This function return true if the IPv6 bit string is of the form
 
   ::d.d.d.d    or    ::ffff::d.d.d.d
 
-=item * $dotquad or $hex_text = inet_n2dx($ipv6naddr);
+=item $dotquad or $hex_text = inet_n2dx($ipv6naddr);
 
 This function B<does the right thing> and returns the text for either a
 dot-quad IPv4 or a hex notation IPv6 address.
@@ -557,7 +557,7 @@ dot-quad IPv4 or a hex notation IPv6 address.
   returns:  ddd.ddd.ddd.ddd
         or  x:x:x:x:x:x:x:x
 
-=item * $dotquad or $dec_text = inet_n2ad($ipv6naddr);
+=item $dotquad or $dec_text = inet_n2ad($ipv6naddr);
 
 This function B<does the right thing> and returns the text for either a
 dot-quad IPv4 or a hex::decimal notation IPv6 address.
@@ -566,13 +566,13 @@ dot-quad IPv4 or a hex::decimal notation IPv6 address.
   returns:  ddd.ddd.ddd.ddd
         or  x:x:x:x:x:x:ddd.ddd.ddd.dd
 
-=item * $netaddr = inet_pton($AF_family,$hex_text);
+=item $netaddr = inet_pton($AF_family,$hex_text);
 
 This function takes an IP address in IPv4 or IPv6 text format and converts it into
 binary format. The type of IP address conversion is controlled by the FAMILY
 argument.
 
-=item * $hex_text = inet_ntop($AF_family,$netaddr);
+=item $hex_text = inet_ntop($AF_family,$netaddr);
 
 This function takes and IP address in binary format and converts it into
 text format. The type of IP address conversion is controlled by the FAMILY
@@ -580,20 +580,20 @@ argument.
 
 NOTE: inet_ntop ALWAYS returns lowercase characters.
 
-=item * $hex_text = packzeros($hex_text);
+=item $hex_text = packzeros($hex_text);
 
 This function optimizes and rfc 1884 IPv6 hex address to reduce the number of
 long strings of zero bits as specified in rfc 1884, 2.2 (2) by substituting
 B<::> for the first occurrence of the longest string of zeros in the address.
 
-=item * $ipv6naddr = ipv4to6($netaddr);
+=item $ipv6naddr = ipv4to6($netaddr);
 
 Convert an ipv4 network address into an IPv6 network address.
 
   input:    32 bit network address
   returns:  128 bit network address
 
-=item * $ipv6naddr = mask4to6($netaddr);
+=item $ipv6naddr = mask4to6($netaddr);
 
 Convert an ipv4 network address/mask into an ipv6 network mask.
 
@@ -602,7 +602,7 @@ Convert an ipv4 network address/mask into an ipv6 network mask.
 
 NOTE: returns the high 96 bits as one's
 
-=item * $ipv6naddr = ipanyto6($netaddr);
+=item $ipv6naddr = ipanyto6($netaddr);
 
 Similar to ipv4to6 except that this function takes either an IPv4 or IPv6
 input and always returns a 128 bit IPv6 network address.
@@ -610,7 +610,7 @@ input and always returns a 128 bit IPv6 network address.
   input:    32 or 128 bit network address
   returns:  128 bit network address
 
-=item * $ipv6naddr = maskanyto6($netaddr);
+=item $ipv6naddr = maskanyto6($netaddr);
 
 Similar to mask4to6 except that this function takes either an IPv4 or IPv6
 netmask and always returns a 128 bit IPv6 netmask.
@@ -618,7 +618,7 @@ netmask and always returns a 128 bit IPv6 netmask.
   input:    32 or 128 bit network mask
   returns:  128 bit network mask
 
-=item * $netaddr = ipv6to4($pv6naddr);
+=item $netaddr = ipv6to4($pv6naddr);
 
 Truncate the upper 96 bits of a 128 bit address and return the lower
 32 bits. Returns an IPv4 address as returned by inet_aton.
@@ -626,7 +626,7 @@ Truncate the upper 96 bits of a 128 bit address and return the lower
   input:    128 bit network address
   returns:  32 bit inet_aton network address
 
-=item * $bitsXn = shiftleft($bits128,$n);
+=item $bitsXn = shiftleft($bits128,$n);
 
   input:    128 bit string variable,
         number of shifts [optional]
@@ -635,7 +635,7 @@ Truncate the upper 96 bits of a 128 bit address and return the lower
   NOTE: a single shift is performed
     if $n is not specified
 
-=item * addconst($ipv6naddr,$signed_32con);
+=item addconst($ipv6naddr,$signed_32con);
 
 Add a signed constant to a 128 bit string variable.
 
@@ -644,7 +644,7 @@ Add a signed constant to a 128 bit string variable.
   returns:  scalar    carry
         array    (carry, result)
 
-=item * add128($ipv6naddr1,$ipv6naddr2);
+=item add128($ipv6naddr1,$ipv6naddr2);
 
 Add two 128 bit string variables.
 
@@ -653,7 +653,7 @@ Add two 128 bit string variables.
   returns:  scalar    carry
         array    (carry, result)
 
-=item * sub128($ipv6naddr1,$ipv6naddr2);
+=item sub128($ipv6naddr1,$ipv6naddr2);
 
 Subtract two 128 bit string variables.
 
@@ -669,7 +669,7 @@ B<NOT borrow>.
   i.e.  if ARG1 >= ARG2 then carry = 1
     or  if ARG1  < ARG2 then carry = 0
 
-=item * ($spurious,$cidr) = notcontiguous($mask128);
+=item ($spurious,$cidr) = notcontiguous($mask128);
 
 This function counts the bit positions remaining in the mask when the
 rightmost '0's are removed.
@@ -681,14 +681,14 @@ rightmost '0's are removed.
             contiguous one's,
         128 bit cidr number
 
-=item * $bcdtext = bin2bcd($bits128);
+=item $bcdtext = bin2bcd($bits128);
 
 Convert a 128 bit binary string into binary coded decimal text digits.
 
   input:    128 bit string variable
   returns:  string of bcd text digits
 
-=item * $bits128 = bcd2bin($bcdtxt);
+=item $bits128 = bcd2bin($bcdtxt);
 
 Convert a bcd text string to 128 bit string variable
 
@@ -735,7 +735,7 @@ Convert a bcd text string to 128 bit string variable
 #
 #Similar to pack("H*", $bcdtext);
 
-=item * $modetext = mode;
+=item $modetext = mode;
 
 Returns the operating mode of this module.
 
@@ -743,7 +743,7 @@ Returns the operating mode of this module.
     returns:  "Pure Perl"
            or "CC XS"
 
-=item * ($name,$aliases,$addrtype,$length,@addrs)=naip_gethostbyname(NAME);
+=item ($name,$aliases,$addrtype,$length,@addrs)=naip_gethostbyname(NAME);
 
 Replacement for Perl's gethostbyname if Socket6 is available
 
@@ -769,17 +769,17 @@ This is NOT the expected result from Perl's gethostbyname2. It is instead equiva
 
 For a gethostbyname2 emulator that behave like Socket6, see: L<Net::DNS::Dig>
 
-=item * $trueif = havegethostbyname2();
+=item $trueif = havegethostbyname2();
 
 This function returns TRUE if Socket6 has a functioning B<gethostbyname2>,
 otherwise it returns FALSE. See the comments above about the behavior of
 B<naip_gethostbyname>.
 
-=item * NetAddr::IP::Util::lower();
+=item NetAddr::IP::Util::lower();
 
 Return IPv6 strings in lowercase.
 
-=item * NetAddr::IP::Util::upper();
+=item NetAddr::IP::Util::upper();
 
 Return IPv6 strings in uppercase.  This is the default.
 
