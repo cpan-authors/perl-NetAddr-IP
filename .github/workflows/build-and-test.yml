@@ -32,11 +32,12 @@ jobs:
           dzil authordeps --missing | cpanm -n
           dzil listdeps --develop --missing | cpanm -n
       - name: Build distribution
-        run: dzil build
+        run: dzil build --in build_dir
       - uses: actions/upload-artifact@v7
         with:
           name: build_dir
-          path: NetAddr-IP-4.080_01
+          path: build_dir
+          if-no-files-found: error
   test_linux:
     runs-on: ubuntu-latest
     name: Perl ${{ matrix.perl-version }} on ubuntu-latest
