@@ -449,7 +449,8 @@ sub full($) {
         $hex[7] = $hex[6] & 0xff;
         $hex[6] >>= 8;
         return sprintf($full_format, @hex);
-    } else {
+    }
+    else {
         &full6;
     }
 }
@@ -1128,7 +1129,8 @@ sub compactref($) {
         my $net = $entry->network;
         if ($net->{isv6}) {
             push @v6, $net;
-        } else {
+        }
+        else {
             push @v4, $net;
         }
     }
@@ -1159,7 +1161,8 @@ sub _merge_sorted {
             ++$changed;
             --$i;
                     }
-                } else {                                    # identical nets
+                }
+                else {                                    # identical nets
                     splice(@r, $i +1, 1);
                     ++$changed;
                     --$i;
@@ -1444,10 +1447,12 @@ sub re6($) {
         if ($n.'' eq $b.'') {
             if ($n =~ /[0-9]/) {
         push @dig, $n;
-            } else {
+            }
+            else {
         push @dig, '['.(lc $n).$n.']';
             }
-        } else {
+        }
+        else {
             my $n = $net[$_];
             my $b = $brd[$_];
             if ($n.'' eq 0 && $b =~ /F/) {
@@ -1464,7 +1469,8 @@ sub re6($) {
         $m = ($n == 9) ? 9 : $n .'-9';
         if ($b =~ /A/) {
             $m .= 'aA';
-} else {
+}
+else {
             $b = 'A-'. $b;
             $m .= (lc $b). $b;
         }
@@ -1473,13 +1479,15 @@ sub re6($) {
             elsif ($n =~ /[A-F]/ && $b =~ /[0-9]/) {
         if ($n =~ /A/) {
             $m = 'aA';
-        } else {
+        }
+        else {
             $n .= '-F';
             $m = (lc $n).$n;
         }
         if ($b == 9) {
             $m .= 9;
-        } else {
+        }
+        else {
             $m .= $b .'-9';
         }
         push @dig, '['.$m.']';
