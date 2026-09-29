@@ -1442,17 +1442,18 @@ Returns true when C<$me> is an RFC 1918 address.
 
 =cut
 
-my $ip_10   = NetAddr::IP::Lite->new('10.0.0.0/8');
-my $ip_10n  = $ip_10->{addr};               # already the right value
-my $ip_10b  = $ip_10n | ~ $ip_10->{mask};
+# built from packed bytes, with each network carrying its own mask, so that
+# loading never needs the resolver: InetBase::inet_aton is a gethostbyname
+# call, which fails at load time wherever the resolver cannot answer a
+# dotted quad
+my $ip_10n  = inet_any2n('10.0.0.0');
+my $ip_10b  = $ip_10n | ~ mask4to6(pack('C4', 255, 0, 0, 0));
 
-my $ip_172  = NetAddr::IP::Lite->new('172.16.0.0/12');
-my $ip_172n = $ip_172->{addr};              # already the right value
-my $ip_172b = $ip_172n | ~ $ip_172->{mask};
+my $ip_172n = inet_any2n('172.16.0.0');
+my $ip_172b = $ip_172n | ~ mask4to6(pack('C4', 255, 240, 0, 0));
 
-my $ip_192  = NetAddr::IP::Lite->new('192.168.0.0/16');
-my $ip_192n = $ip_192->{addr};              # already the right value
-my $ip_192b = $ip_192n | ~ $ip_192->{mask};
+my $ip_192n = inet_any2n('192.168.0.0');
+my $ip_192b = $ip_192n | ~ mask4to6(pack('C4', 255, 255, 0, 0));
 
 sub is_rfc1918 ($) {
     my $netme     = $_[0]->{addr} & $_[0]->{mask};
@@ -1478,9 +1479,8 @@ IPv4 mapped address) is local, the same as its IPv4 form.
 =cut
 
 my $_lclhost6 = NetAddr::IP::Lite->new('::1');
-my $_lclnet   = NetAddr::IP::Lite->new('127/8');
-my $_lclnetn  = $_lclnet->{addr};
-my $_lclnetb  = $_lclnetn | ~ $_lclnet->{mask};
+my $_lclnetn = inet_any2n('127.0.0.0');
+my $_lclnetb = $_lclnetn | ~ mask4to6(pack('C4', 255, 0, 0, 0));
 
 sub is_local ($) {
     my $self = $_[0];
