@@ -1322,18 +1322,6 @@ netmask.
 
 my $biloaded;
 my $bi2strng;
-my $no_mbi_emu = 1;
-
-# function to force into test development mode
-#
-sub _force_bi_emu {
-    undef $biloaded;
-    undef $bi2strng;
-    $no_mbi_emu = 0;
-    print STDERR "\n\n\tWARNING: test development mode, this
-\tmessage SHOULD NEVER BE SEEN IN PRODUCTION!
-set my \$no_mbi_emu = 1 in t/bigint.t to remove this warning\n\n";
-}
 
 # function to stringify various flavors of Math::BigInt objects
 # tests to see if the object is a hash or a signed scalar
@@ -1343,13 +1331,8 @@ sub _bi_stfy {
     $1;
 }
 
-# as of this writing there are three known flavors of Math::BigInt
-# v0.01         MBI::new returns a scalar ref
-# v1.?? - 1.69  CALC::_new takes a reference to a scalar, returns an array, MBI returns a hash ref
-# v1.70 and up  CALC::_new takes a scalar, returns and array, MBI returns a hash ref
-
 sub _loadMBI {                        # load Math::BigInt on demand
-    if (eval { local $SIG{__DIE__}; $no_mbi_emu && require Math::BigInt}) {    # any version should work, three known
+    if (eval { local $SIG{__DIE__}; require Math::BigInt }) {
         $biloaded = \&Math::BigInt::new;
         $bi2strng = \&_bi_stfy;
     }
