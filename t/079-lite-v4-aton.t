@@ -2,6 +2,7 @@
 
 use Test2::V1 -ipP;
 use Test2::Plugin::NoWarnings;
+use Test2::Tools::Warnings qw(warning);
 
 use NetAddr::IP::Lite ();
 
@@ -33,7 +34,9 @@ my $x;
 ok(! defined NetAddr::IP::Lite->new("\1\1\1\1"),
    "binary unrecognized by default ". ($x ? $x->addr : ''));
 
-NetAddr::IP::Lite::import(':aton');
+like(warning { NetAddr::IP::Lite::import(':aton') },
+    qr/:aton is deprecated/,
+    ':aton is deprecated and warns on import');
 
 ok(defined ($x = NetAddr::IP::Lite->new("\1\1\1\1")),
    "...but can be recognized ". $x->addr);
