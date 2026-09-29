@@ -1,3 +1,7 @@
+# This checkout copy is excluded from the dist by Git::GatherDir.
+# The shipped Makefile.PL is written by MakeMaker::Awesome from
+# inc/MakeMaker/header.pl and inc/MakeMaker/footer.pl, so edits to the
+# generated text (including the Util_IS.pm heredoc) belong there.
 use ExtUtils::MakeMaker qw(WriteMakefile);
 use Config;
 use Cwd;
