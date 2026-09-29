@@ -2,9 +2,23 @@
 
 use Test2::V1 -ipP;
 use Test2::Plugin::NoWarnings;
-use Test2::Tools::Warnings qw(no_warnings);
+use Test2::Tools::Warnings qw(no_warnings warning);
 
 use NetAddr::IP::Lite ();
+
+# new_cis is deprecated and warns on every call. Assert that once, then run
+# the behaviour checks with the warning suppressed.
+like(warning { NetAddr::IP::Lite->new_cis('1.2.3.0 24') },
+    qr/new_cis is deprecated/, 'new_cis is deprecated and warns on call');
+
+sub new_cis_quiet {
+    my @args = @_;       # @_ is not visible inside the block below
+    my $ip;
+    # the return value is the warning count, so it is consumed here; leaving
+    # the call in void context would itself be a warning
+    my $quiet = no_warnings { $ip = NetAddr::IP::Lite->new_cis(@args) };
+    $ip;
+}
 
 my $binword;
 my $wn = no_warnings { $binword = eval "0b11111111111111110000000000000000" };
@@ -61,7 +75,7 @@ subtest 'v4 new_cis' => sub {
 
     for my $entry (@a) {
         for my $m (@m) {
-            my $ip = NetAddr::IP::Lite->new_cis("$entry->[0] $m->[0]");
+            my $ip = new_cis_quiet("$entry->[0] $m->[0]");
             SKIP: {
                 skip "Failed to make an object for $entry->[0]/$m->[0]", 4
                     unless defined $ip;
