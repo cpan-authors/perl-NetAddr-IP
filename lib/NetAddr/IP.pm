@@ -1217,7 +1217,7 @@ sub coalesce
     return [] unless @_;
 
     croak("coalesce: masklen must be an integer from 0 to $IPV6_BITS")
-    unless defined $masklen && $masklen =~ m|^[0-9]{1, 3}$| && $masklen <= $IPV6_BITS;
+    unless defined $masklen && $masklen =~ m|^[0-9]{1,3}$| && $masklen <= $IPV6_BITS;
     croak("coalesce: number must be a non-negative integer")
     unless defined $number && $number =~ m|^[0-9]+$|;
     croak("coalesce: arguments must be NetAddr::IP objects")
