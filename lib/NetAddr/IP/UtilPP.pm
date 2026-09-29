@@ -47,8 +47,8 @@ our %EXPORT_TAGS = (
 sub DESTROY {};
 
 sub _callersub {
-  (my $sub = (caller(2))[3]) =~ s/UtilPP::/Util::/;    # callers use NetAddr::IP::Util
-  return $sub;
+    (my $sub = (caller(2))[3]) =~ s/UtilPP::/Util::/;    # callers use NetAddr::IP::Util
+    return $sub;
 }
 
 1;
@@ -186,7 +186,7 @@ sub _128x10 {
     my @x2 = @$a128p;                    # save the x2 value
     $overflow |= _128x2($a128p);
     $overflow |= _128x2($a128p);         # x8
-    $overflow |= _sa128($a128p,\@x2,0);  # add for x10
+    $overflow |= _sa128($a128p,\@x2, 0);  # add for x10
     return $overflow;
 }
 
@@ -197,12 +197,12 @@ sub shiftleft {
     return $bits unless $shifts;
     croak "Bad arg value for NetAddr::IP::Util::shiftleft, is $shifts, should be 0 thru $MAX_SHIFTLEFT"
         if $shifts < 0 || $shifts > $MAX_SHIFTLEFT;
-    my @uint32t = unpack('N4',$bits);
+    my @uint32t = unpack('N4', $bits);
     do {
         $bits = _128x2(\@uint32t);
         $shifts--;
     } while $shifts > 0;
-    return pack('N4',@uint32t);
+    return pack('N4', @uint32t);
 }
 
 sub slowadd128 {
@@ -215,7 +215,7 @@ sub slowadd128 {
 }
 
 sub _sa128 {
-    my($uap, $ubp, $carry) = @_;
+    my ($uap, $ubp, $carry) = @_;
     if (($$uap[3] += $$ubp[3] + $carry) > 0xffffffff) {
         $$uap[3] -= 4294967296;    # 0x1_00000000
         $carry = 1;
@@ -380,7 +380,7 @@ NOTE: returns the high 96 bits as one's
 =cut
 
 sub mask4to6 {
-    _deadlen(length($_[0]),$IPV4_BITS)
+    _deadlen(length($_[0]), $IPV4_BITS)
         if length($_[0]) != $V4_PACKED_BYTES;
     return pack('L3a4', 0xffffffff, 0xffffffff, 0xffffffff, $_[0]);
 }
@@ -531,7 +531,7 @@ sub _bin2bcdn {
         $carry = $binary[$k] & $binmsk;
         $binmsk >>= 1;
         next unless $carry || $j;      # skip leading zeros
-        foreach(4,3,2,1,0) {
+        foreach(4, 3, 2, 1, 0) {
             $bcd8 = $nbcd[$_];
             $add3 = 3;
             $msk8 = 8;
@@ -576,7 +576,7 @@ sub bcdn2txt {
             . (2 * length($_[0]))
             . ", should be $MAX_BCD_DIGITS digits"
     }
-    (unpack("H$MAX_BCD_DIGITS",$_[0])) =~ /^0*(.+)/;
+    (unpack("H$MAX_BCD_DIGITS", $_[0])) =~ /^0*(.+)/;
     return $1;
 }
 
@@ -599,7 +599,7 @@ sub bcdn2bin {
         if length($bcd) > $PACKED_BCD_BYTES;
     croak "Bad digit count for NetAddr::IP::Util::bcdn2bin, is $dc, should be 1 to $digits digits"
         if $dc < 1 || $dc > $digits;
-    return _bcd2bin(unpack("H$dc",$bcd), 'NetAddr::IP::Util::bcdn2bin');
+    return _bcd2bin(unpack("H$dc", $bcd), 'NetAddr::IP::Util::bcdn2bin');
 }
 
 sub _bcd2bin {
@@ -619,7 +619,7 @@ sub _bcd2bin {
         }
         $overflow |= _128x10(\@hbits);
         $digit[3] = $bcd;
-        $overflow |= _sa128(\@hbits,\@digit,0);
+        $overflow |= _sa128(\@hbits,\@digit, 0);
     }
     if ($overflow) {
         croak "Bad arg value for $caller, number is larger than 128 bits";

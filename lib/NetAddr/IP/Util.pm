@@ -167,7 +167,7 @@ else {
 
 sub mode() { $Mode };
 
-my $_newV4compat = pack('N4',0,0,0xffff,0);
+my $_newV4compat = pack('N4', 0, 0, 0xffff, 0);
 
 sub inet_4map6 {
   my $naddr = shift;
@@ -203,7 +203,7 @@ sub import {
     $_Sock6ok = 0;
     @_ = grep { $_ ne ':noSock6' } @_;
   }
-  NetAddr::IP::Util->export_to_level(1,@_);
+  NetAddr::IP::Util->export_to_level(1, @_);
 }
 
 package NetAddr::IP::UtilPolluted;
@@ -222,8 +222,8 @@ use Socket qw(
     inet_pton
 );
 
-my $_v4zero = pack('L',0);
-my $_zero = pack('L4',0,0,0,0);
+my $_v4zero = pack('L', 0);
+my $_zero = pack('L4', 0, 0, 0, 0);
 
 # invoke replacement subroutine for Perl's "gethostbyname"
 # if Socket6 is available.
