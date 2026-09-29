@@ -192,7 +192,7 @@ sub _128x10 {
 
 sub shiftleft {
     _deadlen(length($_[0]))
-      if length($_[0]) != $V6_PACKED_BYTES;
+        if length($_[0]) != $V6_PACKED_BYTES;
     my ($bits, $shifts) = @_;
     return $bits unless $shifts;
     croak "Bad arg value for NetAddr::IP::Util::shiftleft, is $shifts, should be 0 thru $MAX_SHIFTLEFT"
