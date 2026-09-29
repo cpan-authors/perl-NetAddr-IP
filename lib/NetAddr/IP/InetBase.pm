@@ -94,23 +94,30 @@ if (eval{ local $SIG{__DIE__}; require Socket6 } ) {
         *AF_INET6 = \&Socket6::AF_INET6;
     }
     $emulateAF_INET6 = 0;                # clear, have it from elsewhere or here
-} else {
+}
+else {
     unless ($emulateAF_INET6) {    # unlikely at this point
         if ($^O =~ /(?:free|dragon.+)bsd/i) {    # FreeBSD, DragonFlyBSD
             $emulateAF_INET6 = 28;
-        } elsif ($^O =~ /bsd/i) {        # other BSD flavors like NetBDS, OpenBSD, BSD
+        }
+        elsif ($^O =~ /bsd/i) {        # other BSD flavors like NetBDS, OpenBSD, BSD
             $emulateAF_INET6 = 24;
-        } elsif ($^O =~ /(?:darwin|mac)/i) {    # Mac OS X
+        }
+        elsif ($^O =~ /(?:darwin|mac)/i) {    # Mac OS X
             $emulateAF_INET6 = 30;
-        } elsif ($^O =~ /win/i) {        # Windows
+        }
+        elsif ($^O =~ /win/i) {        # Windows
             $emulateAF_INET6 = 23;
-        } elsif ($^O =~ /(?:solaris|sun)/i) {        # Sun box
+        }
+        elsif ($^O =~ /(?:solaris|sun)/i) {        # Sun box
             $emulateAF_INET6 = 26;
-        } else {                    # use linux default
+        }
+        else {                    # use linux default
             $emulateAF_INET6 = 10;
         }
         *AF_INET6 = sub { $emulateAF_INET6; };
-    } else {
+    }
+    else {
         $emulateAF_INET6 = 0;            # clear, have it from elsewhere
     }
     *inet_pton = \&_inet_pton;
@@ -166,18 +173,21 @@ sub fillIPv4 {
                 $3 >= 0 && $3 < 256 &&
                 $4 >= 0 && $4 < 256;
             $host = $1.'.'.$2.'.'.$3.'.'.$4;
-        } elsif (defined $3) {
+        }
+        elsif (defined $3) {
             return undef unless
                 $1 >= 0 && $1 < 256 &&
                 $2 >= 0 && $2 < 256 &&
                 $3 >= 0 && $3 < 256;
             $host = $1.'.'.$2.'.0.'.$3
-        } elsif (defined $2) {
+        }
+        elsif (defined $2) {
             return undef unless
                 $1 >= 0 && $1 < 256 &&
                 $2 >= 0 && $2 < 256;
             $host = $1.'.0.0.'.$2;
-        } else {
+        }
+        else {
             $host = '0.0.0.'.$1;
         }
     }
@@ -496,7 +506,8 @@ sub _inet_pton {
         unless $af == AF_INET6() || $af == AF_INET();
     if ($af == AF_INET()) {
         inet_aton($ip);
-    } else {
+    }
+    else {
         ipv6_aton($ip);
     }
 }
@@ -520,7 +531,8 @@ sub _inet_ntop {
         unless $af == AF_INET6() || $af == AF_INET();
     if ($af == AF_INET()) {
         inet_ntoa($naddr);
-    } else {
+    }
+    else {
         return ($case)
         ? lc packzeros(ipv6_n2x($naddr))
         : _packzeros(ipv6_n2x($naddr));
@@ -568,11 +580,13 @@ sub _packzeros {
         $x6 =~ s/$x[$i]/\:/;              # replace first longest :0:0:0... with "::"
         unless ($i) {                # if it is the first match, $i = 0
             $x6 = substr($x6, 0,-1);            # keep the leading ::, remove trailing ':'
-        } else {
+        }
+        else {
             $x6 = substr($x6, 1,-1);            # else remove leading & trailing ':'
         }
         $x6 .= ':' unless $x6 =~ /\:\:/;        # restore ':' if match and we can't see it, implies trailing '::'
-    } else {                    # there was no match
+    }
+    else {                    # there was no match
         $x6 = substr($x6, 1,-1);            # remove leading & trailing ':'
     }
     $x6 .= $d;                    # append digits if any
