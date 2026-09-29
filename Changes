@@ -2,7 +2,47 @@ Revision history for Perl extension NetAddr::IP
 
 {{$NEXT}}
 
-4.080_01  2026-09-22 09:08:35+10:00 Australia/Sydney (TRIAL RELEASE)
+    Require Math::BigInt 1.99, the last release before perl 5.14 (GH#44)
+
+    Remove duplicate NAME section from the Constants.pm POD
+
+    Adjust Constants.pm POD: name each constant with its sigil and
+    indent descriptions consistently
+
+    Convert SEE ALSO sections to L<...> links and drop the (3) suffixes
+
+    Uniform code formatting across lib/, following UtilPP.pm:
+        - 4 spaces per indent level, no tabs
+        - space after commas, my (...) rather than my(...)
+        - =item rather than =item *
+        - else and elsif on their own line, not cuddled to the brace
+    POD is unchanged by the reindent; verbatim examples keep their
+    two-space first level.
+
+    Fix {1,3} regex quantifiers broken by a stray space, which had
+    disabled the mixed hex/dot-quad branch of InetBase::ipv6_aton and
+    the masklen check in coalesce
+
+    Write the shipped Makefile.PL source as inc/MakeMaker/header.pl and
+    reapply the style pass there, so the tarball no longer ships the
+    old use vars, indent and =item * forms (GH#85)
+
+    Drop AutoLoader from the prerequisites; nothing loads it since GH#70
+
+    Drop vars from the prerequisites; generated Util_IS.pm now declares
+    its version with our $VERSION
+
+    Remove the Math::BigInt emulation switch from Lite.pm (GH#84):
+        - _force_bi_emu and $no_mbi_emu are gone, and _loadMBI always
+          runs the require, so bigint() no longer croaks on a host that
+          has Math::BigInt installed
+        - drop the stale note on the three known Math::BigInt flavors
+
+    Document the numeric() comparison hazard in the Lite.pm POD: an
+    ipV6 value has more digits than a Perl number holds, so ==, <=> and
+    sort treat distinct addresses as equal (GH#84)
+
+4.080_02  2026-09-29 17:02:48+10:00 Australia/Sydney (TRIAL RELEASE)
 
     Fix re6() to support compressed IPv6 addresses (::) and shortened groups (GH#14)
 
@@ -36,6 +76,8 @@ Revision history for Perl extension NetAddr::IP
     Replace use vars with our declarations, consolidate declaration + init
 
     Convert tabs to spaces and fix POD indentation in IP.pm and Lite.pm
+
+4.080_01  2026-09-22 09:08:35+10:00 Australia/Sydney (TRIAL RELEASE)
 
     Validate masklen and number in coalesce, croak on bad arguments (GH#40)
 
