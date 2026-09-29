@@ -358,7 +358,7 @@ and returns a 128 bit binary RDATA string.
 sub ipv6_aton {
     my ($ipv6) = @_;
     return undef unless $ipv6;
-    if (my ($hex, @quad) = $ipv6 =~ /^(.*:)([0-9]{1, 3})\.([0-9]{1, 3})\.([0-9]{1, 3})\.([0-9]{1, 3})$/) {    # mixed hex, dot-quad
+    if (my ($hex, @quad) = $ipv6 =~ /^(.*:)([0-9]{1,3})\.([0-9]{1,3})\.([0-9]{1,3})\.([0-9]{1,3})$/) {    # mixed hex, dot-quad
         return undef if grep { $_ > $MAX_OCTET } @quad;
         $ipv6 = sprintf("%s%X%02X:%X%02X", $hex, @quad);            # convert to pure hex
     }
