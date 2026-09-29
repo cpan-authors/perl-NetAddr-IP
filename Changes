@@ -2,6 +2,31 @@ Revision history for Perl extension NetAddr::IP
 
 {{$NEXT}}
 
+    Fix both SYNOPSIS use lists, which carried their annotations as qw()
+    members, so each module tried to import a symbol named DEPRECATED and
+    Lite.pm one named ! as well (GH#83)
+
+    Consolidate the scattered deprecation notes in IP.pm and Lite.pm into a
+    DEPRECATED section under EXPORT_OK, and state there that everything
+    listed is going in version 5:
+        - the promise was only ever attached to a markdown ###### banner in
+          a POD verbatim block, and in Lite.pm that sat 58 lines into the
+          new_cis6 item body
+        - :rfc3021 said only "a future version", and new_cis and new_cis6
+          carried no removal version at all
+        - :rfc3021, new_cis and new_cis6 are now covered by the promise
+    Each item names its replacement. :old_nth is left out, being a
+    compatibility switch that has never been marked deprecated and has no
+    replacement.
+
+    Warn in the deprecated category when :aton, new_cis or new_cis6 is
+    used, naming the replacement in the warning (GH#49). None of the three
+    warned before, though all were marked deprecated:
+        - :aton warns on import in both IP.pm and Lite.pm
+        - new_cis and new_cis6 warn on call; they are defined once in
+          Lite.pm and reached from IP.pm via AUTOLOAD
+    Behaviour of all three is unchanged.
+
     Require Math::BigInt 1.99, the last release before perl 5.14 (GH#44)
 
     Remove duplicate NAME section from the Constants.pm POD
