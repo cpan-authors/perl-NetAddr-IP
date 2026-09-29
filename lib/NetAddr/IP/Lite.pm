@@ -389,7 +389,8 @@ sub plus {
     my $new;
     if ($const < 2147483648 && $const > -2147483649) {
     $new = (addconst($lo, $const))[1];
-    } else {
+    }
+    else {
     my $mag = _const2bin(abs($const));
     $new = ($const > 0)
         ? (add128($lo, $mag))[1]
@@ -408,10 +409,12 @@ sub _const2bin {
     my ($hi, $lo);
     if ($c <= 4294967295) {
     ($hi, $lo) = (0, $c);
-    } elsif (~0 > 4294967295) {
+    }
+    elsif (~0 > 4294967295) {
     $hi = $c >> 32;
     $lo = $c & 4294967295;
-    } else {
+    }
+    else {
     $hi = int($c / 4294967296);
     $lo = $c - $hi * 4294967296;
     }
@@ -449,7 +452,8 @@ sub minus {
     if ($carry) {                    # value is positive
     return undef if hasbits($dif & $_smsk);        # all sign bits should be 0's
     return (unpack('L3N', $dif))[3];
-    } else {
+    }
+    else {
     return undef if hasbits(($dif & $_smsk) ^ $_smsk);    # sign is 1's
     return (unpack('L3N', $dif))[3] - 4294967296;
     }
@@ -839,12 +843,14 @@ sub _xnew($$;$$) {
         return undef if index($1, ':') < 0;    # RFC 3986 brackets enclose an IPv6 literal only
         $ip    = $1;
         $mask    = $2;
-            } elsif (grep($ip eq $_,(qw(default any broadcast loopback unspecified)))) {
+            }
+            elsif (grep($ip eq $_,(qw(default any broadcast loopback unspecified)))) {
         $isV6 = 1 if $ip eq 'unspecified';
         if ($isV6) {
             $mask = $fip6m{$ip};
             return undef unless defined ($ip = $fip6{$ip});
-        } else {
+        }
+        else {
             $mask    = $fip4m{$ip};
             return undef unless defined ($ip = $fip4{$ip});
         }
@@ -858,7 +864,8 @@ sub _xnew($$;$$) {
             $mask    = $fip6m{$ip};
             $ip    = $fip6{$ip};
             last;
-        } else {
+        }
+        else {
             return undef unless $isV6;
                 # add for ipv6 notation "12345, 1"
                 }
@@ -921,16 +928,19 @@ sub _xnew($$;$$) {
                 }
                 elsif ($mask == $IPV4_BITS) {
                     $mask = Ones;
-                } else {
+                }
+                else {
                     return undef;            # undoubtably an error
                 }
             }
             elsif ($mask < $IPV6_BITS) {
                 $mask = shiftleft(Ones, $IPV6_BITS -$mask);    # small cidr
-            } else {
+            }
+            else {
                 $mask = Ones();
             }
-        } else {
+        }
+        else {
             return undef unless defined ($mask = _bcd2bin_or_undef($mask));
         }
             }
@@ -943,11 +953,13 @@ sub _xnew($$;$$) {
         }
         elsif ( $mask == $IPV4_BITS) {
             $mask = Ones;
-        } else {
+        }
+        else {
             return undef unless defined ($mask = _bcd2bin_or_undef($mask));
             $mask |= $_v4mask;            # v4 always
         }
-            } else {                    # also V4
+            }
+            else {                    # also V4
         return undef unless defined ($mask = _bcd2bin_or_undef($mask));
         $mask |= $_v4mask;
             }
@@ -955,17 +967,21 @@ sub _xnew($$;$$) {
         $ip = $try;
         last;
             }
-        } elsif ($mask =~ m/^[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+$/) { # ipv4 form of mask
+        }
+        elsif ($mask =~ m/^[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+$/) { # ipv4 form of mask
             $mask = _no_octal($mask) if $noctal;    # filter for octal
             return undef unless defined ($mask = inet_aton($mask));
             $mask = mask4to6($mask);
-        } elsif (grep($mask eq $_,qw(default any broadcast loopback unspecified host))) {
+        }
+        elsif (grep($mask eq $_,qw(default any broadcast loopback unspecified host))) {
             if (index($ip,':') < 0 && ! $isV6) {
         return undef unless defined ($mask = $fip4m{$mask});
-            } else {
+            }
+            else {
         return undef unless defined ($mask = $fip6m{$mask});
             }
-        } else {
+        }
+        else {
             return undef unless defined ($mask = ipv6_aton($mask));    # try ipv6 form of mask
         }
 
@@ -1088,13 +1104,16 @@ sub _xnew($$;$$) {
             elsif ($Accept_Binary_IP && ! $hasmask) {
         if (length($ip) == $V4_PACKED_BYTES) {
             $ip = ipv4to6($ip);
-        } elsif (length($ip) == $V6_PACKED_BYTES) {
+        }
+        elsif (length($ip) == $V6_PACKED_BYTES) {
             $isV6 = 1;
-        } else {
+        }
+        else {
             return undef;
         }
         last;
-            } else {
+            }
+            else {
         return undef;
             }
             return undef unless defined ($ip = inet_aton($ip));
@@ -1333,7 +1352,8 @@ sub _loadMBI {                        # load Math::BigInt on demand
     if (eval { local $SIG{__DIE__}; $no_mbi_emu && require Math::BigInt}) {    # any version should work, three known
         $biloaded = \&Math::BigInt::new;
         $bi2strng = \&_bi_stfy;
-    } else {
+    }
+    else {
         croak "Math::BigInt is required for bigint() support";
     }
 }
@@ -1369,13 +1389,15 @@ sub bigint($) {
         }
         (_biRef($addr), _biRef($mask));
 
-    } else {    # not wantarray
+    }
+    else {    # not wantarray
 
         if (! $_[0]->{isv6} && isIPv4($_[0]->{addr})) {
             $addr = $_[0]->{addr}
         ? sprintf("%u",unpack('N',ipv6to4($_[0]->{addr})))
         : 0;
-        } else {
+        }
+        else {
             $addr = $_[0]->{addr}
         ? bin2bcd($_[0]->{addr})
         : 0;
@@ -1498,7 +1520,8 @@ my $_cidr127 = pack('N4', 0xffffffff, 0xffffffff, 0xffffffff, 0xfffffffe);
 sub first ($) {
     if (hasbits($_[0]->{mask} ^ $_cidr127)) {
         return $_[0]->network + 1;
-    } else {
+    }
+    else {
         return $_[0]->network;
     }
 #  return $_[0]->network + 1;
@@ -1514,7 +1537,8 @@ the subnet (ie, one less than the broadcast address).
 sub last ($) {
     if (hasbits($_[0]->{mask} ^ $_cidr127)) {
         return $_[0]->broadcast - 1;
-    } else {
+    }
+    else {
         return $_[0]->broadcast;
     }
 }
@@ -1577,7 +1601,8 @@ sub nth ($$) {
     }
     elsif ($slash31) {
         return undef if ($count && $count != 1);    # only index 0, 1 allowed for /31
-    } else {
+    }
+    else {
         ++$count;
         return undef if ($count < 1 or $count > $self->num ());
     }
@@ -1625,7 +1650,8 @@ sub num ($) {
         # number of ip's less broadcast
         return 0xfffffffe if $net[0] || $net[1] || $net[2]; # 2**32 - 2
         return $net[3] if $net[3];
-    } else {    # returns 1 for /32 /128, 2 for /31 /127 else n-2 up to 2**32
+    }
+    else {    # returns 1 for /32 /128, 2 for /31 /127 else n-2 up to 2**32
         (undef, my $net) = addconst($_[0]->{mask}, 1);
         return 1 unless hasbits($net);    # ipV4/32 or ipV6/128
         $net = $net ^ Ones;

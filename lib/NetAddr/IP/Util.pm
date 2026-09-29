@@ -177,7 +177,8 @@ sub inet_4map6 {
     elsif (length($naddr) == $V6_PACKED_BYTES) {
         ;    # is OK
         return undef unless isAnyIPv4($naddr);
-    } else {
+    }
+    else {
         return undef;
     }
     $naddr |= $_newV4compat;
@@ -248,7 +249,8 @@ sub _end_gethostbyname {
     }
     elsif ($rv[3] == $NetAddr::IP::Util::V6_PACKED_BYTES) {
         ;    # is ok
-    } else {
+    }
+    else {
         @rv = ();
     }
     return @rv;
@@ -260,13 +262,15 @@ unless ( eval { local $SIG{__DIE__}; require Socket6 }) {
         my @tip = gethostbyname(NetAddr::IP::InetBase::fillIPv4($_[0]));
         return &_end_gethostbyname(@tip);
     };
-} else {
+}
+else {
     import Socket6 qw( gethostbyname2 getipnodebyname );
     my $try = eval { local $SIG{__DIE__}; my @try = gethostbyname2('127.0.0.1',NetAddr::IP::Util::AF_INET()); $try[4] };
     if (! $@ && $try && $try eq INADDR_LOOPBACK()) {
         *_ghbn2 = \&Socket6::gethostbyname2;
         $havegethostbyname2 = 1;
-    } else {
+    }
+    else {
         *_ghbn2 = sub { return () };    # use failure branch below
     }
 
