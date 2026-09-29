@@ -742,6 +742,8 @@ sub new6FFFF($;$$) {
 }
 
 sub new_cis($;$$) {
+    warnings::warnif('deprecated',
+        'new_cis is deprecated and will be removed in version 5; ->new() accepts the same notation');
     my @in = @_;
     if ( $in[1] && $in[1] =~ m!^(.+)\s+(.+)$! ) {
         $in[1] = $1 .'/'. $2;
@@ -751,6 +753,8 @@ sub new_cis($;$$) {
 }
 
 sub new_cis6($;$$) {
+    warnings::warnif('deprecated',
+        'new_cis6 is deprecated and will be removed in version 5; ->new6() accepts the same notation');
     my @in = @_;
     if ( $in[1] && $in[1] =~ m!^(.+)\s+(.+)$! ) {
         $in[1] = $1 .'/'. $2;
@@ -1640,6 +1644,8 @@ sub num ($) {
 
 sub import {
     if (grep { $_ eq ':aton' } @_) {
+        warnings::warnif('deprecated',
+            ':aton is deprecated and will be removed in version 5; new() accepts inet_aton notation without it, and new_from_aton() takes a packed IPv4 address');
         $Accept_Binary_IP = 1;
         @_ = grep { $_ ne ':aton' } @_;
     }

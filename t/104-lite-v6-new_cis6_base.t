@@ -2,8 +2,23 @@
 
 use Test2::V1 -ipP;
 use Test2::Plugin::NoWarnings;
+use Test2::Tools::Warnings qw(no_warnings warning);
 
 use NetAddr::IP::Lite ();
+
+# new_cis6 is deprecated and warns on every call. Assert that once, then
+# run the behaviour checks with the warning suppressed.
+like(warning { NetAddr::IP::Lite->new_cis6('::1') },
+    qr/new_cis6 is deprecated/, 'new_cis6 is deprecated and warns on call');
+
+sub new_cis6_quiet {
+    my @args = @_;       # @_ is not visible inside the block below
+    my $ip;
+    # the return value is the warning count, so it is consumed here; leaving
+    # the call in void context would itself be a warning
+    my $quiet = no_warnings { $ip = NetAddr::IP::Lite->new_cis6(@args) };
+    $ip;
+}
 
 my @addr = (
     ['::',                     3,     '0:0:0:0:0:0:0:0/128',        0],
@@ -32,7 +47,7 @@ my @addr = (
 
 subtest 'new_cis6 basic v6 tests' => sub {
     for my $entry (@addr) {
-        my $ip = NetAddr::IP::Lite->new_cis6($entry->[0]);
+        my $ip = new_cis6_quiet($entry->[0]);
         my $input = $entry->[0];
         $input =~ s,/[0-9]+,,;
         isa_ok($ip, ['NetAddr::IP::Lite'], "$input ");
@@ -48,11 +63,11 @@ subtest 'new_cis6 basic v6 tests' => sub {
     }
 };
 
-my $ip = NetAddr::IP::Lite->new_cis6('f34::1');
+my $ip = new_cis6_quiet('f34::1');
 isa_ok($ip, 'NetAddr::IP::Lite');
 ok($ip->network->contains($ip), '->contains');
 
-$ip = NetAddr::IP::Lite->new_cis6('f35::1 40');
+$ip = new_cis6_quiet('f35::1 40');
 isa_ok($ip, 'NetAddr::IP::Lite');
 ok($ip->network->contains($ip), '->contains');
 
