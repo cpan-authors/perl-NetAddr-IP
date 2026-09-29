@@ -61,7 +61,7 @@ our $AUTOLOAD;
       Ones
       V4mask
       V4net
-      :aton        DEPRECATED !
+      :aton
       :old_nth
       :upper
       :lower
@@ -544,8 +544,6 @@ sub _new ($$$) {
 
 =item C<-E<gt>new_from_aton($netaddr)>
 
-=item new_cis and new_cis6 are DEPRECATED
-
 =item C<-E<gt>new_cis("$addr $mask)>
 
 =item C<-E<gt>new_cis6("$addr $mask)>
@@ -565,19 +563,13 @@ dot quad strings for leading 0's that would normally be interpreted as octal
 format by NetAddr per the specifications for inet_aton.
 
 B<new_from_aton> takes a packed IPv4 address and assumes a /32 mask. This
-function replaces the DEPRECATED :aton functionality which is fundamentally
-broken.
+function replaces the :aton functionality which is fundamentally
+broken. See L</DEPRECATED>.
 
-The last two methods B<new_cis> and B<new_cis6> differ from B<new> and
-B<new6> only in that they except the common Cisco address notation for
-address/mask pairs with a B<space> as a separator instead of a slash (/)
-
-These methods are DEPRECATED because the functionality is now included
-in the other "new" methods
-
-  i.e.  ->new_cis('1.2.3.0 24')
-        or
-        ->new_cis6('::1.2.3.0 120')
+B<new_cis> and B<new_cis6> accept the common Cisco address notation for
+address/mask pairs with a B<space> as a separator instead of a slash (/).
+Both are deprecated in favour of B<new> and B<new6>, which do the same.
+See L</DEPRECATED>.
 
 C<-E<gt>new6> and
 C<-E<gt>new_cis6> mark the address as being in ipV6 address space even
@@ -605,13 +597,6 @@ Addresses in the same format returned by C<inet_aton> or
 C<gethostbyname> can also be understood, although no mask can be
 specified for them. The default is to not attempt to recognize this
 format, as it seems to be seldom used.
-
-###### DEPRECATED, will be remove in version 5 ############
-To accept addresses in that format, invoke the module as in
-
-  use NetAddr::IP::Lite ':aton'
-
-###### USE new_from_aton instead ##########################
 
 If called with no arguments, 'default' is assumed. An explicit undef
 argument returns undef.
@@ -1691,6 +1676,34 @@ sub import {
   :upper
   :lower
   :nofqdn
+
+=head1 DEPRECATED
+
+Everything listed here is deprecated and will be removed in version 5.
+
+=over 4
+
+=item C<:aton>
+
+Enables C<->new()> to accept a raw packed address of four or sixteen
+bytes, and stops it stripping surrounding whitespace, which a packed
+address may begin or end with. Plain C<inet_aton> notation is accepted
+without this tag.
+
+C<new_from_aton> replaces it for a packed IPv4 address. There is no
+replacement for the packed sixteen byte case.
+
+  use NetAddr::IP::Lite qw(:aton);
+
+=item C<new_cis> and C<new_cis6>
+
+Accept the Cisco address and mask notation, with a space separator in
+place of a slash. C<->new()> and C<->new6()> do the same.
+
+  ->new('1.2.3.0 24')      in place of   ->new_cis('1.2.3.0 24')
+  ->new6('::1.2.3.0 120')  in place of   ->new_cis6('::1.2.3.0 120')
+
+=back
 
 =head1 SEE ALSO
 
