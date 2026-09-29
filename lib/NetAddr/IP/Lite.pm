@@ -1292,6 +1292,11 @@ netmask.
 This method is essential for serializing the representation of a
 subnet.
 
+The ipV6 value has more digits than a Perl number holds, so C<==>,
+C<E<lt>=E<gt>> and C<sort> on two C<numeric()> results compare them as
+floats and call distinct addresses equal. Compare the objects directly,
+both operators are overloaded, or use C<-E<gt>bigint()>.
+
 =cut
 
 sub numeric ($) {
