@@ -1,6 +1,7 @@
 #!/usr/bin/env perl
 
 use Test2::V1 -ipP;
+use Test2::Plugin::NoWarnings;
 use Test2::Tools::Warnings qw(no_warnings);
 
 use NetAddr::IP::Lite ();
