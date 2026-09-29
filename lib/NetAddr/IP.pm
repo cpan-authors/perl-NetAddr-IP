@@ -40,12 +40,12 @@ our $_netlimit;
     V4mask
     V4net
     netlimit
-    :aton        DEPRECATED
+    :aton
     :lower
     :upper
     :old_storable
     :old_nth
-    :rfc3021    DEPRECATED
+    :rfc3021
     :nofqdn
   );
 
@@ -83,15 +83,6 @@ their string form via C<ipv6_n2x()>:
 
   Will also return an ipV4 or ipV6 representation of a
   resolvable Fully Qualified Domain Name (FQDN).
-
-  ###### DEPRECATED, will be remove in version 5 ############
-
-* To accept addresses in the format as returned by
-  inet_aton, invoke the module as:
-
-  use NetAddr::IP qw(:aton);
-
-  ###### USE new_from_aton instead ##########################
 
 * To enable usage of legacy data files containing NetAddr::IP
   objects stored using the L<Storable> module.
@@ -510,8 +501,6 @@ sub do_prefix ($$$) {
 
 =item C<-E<gt>new_from_aton($netaddr)>
 
-=item new_cis and new_cis6 are DEPRECATED
-
 =item C<-E<gt>new_cis("$addr $mask)>
 
 =item C<-E<gt>new_cis6("$addr $mask)>
@@ -526,19 +515,13 @@ dot quad strings for leading 0's that would normally be interpreted as octal
 format by NetAddr per the specifications for inet_aton.
 
 B<new_from_aton> takes a packed IPv4 address and assumes a /32 mask. This
-function replaces the DEPRECATED :aton functionality which is fundamentally
-broken.
+function replaces the :aton functionality which is fundamentally
+broken. See L</DEPRECATED>.
 
-The last two methods B<new_cis> and B<new_cis6> differ from B<new> and
-B<new6> only in that they except the common Cisco address notation for
-address/mask pairs with a B<space> as a separator instead of a slash (/)
-
-These methods are DEPRECATED because the functionality is now included
-in the other "new" methods
-
-  i.e.  ->new_cis('1.2.3.0 24')
-  or
-  ->new_cis6('::1.2.3.0 120')
+B<new_cis> and B<new_cis6> accept the common Cisco address notation for
+address/mask pairs with a B<space> as a separator instead of a slash (/).
+Both are deprecated in favour of B<new> and B<new6>, which do the same.
+See L</DEPRECATED>.
 
 C<-E<gt>new6> and
 C<-E<gt>new_cis6> mark the address as being in ipV6 address space even
@@ -564,10 +547,6 @@ Addresses in the same format returned by C<inet_aton> or
 C<gethostbyname> can also be understood, although no mask can be
 specified for them. The default is to not attempt to recognize this
 format, as it seems to be seldom used.
-
-To accept addresses in that format, invoke the module as in
-
-  use NetAddr::IP ':aton'
 
 If called with no arguments, 'default' is assumed. An explicit undef
 argument returns undef.
@@ -1069,10 +1048,8 @@ Faster version of C<-E<gt>hostenum()>, returning a reference to a list.
 NOTE: hostenum and hostenumref report two (2) useable hosts in a /31 or
 /127 point-to-point network (RFC 3021), the same as C<first>, C<last>,
 C<nth> and C<num>. Versions before 4.080 reported zero hosts unless the
-B<:rfc3021> tag was imported. The tag is now deprecated and emits a
-warning if imported; it will be removed in a future version.
-
-  use NetAddr::IP qw(:rfc3021);    # deprecated, no longer needed
+B<:rfc3021> tag was imported, so the tag is no longer needed and is
+deprecated. See L</DEPRECATED>.
 
 =item C<$me-E<gt>compact($addr1, $addr2, ...)>
 
@@ -1555,6 +1532,43 @@ sub mod_version {
   V4mask
   V4net
   netlimit
+
+=head1 DEPRECATED
+
+Everything listed here is deprecated and will be removed in version 5.
+
+=over 4
+
+=item C<:aton>
+
+Enables C<->new()> to accept a raw packed address of four or sixteen
+bytes, and stops it stripping surrounding whitespace, which a packed
+address may begin or end with. Plain C<inet_aton> notation is accepted
+without this tag.
+
+C<new_from_aton> replaces it for a packed IPv4 address. There is no
+replacement for the packed sixteen byte case.
+
+  use NetAddr::IP qw(:aton);
+
+=item C<:rfc3021>
+
+Imports successfully and does nothing. Versions before 4.080 reported
+zero usable hosts in a /31 or /127 unless this tag was imported;
+C<hostenum> and C<hostenumref> now always report two, the same as
+C<first>, C<last>, C<nth> and C<num>. Importing it warns.
+
+  use NetAddr::IP qw(:rfc3021);    # no longer needed
+
+=item C<new_cis> and C<new_cis6>
+
+Accept the Cisco address and mask notation, with a space separator in
+place of a slash. C<->new()> and C<->new6()> do the same.
+
+  ->new('1.2.3.0 24')      in place of   ->new_cis('1.2.3.0 24')
+  ->new6('::1.2.3.0 120')  in place of   ->new_cis6('::1.2.3.0 120')
+
+=back
 
 =head1 NOTES / BUGS ... FEATURES
 
