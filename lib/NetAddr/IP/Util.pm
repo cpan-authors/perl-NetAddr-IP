@@ -287,8 +287,6 @@ else {
 package NetAddr::IP::Util;
 
 sub naip_gethostbyname {
-    # turn off complaint from Socket6 about missing numeric argument
-    undef local $^W;
     my @rv = &$mygethostbyname($_[0]);
     return wantarray
         ? @rv
