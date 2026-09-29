@@ -147,11 +147,11 @@ Returns true on success, otherwise C<undef>.
 $_netlimit = 2 ** $DEFAULT_NETLIMIT_EXP;    # default
 
 sub netlimit($) {
-  return undef unless $_[0];
-  return undef if $_[0] =~ /[^0-9]/;
-  return undef if $_[0] < $DEFAULT_NETLIMIT_EXP;
-  return undef if $_[0] > $MAX_NETLIMIT_EXP;
-  $_netlimit = 2 ** $_[0];
+    return undef unless $_[0];
+    return undef if $_[0] =~ /[^0-9]/;
+    return undef if $_[0] < $DEFAULT_NETLIMIT_EXP;
+    return undef if $_[0] > $MAX_NETLIMIT_EXP;
+    $_netlimit = 2 ** $_[0];
 };
 
 =head1 INSTALLATION
@@ -197,9 +197,9 @@ Many operators have been overloaded, as described below:
 
 use overload
 
-  '@{}'    => sub {
-    return [ $_[0]->hostenum ];
-  };
+    '@{}'    => sub {
+        return [ $_[0]->hostenum ];
+    };
 
 
 =over
@@ -405,63 +405,63 @@ sub compact {
 *Compact = \&compact;
 
 sub Coalesce {
-  return &coalesce;
+    return &coalesce;
 }
 
 sub hostenumref($) {
-  my $r = _splitref(0, $_[0]);
-# a /32 or /128 is one host, a /31 or /127 is two (RFC 3021), matching
-# first, last, nth and num in NetAddr::IP::Lite
-  unless ((notcontiguous($_[0]->{mask}))[1] >= $RFC3021_THRESHOLD) {
-    splice(@$r, 0, 1);
-    splice(@$r, scalar @$r - 1, 1);
-  }
-  return $r;
+    my $r = _splitref(0, $_[0]);
+    # a /32 or /128 is one host, a /31 or /127 is two (RFC 3021), matching
+    # first, last, nth and num in NetAddr::IP::Lite
+    unless ((notcontiguous($_[0]->{mask}))[1] >= $RFC3021_THRESHOLD) {
+        splice(@$r, 0, 1);
+        splice(@$r, scalar @$r - 1, 1);
+    }
+    return $r;
 }
 
 sub splitref {
-  unshift @_, 0;    # mark as no reverse
-  goto &_splitref;
+    unshift @_, 0;    # mark as no reverse
+    goto &_splitref;
 }
 
 sub rsplitref {
-  unshift @_, 1;    # mark as reversed
-  goto &_splitref;
+    unshift @_, 1;    # mark as reversed
+    goto &_splitref;
 }
 
 sub split {
-  unshift @_, 0;    # mark as no reverse
-  my $rv = &_splitref;
-  return $rv ? @$rv : ();
+    unshift @_, 0;    # mark as no reverse
+    my $rv = &_splitref;
+    return $rv ? @$rv : ();
 }
 
 sub rsplit {
-  unshift @_, 1;    # mark as reversed
-  my $rv = &_splitref;
-  return $rv ? @$rv : ();
+    unshift @_, 1;    # mark as reversed
+    my $rv = &_splitref;
+    return $rv ? @$rv : ();
 }
 
 sub full($) {
-  if (! $_[0]->{isv6} && isIPv4($_[0]->{addr})) {
-    my @hex = (unpack("n8", $_[0]->{addr}));
-    $hex[9] = $hex[7] & 0xff;
-    $hex[8] = $hex[7] >> 8;
-    $hex[7] = $hex[6] & 0xff;
-    $hex[6] >>= 8;
-    return sprintf($full_format, @hex);
-  } else {
-    &full6;
-  }
+    if (! $_[0]->{isv6} && isIPv4($_[0]->{addr})) {
+        my @hex = (unpack("n8", $_[0]->{addr}));
+        $hex[9] = $hex[7] & 0xff;
+        $hex[8] = $hex[7] >> 8;
+        $hex[7] = $hex[6] & 0xff;
+        $hex[6] >>= 8;
+        return sprintf($full_format, @hex);
+    } else {
+        &full6;
+    }
 }
 
 sub full6($) {
-  my @hex = (unpack("n8", $_[0]->{addr}));
-  return sprintf($full6_format, @hex);
+    my @hex = (unpack("n8", $_[0]->{addr}));
+    return sprintf($full6_format, @hex);
 }
 
 sub full6m($) {
-  my @hex = (unpack("n8", $_[0]->{mask}));
-  return sprintf($full6_format, @hex);
+    my @hex = (unpack("n8", $_[0]->{mask}));
+    return sprintf($full6_format, @hex);
 }
 
 sub DESTROY {};
@@ -743,13 +743,13 @@ wildcard translation of the mask.
 =cut
 
 sub wildcard($) {
-  my $copy = $_[0]->copy;
-  $copy->{addr} = ~ $copy->{mask};
-  $copy->{addr} &= V4net unless $copy->{isv6};
-  if (wantarray) {
-    return ($_[0]->addr, $copy->addr);
-  }
-  return $copy->addr;
+    my $copy = $_[0]->copy;
+    $copy->{addr} = ~ $copy->{mask};
+    $copy->{addr} &= V4net unless $copy->{isv6};
+    if (wantarray) {
+        return ($_[0]->addr, $copy->addr);
+    }
+    return $copy->addr;
 }
 
 =item C<-E<gt>short()>
@@ -773,13 +773,13 @@ sub _compV6 ($) {
 }
 
 sub short($) {
-  my $addr = $_[0]->addr;
-  if (! $_[0]->{isv6} && isIPv4($_[0]->{addr})) {
-    my @o = split(/\./, $addr, $OCTET_COUNT);
-    splice(@o, 1, 2) if $o[1] == 0 and $o[2] == 0;
-    return join '.', @o;
-  }
-  return _compV6($addr);
+    my $addr = $_[0]->addr;
+    if (! $_[0]->{isv6} && isIPv4($_[0]->{addr})) {
+        my @o = split(/\./, $addr, $OCTET_COUNT);
+        splice(@o, 1, 2) if $o[1] == 0 and $o[2] == 0;
+        return join '.', @o;
+    }
+    return _compV6($addr);
 }
 
 =item C<-E<gt>canon()>
@@ -792,8 +792,8 @@ returned by "->short()".
 =cut
 
 sub canon($) {
-  my $addr = $_[0]->addr;
-  return $_[0]->{isv6} ? lc _compV6($addr) : $addr;
+    my $addr = $_[0]->addr;
+    return $_[0]->{isv6} ? lc _compV6($addr) : $addr;
 }
 
 =item C<-E<gt>full()>
@@ -940,81 +940,81 @@ expected.
 #        (\@bits,\%masks) for a real plan
 #
 sub _splitplan {
-  my ($ip, @bits) = @_;
-  my $addr = $ip->addr();
-  my $isV6 = $ip->{isv6};
-  unless (@bits) {
-    $bits[0] = $isV6 ? $IPV6_BITS : $IPV4_BITS;
-  }
-  my $basem = $ip->masklen();
+    my ($ip, @bits) = @_;
+    my $addr = $ip->addr();
+    my $isV6 = $ip->{isv6};
+    unless (@bits) {
+        $bits[0] = $isV6 ? $IPV6_BITS : $IPV4_BITS;
+    }
+    my $basem = $ip->masklen();
 
-  my (%nets, $dif);
-  my $denom = 0;
+    my (%nets, $dif);
+    my $denom = 0;
 
-  my ($x, $maddr);
-  foreach my $mask(@bits) {
-    if (ref $mask) {    # is a NetAddr::IP
-      $x = $mask->{isv6} ? $mask->{addr} : $mask->{addr} | V4mask;
-      ($x, $maddr) = notcontiguous($x);
-      return () if $x;    # spurious bits
-      $mask = $isV6 ? $maddr : $maddr - $IPV4_OFFSET;
+    my ($x, $maddr);
+    foreach my $mask(@bits) {
+        if (ref $mask) {    # is a NetAddr::IP
+            $x = $mask->{isv6} ? $mask->{addr} : $mask->{addr} | V4mask;
+            ($x, $maddr) = notcontiguous($x);
+            return () if $x;    # spurious bits
+            $mask = $isV6 ? $maddr : $maddr - $IPV4_OFFSET;
+        }
+        elsif ($mask = NetAddr::IP->new($addr, $mask, $isV6)) { # will be undefined if bad mask and will fall into oops!
+            $mask = $mask->masklen();
+        }
+        else {
+            return ();    # oops!
+        }
+        $dif = $mask - $basem;            # for normalization
+        return () if $dif < 0;        # overange nets not allowed
+        return (\@bits,undef) unless ($dif || $#bits);    # return if original net = mask alone
+        $denom = $dif if $dif > $denom;
+        next if exists $nets{$mask};
+        $nets{$mask} = $mask - $basem;        # for normalization
     }
-    elsif ($mask = NetAddr::IP->new($addr, $mask, $isV6)) { # will be undefined if bad mask and will fall into oops!
-      $mask = $mask->masklen();
-    }
-    else {
-      return ();    # oops!
-    }
-    $dif = $mask - $basem;            # for normalization
-    return () if $dif < 0;        # overange nets not allowed
-    return (\@bits,undef) unless ($dif || $#bits);    # return if original net = mask alone
-    $denom = $dif if $dif > $denom;
-    next if exists $nets{$mask};
-    $nets{$mask} = $mask - $basem;        # for normalization
-  }
 
-# $denom is the normalization denominator, since these are all exponents
-# normalization can use add/subtract to accomplish normalization
-#
-# keys of %nets are the masks used by this split
-# values of %nets are the normalized weighting for
-# calculating when the split is "full" or complete
-# %masks values contain the actual masks for each split subnet
-# @bits contains the masks in the order the user actually wants them
-#
-  my %masks;                    # calculate masks
-  my $maskbase = $isV6 ? $IPV6_BITS : $IPV4_BITS;
-  foreach( keys %nets ) {
-    $nets{$_} = 2 ** ($denom - $nets{$_});
-    $masks{$_} = shiftleft(Ones, $maskbase - $_);
-  }
+    # $denom is the normalization denominator, since these are all exponents
+    # normalization can use add/subtract to accomplish normalization
+    #
+    # keys of %nets are the masks used by this split
+    # values of %nets are the normalized weighting for
+    # calculating when the split is "full" or complete
+    # %masks values contain the actual masks for each split subnet
+    # @bits contains the masks in the order the user actually wants them
+    #
+    my %masks;                    # calculate masks
+    my $maskbase = $isV6 ? $IPV6_BITS : $IPV4_BITS;
+    foreach( keys %nets ) {
+        $nets{$_} = 2 ** ($denom - $nets{$_});
+        $masks{$_} = shiftleft(Ones, $maskbase - $_);
+    }
 
-  my @plan;
-  my $idx = 0;
-  $denom = 2 ** $denom;
-  PLAN:
-  while ($denom > 0) {                # make a net plan
-    my $nexmask = ($idx < $#bits) ? $bits[$idx] : $bits[$#bits];
-    ++$idx;
-    unless (($denom -= $nets{$nexmask}) < 0) {
-      croak('netlimit exceeded') if (push @plan, $nexmask) > $_netlimit;
-      next;
+    my @plan;
+    my $idx = 0;
+    $denom = 2 ** $denom;
+    PLAN:
+    while ($denom > 0) {                # make a net plan
+        my $nexmask = ($idx < $#bits) ? $bits[$idx] : $bits[$#bits];
+        ++$idx;
+        unless (($denom -= $nets{$nexmask}) < 0) {
+            croak('netlimit exceeded') if (push @plan, $nexmask) > $_netlimit;
+            next;
+        }
+        # a fractional net is needed that is not in the mask list or the replicant
+        $denom += $nets{$nexmask};            # restore mistake
+    TRY:
+        foreach my $try_mask (sort { $a <=> $b } keys %nets) {
+            next TRY if $nexmask > $try_mask;
+            do {
+        next TRY if $denom - $nets{$try_mask} < 0;
+        croak('netlimit exceeded') if (push @plan, $try_mask) > $_netlimit;
+        $denom -= $nets{$try_mask};
+            } while $denom;
+        }
+        die 'ERROR: miscalculated weights' if $denom;
     }
-    # a fractional net is needed that is not in the mask list or the replicant
-    $denom += $nets{$nexmask};            # restore mistake
-  TRY:
-    foreach my $try_mask (sort { $a <=> $b } keys %nets) {
-      next TRY if $nexmask > $try_mask;
-      do {
-    next TRY if $denom - $nets{$try_mask} < 0;
-    croak('netlimit exceeded') if (push @plan, $try_mask) > $_netlimit;
-    $denom -= $nets{$try_mask};
-      } while $denom;
-    }
-    die 'ERROR: miscalculated weights' if $denom;
-  }
-  return () if $idx < @bits;            # overrange original subnet request
-  return (\@plan,\%masks);
+    return () if $idx < @bits;            # overrange original subnet request
+    return (\@plan,\%masks);
 }
 
 # input:    $rev,    # t/f
@@ -1022,25 +1022,25 @@ sub _splitplan {
 #        @bits    # list of masks for split
 #
 sub _splitref {
-  my $rev = shift;
-  my ($plan, $masks) = &_splitplan;
-  # bug report 82719
-  croak('netmask error: overrange or spurious bits') unless defined $plan;
-  my $net = $_[0]->network();
-  return [$net] unless $masks;
-  my $addr = $net->{addr};
-  my $isV6 = $net->{isv6};
-  my @plan = $rev ? reverse @$plan : @$plan;
+    my $rev = shift;
+    my ($plan, $masks) = &_splitplan;
+    # bug report 82719
+    croak('netmask error: overrange or spurious bits') unless defined $plan;
+    my $net = $_[0]->network();
+    return [$net] unless $masks;
+    my $addr = $net->{addr};
+    my $isV6 = $net->{isv6};
+    my @plan = $rev ? reverse @$plan : @$plan;
 
-  # create splits
-  my @ret;
-  while ($_ = shift @plan) {
-    my $mask = $masks->{$_};
-    push @ret, $net->_new($addr, $mask, $isV6);
-    last unless @plan;
-    $addr = (sub128($addr, $mask))[1];
-  }
-  return \@ret;
+    # create splits
+    my @ret;
+    while ($_ = shift @plan) {
+        my $mask = $masks->{$_};
+        push @ret, $net->_new($addr, $mask, $isV6);
+        last unless @plan;
+        $addr = (sub128($addr, $mask))[1];
+    }
+    return \@ret;
 }
 
 
@@ -1105,69 +1105,69 @@ Note that C<$me> must be a C<NetAddr::IP> object.
 =cut
 
 sub compactref($) {
-  my $unr;
+    my $unr;
 
-  if (UNIVERSAL::isa($_[0], __PACKAGE__) and ref $_[1] eq 'ARRAY') {
-    # ->compactref(\@list)
-    #
-    $unr = [$_[0], @{$_[1]}]; # keeping structures intact
-  }
-  else {
-    # Compact(@list) or ->compact(@list) or Compact(\@list)
-    #
-    $unr = $_[0];
-  }
-
-  return [] unless @$unr;
-
-  # work on network copies so the caller's objects are not modified, and
-  # keep the address families apart: a 128 bit mask comparison would
-  # otherwise merge 0.0.0.0/24 with ::100/120
-  my (@v4, @v6);
-  foreach my $entry (@$unr) {
-    my $net = $entry->network;
-    if ($net->{isv6}) {
-      push @v6, $net;
-    } else {
-      push @v4, $net;
+    if (UNIVERSAL::isa($_[0], __PACKAGE__) and ref $_[1] eq 'ARRAY') {
+        # ->compactref(\@list)
+        #
+        $unr = [$_[0], @{$_[1]}]; # keeping structures intact
     }
-  }
-  return [ _merge_sorted(sort @v4), _merge_sorted(sort @v6) ];
+    else {
+        # Compact(@list) or ->compact(@list) or Compact(\@list)
+        #
+        $unr = $_[0];
+    }
+
+    return [] unless @$unr;
+
+    # work on network copies so the caller's objects are not modified, and
+    # keep the address families apart: a 128 bit mask comparison would
+    # otherwise merge 0.0.0.0/24 with ::100/120
+    my (@v4, @v6);
+    foreach my $entry (@$unr) {
+        my $net = $entry->network;
+        if ($net->{isv6}) {
+            push @v6, $net;
+        } else {
+            push @v4, $net;
+        }
+    }
+    return [ _merge_sorted(sort @v4), _merge_sorted(sort @v6) ];
 }
 
 # input:    sorted list of network objects of one address family
 # returns:    the compacted list
 #
 sub _merge_sorted {
-  my @r = @_;
-  my $changed;
-  do {
-    $changed = 0;
-    for(my $i=0; $i <= $#r -1;$i++) {
-      if ($r[$i]->contains($r[$i +1])) {
-        splice(@r, $i +1, 1);
-        ++$changed;
-        --$i;
-      }
-      elsif ((notcontiguous($r[$i]->{mask}))[1] == (notcontiguous($r[$i +1]->{mask}))[1]) {        # masks the same
-        if (hasbits($r[$i]->{addr} ^ $r[$i +1]->{addr})) {    # if not the same netblock
-          my $upnet = $r[$i]->copy;
-          $upnet->{mask} = shiftleft($upnet->{mask}, 1);
-          if ($upnet->contains($r[$i +1])) {                    # adjacent nets in next net up
-      $r[$i] = $upnet;
-      splice(@r, $i +1, 1);
-      ++$changed;
-      --$i;
-          }
-        } else {                                    # identical nets
-          splice(@r, $i +1, 1);
-          ++$changed;
-          --$i;
+    my @r = @_;
+    my $changed;
+    do {
+        $changed = 0;
+        for(my $i=0; $i <= $#r -1;$i++) {
+            if ($r[$i]->contains($r[$i +1])) {
+                splice(@r, $i +1, 1);
+                ++$changed;
+                --$i;
+            }
+            elsif ((notcontiguous($r[$i]->{mask}))[1] == (notcontiguous($r[$i +1]->{mask}))[1]) {        # masks the same
+                if (hasbits($r[$i]->{addr} ^ $r[$i +1]->{addr})) {    # if not the same netblock
+                    my $upnet = $r[$i]->copy;
+                    $upnet->{mask} = shiftleft($upnet->{mask}, 1);
+                    if ($upnet->contains($r[$i +1])) {                    # adjacent nets in next net up
+            $r[$i] = $upnet;
+            splice(@r, $i +1, 1);
+            ++$changed;
+            --$i;
+                    }
+                } else {                                    # identical nets
+                    splice(@r, $i +1, 1);
+                    ++$changed;
+                    --$i;
+                }
+            }
         }
-      }
-    }
-  } while $changed;
-  return @r;
+    } while $changed;
+    return @r;
 }
 
 
@@ -1204,8 +1204,8 @@ sub coalesce
 {
     my $masklen    = shift;
     if (UNIVERSAL::isa($masklen, __PACKAGE__)) {        # if called as a method
-      push @_, $masklen;
-      $masklen = shift;
+        push @_, $masklen;
+        $masklen = shift;
     }
 
     my $number    = shift;
@@ -1242,7 +1242,7 @@ sub coalesce
 
     # Add to @ret any arguments with netmasks longer than our argument
     for my $c (sort { $a->masklen <=> $b->masklen }
-           grep { $_->masklen <= $masklen } @_)
+        grep { $_->masklen <= $masklen } @_)
     {
     next if grep { $_->contains($c) } @ret;
     push @ret, $c->network;
@@ -1250,8 +1250,8 @@ sub coalesce
 
     # Now add to @ret all the subnets with more than $number hits
     for my $c (map { NetAddr::IP->new($_) }
-           grep { $ret{$_} >= $number }
-           sort keys %ret)
+        grep { $ret{$_} >= $number }
+        sort keys %ret)
     {
     next if grep { $_->contains($c) } @ret;
     push @ret, $c;
@@ -1369,8 +1369,8 @@ sub re ($)
     {
     if ($mlen > $OCTET_BITS * 3)
     {
-         $d    = 2 ** ($IPV4_BITS - $mlen) - 1;
-         $r[3] = '(?:' . join('|', ($o[3]..$o[3] + $d)) . ')';
+        $d    = 2 ** ($IPV4_BITS - $mlen) - 1;
+        $r[3] = '(?:' . join('|', ($o[3]..$o[3] + $d)) . ')';
     }
     else
     {
@@ -1432,107 +1432,107 @@ matched text:
 =cut
 
 sub re6($) {
-  my @net = split('',sprintf("%04X%04X%04X%04X%04X%04X%04X%04X",unpack('n8', $_[0]->network->{addr})));
-  my @brd = split('',sprintf("%04X%04X%04X%04X%04X%04X%04X%04X",unpack('n8', $_[0]->broadcast->{addr})));
+    my @net = split('',sprintf("%04X%04X%04X%04X%04X%04X%04X%04X",unpack('n8', $_[0]->network->{addr})));
+    my @brd = split('',sprintf("%04X%04X%04X%04X%04X%04X%04X%04X",unpack('n8', $_[0]->broadcast->{addr})));
 
-  my @dig;
+    my @dig;
 
-  foreach(0..$#net) {
-    my $n = $net[$_];
-    my $b = $brd[$_];
-    my $m;
-    if ($n.'' eq $b.'') {
-      if ($n =~ /[0-9]/) {
-    push @dig, $n;
-      } else {
-    push @dig, '['.(lc $n).$n.']';
-      }
-    } else {
-      my $n = $net[$_];
-      my $b = $brd[$_];
-      if ($n.'' eq 0 && $b =~ /F/) {
-    push @dig, 'x';
-      }
-      elsif ($n =~ /[0-9]/ && $b =~ /[0-9]/) {
-    push @dig, '['.$n.'-'.$b.']';
-      }
-      elsif ($n =~ /[A-F]/ && $b =~ /[A-F]/) {
-    $n .= '-'.$b;
-    push @dig, '['.(lc $n).$n.']';
-      }
-      elsif ($n =~ /[0-9]/ && $b =~ /[A-F]/) {
-    $m = ($n == 9) ? 9 : $n .'-9';
-    if ($b =~ /A/) {
-      $m .= 'aA';
+    foreach(0..$#net) {
+        my $n = $net[$_];
+        my $b = $brd[$_];
+        my $m;
+        if ($n.'' eq $b.'') {
+            if ($n =~ /[0-9]/) {
+        push @dig, $n;
+            } else {
+        push @dig, '['.(lc $n).$n.']';
+            }
+        } else {
+            my $n = $net[$_];
+            my $b = $brd[$_];
+            if ($n.'' eq 0 && $b =~ /F/) {
+        push @dig, 'x';
+            }
+            elsif ($n =~ /[0-9]/ && $b =~ /[0-9]/) {
+        push @dig, '['.$n.'-'.$b.']';
+            }
+            elsif ($n =~ /[A-F]/ && $b =~ /[A-F]/) {
+        $n .= '-'.$b;
+        push @dig, '['.(lc $n).$n.']';
+            }
+            elsif ($n =~ /[0-9]/ && $b =~ /[A-F]/) {
+        $m = ($n == 9) ? 9 : $n .'-9';
+        if ($b =~ /A/) {
+            $m .= 'aA';
 } else {
-      $b = 'A-'. $b;
-      $m .= (lc $b). $b;
+            $b = 'A-'. $b;
+            $m .= (lc $b). $b;
+        }
+        push @dig, '['.$m.']';
+            }
+            elsif ($n =~ /[A-F]/ && $b =~ /[0-9]/) {
+        if ($n =~ /A/) {
+            $m = 'aA';
+        } else {
+            $n .= '-F';
+            $m = (lc $n).$n;
+        }
+        if ($b == 9) {
+            $m .= 9;
+        } else {
+            $m .= $b .'-9';
+        }
+        push @dig, '['.$m.']';
+            }
+        }
     }
-    push @dig, '['.$m.']';
-       }
-      elsif ($n =~ /[A-F]/ && $b =~ /[0-9]/) {
-    if ($n =~ /A/) {
-      $m = 'aA';
-    } else {
-      $n .= '-F';
-      $m = (lc $n).$n;
-    }
-    if ($b == 9) {
-      $m .= 9;
-    } else {
-      $m .= $b .'-9';
-    }
-    push @dig, '['.$m.']';
-      }
-    }
-  }
-  my @zok = map { join('', @net[$_*4 .. $_*4+3]) eq '0000' ? 1 : 0 } 0..7;
+    my @zok = map { join('', @net[$_*4 .. $_*4+3]) eq '0000' ? 1 : 0 } 0..7;
 
-  my @grp;
-  do {
-    my @g = splice(@dig, 0, 4);
-    my $zeros = 0;
-    while (@g and $g[0] eq '0') {
-      shift @g;
-      ++$zeros;
-    }
-    my $wild = 0;
-    while (@g and $g[-1] eq 'x') {
-      pop @g;
-      ++$wild;
-    }
-    my $grp;
-    if (!@g) {
-      $grp = $wild ? "[0-9a-fA-F]{1,$wild}" : '0{1,4}';
-    }
-    elsif ($wild and @g == 1 and $g[0] =~ /^\[0/) {
-      $grp = '(?:'. $g[0] .'[0-9a-fA-F]{'. $wild .'}|[0-9a-fA-F]{1,'. $wild .'})';
-    }
-    else {
-      $grp = join('', @g);
-      $grp .= "[0-9a-fA-F]{$wild}" if $wild;
-    }
-    $grp = "0{0,$zeros}". $grp if $zeros and $grp ne '0{1,4}';
-    push @grp, $grp;
-  } while @dig > 0;
+    my @grp;
+    do {
+        my @g = splice(@dig, 0, 4);
+        my $zeros = 0;
+        while (@g and $g[0] eq '0') {
+            shift @g;
+            ++$zeros;
+        }
+        my $wild = 0;
+        while (@g and $g[-1] eq 'x') {
+            pop @g;
+            ++$wild;
+        }
+        my $grp;
+        if (!@g) {
+            $grp = $wild ? "[0-9a-fA-F]{1,$wild}" : '0{1,4}';
+        }
+        elsif ($wild and @g == 1 and $g[0] =~ /^\[0/) {
+            $grp = '(?:'. $g[0] .'[0-9a-fA-F]{'. $wild .'}|[0-9a-fA-F]{1,'. $wild .'})';
+        }
+        else {
+            $grp = join('', @g);
+            $grp .= "[0-9a-fA-F]{$wild}" if $wild;
+        }
+        $grp = "0{0,$zeros}". $grp if $zeros and $grp ne '0{1,4}';
+        push @grp, $grp;
+    } while @dig > 0;
 
-  my @alt = (join(':', @grp));
-  foreach my $i (0..$#grp) {
-    next unless $zok[$i];
-    foreach my $j ($i..$#grp) {
-      last unless $zok[$j];
-      push @alt, join(':', @grp[0..$i-1]) .'::'. join(':', @grp[$j+1..$#grp]);
+    my @alt = (join(':', @grp));
+    foreach my $i (0..$#grp) {
+        next unless $zok[$i];
+        foreach my $j ($i..$#grp) {
+            last unless $zok[$j];
+            push @alt, join(':', @grp[0..$i-1]) .'::'. join(':', @grp[$j+1..$#grp]);
+        }
     }
-  }
-  return '(?:'. join('|', @alt) .')';
+    return '(?:'. join('|', @alt) .')';
 }
 
 sub mod_version {
-  return $NetAddr::IP::VERSION;
-  &Compact;            # suppress warnings about these symbols
-  &Coalesce;
-  &STORABLE_freeze;
-  &STORABLE_thaw;
+    return $NetAddr::IP::VERSION;
+    &Compact;            # suppress warnings about these symbols
+    &Coalesce;
+    &STORABLE_freeze;
+    &STORABLE_thaw;
 }
 
 

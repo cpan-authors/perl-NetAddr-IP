@@ -9,42 +9,16 @@ package NetAddr::IP::InetBase;
 
 use parent 'Exporter';
 use NetAddr::IP::Constants qw(
-    $IPV6_BITS
-    $MAX_OCTET
-    $OCTET_BITS
-    $V4_PACKED_BYTES
-    $V6_PACKED_BYTES
+        $IPV6_BITS
+        $MAX_OCTET
+        $OCTET_BITS
+        $V4_PACKED_BYTES
+        $V6_PACKED_BYTES
 );
 
 our @EXPORT_OK = qw(
-    inet_aton
-    inet_ntoa
-    ipv6_aton
-    ipv6_ntoa
-    ipv6_n2x
-    ipv6_n2d
-    inet_any2n
-    inet_n2dx
-    inet_n2ad
-    inet_ntop
-    inet_pton
-    packzeros
-    isIPv4
-    isNewIPv4
-    isAnyIPv4
-    AF_INET
-    AF_INET6
-    fake_AF_INET6
-    fillIPv4
-);
-our %EXPORT_TAGS = (
-    all     => [@EXPORT_OK],
-    ipv4    => [qw(
         inet_aton
         inet_ntoa
-        fillIPv4
-    )],
-    ipv6    => [qw(
         ipv6_aton
         ipv6_ntoa
         ipv6_n2x
@@ -52,10 +26,36 @@ our %EXPORT_TAGS = (
         inet_any2n
         inet_n2dx
         inet_n2ad
-        inet_pton
         inet_ntop
+        inet_pton
         packzeros
-    )],
+        isIPv4
+        isNewIPv4
+        isAnyIPv4
+        AF_INET
+        AF_INET6
+        fake_AF_INET6
+        fillIPv4
+);
+our %EXPORT_TAGS = (
+        all     => [@EXPORT_OK],
+        ipv4    => [qw(
+                inet_aton
+                inet_ntoa
+                fillIPv4
+        )],
+        ipv6    => [qw(
+                ipv6_aton
+                ipv6_ntoa
+                ipv6_n2x
+                ipv6_n2d
+                inet_any2n
+                inet_n2dx
+                inet_n2ad
+                inet_pton
+                inet_ntop
+                packzeros
+        )],
 );
 our $Mode;
 
@@ -82,52 +82,52 @@ require Socket;
 *AF_INET = \&Socket::AF_INET;
 
 if (eval { local $SIG{__DIE__}; AF_INET6() } ) {
-  *AF_INET6 = \&Socket::AF_INET6;
-  $emulateAF_INET6 = -1;            # have it, remind below
+    *AF_INET6 = \&Socket::AF_INET6;
+    $emulateAF_INET6 = -1;            # have it, remind below
 }
 if (eval{ local $SIG{__DIE__}; require Socket6 } ) {
-  import Socket6 qw(
-    inet_pton
-    inet_ntop
-  );
-  unless ($emulateAF_INET6) {
-    *AF_INET6 = \&Socket6::AF_INET6;
-  }
-  $emulateAF_INET6 = 0;                # clear, have it from elsewhere or here
-} else {
-  unless ($emulateAF_INET6) {    # unlikely at this point
-    if ($^O =~ /(?:free|dragon.+)bsd/i) {    # FreeBSD, DragonFlyBSD
-    $emulateAF_INET6 = 28;
-    } elsif ($^O =~ /bsd/i) {        # other BSD flavors like NetBDS, OpenBSD, BSD
-    $emulateAF_INET6 = 24;
-    } elsif ($^O =~ /(?:darwin|mac)/i) {    # Mac OS X
-    $emulateAF_INET6 = 30;
-    } elsif ($^O =~ /win/i) {        # Windows
-    $emulateAF_INET6 = 23;
-    } elsif ($^O =~ /(?:solaris|sun)/i) {        # Sun box
-    $emulateAF_INET6 = 26;
-    } else {                    # use linux default
-    $emulateAF_INET6 = 10;
+    import Socket6 qw(
+        inet_pton
+        inet_ntop
+    );
+    unless ($emulateAF_INET6) {
+        *AF_INET6 = \&Socket6::AF_INET6;
     }
-    *AF_INET6 = sub { $emulateAF_INET6; };
-  } else {
-    $emulateAF_INET6 = 0;            # clear, have it from elsewhere
-  }
-  *inet_pton = \&_inet_pton;
-  *inet_ntop = \&_inet_ntop;
+    $emulateAF_INET6 = 0;                # clear, have it from elsewhere or here
+} else {
+    unless ($emulateAF_INET6) {    # unlikely at this point
+        if ($^O =~ /(?:free|dragon.+)bsd/i) {    # FreeBSD, DragonFlyBSD
+            $emulateAF_INET6 = 28;
+        } elsif ($^O =~ /bsd/i) {        # other BSD flavors like NetBDS, OpenBSD, BSD
+            $emulateAF_INET6 = 24;
+        } elsif ($^O =~ /(?:darwin|mac)/i) {    # Mac OS X
+            $emulateAF_INET6 = 30;
+        } elsif ($^O =~ /win/i) {        # Windows
+            $emulateAF_INET6 = 23;
+        } elsif ($^O =~ /(?:solaris|sun)/i) {        # Sun box
+            $emulateAF_INET6 = 26;
+        } else {                    # use linux default
+            $emulateAF_INET6 = 10;
+        }
+        *AF_INET6 = sub { $emulateAF_INET6; };
+    } else {
+        $emulateAF_INET6 = 0;            # clear, have it from elsewhere
+    }
+    *inet_pton = \&_inet_pton;
+    *inet_ntop = \&_inet_ntop;
 }
 
 } # end no warnings 'once'
 
 sub fake_AF_INET6 {
-  return $emulateAF_INET6;
+    return $emulateAF_INET6;
 }
 
 # allow user to choose upper or lower case
 our ($n2x_format, $n2d_format);
 BEGIN {
-  $n2x_format = "%x:%x:%x:%x:%x:%x:%x:%x";
-  $n2d_format = "%x:%x:%x:%x:%x:%x:%d.%d.%d.%d";
+    $n2x_format = "%x:%x:%x:%x:%x:%x:%x:%x";
+    $n2d_format = "%x:%x:%x:%x:%x:%x:%d.%d.%d.%d";
 }
 
 my $case = 0;    # default lower case
@@ -136,93 +136,93 @@ sub upper { $n2x_format = uc($n2x_format); $n2d_format = uc($n2d_format); $case 
 sub lower { $n2x_format = lc($n2x_format); $n2d_format = lc($n2d_format); $case = 0; }
 
 sub ipv6_n2x {
-  die sprintf('Bad arg length for \'ipv6_n2x\', length is %d should be %d', length($_[0]), $V6_PACKED_BYTES)
-    unless length($_[0]) == $V6_PACKED_BYTES;
-  return sprintf($n2x_format,unpack("n8", $_[0]));
+    die sprintf('Bad arg length for \'ipv6_n2x\', length is %d should be %d', length($_[0]), $V6_PACKED_BYTES)
+        unless length($_[0]) == $V6_PACKED_BYTES;
+    return sprintf($n2x_format,unpack("n8", $_[0]));
 }
 
 sub ipv6_n2d {
-  die sprintf('Bad arg length for \'ipv6_n2d\', length is %d should be %d', length($_[0]), $V6_PACKED_BYTES)
-    unless length($_[0]) == $V6_PACKED_BYTES;
-  my @hex = (unpack("n8", $_[0]));
-  $hex[9] = $hex[7] & $MAX_OCTET;
-  $hex[8] = $hex[7] >> $OCTET_BITS;
-  $hex[7] = $hex[6] & $MAX_OCTET;
-  $hex[6] >>= $OCTET_BITS;
-  return sprintf($n2d_format, @hex);
+    die sprintf('Bad arg length for \'ipv6_n2d\', length is %d should be %d', length($_[0]), $V6_PACKED_BYTES)
+        unless length($_[0]) == $V6_PACKED_BYTES;
+    my @hex = (unpack("n8", $_[0]));
+    $hex[9] = $hex[7] & $MAX_OCTET;
+    $hex[8] = $hex[7] >> $OCTET_BITS;
+    $hex[7] = $hex[6] & $MAX_OCTET;
+    $hex[6] >>= $OCTET_BITS;
+    return sprintf($n2d_format, @hex);
 }
 
 # if Socket lib is broken in some way, check for overange values
 #
 
 sub fillIPv4 {
-  my $host = $_[0];
-  return undef unless defined $host;
-  if ($host =~ /^([0-9]+)(?:|\.([0-9]+)(?:|\.([0-9]+)(?:|\.([0-9]+))))$/) {
-    if (defined $4) {
-      return undef unless
-        $1 >= 0 && $1 < 256 &&
-        $2 >= 0 && $2 < 256 &&
-        $3 >= 0 && $3 < 256 &&
-        $4 >= 0 && $4 < 256;
-      $host = $1.'.'.$2.'.'.$3.'.'.$4;
-    } elsif (defined $3) {
-      return undef unless
-        $1 >= 0 && $1 < 256 &&
-        $2 >= 0 && $2 < 256 &&
-        $3 >= 0 && $3 < 256;
-      $host = $1.'.'.$2.'.0.'.$3
-    } elsif (defined $2) {
-      return undef unless
-        $1 >= 0 && $1 < 256 &&
-        $2 >= 0 && $2 < 256;
-      $host = $1.'.0.0.'.$2;
-    } else {
-      $host = '0.0.0.'.$1;
+    my $host = $_[0];
+    return undef unless defined $host;
+    if ($host =~ /^([0-9]+)(?:|\.([0-9]+)(?:|\.([0-9]+)(?:|\.([0-9]+))))$/) {
+        if (defined $4) {
+            return undef unless
+                $1 >= 0 && $1 < 256 &&
+                $2 >= 0 && $2 < 256 &&
+                $3 >= 0 && $3 < 256 &&
+                $4 >= 0 && $4 < 256;
+            $host = $1.'.'.$2.'.'.$3.'.'.$4;
+        } elsif (defined $3) {
+            return undef unless
+                $1 >= 0 && $1 < 256 &&
+                $2 >= 0 && $2 < 256 &&
+                $3 >= 0 && $3 < 256;
+            $host = $1.'.'.$2.'.0.'.$3
+        } elsif (defined $2) {
+            return undef unless
+                $1 >= 0 && $1 < 256 &&
+                $2 >= 0 && $2 < 256;
+            $host = $1.'.0.0.'.$2;
+        } else {
+            $host = '0.0.0.'.$1;
+        }
     }
-  }
-  $host;
+    $host;
 }
 
 sub inet_aton {
-  my $host = fillIPv4($_[0]);
-  return $host ? scalar gethostbyname($host) : undef;
+    my $host = fillIPv4($_[0]);
+    return $host ? scalar gethostbyname($host) : undef;
 }
 
 my $_zero = pack('L4', 0, 0, 0, 0);
 my $_ipv4mask = pack('L4', 0xffffffff, 0xffffffff, 0xffffffff, 0);
 
 sub isIPv4 {
-  if (length($_[0]) != $V6_PACKED_BYTES) {
-    my $sub = (caller(1))[3] || (caller(0))[3];
-    die "Bad arg length for $sub, length is ". (length($_[0]) * $OCTET_BITS) .", should be $IPV6_BITS";
-  }
-  return ($_[0] & $_ipv4mask) eq $_zero
-    ? 1 : 0;
+    if (length($_[0]) != $V6_PACKED_BYTES) {
+        my $sub = (caller(1))[3] || (caller(0))[3];
+        die "Bad arg length for $sub, length is ". (length($_[0]) * $OCTET_BITS) .", should be $IPV6_BITS";
+    }
+    return ($_[0] & $_ipv4mask) eq $_zero
+        ? 1 : 0;
 }
 
 my $_newV4compat = pack('N4', 0, 0, 0xffff, 0);
 
 sub isNewIPv4 {
-  my $naddr = $_[0] ^ $_newV4compat;
-  return isIPv4($naddr);
+    my $naddr = $_[0] ^ $_newV4compat;
+    return isIPv4($naddr);
 }
 
 sub isAnyIPv4 {
-  my $naddr = $_[0];
-  my $rv = isIPv4($_[0]);
-  return $rv if $rv;
-  return isNewIPv4($naddr);
+    my $naddr = $_[0];
+    my $rv = isIPv4($_[0]);
+    return $rv if $rv;
+    return isNewIPv4($naddr);
 }
 
 sub DESTROY {};
 
 sub import {
-  if (grep { $_ eq ':upper' } @_) {
-    upper();
-    @_ = grep { $_ ne ':upper' } @_;
-  }
-  NetAddr::IP::InetBase->export_to_level(1, @_);
+    if (grep { $_ eq ':upper' } @_) {
+        upper();
+        @_ = grep { $_ ne ':upper' } @_;
+    }
+    NetAddr::IP::InetBase->export_to_level(1, @_);
 }
 
 1;
@@ -318,14 +318,14 @@ Convert a packed IPv4 network address to a dot-quad IP address.
 =cut
 
 sub inet_ntoa {
-  die 'Bad arg length for '. __PACKAGE__ ."::inet_ntoa, length is ". length($_[0]) ." should be $V4_PACKED_BYTES"
-        unless length($_[0]) == $V4_PACKED_BYTES;
-  my @hex = (unpack("n2", $_[0]));
-  $hex[3] = $hex[1] & $MAX_OCTET;
-  $hex[2] = $hex[1] >> $OCTET_BITS;
-  $hex[1] = $hex[0] & $MAX_OCTET;
-  $hex[0] >>= $OCTET_BITS;
-  return sprintf("%d.%d.%d.%d", @hex);
+    die 'Bad arg length for '. __PACKAGE__ ."::inet_ntoa, length is ". length($_[0]) ." should be $V4_PACKED_BYTES"
+                unless length($_[0]) == $V4_PACKED_BYTES;
+    my @hex = (unpack("n2", $_[0]));
+    $hex[3] = $hex[1] & $MAX_OCTET;
+    $hex[2] = $hex[1] >> $OCTET_BITS;
+    $hex[1] = $hex[0] & $MAX_OCTET;
+    $hex[0] >>= $OCTET_BITS;
+    return sprintf("%d.%d.%d.%d", @hex);
 }
 
 =item $netaddr = inet_aton($dotquad);
@@ -346,35 +346,35 @@ and returns a 128 bit binary RDATA string.
 =cut
 
 sub ipv6_aton {
-  my ($ipv6) = @_;
-  return undef unless $ipv6;
-  local($1, $2, $3, $4, $5);
-  if ($ipv6 =~ /^(.*:)([0-9]{1, 3})\.([0-9]{1, 3})\.([0-9]{1, 3})\.([0-9]{1, 3})$/) {    # mixed hex, dot-quad
-    return undef if $2 > $MAX_OCTET || $3 > $MAX_OCTET || $4 > $MAX_OCTET || $5 > $MAX_OCTET;
-    $ipv6 = sprintf("%s%X%02X:%X%02X", $1, $2, $3, $4, $5);            # convert to pure hex
-  }
-  my $c;
-  return undef if
-    $ipv6 =~ /[^:0-9a-fA-F]/ ||            # non-hex character
-    (($c = $ipv6) =~ s/::/x/ && $c =~ /(?:x|:):/) ||    # double :: ::?
-    $ipv6 =~ /[0-9a-fA-F]{5,}/;            # more than 4 digits
-  $c = $ipv6 =~ tr/:/:/;                # count the colons
-  return undef if $c < 7 && $ipv6 !~ /::/;
-  if ($c > 7) {                        # strip leading or trailing ::
-    return undef unless
-    $ipv6 =~ s/^::/:/ ||
-    $ipv6 =~ s/::$/:/;
-    return undef if --$c > 7;
-  }
-  while ($c++ < 7) {                    # expand compressed fields
-    $ipv6 =~ s/::/:::/;
-  }
-  $ipv6 .= 0 if $ipv6 =~ /:$/;
-  my @hex = split(/:/, $ipv6);
-  foreach(0..$#hex) {
-    $hex[$_] = hex($hex[$_] || 0);
-  }
-  pack("n8", @hex);
+    my ($ipv6) = @_;
+    return undef unless $ipv6;
+    local($1, $2, $3, $4, $5);
+    if ($ipv6 =~ /^(.*:)([0-9]{1, 3})\.([0-9]{1, 3})\.([0-9]{1, 3})\.([0-9]{1, 3})$/) {    # mixed hex, dot-quad
+        return undef if $2 > $MAX_OCTET || $3 > $MAX_OCTET || $4 > $MAX_OCTET || $5 > $MAX_OCTET;
+        $ipv6 = sprintf("%s%X%02X:%X%02X", $1, $2, $3, $4, $5);            # convert to pure hex
+    }
+    my $c;
+    return undef if
+        $ipv6 =~ /[^:0-9a-fA-F]/ ||            # non-hex character
+        (($c = $ipv6) =~ s/::/x/ && $c =~ /(?:x|:):/) ||    # double :: ::?
+        $ipv6 =~ /[0-9a-fA-F]{5,}/;            # more than 4 digits
+    $c = $ipv6 =~ tr/:/:/;                # count the colons
+    return undef if $c < 7 && $ipv6 !~ /::/;
+    if ($c > 7) {                        # strip leading or trailing ::
+        return undef unless
+        $ipv6 =~ s/^::/:/ ||
+        $ipv6 =~ s/::$/:/;
+        return undef if --$c > 7;
+    }
+    while ($c++ < 7) {                    # expand compressed fields
+        $ipv6 =~ s/::/:::/;
+    }
+    $ipv6 .= 0 if $ipv6 =~ /:$/;
+    my @hex = split(/:/, $ipv6);
+    foreach(0..$#hex) {
+        $hex[$_] = hex($hex[$_] || 0);
+    }
+    pack("n8", @hex);
 }
 
 =item $ipv6text = ipv6_ntoa($ipv6naddr);
@@ -388,7 +388,7 @@ text representation.
 =cut
 
 sub ipv6_ntoa {
-  return inet_ntop(AF_INET6(), $_[0]);
+    return inet_ntop(AF_INET6(), $_[0]);
 }
 
 =item $hex_text = ipv6_n2x($ipv6addr);
@@ -425,11 +425,11 @@ dot-quad address (if found) with '::' and passes it to B<ipv6_aton>.
 =cut
 
 sub inet_any2n($) {
-  my ($addr) = @_;
-  $addr = '' unless $addr;
-  $addr = '::' . $addr
-    unless $addr =~ /:/;
-  return ipv6_aton($addr);
+    my ($addr) = @_;
+    $addr = '' unless $addr;
+    $addr = '::' . $addr
+        unless $addr =~ /:/;
+    return ipv6_aton($addr);
 }
 
 =item $dotquad or $hex_text = inet_n2dx($ipv6naddr);
@@ -447,13 +447,13 @@ dot-quad IPv4 or a hex notation IPv6 address.
 =cut
 
 sub inet_n2dx($) {
-  my ($nadr) = @_;
-  if (isAnyIPv4($nadr)) {
-    local $1;
-    ipv6_n2d($nadr) =~ /([^:]+)$/;
-    return $1;
-  }
-  return ipv6_n2x($nadr);
+    my ($nadr) = @_;
+    if (isAnyIPv4($nadr)) {
+        local $1;
+        ipv6_n2d($nadr) =~ /([^:]+)$/;
+        return $1;
+    }
+    return ipv6_n2x($nadr);
 }
 
 =item $dotquad or $dec_text = inet_n2ad($ipv6naddr);
@@ -471,12 +471,12 @@ dot-quad IPv4 or a hex::decimal notation IPv6 address.
 =cut
 
 sub inet_n2ad($) {
-  my ($nadr) = @_;
-  my $addr = ipv6_n2d($nadr);
-  return $addr unless isAnyIPv4($nadr);
-  local $1;
-  $addr =~ /([^:]+)$/;
-  return $1;
+    my ($nadr) = @_;
+    my $addr = ipv6_n2d($nadr);
+    return $addr unless isAnyIPv4($nadr);
+    local $1;
+    $addr =~ /([^:]+)$/;
+    return $1;
 }
 
 =item $netaddr = inet_pton($AF_family,$text_addr);
@@ -491,14 +491,14 @@ is present on this host.
 =cut
 
 sub _inet_pton {
-  my ($af, $ip) = @_;
-  die 'Bad address family for '. __PACKAGE__ ."::inet_pton, got $af"
-    unless $af == AF_INET6() || $af == AF_INET();
-  if ($af == AF_INET()) {
-    inet_aton($ip);
-  } else {
-    ipv6_aton($ip);
-  }
+    my ($af, $ip) = @_;
+    die 'Bad address family for '. __PACKAGE__ ."::inet_pton, got $af"
+        unless $af == AF_INET6() || $af == AF_INET();
+    if ($af == AF_INET()) {
+        inet_aton($ip);
+    } else {
+        ipv6_aton($ip);
+    }
 }
 
 =item $text_addr = inet_ntop($AF_family,$netaddr);
@@ -515,16 +515,16 @@ is present on this host.
 =cut
 
 sub _inet_ntop {
-  my ($af, $naddr) = @_;
-  die 'Unsupported address family for '. __PACKAGE__ ."::inet_ntop, af is $af"
-    unless $af == AF_INET6() || $af == AF_INET();
-  if ($af == AF_INET()) {
-    inet_ntoa($naddr);
-  } else {
-    return ($case)
-    ? lc packzeros(ipv6_n2x($naddr))
-    : _packzeros(ipv6_n2x($naddr));
-  }
+    my ($af, $naddr) = @_;
+    die 'Unsupported address family for '. __PACKAGE__ ."::inet_ntop, af is $af"
+        unless $af == AF_INET6() || $af == AF_INET();
+    if ($af == AF_INET()) {
+        inet_ntoa($naddr);
+    } else {
+        return ($case)
+        ? lc packzeros(ipv6_n2x($naddr))
+        : _packzeros(ipv6_n2x($naddr));
+    }
 }
 
 =item $hex_text = packzeros($hex_text);
@@ -536,49 +536,49 @@ B<::> for the first occurrence of the longest string of zeros in the address.
 =cut
 
 sub _packzeros {
-  my $x6 = shift;
-  if ($x6 =~ /\:\:/) {                # already contains ::
-# then re-optimize
-    $x6 = ($x6 =~ /\:[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+/)    # ipv4 notation ?
-    ? ipv6_n2d(ipv6_aton($x6))
-    : ipv6_n2x(ipv6_aton($x6));
-  }
-  $x6 = ':'. lc $x6;                # prefix : & always lower case
-  my $d = '';
-  if ($x6 =~ /(.+\:)([0-9]+\.[0-9]+\.[0-9]+\.[0-9]+)/) {    # if contains dot quad
-    $x6 = $1;                    # save hex piece
-    $d = $2;                    # and dot quad piece
-  }
-  $x6 .= ':';                    # suffix :
-  $x6 =~ s/\:0+/\:0/g;                # compress strings of 0's to single '0'
-  $x6 =~ s/\:0([1-9a-f]+)/\:$1/g;        # eliminate leading 0's in hex strings
-  my @x = $x6 =~ /(?:\:0)*/g;            # split only strings of :0:0..."
-
-  my $m = 0;
-  my $i = 0;
-
-  for (0..$#x) {                # find next longest pattern :0:0:0...
-    my $len = length($x[$_]);
-    next unless $len > $m;
-    $m = $len;
-    $i = $_;                    # index to first longest pattern
-  }
-
-  if ($m > 2) {                    # there was a string of 2 or more zeros
-    $x6 =~ s/$x[$i]/\:/;              # replace first longest :0:0:0... with "::"
-    unless ($i) {                # if it is the first match, $i = 0
-      $x6 = substr($x6, 0,-1);            # keep the leading ::, remove trailing ':'
-    } else {
-      $x6 = substr($x6, 1,-1);            # else remove leading & trailing ':'
+    my $x6 = shift;
+    if ($x6 =~ /\:\:/) {                # already contains ::
+        # then re-optimize
+        $x6 = ($x6 =~ /\:[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+/)    # ipv4 notation ?
+        ? ipv6_n2d(ipv6_aton($x6))
+        : ipv6_n2x(ipv6_aton($x6));
     }
-    $x6 .= ':' unless $x6 =~ /\:\:/;        # restore ':' if match and we can't see it, implies trailing '::'
-  } else {                    # there was no match
-    $x6 = substr($x6, 1,-1);            # remove leading & trailing ':'
-  }
-  $x6 .= $d;                    # append digits if any
-  return $case
-    ? uc $x6
-    : $x6;
+    $x6 = ':'. lc $x6;                # prefix : & always lower case
+    my $d = '';
+    if ($x6 =~ /(.+\:)([0-9]+\.[0-9]+\.[0-9]+\.[0-9]+)/) {    # if contains dot quad
+        $x6 = $1;                    # save hex piece
+        $d = $2;                    # and dot quad piece
+    }
+    $x6 .= ':';                    # suffix :
+    $x6 =~ s/\:0+/\:0/g;                # compress strings of 0's to single '0'
+    $x6 =~ s/\:0([1-9a-f]+)/\:$1/g;        # eliminate leading 0's in hex strings
+    my @x = $x6 =~ /(?:\:0)*/g;            # split only strings of :0:0..."
+
+    my $m = 0;
+    my $i = 0;
+
+    for (0..$#x) {                # find next longest pattern :0:0:0...
+        my $len = length($x[$_]);
+        next unless $len > $m;
+        $m = $len;
+        $i = $_;                    # index to first longest pattern
+    }
+
+    if ($m > 2) {                    # there was a string of 2 or more zeros
+        $x6 =~ s/$x[$i]/\:/;              # replace first longest :0:0:0... with "::"
+        unless ($i) {                # if it is the first match, $i = 0
+            $x6 = substr($x6, 0,-1);            # keep the leading ::, remove trailing ':'
+        } else {
+            $x6 = substr($x6, 1,-1);            # else remove leading & trailing ':'
+        }
+        $x6 .= ':' unless $x6 =~ /\:\:/;        # restore ':' if match and we can't see it, implies trailing '::'
+    } else {                    # there was no match
+        $x6 = substr($x6, 1,-1);            # remove leading & trailing ':'
+    }
+    $x6 .= $d;                    # append digits if any
+    return $case
+        ? uc $x6
+        : $x6;
 }
 
 =item $ipv6naddr = ipv4to6($netaddr);
