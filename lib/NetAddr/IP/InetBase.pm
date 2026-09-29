@@ -138,18 +138,18 @@ sub lower { $n2x_format = lc($n2x_format); $n2d_format = lc($n2d_format); $case 
 sub ipv6_n2x {
   die sprintf('Bad arg length for \'ipv6_n2x\', length is %d should be %d', length($_[0]), $V6_PACKED_BYTES)
     unless length($_[0]) == $V6_PACKED_BYTES;
-  return sprintf($n2x_format,unpack("n8",$_[0]));
+  return sprintf($n2x_format,unpack("n8", $_[0]));
 }
 
 sub ipv6_n2d {
   die sprintf('Bad arg length for \'ipv6_n2d\', length is %d should be %d', length($_[0]), $V6_PACKED_BYTES)
     unless length($_[0]) == $V6_PACKED_BYTES;
-  my @hex = (unpack("n8",$_[0]));
+  my @hex = (unpack("n8", $_[0]));
   $hex[9] = $hex[7] & $MAX_OCTET;
   $hex[8] = $hex[7] >> $OCTET_BITS;
   $hex[7] = $hex[6] & $MAX_OCTET;
   $hex[6] >>= $OCTET_BITS;
-  return sprintf($n2d_format,@hex);
+  return sprintf($n2d_format, @hex);
 }
 
 # if Socket lib is broken in some way, check for overange values
@@ -189,8 +189,8 @@ sub inet_aton {
   return $host ? scalar gethostbyname($host) : undef;
 }
 
-my $_zero = pack('L4',0,0,0,0);
-my $_ipv4mask = pack('L4',0xffffffff,0xffffffff,0xffffffff,0);
+my $_zero = pack('L4', 0, 0, 0, 0);
+my $_ipv4mask = pack('L4', 0xffffffff, 0xffffffff, 0xffffffff, 0);
 
 sub isIPv4 {
   if (length($_[0]) != $V6_PACKED_BYTES) {
@@ -201,7 +201,7 @@ sub isIPv4 {
     ? 1 : 0;
 }
 
-my $_newV4compat = pack('N4',0,0,0xffff,0);
+my $_newV4compat = pack('N4', 0, 0, 0xffff, 0);
 
 sub isNewIPv4 {
   my $naddr = $_[0] ^ $_newV4compat;
@@ -222,7 +222,7 @@ sub import {
     upper();
     @_ = grep { $_ ne ':upper' } @_;
   }
-  NetAddr::IP::InetBase->export_to_level(1,@_);
+  NetAddr::IP::InetBase->export_to_level(1, @_);
 }
 
 1;
@@ -320,12 +320,12 @@ Convert a packed IPv4 network address to a dot-quad IP address.
 sub inet_ntoa {
   die 'Bad arg length for '. __PACKAGE__ ."::inet_ntoa, length is ". length($_[0]) ." should be $V4_PACKED_BYTES"
         unless length($_[0]) == $V4_PACKED_BYTES;
-  my @hex = (unpack("n2",$_[0]));
+  my @hex = (unpack("n2", $_[0]));
   $hex[3] = $hex[1] & $MAX_OCTET;
   $hex[2] = $hex[1] >> $OCTET_BITS;
   $hex[1] = $hex[0] & $MAX_OCTET;
   $hex[0] >>= $OCTET_BITS;
-  return sprintf("%d.%d.%d.%d",@hex);
+  return sprintf("%d.%d.%d.%d", @hex);
 }
 
 =item $netaddr = inet_aton($dotquad);
@@ -348,10 +348,10 @@ and returns a 128 bit binary RDATA string.
 sub ipv6_aton {
   my ($ipv6) = @_;
   return undef unless $ipv6;
-  local($1,$2,$3,$4,$5);
-  if ($ipv6 =~ /^(.*:)([0-9]{1,3})\.([0-9]{1,3})\.([0-9]{1,3})\.([0-9]{1,3})$/) {    # mixed hex, dot-quad
+  local($1, $2, $3, $4, $5);
+  if ($ipv6 =~ /^(.*:)([0-9]{1, 3})\.([0-9]{1, 3})\.([0-9]{1, 3})\.([0-9]{1, 3})$/) {    # mixed hex, dot-quad
     return undef if $2 > $MAX_OCTET || $3 > $MAX_OCTET || $4 > $MAX_OCTET || $5 > $MAX_OCTET;
-    $ipv6 = sprintf("%s%X%02X:%X%02X",$1,$2,$3,$4,$5);            # convert to pure hex
+    $ipv6 = sprintf("%s%X%02X:%X%02X", $1, $2, $3, $4, $5);            # convert to pure hex
   }
   my $c;
   return undef if
@@ -370,11 +370,11 @@ sub ipv6_aton {
     $ipv6 =~ s/::/:::/;
   }
   $ipv6 .= 0 if $ipv6 =~ /:$/;
-  my @hex = split(/:/,$ipv6);
+  my @hex = split(/:/, $ipv6);
   foreach(0..$#hex) {
     $hex[$_] = hex($hex[$_] || 0);
   }
-  pack("n8",@hex);
+  pack("n8", @hex);
 }
 
 =item $ipv6text = ipv6_ntoa($ipv6naddr);
@@ -388,7 +388,7 @@ text representation.
 =cut
 
 sub ipv6_ntoa {
-  return inet_ntop(AF_INET6(),$_[0]);
+  return inet_ntop(AF_INET6(), $_[0]);
 }
 
 =item $hex_text = ipv6_n2x($ipv6addr);
@@ -567,13 +567,13 @@ sub _packzeros {
   if ($m > 2) {                    # there was a string of 2 or more zeros
     $x6 =~ s/$x[$i]/\:/;              # replace first longest :0:0:0... with "::"
     unless ($i) {                # if it is the first match, $i = 0
-      $x6 = substr($x6,0,-1);            # keep the leading ::, remove trailing ':'
+      $x6 = substr($x6, 0,-1);            # keep the leading ::, remove trailing ':'
     } else {
-      $x6 = substr($x6,1,-1);            # else remove leading & trailing ':'
+      $x6 = substr($x6, 1,-1);            # else remove leading & trailing ':'
     }
     $x6 .= ':' unless $x6 =~ /\:\:/;        # restore ':' if match and we can't see it, implies trailing '::'
   } else {                    # there was no match
-    $x6 = substr($x6,1,-1);            # remove leading & trailing ':'
+    $x6 = substr($x6, 1,-1);            # remove leading & trailing ':'
   }
   $x6 .= $d;                    # append digits if any
   return $case
