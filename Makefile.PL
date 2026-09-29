@@ -113,10 +113,10 @@ $VERSION = 1.00;
 
 
 sub pure {
-  return |, (($useXS) ? 0 : 1), q|;
+    return |, (($useXS) ? 0 : 1), q|;
 }
 sub not_pure {
-  return |, (($useXS) ? 1 : 0), q|;
+    return |, (($useXS) ? 1 : 0), q|;
 }
 1;
 __END__

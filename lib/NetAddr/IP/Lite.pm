@@ -184,12 +184,12 @@ sub AUTOLOAD {
 # these really should be packed in Network Long order but since they are
 # symmetrical, that extra internal processing can be skipped
 
-my $_v4zero = pack('L',0);
-my $_zero   = pack('L4',0,0,0,0);
+my $_v4zero = pack('L', 0);
+my $_zero   = pack('L4', 0, 0, 0, 0);
 my $_ones   = ~$_zero;
-my $_v4mask = pack('L4',0xffffffff,0xffffffff,0xffffffff,0);
+my $_v4mask = pack('L4', 0xffffffff, 0xffffffff, 0xffffffff, 0);
 my $_v4net  = ~ $_v4mask;
-my $_ipv4FFFF = pack('N4',0,0,0xffff,0);
+my $_ipv4FFFF = pack('N4', 0, 0, 0xffff, 0);
 
 sub Zeros() {
   return $_zero;
@@ -232,24 +232,24 @@ use overload
     '""'    => sub { $_[0]->cidr(); },
 
     'eq'    => sub {
-    my $a = (UNIVERSAL::isa($_[0],__PACKAGE__)) ? $_[0]->cidr : $_[0];
-    my $b = (UNIVERSAL::isa($_[1],__PACKAGE__)) ? $_[1]->cidr : $_[1];
+    my $a = (UNIVERSAL::isa($_[0], __PACKAGE__)) ? $_[0]->cidr : $_[0];
+    my $b = (UNIVERSAL::isa($_[1], __PACKAGE__)) ? $_[1]->cidr : $_[1];
     $a eq $b;
     },
 
     'ne'    => sub {
-    my $a = (UNIVERSAL::isa($_[0],__PACKAGE__)) ? $_[0]->cidr : $_[0];
-    my $b = (UNIVERSAL::isa($_[1],__PACKAGE__)) ? $_[1]->cidr : $_[1];
+    my $a = (UNIVERSAL::isa($_[0], __PACKAGE__)) ? $_[0]->cidr : $_[0];
+    my $b = (UNIVERSAL::isa($_[1], __PACKAGE__)) ? $_[1]->cidr : $_[1];
     $a ne $b;
     },
 
     '=='    => sub {
-    return 0 unless UNIVERSAL::isa($_[0],__PACKAGE__) && UNIVERSAL::isa($_[1],__PACKAGE__);
+    return 0 unless UNIVERSAL::isa($_[0], __PACKAGE__) && UNIVERSAL::isa($_[1], __PACKAGE__);
     $_[0]->cidr eq $_[1]->cidr;
     },
 
     '!='    => sub {
-    return 1 unless UNIVERSAL::isa($_[0],__PACKAGE__) && UNIVERSAL::isa($_[1],__PACKAGE__);
+    return 1 unless UNIVERSAL::isa($_[0], __PACKAGE__) && UNIVERSAL::isa($_[1], __PACKAGE__);
     $_[0]->cidr ne $_[1]->cidr;
     },
 
@@ -274,10 +274,10 @@ use overload
     'cmp'    => \&comp_addr_mask;
 
 sub comp_addr_mask {
-  my ($c, $rv) = sub128($_[0]->{addr},$_[1]->{addr});
+  my ($c, $rv) = sub128($_[0]->{addr}, $_[1]->{addr});
   return -1 unless $c;
   return 1 if hasbits($rv);
-  ($c,$rv) = sub128($_[0]->{mask},$_[1]->{mask});
+  ($c, $rv) = sub128($_[0]->{mask}, $_[1]->{mask});
   return -1 unless $c;
   return hasbits($rv) ? 1 : 0;
 }
@@ -299,7 +299,7 @@ B<C<-E<gt>copy()>> actually creates a new object when called.
 =cut
 
 sub copy {
-    return _new($_[0],$_[0]->{addr}, $_[0]->{mask});
+    return _new($_[0], $_[0]->{addr}, $_[0]->{mask});
 }
 
 =item B<Stringification>
@@ -388,16 +388,16 @@ sub plus {
 
     my $new;
     if ($const < 2147483648 && $const > -2147483649) {
-    $new = (addconst($lo,$const))[1];
+    $new = (addconst($lo, $const))[1];
     } else {
     my $mag = _const2bin(abs($const));
     $new = ($const > 0)
-        ? (add128($lo,$mag))[1]
-        : (sub128($lo,$mag))[1];
+        ? (add128($lo, $mag))[1]
+        : (sub128($lo, $mag))[1];
     }
     $new = ($new & ~$m) | $hi;
 
-    return _new($ip,$new,$m);
+    return _new($ip, $new, $m);
 }
 
 # 128 bit string for a non-negative integer constant below 2**64.
@@ -407,7 +407,7 @@ sub _const2bin {
     my $c = shift;
     my ($hi, $lo);
     if ($c <= 4294967295) {
-    ($hi,$lo) = (0,$c);
+    ($hi, $lo) = (0, $c);
     } elsif (~0 > 4294967295) {
     $hi = $c >> 32;
     $lo = $c & 4294967295;
@@ -415,7 +415,7 @@ sub _const2bin {
     $hi = int($c / 4294967296);
     $lo = $c - $hi * 4294967296;
     }
-    return pack('N4',0,0,$hi,$lo);
+    return pack('N4', 0, 0, $hi, $lo);
 }
 
 =item B<Subtraction of a constant (C<->)>
@@ -434,7 +434,7 @@ Returns B<undef> if the difference is out of range.
 
 =cut
 
-my $_smsk = pack('L3N',0xffffffff,0xffffffff,0xffffffff,0x80000000);
+my $_smsk = pack('L3N', 0xffffffff, 0xffffffff, 0xffffffff, 0x80000000);
 
 sub minus {
     my $ip    = shift;
@@ -445,13 +445,13 @@ sub minus {
     unless (ref $arg) {
     return plus($ip, -$arg);
     }
-    my ($carry, $dif) = sub128($ip->{addr},$arg->{addr});
+    my ($carry, $dif) = sub128($ip->{addr}, $arg->{addr});
     if ($carry) {                    # value is positive
     return undef if hasbits($dif & $_smsk);        # all sign bits should be 0's
-    return (unpack('L3N',$dif))[3];
+    return (unpack('L3N', $dif))[3];
     } else {
     return undef if hasbits(($dif & $_smsk) ^ $_smsk);    # sign is 1's
-    return (unpack('L3N',$dif))[3] - 4294967296;
+    return (unpack('L3N', $dif))[3] - 4294967296;
     }
 }
 
@@ -472,7 +472,7 @@ sub plusplus {
     my $lo = $a & ~ $m;
     my $hi = $a & $m;
 
-    $ip->{addr} = ((addconst($lo,1))[1] & ~ $m) | $hi;
+    $ip->{addr} = ((addconst($lo, 1))[1] & ~ $m) | $hi;
     return $ip;
 }
 
@@ -668,7 +668,7 @@ my $_p4loop    = inet_any2n('127.0.0.1');
 # a literal mask must not need a resolver: InetBase::inet_aton is a
 # gethostbyname call, which fails at load time wherever the resolver cannot
 # answer a dotted quad
-my $_p4mloop    = mask4to6(pack('C4',255,0,0,0));
+my $_p4mloop    = mask4to6(pack('C4', 255, 0, 0, 0));
 my $_p6loop    = inet_any2n('::1');
 
 my %fip4 = (
@@ -704,9 +704,9 @@ my %fip6m = (
     host        => Ones,
 );
 
-my $ff000000 = pack('L3N',0xffffffff,0xffffffff,0xffffffff,0xFF000000);
-my $ffff0000 = pack('L3N',0xffffffff,0xffffffff,0xffffffff,0xFFFF0000);
-my $ffffff00 = pack('L3N',0xffffffff,0xffffffff,0xffffffff,0xFFFFFF00);
+my $ff000000 = pack('L3N', 0xffffffff, 0xffffffff, 0xffffffff, 0xFF000000);
+my $ffff0000 = pack('L3N', 0xffffffff, 0xffffffff, 0xffffffff, 0xFFFF0000);
+my $ffffff00 = pack('L3N', 0xffffffff, 0xffffffff, 0xffffffff, 0xFFFFFF00);
 
 sub _obits ($$) {
     my ($lo, $hi) = @_;
@@ -746,7 +746,7 @@ sub new6($;$$) {
 }
 
 sub new6FFFF($;$$) {
-  my $ip = _xnew(1,@_);
+  my $ip = _xnew(1, @_);
   return undef unless defined $ip;
   $ip->{addr} |= $_ipv4FFFF;
   return $ip;
@@ -757,7 +757,7 @@ sub new_cis($;$$) {
   if ( $in[1] && $in[1] =~ m!^(.+)\s+(.+)$! ) {
     $in[1] = $1 .'/'. $2;
   }
-  @_ = (0,@in);
+  @_ = (0, @in);
   goto &_xnew;
 }
 
@@ -766,7 +766,7 @@ sub new_cis6($;$$) {
   if ( $in[1] && $in[1] =~ m!^(.+)\s+(.+)$! ) {
     $in[1] = $1 .'/'. $2;
   }
-  @_ = (1,@in);
+  @_ = (1, @in);
   goto &_xnew;
 }
 
@@ -914,10 +914,10 @@ sub _xnew($$;$$) {
         $dq3 >= 0 && $dq3 < 256 &&
         $dq4 >= 0 && $dq4 < 256
       ) {    # corner condition of IPv4 with isV6
-        $ip = join('.',$dq1,$dq2,$dq3,$dq4);
+        $ip = join('.', $dq1, $dq2, $dq3, $dq4);
         $try = ipv4to6(inet_aton($ip));
         if ($mask < $IPV4_BITS) {
-          $mask = shiftleft(Ones,$IPV4_BITS -$mask);
+          $mask = shiftleft(Ones, $IPV4_BITS -$mask);
         }
         elsif ($mask == $IPV4_BITS) {
           $mask = Ones;
@@ -926,7 +926,7 @@ sub _xnew($$;$$) {
         }
       }
       elsif ($mask < $IPV6_BITS) {
-        $mask = shiftleft(Ones,$IPV6_BITS -$mask);    # small cidr
+        $mask = shiftleft(Ones, $IPV6_BITS -$mask);    # small cidr
       } else {
         $mask = Ones();
       }
@@ -939,7 +939,7 @@ sub _xnew($$;$$) {
 #      $mask = _no_octal($mask);
 #    }
     if ($mask < $IPV4_BITS) {
-      $mask = shiftleft(Ones,$IPV4_BITS -$mask);
+      $mask = shiftleft(Ones, $IPV4_BITS -$mask);
     }
     elsif ( $mask == $IPV4_BITS) {
       $mask = Ones;
@@ -989,7 +989,7 @@ sub _xnew($$;$$) {
         : "${1}.${2}.0.${3}";
       }
       elsif ($ip =~ /^([0-9]+)$/ && $hasmask && $1 >= 0 and $1 < 256) { # pure numeric
-    $ip = sprintf("%d.0.0.0",$1);
+    $ip = sprintf("%d.0.0.0", $1);
       }
 #      elsif ($ip =~ /^[0-9]+$/ && !$hasmask) {    # a big integer
       elsif ($ip =~ /^[0-9]+$/ ) {    # a big integer
@@ -999,19 +999,19 @@ sub _xnew($$;$$) {
       # binary and hex literals, 0b[01]+ or 0x[0-9a-f]+ ($ip is already lower case)
       elsif ($ip =~ /^(?:0b[01]+|0x[0-9a-f]+)$/ && $hasmask &&
         ($tmp = oct($ip)) < 256) {
-        $ip = sprintf("%d.0.0.0",$tmp);
+        $ip = sprintf("%d.0.0.0", $tmp);
       }
       elsif ($ip =~ /^-?[0-9]+$/) {
     # negative values in -1 .. -(2**32) are accepted as 2's complement
     $ip += 2 ** $IPV4_BITS;
     return undef if $ip < 0;        # would wrap in pack
-    $ip = pack('L3N',0,0,0,$ip);
+    $ip = pack('L3N', 0, 0, 0, $ip);
     last;
       }
       elsif ($ip =~ /^(-?)(0b[01]+|0x[0-9a-f]+)$/) {
     $ip = oct($2);
     $ip = 2 ** $IPV4_BITS - $ip if $1 && $ip;
-    $ip = pack('L3N',0,0,0,$ip);
+    $ip = pack('L3N', 0, 0, 0, $ip);
     last;
       }
 
@@ -1023,11 +1023,11 @@ sub _xnew($$;$$) {
       }
       elsif ($ip =~ m/^([0-9]+)\.([0-9]+)-([0-9]+)\.?$/ && $2 <= $3 && $3 < 256) {
     $ip = "${1}.${2}.0.0";
-    $mask = pack('L3C4',0xffffffff,0xffffffff,0xffffffff,255,_obits($2,$3),0,0);
+    $mask = pack('L3C4', 0xffffffff, 0xffffffff, 0xffffffff, 255, _obits($2, $3), 0, 0);
       }
       elsif ($ip =~ m/^([0-9]+)-([0-9]+)\.?$/ and $1 <= $2 && $2 < 256) {
     $ip = "${1}.0.0.0";
-    $mask = pack('L3C4',0xffffffff,0xffffffff,0xffffffff,_obits($1,$2),0,0,0)
+    $mask = pack('L3C4', 0xffffffff, 0xffffffff, 0xffffffff, _obits($1, $2), 0, 0, 0)
       }
       elsif ($ip =~ m/^([0-9]+)\.([0-9]+)\.$/) {
     $ip = "${1}.${2}.0.0";
@@ -1035,7 +1035,7 @@ sub _xnew($$;$$) {
       }
       elsif ($ip =~ m/^([0-9]+)\.([0-9]+)\.([0-9]+)-([0-9]+)\.?$/ && $3 <= $4 && $4 < 256) {
     $ip = "${1}.${2}.${3}.0";
-    $mask = pack('L3C4',0xffffffff,0xffffffff,0xffffffff,255,255,_obits($3,$4),0);
+    $mask = pack('L3C4', 0xffffffff, 0xffffffff, 0xffffffff, 255, 255, _obits($3, $4), 0);
       }
       elsif ($ip =~ m/^([0-9]+)\.([0-9]+)\.([0-9]+)\.$/) {
     $ip = "${1}.${2}.${3}.0";
@@ -1043,7 +1043,7 @@ sub _xnew($$;$$) {
       }
       elsif ($ip =~ m/^([0-9]+)\.([0-9]+)\.([0-9]+)\.([0-9]+)-([0-9]+)$/ && $4 <= $5 && $5 < 256) {
     $ip = "${1}.${2}.${3}.${4}";
-    $mask = pack('L3C4',0xffffffff,0xffffffff,0xffffffff,255,255,255,_obits($4,$5));
+    $mask = pack('L3C4', 0xffffffff, 0xffffffff, 0xffffffff, 255, 255, 255, _obits($4, $5));
       }
       elsif ($ip =~ m/^([0-9]+\.[0-9]+\.[0-9]+\.[0-9]+)
         \s*-\s*([0-9]+\.[0-9]+\.[0-9]+\.[0-9]+)$/x) {
@@ -1056,9 +1056,9 @@ sub _xnew($$;$$) {
 #    }
     # check for left side greater than right side
     # save numeric difference in $mask
-    return undef if ($tmp = unpack('N',$tmp) - unpack('N',$ip)) < 0;
+    return undef if ($tmp = unpack('N', $tmp) - unpack('N', $ip)) < 0;
     $ip = ipv4to6($ip);
-    $tmp = pack('L3N',0,0,0,$tmp);
+    $tmp = pack('L3N', 0, 0, 0, $tmp);
     $mask = ~$tmp;
     return undef if notcontiguous($mask);
     # check for non-aligned left side
@@ -1137,7 +1137,7 @@ the hosts in a given subnet.
 =cut
 
 sub broadcast ($) {
-  my $ip = _new($_[0],$_[0]->{addr} | ~$_[0]->{mask},$_[0]->{mask});
+  my $ip = _new($_[0], $_[0]->{addr} | ~$_[0]->{mask}, $_[0]->{mask});
   $ip->{addr} &= V4net unless $ip->{isv6};
   return $ip;
 }
@@ -1151,7 +1151,7 @@ netmask are zero. Normally this is used to refer to a subnet.
 =cut
 
 sub network ($) {
-  return _new($_[0],$_[0]->{addr} & $_[0]->{mask},$_[0]->{mask});
+  return _new($_[0], $_[0]->{addr} & $_[0]->{mask}, $_[0]->{mask});
 }
 
 =item C<-E<gt>addr()>
@@ -1345,7 +1345,7 @@ sub _retMBIstring {
 
 sub _biRef {
   _loadMBI unless $biloaded;                # load Math::BigInt on demand
-  $biloaded->('Math::BigInt',$_[0]);
+  $biloaded->('Math::BigInt', $_[0]);
 }
 
 sub bigint($) {
@@ -1367,7 +1367,7 @@ sub bigint($) {
     ? bin2bcd($_[0]->{mask})
     : 0;
     }
-    (_biRef($addr),_biRef($mask));
+    (_biRef($addr), _biRef($mask));
 
   } else {    # not wantarray
 
@@ -1393,7 +1393,7 @@ are not both C<NetAddr::IP::Lite> objects.
 =cut
 
 sub contains ($$) {
-  return within(@_[1,0]);
+  return within(@_[1, 0]);
 }
 
 =item C<$me-E<gt>within($other)>
@@ -1410,15 +1410,15 @@ different addresses.
 =cut
 
 sub within ($$) {
-  return undef unless UNIVERSAL::isa($_[0],__PACKAGE__)
-           && UNIVERSAL::isa($_[1],__PACKAGE__);
+  return undef unless UNIVERSAL::isa($_[0], __PACKAGE__)
+           && UNIVERSAL::isa($_[1], __PACKAGE__);
   return 0 if ($_[0]->{isv6} ? 1 : 0) != ($_[1]->{isv6} ? 1 : 0);    # different address families
   return 1 unless hasbits($_[1]->{mask});    # 0x0 contains everything
   my $netme    = $_[0]->{addr} & $_[0]->{mask};
   my $brdme    = $_[0]->{addr} | ~ $_[0]->{mask};
   my $neto    = $_[1]->{addr} & $_[1]->{mask};
   my $brdo    = $_[1]->{addr} | ~ $_[1]->{mask};
-  return (sub128($netme,$neto) && sub128($brdo,$brdme))
+  return (sub128($netme, $neto) && sub128($brdo, $brdme))
     ? 1 : 0;
 }
 
@@ -1447,9 +1447,9 @@ my $ip_192b = $ip_192n | ~ $ip_192->{mask};
 sub is_rfc1918 ($) {
   my $netme     = $_[0]->{addr} & $_[0]->{mask};
   my $brdme     = $_[0]->{addr} | ~ $_[0]->{mask};
-  return 1 if (sub128($netme,$ip_10n) && sub128($ip_10b,$brdme));
-  return 1 if (sub128($netme,$ip_192n) && sub128($ip_192b,$brdme));
-  return (sub128($netme,$ip_172n) && sub128($ip_172b,$brdme))
+  return 1 if (sub128($netme, $ip_10n) && sub128($ip_10b, $brdme));
+  return 1 if (sub128($netme, $ip_192n) && sub128($ip_192b, $brdme));
+  return (sub128($netme, $ip_172n) && sub128($ip_172b, $brdme))
         ? 1 : 0;
 }
 
@@ -1482,7 +1482,7 @@ sub is_local ($) {
   }
   my $netme = $addr & $self->{mask};
   my $brdme = $addr | ~ $self->{mask};
-  return (sub128($netme,$_lclnetn) && sub128($_lclnetb,$brdme))
+  return (sub128($netme, $_lclnetn) && sub128($_lclnetb, $brdme))
     ? 1 : 0;
 }
 
@@ -1493,7 +1493,7 @@ the subnet (ie, the first host address).
 
 =cut
 
-my $_cidr127 = pack('N4',0xffffffff,0xffffffff,0xffffffff,0xfffffffe);
+my $_cidr127 = pack('N4', 0xffffffff, 0xffffffff, 0xffffffff, 0xfffffffe);
 
 sub first ($) {
   if (hasbits($_[0]->{mask} ^ $_cidr127)) {
@@ -1621,12 +1621,12 @@ package to do the integer math.
 
 sub num ($) {
   if ($Old_nth) {
-    my @net = unpack('L3N',$_[0]->{mask} ^ Ones);
+    my @net = unpack('L3N', $_[0]->{mask} ^ Ones);
 # number of ip's less broadcast
     return 0xfffffffe if $net[0] || $net[1] || $net[2]; # 2**32 - 2
     return $net[3] if $net[3];
   } else {    # returns 1 for /32 /128, 2 for /31 /127 else n-2 up to 2**32
-    (undef, my $net) = addconst($_[0]->{mask},1);
+    (undef, my $net) = addconst($_[0]->{mask}, 1);
     return 1 unless hasbits($net);    # ipV4/32 or ipV6/128
     $net = $net ^ Ones;
     return 2 unless hasbits($net);    # ipV4/31 or ipV6/127
