@@ -3,6 +3,7 @@
 # PODNAME: NetAddr::IP::Lite
 
 use strict;
+use warnings FATAL => 'all';
 
 package NetAddr::IP::Lite;
 # VERSION
@@ -10,7 +11,6 @@ package NetAddr::IP::Lite;
 use parent 'Exporter';
 use Carp qw( croak );
 
-#use warnings;
 use NetAddr::IP::Constants qw(
     $IPV6_BITS
     $IPV4_BITS
