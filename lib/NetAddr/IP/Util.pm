@@ -701,7 +701,7 @@ Convert a bcd text string to 128 bit string variable
 
 =cut
 
-#=item * $onescomp=NetAddr::IP::Util::comp128($ipv6addr);
+#=item $onescomp=NetAddr::IP::Util::comp128($ipv6addr);
 #
 #This function is not exported because it is more efficient to use perl " ~ "
 #on the bit string directly. This interface to the B<C> routine is published for
@@ -710,7 +710,7 @@ Convert a bcd text string to 128 bit string variable
 #33% faster to use B<sub128> than to do a 1's comp with perl and then call
 #B<add128>.
 #
-#=item * $bcdpacked = NetAddr::IP::Util::bin2bcdn($bits128);
+#=item $bcdpacked = NetAddr::IP::Util::bin2bcdn($bits128);
 #
 #Convert a 128 bit binary string into binary coded decimal digits.
 #This function is not exported.
@@ -720,7 +720,7 @@ Convert a bcd text string to 128 bit string variable
 #
 #  i.e.    text = unpack("H*", $bcd);
 #
-#=item * $bcdtext =  NetAddr::IP::Util::bcdn2txt($bcdpacked);
+#=item $bcdtext =  NetAddr::IP::Util::bcdn2txt($bcdpacked);
 #
 #Convert a packed bcd string into text digits, suppress the leading zeros.
 #This function is not exported.
@@ -730,7 +730,7 @@ Convert a bcd text string to 128 bit string variable
 #
 #Similar to unpack("H*", $bcd);
 #
-#=item * $bcdpacked = NetAddr::IP::Util::simple_pack($bcdtext);
+#=item $bcdpacked = NetAddr::IP::Util::simple_pack($bcdtext);
 #
 #Convert a numeric string into a packed bcd string, left fill with zeros
 #
