@@ -52,8 +52,8 @@ our $_netlimit;
 NOTE: NetAddr::IP::Util has a full complement of network address
 utilities to convert back and forth between binary and text.
 
-inet_aton, inet_ntoa, ipv6_aton, ipv6_ntoa
-ipv6_n2x, ipv6_n2d inet_any2d, inet_n2dx,
+inet_aton, inet_ntoa,  ipv6_aton,  ipv6_ntoa
+ipv6_n2x,  ipv6_n2d,   inet_any2d, inet_n2dx,
 inet_n2ad, inetanyto6, ipv6to4
 
 See L<NetAddr::IP::Util>
@@ -351,6 +351,8 @@ sub import
 
     if (grep { $_ eq ':aton' } @_)
     {
+    warnings::warnif('deprecated',
+        ':aton is deprecated and will be removed in version 5; new() accepts inet_aton notation without it, and new_from_aton() takes a packed IPv4 address');
     $NetAddr::IP::Lite::Accept_Binary_IP = 1;
     @_ = grep { $_ ne ':aton' } @_;
     }
@@ -390,7 +392,7 @@ sub import
 sub compact {
     return (ref $_[0] eq 'ARRAY')
     ? compactref($_[0])    # Compact(\@list)
-    : @{compactref(\@_)};    # Compact(@list)  or ->compact(@list)
+    : @{compactref(\@_)};  # Compact(@list)  or ->compact(@list)
 }
 
 *Compact = \&compact;
@@ -434,7 +436,7 @@ sub rsplit {
 
 sub full($) {
     if (! $_[0]->{isv6} && isIPv4($_[0]->{addr})) {
-        my @hex = (unpack("n8", $_[0]->{addr}));
+        my @hex = (unpack('n8', $_[0]->{addr}));
         $hex[9] = $hex[7] & 0xff;
         $hex[8] = $hex[7] >> 8;
         $hex[7] = $hex[6] & 0xff;
@@ -447,12 +449,12 @@ sub full($) {
 }
 
 sub full6($) {
-    my @hex = (unpack("n8", $_[0]->{addr}));
+    my @hex = (unpack('n8', $_[0]->{addr}));
     return sprintf($full6_format, @hex);
 }
 
 sub full6m($) {
-    my @hex = (unpack("n8", $_[0]->{mask}));
+    my @hex = (unpack('n8', $_[0]->{mask}));
     return sprintf($full6_format, @hex);
 }
 
@@ -461,30 +463,30 @@ sub DESTROY {};
 1;
 
 sub do_prefix ($$$) {
-    my $mask    = shift;
-    my $faddr    = shift;
-    my $laddr    = shift;
+    my $mask  = shift;
+    my $faddr = shift;
+    my $laddr = shift;
 
     if ($mask > $OCTET_BITS * 3) {
-    return "$faddr->[0].$faddr->[1].$faddr->[2].$faddr->[3]-$laddr->[3]";
+        return "$faddr->[0].$faddr->[1].$faddr->[2].$faddr->[3]-$laddr->[3]";
     }
     elsif ($mask == $OCTET_BITS * 3) {
-    return "$faddr->[0].$faddr->[1].$faddr->[2].";
+        return "$faddr->[0].$faddr->[1].$faddr->[2].";
     }
     elsif ($mask > $OCTET_BITS * 2) {
-    return "$faddr->[0].$faddr->[1].$faddr->[2]-$laddr->[2].";
+        return "$faddr->[0].$faddr->[1].$faddr->[2]-$laddr->[2].";
     }
     elsif ($mask == $OCTET_BITS * 2) {
-    return "$faddr->[0].$faddr->[1].";
+        return "$faddr->[0].$faddr->[1].";
     }
     elsif ($mask > $OCTET_BITS) {
-    return "$faddr->[0].$faddr->[1]-$laddr->[1].";
+        return "$faddr->[0].$faddr->[1]-$laddr->[1].";
     }
     elsif ($mask == $OCTET_BITS) {
-    return "$faddr->[0].";
+        return "$faddr->[0].";
     }
     else {
-    return "$faddr->[0]-$laddr->[0]";
+        return "$faddr->[0]-$laddr->[0]";
     }
 }
 
@@ -817,9 +819,9 @@ form.
 
 Returns true when C<$me> is an RFC 1918 address.
 
-  10.0.0.0      -   10.255.255.255  (10/8 prefix)
-  172.16.0.0    -   172.31.255.255  (172.16/12 prefix)
-  192.168.0.0   -   192.168.255.255 (192.168/16 prefix)
+  10.0.0.0     -  10.255.255.255  (10/8 prefix)
+  172.16.0.0   -  172.31.255.255  (172.16/12 prefix)
+  192.168.0.0  -  192.168.255.255 (192.168/16 prefix)
 
 =item C<-E<gt>is_local()>
 
@@ -858,8 +860,10 @@ splitting off the first parts of the list, a "best fits" list of remaining
 objects will be returned based on an increasing sort of the CIDR values of
 the C<bits> list.
 
-  i.e.    my $ip = NetAddr::IP->new('192.0.2.0/24');
-    my $objptr = $ip->splitref(28, 29, 28, 29, 26);
+  i.e.
+
+  my $ip     = NetAddr::IP->new('192.0.2.0/24');
+  my $objptr = $ip->splitref(28, 29, 28, 29, 26);
 
   has split plan 28 29 28 29 26 26 26 28
   and returns this list of objects
@@ -883,7 +887,7 @@ applied to the original object in reverse order.
 
   i.e.
 
-  my $ip = NetAddr::IP->new('192.0.2.0/24');
+  my $ip     = NetAddr::IP->new('192.0.2.0/24');
   my $objptr = $ip->rsplitref(28, 29, 28, 29, 26);
 
   has split plan 28 26 26 26 29 28 29 28
@@ -932,7 +936,7 @@ sub _splitplan {
     my $denom = 0;
 
     my ($x, $maddr);
-    foreach my $mask(@bits) {
+    for my $mask (@bits) {
         if (ref $mask) {    # is a NetAddr::IP
             $x = $mask->{isv6} ? $mask->{addr} : $mask->{addr} | V4mask;
             ($x, $maddr) = notcontiguous($x);
@@ -983,12 +987,12 @@ sub _splitplan {
         # a fractional net is needed that is not in the mask list or the replicant
         $denom += $nets{$nexmask};            # restore mistake
     TRY:
-        foreach my $try_mask (sort { $a <=> $b } keys %nets) {
+        for my $try_mask (sort { $a <=> $b } keys %nets) {
             next TRY if $nexmask > $try_mask;
             do {
-        next TRY if $denom - $nets{$try_mask} < 0;
-        croak('netlimit exceeded') if (push @plan, $try_mask) > $_netlimit;
-        $denom -= $nets{$try_mask};
+                next TRY if $denom - $nets{$try_mask} < 0;
+                croak('netlimit exceeded') if (push @plan, $try_mask) > $_netlimit;
+                $denom -= $nets{$try_mask};
             } while $denom;
         }
         die 'ERROR: miscalculated weights' if $denom;
