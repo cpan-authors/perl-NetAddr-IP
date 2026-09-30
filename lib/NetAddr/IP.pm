@@ -266,8 +266,9 @@ outputs 198.51.100.0/24.
 
 Returns a copy of the object when the constant is missing or zero. The
 constant must be an integer with a magnitude below 2**64; anything else
-croaks. Values above 2**53 must be passed as integers (IV or UV), since a
-floating point value that large has no unit precision and is rejected.
+croaks, including a string that is not a number, such as '0x10'. Values
+above 2**53 must be passed as integers (IV or UV), since a floating point
+value that large has no unit precision and is rejected.
 
 =item B<Subtraction of a constant (C<->)>
 

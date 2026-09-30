@@ -10,6 +10,7 @@ package NetAddr::IP::Lite;
 
 use parent 'Exporter';
 use Carp qw( croak );
+use Scalar::Util qw( looks_like_number );
 
 use NetAddr::IP::Constants qw(
     $IPV6_BITS
@@ -363,8 +364,9 @@ outputs 203.0.113.0/24.
 
 Returns a copy of the object when the constant is missing or zero. The
 constant must be an integer with a magnitude below 2**64; anything else
-croaks. Values above 2**53 must be passed as integers (IV or UV), since a
-floating point value that large has no unit precision and is rejected.
+croaks, including a string that is not a number, such as '0x10'. Values
+above 2**53 must be passed as integers (IV or UV), since a floating point
+value that large has no unit precision and is rejected.
 
 =cut
 
@@ -373,9 +375,12 @@ sub plus {
     my $const    = shift;
 
     return $ip->copy unless $const;
-    # integer, unit precision (rejects floats above 2**53), below 2**64
+    # a number, integer, unit precision (rejects floats above 2**53),
+    # below 2**64
     croak 'constant must be an exact integer with magnitude below 2**64'
-    unless $const == int($const)
+    unless defined $const
+        && looks_like_number($const)
+        && $const == int($const)
         && ($const > 0 ? $const - 1 != $const : $const + 1 != $const)
         && $const <= 18446744073709551615
         && $const >= -18446744073709551615;
@@ -446,7 +451,8 @@ sub minus {
     croak 'cannot subtract a NetAddr::IP::Lite object from a constant'
     if $swapped;
     unless (ref $arg) {
-    return plus($ip, -$arg);
+    # negate numbers only, so plus() sees and rejects anything else
+    return plus($ip, looks_like_number($arg) ? -$arg : $arg);
     }
     my ($carry, $dif) = sub128($ip->{addr}, $arg->{addr});
     if ($carry) {                    # value is positive
