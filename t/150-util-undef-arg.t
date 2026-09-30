@@ -46,9 +46,11 @@ my $V6_PACKED_BYTES = 16;
 # expects it to have. The XS build has a matching !SvOK branch for each of
 # these, so CI runs the same expectations against both implementations.
 #
-# The argument is spelled out rather than forwarded through @_, because the XS
-# half enables prototypes, so a wrapper written as "hasbits(@_)" scalar
-# contexts the array to its length and the XS receives 1 instead of undef.
+# The undefined argument is spelled out rather than forwarded through @_,
+# which does work, but only because perl flattens @_ for a sub that takes a
+# scalar argument. Spelling it out keeps these expectations independent of how
+# the XS prototypes interact with that flattening, so a test failure here
+# always means the guard changed and not the call.
 my @via_deadlen = (
     [ sub { hasbits(undef) },        128 ],
     [ sub { ipv4to6(undef) },        32 ],
