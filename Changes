@@ -44,7 +44,10 @@ Revision history for Perl extension NetAddr::IP
         - :aton warns on import in both IP.pm and Lite.pm
         - new_cis and new_cis6 warn on call; they are defined once in
           Lite.pm and reached from IP.pm via AUTOLOAD
-    Behaviour of all three is unchanged.
+    Behaviour of all three is unchanged, except under use warnings
+    FATAL => 'all', where the new warning dies; no warnings 'deprecated'
+    silences it. For an import like :aton that silence has to come
+    before the use, since the import runs at BEGIN time.
 
     Require Math::BigInt 1.99, the last release before perl 5.14 (GH#44)
 
