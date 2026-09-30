@@ -12,16 +12,16 @@ my %addr = (
     '13.13.13.13' => '13.13.13.13/32',
 );
 
-for my $prefix (sort keys %addr) {
+for my $prefix ( sort keys %addr ) {
     my $ip = NetAddr::IP->new($prefix);
 
-    is($ip->cidr, $addr{$prefix}, 'cidr returns correct value');
+    is( $ip->cidr, $addr{$prefix}, 'cidr returns correct value' );
 
-    my $p = NetAddr::IP->new($ip->cidr);
+    my $p = NetAddr::IP->new( $ip->cidr );
 
-    is($p->prefix, $prefix, 'prefix returns correct value');
+    is( $p->prefix, $prefix, 'prefix returns correct value' );
 
-    is($p->nprefix, $prefix, 'nprefix returns correct value');
+    is( $p->nprefix, $prefix, 'nprefix returns correct value' );
 }
 
 done_testing;

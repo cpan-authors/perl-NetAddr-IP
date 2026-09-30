@@ -19,10 +19,14 @@ my %try = (
     '8' => undef,
 );
 
-for my $input (sort { $a <=> $b } keys %try) {
+for my $input ( sort { $a <=> $b } keys %try ) {
     my $rv  = $ip4->nth($input);
     my $got = defined $rv ? $rv->addr : 'undef';
-    is($got, $try{$input} // 'undef', "nth($input) returns " . ($try{$input} // 'undef'));
+    is(
+        $got,
+        $try{$input} // 'undef',
+        "nth($input) returns " . ( $try{$input} // 'undef' )
+    );
 }
 
 done_testing;

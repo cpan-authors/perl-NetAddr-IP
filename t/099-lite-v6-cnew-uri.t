@@ -10,9 +10,9 @@ my %subnets = (
     '[::1234:BEEF:DEAD/24]' => '0:0:0:0:0:1234:BEEF:DEAD/24',
 );
 
-for my $input (sort keys %subnets) {
+for my $input ( sort keys %subnets ) {
     my $ip = NetAddr::IP::Lite->new($input);
-    is($ip, $subnets{$input}, "converted $input");
+    is( $ip, $subnets{$input}, "converted $input" );
 }
 
 done_testing;
