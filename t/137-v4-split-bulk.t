@@ -16,10 +16,10 @@ my @addr = (
 );
 
 for my $row (@addr) {
-    my $ip = NetAddr::IP->new($row->[0], $row->[1]);
-    my $r  = $ip->splitref($row->[2]);
+    my $ip = NetAddr::IP->new( $row->[0], $row->[1] );
+    my $r  = $ip->splitref( $row->[2] );
 
-    is(scalar @$r, $row->[3]);
+    is( scalar @$r, $row->[3] );
 }
 
 done_testing;

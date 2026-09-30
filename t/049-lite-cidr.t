@@ -11,8 +11,8 @@ my $dqip = NetAddr::IP::Lite->new('192.0.2.4/24');
 
 ## test cidr
 
-is($hiip->cidr, 'FF00:0:0:0:0:0:0:4/120', 'hiip cidr');
-is($loip->cidr, '0:0:0:0:0:0:102:304/120', 'loip cidr');
-is($dqip->cidr, '192.0.2.4/24', 'dqip cidr');
+is( $hiip->cidr, 'FF00:0:0:0:0:0:0:4/120',  'hiip cidr' );
+is( $loip->cidr, '0:0:0:0:0:0:102:304/120', 'loip cidr' );
+is( $dqip->cidr, '192.0.2.4/24',            'dqip cidr' );
 
 done_testing;

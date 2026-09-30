@@ -16,11 +16,11 @@ my %try = (
     'FF::8B/125'  => 7,
 );
 
-for my $input (sort keys %try) {
+for my $input ( sort keys %try ) {
     my $ip  = NetAddr::IP::Lite->new($input);
     my $exp = $try{$input};
 
-    is($ip->num, $exp, "$input num is $exp");
+    is( $ip->num, $exp, "$input num is $exp" );
 }
 
 done_testing;

@@ -8,12 +8,16 @@ use NetAddr::IP::Lite ();
 
 # new_cis6 is deprecated and warns on every call. Assert that once, then
 # run the behaviour checks with the warning suppressed.
-like(warning { NetAddr::IP::Lite->new_cis6('::1') },
-    qr/new_cis6 is deprecated/, 'new_cis6 is deprecated and warns on call');
+like(
+    warning { NetAddr::IP::Lite->new_cis6('::1') },
+    qr/new_cis6 is deprecated/,
+    'new_cis6 is deprecated and warns on call'
+);
 
 sub new_cis6_quiet {
-    my @args = @_;       # @_ is not visible inside the block below
+    my @args = @_;    # @_ is not visible inside the block below
     my $ip;
+
     # the return value is the warning count, so it is consumed here; leaving
     # the call in void context would itself be a warning
     my $quiet = no_warnings { $ip = NetAddr::IP::Lite->new_cis6(@args) };
@@ -21,54 +25,54 @@ sub new_cis6_quiet {
 }
 
 my @addr = (
-    ['::',                     3,     '0:0:0:0:0:0:0:0/128',        0],
-    ['::1',                    3,     '0:0:0:0:0:0:0:1/128',        0],
-    ['F34::123 40',            2,     'F34:0:0:0:0:0:0:3/40',       1],
-    ['DEAD:BEEF::1 40',        2,     'DEAD:BEEF:0:0:0:0:0:3/40',   1],
-    ['1000::2 40',             0,     '1000:0:0:0:0:0:0:1/40',      1],
-    ['1000::2000 40',          0,     '1000:0:0:0:0:0:0:1/40',      1],
-    ['DEAD::CAFE 40',          0,     'DEAD:0:0:0:0:0:0:1/40',      1],
-    ['DEAD:BEEF::1 40',        3,     'DEAD:BEEF:0:0:0:0:0:4/40',   1],
-    ['DEAD:BEEF::1 40',        4,     'DEAD:BEEF:0:0:0:0:0:5/40',   1],
-    ['DEAD:BEEF::1 40',        5,     'DEAD:BEEF:0:0:0:0:0:6/40',   1],
-    ['DEAD:BEEF::1 40',        6,     'DEAD:BEEF:0:0:0:0:0:7/40',   1],
-    ['DEAD:BEEF::1 40',        7,     'DEAD:BEEF:0:0:0:0:0:8/40',   1],
-    ['DEAD:BEEF::1 40',        8,     'DEAD:BEEF:0:0:0:0:0:9/40',   1],
-    ['DEAD:BEEF::1 40',        254,   'DEAD:BEEF:0:0:0:0:0:FF/40',  1],
-    ['DEAD:BEEF::1 40',        255,   'DEAD:BEEF:0:0:0:0:0:100/40', 1],
-    ['DEAD:BEEF::1 40',        256,   'DEAD:BEEF:0:0:0:0:0:101/40', 1],
-    ['DEAD:BEEF::1 40',        65535, 'DEAD:BEEF:0:0:0:0:1:0/40',   1],
-    ['DEAD:BEEF::1 40',        65536, 'DEAD:BEEF:0:0:0:0:1:1/40',   1],
-    ['2001:620:0:4::/64',      0,     '2001:620:0:4:0:0:0:1/64',    1],
-    ['3FFE:2000:0:4::/64',     0,     '3FFE:2000:0:4:0:0:0:1/64',   1],
-    ['2001:620:600::1',         0,     '2001:620:600:0:0:0:0:1/128', 1],
-    ['2001:620:600:0:1::1',     0,     '2001:620:600:0:1:0:0:1/128', 1],
+    [ '::',                  3,     '0:0:0:0:0:0:0:0/128',        0 ],
+    [ '::1',                 3,     '0:0:0:0:0:0:0:1/128',        0 ],
+    [ 'F34::123 40',         2,     'F34:0:0:0:0:0:0:3/40',       1 ],
+    [ 'DEAD:BEEF::1 40',     2,     'DEAD:BEEF:0:0:0:0:0:3/40',   1 ],
+    [ '1000::2 40',          0,     '1000:0:0:0:0:0:0:1/40',      1 ],
+    [ '1000::2000 40',       0,     '1000:0:0:0:0:0:0:1/40',      1 ],
+    [ 'DEAD::CAFE 40',       0,     'DEAD:0:0:0:0:0:0:1/40',      1 ],
+    [ 'DEAD:BEEF::1 40',     3,     'DEAD:BEEF:0:0:0:0:0:4/40',   1 ],
+    [ 'DEAD:BEEF::1 40',     4,     'DEAD:BEEF:0:0:0:0:0:5/40',   1 ],
+    [ 'DEAD:BEEF::1 40',     5,     'DEAD:BEEF:0:0:0:0:0:6/40',   1 ],
+    [ 'DEAD:BEEF::1 40',     6,     'DEAD:BEEF:0:0:0:0:0:7/40',   1 ],
+    [ 'DEAD:BEEF::1 40',     7,     'DEAD:BEEF:0:0:0:0:0:8/40',   1 ],
+    [ 'DEAD:BEEF::1 40',     8,     'DEAD:BEEF:0:0:0:0:0:9/40',   1 ],
+    [ 'DEAD:BEEF::1 40',     254,   'DEAD:BEEF:0:0:0:0:0:FF/40',  1 ],
+    [ 'DEAD:BEEF::1 40',     255,   'DEAD:BEEF:0:0:0:0:0:100/40', 1 ],
+    [ 'DEAD:BEEF::1 40',     256,   'DEAD:BEEF:0:0:0:0:0:101/40', 1 ],
+    [ 'DEAD:BEEF::1 40',     65535, 'DEAD:BEEF:0:0:0:0:1:0/40',   1 ],
+    [ 'DEAD:BEEF::1 40',     65536, 'DEAD:BEEF:0:0:0:0:1:1/40',   1 ],
+    [ '2001:620:0:4::/64',   0,     '2001:620:0:4:0:0:0:1/64',    1 ],
+    [ '3FFE:2000:0:4::/64',  0,     '3FFE:2000:0:4:0:0:0:1/64',   1 ],
+    [ '2001:620:600::1',     0,     '2001:620:600:0:0:0:0:1/128', 1 ],
+    [ '2001:620:600:0:1::1', 0,     '2001:620:600:0:1:0:0:1/128', 1 ],
 );
 
 subtest 'new_cis6 basic v6 tests' => sub {
     for my $entry (@addr) {
-        my $ip = new_cis6_quiet($entry->[0]);
+        my $ip    = new_cis6_quiet( $entry->[0] );
         my $input = $entry->[0];
         $input =~ s,/[0-9]+,,;
-        isa_ok($ip, ['NetAddr::IP::Lite'], "$input ");
-        is($ip->bits, 128, 'bits == 128');
-        is($ip->version, 6, 'version == 6');
+        isa_ok( $ip, ['NetAddr::IP::Lite'], "$input " );
+        is( $ip->bits,    128, 'bits == 128' );
+        is( $ip->version, 6,   'version == 6' );
         my $index = $entry->[1];
-        if ($entry->[3]) {
-            is(uc $ip->nth($index), $entry->[2], "nth $input, $index");
+        if ( $entry->[3] ) {
+            is( uc $ip->nth($index), $entry->[2], "nth $input, $index" );
         }
         else {
-            ok(!$ip->nth($index), "nth $input, undef");
+            ok( !$ip->nth($index), "nth $input, undef" );
         }
     }
 };
 
 my $ip = new_cis6_quiet('f34::1');
-isa_ok($ip, 'NetAddr::IP::Lite');
-ok($ip->network->contains($ip), '->contains');
+isa_ok( $ip, 'NetAddr::IP::Lite' );
+ok( $ip->network->contains($ip), '->contains' );
 
 $ip = new_cis6_quiet('f35::1 40');
-isa_ok($ip, 'NetAddr::IP::Lite');
-ok($ip->network->contains($ip), '->contains');
+isa_ok( $ip, 'NetAddr::IP::Lite' );
+ok( $ip->network->contains($ip), '->contains' );
 
 done_testing;

@@ -12,11 +12,11 @@ my %addr = (
     '10.128.0.1/17'  => '0.0.127.255',
 );
 
-for my $input (sort keys %addr) {
+for my $input ( sort keys %addr ) {
     my $ip = NetAddr::IP->new($input);
 
-    is($ip->wildcard, $addr{$input}, "wildcard for $input");
-    is(($ip->wildcard)[1], $addr{$input}, "wildcard list for $input");
+    is( $ip->wildcard,        $addr{$input}, "wildcard for $input" );
+    is( ( $ip->wildcard )[1], $addr{$input}, "wildcard list for $input" );
 }
 
 done_testing;

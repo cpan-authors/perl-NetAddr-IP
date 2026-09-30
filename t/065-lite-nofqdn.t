@@ -10,7 +10,7 @@ my $skip;
 
 subtest 'DNS resolution check' => sub {
     my $ip = NetAddr::IP::Lite->new('arin.net');
-    if (defined $ip) {
+    if ( defined $ip ) {
         pass("resolved $ip");
     }
     else {
@@ -19,11 +19,11 @@ subtest 'DNS resolution check' => sub {
     $skip = !defined $ip;
 };
 
-if (!$skip) {
+if ( !$skip ) {
     import NetAddr::IP::Lite qw(:nofqdn);
 
     my $ip = NetAddr::IP::Lite->new('arin.net');
-    ok(!defined $ip, 'unexpected response with :nofqdn');
+    ok( !defined $ip, 'unexpected response with :nofqdn' );
 }
 
 done_testing;
