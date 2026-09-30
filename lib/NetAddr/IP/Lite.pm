@@ -3,7 +3,7 @@
 # PODNAME: NetAddr::IP::Lite
 
 use strict;
-use warnings FATAL => 'all';
+use warnings;
 
 package NetAddr::IP::Lite;
 # VERSION

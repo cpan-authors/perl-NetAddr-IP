@@ -3,7 +3,7 @@
 # PODNAME: NetAddr::IP::Constants
 
 use strict;
-use warnings FATAL => 'all';
+use warnings;
 
 package NetAddr::IP::Constants;
 # VERSION
