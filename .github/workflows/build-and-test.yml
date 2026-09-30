@@ -211,6 +211,15 @@ jobs:
       - uses: perl-actions/setup-cpm@v1
         with:
           version: compat
+      # setup-cpm with version "compat" ships skaji-cpm 1.1.5, a plain
+      # script rather than a fat-packed one, so it needs its own
+      # prerequisites already installed. CPAN::Meta::Requirements is core
+      # in perl, but Strawberry Perl prunes core modules it does not
+      # ship, and cpm dies at compile time without it:
+      #   Can't locate CPAN/Meta/Requirements.pm in @INC
+      - name: Install cpm's prerequisite
+        shell: bash
+        run: cpanm --notest CPAN::Meta::Requirements
       - name: install deps using cpanm
         shell: bash
         run: cpm install -g
