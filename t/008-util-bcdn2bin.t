@@ -33,12 +33,12 @@ my %num = (
 );
 
 ## check pack correct
-for my $input (sort { $a <=> $b } keys %num) {
-    my $pkd = pack('H*', $input);
-    my $len = length($input);
-    my $bits = bcdn2bin($pkd, $len);
+for my $input ( sort { $a <=> $b } keys %num ) {
+    my $pkd  = pack( 'H*', $input );
+    my $len  = length($input);
+    my $bits = bcdn2bin( $pkd, $len );
     my $ip   = ipv6_n2x($bits);
-    is($ip, $num{$input}, "bcdn2bin($input)");
+    is( $ip, $num{$input}, "bcdn2bin($input)" );
 }
 
 done_testing;

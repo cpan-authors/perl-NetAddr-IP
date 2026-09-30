@@ -12,11 +12,11 @@ my %const = (
     '::FFFF:FFFF'                             => V4net,
 );
 
-for my $key (sort keys %const) {
+for my $key ( sort keys %const ) {
     my $ip = NetAddr::IP::Lite->new($key);
-    ok($ip, "netaddr $key");
-    ok($ip->{addr} eq $const{$key}, "match $key");
-    ok(length($const{$key}) == 16, "length $key is 16");
+    ok( $ip,                          "netaddr $key" );
+    ok( $ip->{addr} eq $const{$key},  "match $key" );
+    ok( length( $const{$key} ) == 16, "length $key is 16" );
 }
 
 done_testing;

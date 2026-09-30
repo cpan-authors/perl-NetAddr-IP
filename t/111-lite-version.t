@@ -10,10 +10,10 @@ my $hiip = NetAddr::IP::Lite->new('FF00::1:4/120');
 
 my $exp     = 4;
 my $version = $loip->version;
-is($version, $exp, 'version lo');
+is( $version, $exp, 'version lo' );
 
 $exp     = 6;
 $version = $hiip->version;
-is($version, $exp, 'version hi');
+is( $version, $exp, 'version hi' );
 
 done_testing;
