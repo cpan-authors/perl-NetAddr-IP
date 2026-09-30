@@ -2,6 +2,30 @@ Revision history for Perl extension NetAddr::IP
 
 {{$NEXT}}
 
+    Reformat the test files with perltidy's default profile. Nine of
+    them were indented with tabs while the other 140 used spaces, and
+    .editorconfig asks for four columns of spaces, so t/ is now
+    internally consistent for the first time. Whitespace is the only
+    thing that moved, except for four semicolons perltidy deletes by
+    default, being ones that are simply empty statements: the one after
+    "sub BASE_LEN () { 7 };" in t/043, and one standing before a closing
+    brace in each of t/087, t/096 and t/097. None of them changes what
+    the code does.
+
+    Tabs survive in six files, inside comments that use them to line up
+    columns in a table of test vectors. perltidy does not rewrite comment
+    text, which is the right call, so those stay.
+
+    Checked by stripping all whitespace from each file before and after,
+    which is the only guarantee perltidy actually makes, so those four
+    semicolons are the whole of the difference. The suite passes either
+    way: 160 files and 2927 tests from dzil test --all, and 160 files
+    and 2531 tests in each of the XS and pure Perl built distributions.
+
+    No .perltidyrc is checked in, so this records the result rather than
+    the settings that produced it, and nothing stops the files drifting
+    apart again.
+
     Name an undefined packed argument in the error, instead of warning
     first and then reporting a length of zero. The guards read their
     argument with length() and then did arithmetic or a comparison on

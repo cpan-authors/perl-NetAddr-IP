@@ -13,14 +13,14 @@ my %addr = (
     '10.128.0.0/17' => '10.128.0-127.',
 );
 
-for my $input (sort keys %addr) {
+for my $input ( sort keys %addr ) {
     my $ip = NetAddr::IP->new($input);
 
-    is($ip->prefix, $addr{$input}, "$input prefix is $addr{$input}");
+    is( $ip->prefix, $addr{$input}, "$input prefix is $addr{$input}" );
 
-    my $p = NetAddr::IP->new($ip->prefix);
+    my $p = NetAddr::IP->new( $ip->prefix );
 
-    is($p->cidr, $input, "$ip prefix roundtrips to $input");
+    is( $p->cidr, $input, "$ip prefix roundtrips to $input" );
 }
 
 done_testing;

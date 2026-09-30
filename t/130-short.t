@@ -47,11 +47,11 @@ my %cases = (
     '2001:0:0:1::'           => '2001:0:0:1:0:0:0:0',
 );
 
-for my $c (sort keys %cases) {
-    my $ip = NetAddr::IP->new($cases{$c});
-    isa_ok($ip, 'NetAddr::IP');
+for my $c ( sort keys %cases ) {
+    my $ip = NetAddr::IP->new( $cases{$c} );
+    isa_ok( $ip, 'NetAddr::IP' );
     my $short = uc $ip->short;
-    is($short, $c, "short($cases{$c}) returns $short");
+    is( $short, $c, "short($cases{$c}) returns $short" );
 }
 
 done_testing;

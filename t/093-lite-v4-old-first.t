@@ -12,18 +12,10 @@ my %nets = (
     '10.128.0.1' => [ 24, '10.128.0.1', '10.128.0.254',   '10.128.0.10' ],
 );
 
-for my $key (keys %nets) {
-    my $ip = NetAddr::IP::Lite->new($key, $nets{$key}->[0]);
-    is(
-        $ip->first->addr,
-        $nets{$key}->[1],
-        "first address for $key",
-    );
-    is(
-        $ip->last->addr,
-        $nets{$key}->[2],
-        "last address for $key",
-    );
+for my $key ( keys %nets ) {
+    my $ip = NetAddr::IP::Lite->new( $key, $nets{$key}->[0] );
+    is( $ip->first->addr, $nets{$key}->[1], "first address for $key", );
+    is( $ip->last->addr,  $nets{$key}->[2], "last address for $key", );
 
     my $new = $ip->nth(10);
     is(

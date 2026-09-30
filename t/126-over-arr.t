@@ -12,12 +12,14 @@ my $addr = {
 };
 
 SKIP: {
-    skip "overload dereferencing not supported in version $] of Perl", scalar keys %$addr
-        unless $overload::ops{dereferencing} && $overload::ops{dereferencing} =~ m/\@\{\}/;
+    skip "overload dereferencing not supported in version $] of Perl",
+      scalar keys %$addr
+      unless $overload::ops{dereferencing}
+      && $overload::ops{dereferencing} =~ m/\@\{\}/;
 
-    for my $input (sort keys %$addr) {
+    for my $input ( sort keys %$addr ) {
         my $ip = NetAddr::IP->new($input);
-        ok(@$ip[0]->cidr eq $addr->{$input}, $input);
+        ok( @$ip[0]->cidr eq $addr->{$input}, $input );
     }
 }
 

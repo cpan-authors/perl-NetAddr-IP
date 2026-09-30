@@ -12,16 +12,16 @@ use NetAddr::IP qw( Compact );
 my @temp = <DATA>;
 
 my @sortreg = sort @temp;
-my @sortdec = sort { $b cmp $a} @temp;
-my @sortnum = sort { $a cmp $b} @temp;
+my @sortdec = sort { $b cmp $a } @temp;
+my @sortnum = sort { $a cmp $b } @temp;
 
-my $sortnum = Compact(map { NetAddr::IP->new($_) } @sortnum);
-my $sorttag = Compact(map { NetAddr::IP->new($_) } @sortreg);
-my $sortdec = Compact(map { NetAddr::IP->new($_) } @sortdec);
+my $sortnum = Compact( map { NetAddr::IP->new($_) } @sortnum );
+my $sorttag = Compact( map { NetAddr::IP->new($_) } @sortreg );
+my $sortdec = Compact( map { NetAddr::IP->new($_) } @sortdec );
 
-is($sortnum, $sorttag);
-is($sortnum, $sortdec);
-is($sortdec, $sorttag); # I know this one is redundant
+is( $sortnum, $sorttag );
+is( $sortnum, $sortdec );
+is( $sortdec, $sorttag );    # I know this one is redundant
 
 done_testing;
 

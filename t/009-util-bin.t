@@ -7,7 +7,7 @@ use NetAddr::IP::Util qw( bcdn2txt bin2bcd bin2bcdn ipv6_aton );
 
 sub val {
     my $bcd = shift;
-    my $rv  = unpack('H*', $bcd);
+    my $rv  = unpack( 'H*', $bcd );
     $rv =~ s/^0+([0-9])/$1/g;
     return $rv;
 }
@@ -24,28 +24,28 @@ my %num2 = (
 );
 
 subtest 'bin2bcdn string unpack via val' => sub {
-    for my $input (sort { $a cmp $b } keys %num2) {
+    for my $input ( sort { $a cmp $b } keys %num2 ) {
         my $bstr = ipv6_aton($input);
         my $bcd  = bin2bcdn($bstr);
         my $got  = val($bcd);
-        is($got, $num2{$input}, "bin2bcdn($input) via val");
+        is( $got, $num2{$input}, "bin2bcdn($input) via val" );
     }
 };
 
 subtest 'bin2bcdn string unpack via bcdn2txt' => sub {
-    for my $input (sort { $a cmp $b } keys %num2) {
+    for my $input ( sort { $a cmp $b } keys %num2 ) {
         my $bstr = ipv6_aton($input);
         my $bcd  = bin2bcdn($bstr);
         my $got  = bcdn2txt($bcd);
-        is($got, $num2{$input}, "bin2bcdn($input) via bcdn2txt");
+        is( $got, $num2{$input}, "bin2bcdn($input) via bcdn2txt" );
     }
 };
 
 subtest 'bin2bcd' => sub {
-    for my $input (sort { $a cmp $b } keys %num2) {
+    for my $input ( sort { $a cmp $b } keys %num2 ) {
         my $bstr = ipv6_aton($input);
         my $bcd  = bin2bcd($bstr);
-        is($bcd, $num2{$input}, "bin2bcd($input)");
+        is( $bcd, $num2{$input}, "bin2bcd($input)" );
     }
 };
 
