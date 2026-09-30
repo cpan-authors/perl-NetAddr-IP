@@ -329,9 +329,12 @@ Convert a packed IPv4 network address to a dot-quad IP address.
 =cut
 
 sub inet_ntoa {
-    die 'Bad arg length for '. __PACKAGE__ ."::inet_ntoa, length is ". length($_[0]) ." should be $V4_PACKED_BYTES"
-                unless length($_[0]) == $V4_PACKED_BYTES;
-    my @hex = (unpack("n2", $_[0]));
+    my $packed = $_[0];
+    die 'Bad arg length for '. __PACKAGE__ ."::inet_ntoa, length is ".
+        (defined $packed ? length($packed) : 'undefined') .
+        " should be $V4_PACKED_BYTES"
+                unless defined $packed && length($packed) == $V4_PACKED_BYTES;
+    my @hex = (unpack("n2", $packed));
     $hex[3] = $hex[1] & $MAX_OCTET;
     $hex[2] = $hex[1] >> $OCTET_BITS;
     $hex[1] = $hex[0] & $MAX_OCTET;
@@ -399,6 +402,8 @@ text representation.
 =cut
 
 sub ipv6_ntoa {
+    die 'Bad arg length for '. __PACKAGE__ ."::ipv6_ntoa, length is undefined should be $V6_PACKED_BYTES"
+                unless defined $_[0];
     return inet_ntop(AF_INET6(), $_[0]);
 }
 
