@@ -2,6 +2,43 @@ Revision history for Perl extension NetAddr::IP
 
 {{$NEXT}}
 
+    Name an undefined packed argument in the error, instead of warning
+    first and then reporting a length of zero. The guards read their
+    argument with length() and then did arithmetic or a comparison on
+    the result, so an undef reached an operator first and perl warned
+    about a value inside the library, at a line the caller cannot act
+    on, before the check that names the function could run:
+        inet_ntoa(undef)    Use of uninitialized value in numeric eq
+                            (==), at InetBase.pm line 332
+                          Bad arg length for ...::inet_ntoa, length is
+                          should be 4
+        hasbits(undef)      Use of uninitialized value in numeric ne
+                            (!=), at UtilPP.pm line 137
+                          Bad arg length for ...::hasbits, length is 0,
+                          should be 128
+    Both halves were wrong. The zero described a length nobody passed,
+    and inet_ntoa interpolated an empty string because length(undef) is
+    the empty string, so its message named the function and the expected
+    width but no length at all. The message now says the length is
+    undefined, and nothing warns on the way to it.
+
+    Fixed in both implementations, which have to agree: NetAddr::IP::Util
+    is native by default and falls back to UtilPP, and the XS half got
+    there differently. It declares its arguments as SV *, and SvPV
+    turned an undefined argument into an empty string with a length of
+    zero without complaining, so it reported the same misleading zero
+    and perl's "Use of uninitialized value in subroutine entry" warning
+    fired from the caller's line. Each XS function now tests SvOK
+    before it calls SvPV.
+
+    inet_ntoa and ipv6_ntoa are pure perl with no XS counterpart, so
+    they only needed the guard. ipv6_ntoa was also handing an undefined
+    argument to Socket6::inet_ntop, which reported a length of 0 for
+    something that had none.
+
+    A wrong but defined length is still measured and reported as before,
+    so "ab" still gives 2 and not undefined.
+
     Fix addition and subtraction accepting a constant that is not a
     number (GH#89). The guard compared $const == int($const), and perl
     numifies both sides first, so a string passed as its leading digits
