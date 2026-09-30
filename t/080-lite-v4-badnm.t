@@ -23,17 +23,17 @@ my @badnets = (
 );
 
 my @goodnets = ();
-push @goodnets, "10.0.0.1/$_" for (0 .. 32);
+push @goodnets, "10.0.0.1/$_" for ( 0 .. 32 );
 push @goodnets, '10.0.0.1/255.255.255.255';
 
 subtest 'bad nets' => sub {
-    ok(!defined NetAddr::IP::Lite->new($_), "new $_ should fail")
-        for @badnets;
+    ok( !defined NetAddr::IP::Lite->new($_), "new $_ should fail" )
+      for @badnets;
 };
 
 subtest 'good nets' => sub {
-    ok(defined NetAddr::IP::Lite->new($_), "new $_ should work")
-        for @goodnets;
+    ok( defined NetAddr::IP::Lite->new($_), "new $_ should work" )
+      for @goodnets;
 };
 
 done_testing;
