@@ -2,6 +2,25 @@ Revision history for Perl extension NetAddr::IP
 
 {{$NEXT}}
 
+    Fix addition and subtraction accepting a constant that is not a
+    number (GH#89). The guard compared $const == int($const), and perl
+    numifies both sides first, so a string passed as its leading digits
+    or as zero:
+        - '5abc' added or subtracted 5
+        - '0x10' and '0b11' added 0, which reads as no change at all
+    looks_like_number now runs ahead of the guard, and subtraction
+    negates only what is a number so the guard sees the original
+    otherwise. Hex, binary, 0o and empty strings are rejected. Padded
+    and exponent strings, and a Math::BigInt constant, are unaffected.
+    The POD in both IP.pm and Lite.pm said only that the constant must
+    be an integer, and now says a non-numeric string croaks.
+
+    Keep the documented behaviour for a missing or zero constant, which
+    returns a copy. Nothing tested it before, so the new tests pin it:
+    undef and the empty string still return a copy for both operators,
+    where subtraction previously died inside the negation and addition
+    returned a copy.
+
     Fix both SYNOPSIS use lists, which carried their annotations as qw()
     members, so each module tried to import a symbol named DEPRECATED and
     Lite.pm one named ! as well (GH#83)
