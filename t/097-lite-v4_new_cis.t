@@ -8,12 +8,16 @@ use NetAddr::IP::Lite ();
 
 # new_cis is deprecated and warns on every call. Assert that once, then run
 # the behaviour checks with the warning suppressed.
-like(warning { NetAddr::IP::Lite->new_cis('1.2.3.0 24') },
-    qr/new_cis is deprecated/, 'new_cis is deprecated and warns on call');
+like(
+    warning { NetAddr::IP::Lite->new_cis('1.2.3.0 24') },
+    qr/new_cis is deprecated/,
+    'new_cis is deprecated and warns on call'
+);
 
 sub new_cis_quiet {
-    my @args = @_;       # @_ is not visible inside the block below
+    my @args = @_;    # @_ is not visible inside the block below
     my $ip;
+
     # the return value is the warning count, so it is consumed here; leaving
     # the call in void context would itself be a warning
     my $quiet = no_warnings { $ip = NetAddr::IP::Lite->new_cis(@args) };
@@ -32,12 +36,13 @@ if ($@) {
 
 for my $invalid (
     qw(
-        256.1.1.1
-        256.256.1.1
-        256.256.256.1
-        256.256.256.256
+    256.1.1.1
+    256.256.1.1
+    256.256.256.1
+    256.256.256.256
     )
-) {
+  )
+{
     ok(
         !defined NetAddr::IP::Lite->new($invalid),
         "Invalid IP $invalid returns undef"
@@ -47,43 +52,44 @@ for my $invalid (
 subtest 'v4 new_cis' => sub {
     my @a = (
         [ 'localhost', '127.0.0.1' ],
-        [ 0x01010101, '1.1.1.1' ],
-        [ 1,          '1.0.0.0' ],
-        [ 'default',  '0.0.0.0' ],
-        [ 'any',      '0.0.0.0' ],
-        [ -809041407, '207.199.2.1' ],
-        [ 3485925889, '207.199.2.1' ],
+        [ 0x01010101,  '1.1.1.1' ],
+        [ 1,           '1.0.0.0' ],
+        [ 'default',   '0.0.0.0' ],
+        [ 'any',       '0.0.0.0' ],
+        [ -809041407,  '207.199.2.1' ],
+        [ 3485925889,  '207.199.2.1' ],
     );
 
     my @m = (
-        [ 0,              '0.0.0.0' ],
-        [ 1,              '128.0.0.0' ],
-        [ 2,              '192.0.0.0' ],
-        [ 4,              '240.0.0.0' ],
-        [ 8,              '255.0.0.0' ],
-        [ 16,             '255.255.0.0' ],
-        [ 17,             '255.255.128.0' ],
-        [ 24,             '255.255.255.0' ],
-        [ 'default',      '0.0.0.0' ],
-        [ 32,             '255.255.255.255' ],
-        [ 'host',         '255.255.255.255' ],
-        [ 0xffffff00,     '255.255.255.0' ],
+        [ 0,                 '0.0.0.0' ],
+        [ 1,                 '128.0.0.0' ],
+        [ 2,                 '192.0.0.0' ],
+        [ 4,                 '240.0.0.0' ],
+        [ 8,                 '255.0.0.0' ],
+        [ 16,                '255.255.0.0' ],
+        [ 17,                '255.255.128.0' ],
+        [ 24,                '255.255.255.0' ],
+        [ 'default',         '0.0.0.0' ],
+        [ 32,                '255.255.255.255' ],
+        [ 'host',            '255.255.255.255' ],
+        [ 0xffffff00,        '255.255.255.0' ],
         [ '255.255.255.240', '255.255.255.240' ],
         [ '255.255.128.0',   '255.255.128.0' ],
-        [ $binword,       '255.255.0.0' ],
+        [ $binword,          '255.255.0.0' ],
     );
 
     for my $entry (@a) {
         for my $m (@m) {
             my $ip = new_cis_quiet("$entry->[0] $m->[0]");
-            SKIP: {
+          SKIP: {
                 skip "Failed to make an object for $entry->[0]/$m->[0]", 4
-                    unless defined $ip;
-                is($ip->addr, $entry->[1], "$entry->[0] / $m->[0] is $entry->[1]");
-                is($ip->mask, $m->[1], "$entry->[0] / $m->[0] is $m->[1]");
-                is($ip->bits, 32, "$entry->[0] / $m->[0] is 32 bits wide");
-                is($ip->version, 4, "$entry->[0] / $m->[0] is version 4");
-            };
+                  unless defined $ip;
+                is( $ip->addr, $entry->[1],
+                    "$entry->[0] / $m->[0] is $entry->[1]" );
+                is( $ip->mask,    $m->[1], "$entry->[0] / $m->[0] is $m->[1]" );
+                is( $ip->bits,    32, "$entry->[0] / $m->[0] is 32 bits wide" );
+                is( $ip->version, 4,  "$entry->[0] / $m->[0] is version 4" );
+            }
         }
     }
 };

@@ -11,14 +11,14 @@ my %addr = (
     '127.0.0.1/32'   => '127.0.0.1/32',
 );
 
-for my $key (sort keys %addr) {
+for my $key ( sort keys %addr ) {
     my $ip = NetAddr::IP->new($key);
 
-    cmp_ok("$ip", 'eq', $key,   "stringify eq address ($key)");
-    cmp_ok($ip,   'eq', $key,   "eq address ($key)");
-    cmp_ok($key,  'eq', $ip,    "address eq ip ($key)");
-    cmp_ok($ip,   'eq', $ip,    "ip eq ip ($key)");
-    cmp_ok($ip,   '==', $ip,    "ip num eq ip num ($key)");
+    cmp_ok( "$ip", 'eq', $key, "stringify eq address ($key)" );
+    cmp_ok( $ip,   'eq', $key, "eq address ($key)" );
+    cmp_ok( $key,  'eq', $ip,  "address eq ip ($key)" );
+    cmp_ok( $ip,   'eq', $ip,  "ip eq ip ($key)" );
+    cmp_ok( $ip,   '==', $ip,  "ip num eq ip num ($key)" );
 }
 
 done_testing;

@@ -9,17 +9,17 @@ use NetAddr::IP ();
 subtest 'DNS resolution check' => sub {
     my $ip = NetAddr::IP->new('arin.net');
     my $ip2;
-    if (defined $ip) {
+    if ( defined $ip ) {
         pass("resolved $ip");
         NetAddr::IP->import(':nofqdn');
         $ip2 = NetAddr::IP->new('arin.net');
     }
     else {
         pass('resolver not working');
-        skip('resolver not working', 1);
+        skip( 'resolver not working', 1 );
     }
 
-    ok(!defined $ip2, 'unexpected response with :nofqdn');
+    ok( !defined $ip2, 'unexpected response with :nofqdn' );
 };
 
 done_testing;
