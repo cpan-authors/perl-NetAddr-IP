@@ -2,6 +2,8 @@ Revision history for Perl extension NetAddr::IP
 
 {{$NEXT}}
 
+4.080_03  2026-09-30 23:07:41+10:00 Australia/Sydney (TRIAL RELEASE)
+
     Reformat the test files with perltidy's default profile. Nine of
     them were indented with tabs while the other 140 used spaces, and
     .editorconfig asks for four columns of spaces, so t/ is now
