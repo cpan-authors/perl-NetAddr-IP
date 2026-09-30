@@ -3,7 +3,7 @@
 # PODNAME: NetAddr::IP::UtilPP
 
 use strict;
-use warnings FATAL => 'all';
+use warnings;
 
 package NetAddr::IP::UtilPP;
 # VERSION

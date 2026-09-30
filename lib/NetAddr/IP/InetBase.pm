@@ -3,7 +3,7 @@
 # PODNAME: NetAddr::IP::InetBase
 
 use strict;
-use warnings FATAL => 'all';
+use warnings;
 
 package NetAddr::IP::InetBase;
 # VERSION
