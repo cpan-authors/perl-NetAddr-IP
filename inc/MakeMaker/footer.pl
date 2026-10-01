@@ -2,7 +2,13 @@ package MY;
 
 sub top_targets {
     my $inherited = shift->SUPER::top_targets(@_);
-    $main::begin . $inherited;
+    # $begin, not $main::begin. header.pl declares it as a file-scoped
+    # "my", and the two files are concatenated into one Makefile.PL, so the
+    # lexical is in scope here and closes over this sub. $main::begin is the
+    # package variable of a different thing entirely, is always unset, and
+    # meant the xs/config.h target in header.pl was never added to the
+    # Makefile.
+    $begin . $inherited;
 }
 
 sub postamble {

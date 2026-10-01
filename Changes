@@ -2,6 +2,47 @@ Revision history for Perl extension NetAddr::IP
 
 {{$NEXT}}
 
+    Fix the xs/config.h target never reaching the Makefile. The header
+    declares $begin as a file-scoped "my", and the footer referred to
+    $main::begin, which is the package variable of a different thing and
+    is always unset. MakeMaker concatenates the two into one Makefile.PL,
+    so the lexical is in scope and the reference should have been plain
+    $begin. Every build since 0da215c warned
+        Name "main::begin" used only once: possible typo
+        Use of uninitialized value $begin in concatenation (.) or string
+    and silently dropped the target, so "cd xs && configure" was never a
+    declared dependency of the top-level build. On the perls where that
+    warning is fatal the build could not start at all.
+
+    Re-enable the Windows test job, pure Perl only, so the runner needs
+    no C toolchain. It had been disabled long enough that the reason was
+    forgotten, and the reason was three separate things stacked on top of
+    each other:
+        - the job ran under a POSIX shell, where "perl" is the Cygwin perl
+          that Git Bash puts on PATH, and it has no ExtUtils::MakeMaker, so
+          the installer reported a core module as missing
+        - the flavour of make ExtUtils::MakeMaker writes a Makefile in
+          depends on the perl, 5.24 saying "dmake-style" and 5.26 saying
+          "gmake-style", and neither make works across the matrix
+        - the dependency install did not request the develop phase, which
+          the author tests in the distribution need
+    It now installs through cpm via the setup action, which also gets all
+    five author tests' prerequisites, and asks for gmake explicitly with
+    MAKE=gmake so the Makefile flavour does not vary with the perl.
+
+    Skip local/ in the author line-ending check. On Windows the setup
+    action installs dependencies into local/lib/perl5 inside the project
+    directory, and the file list is gathered when the distribution is
+    built, so the check was reading third-party modules and failing on
+    Data::Binary's line endings.
+
+    Verified on Windows, pure Perl, perl 5.24: 160 files and 3676 tests,
+    with the one failure above. t/013-util-binet_pton.t and
+    t/025-util-inet_pton.t, which hard-code the output of inet_ntop, both
+    pass, so the difference in GH#33 is glibc against BSD and does not
+    reach Windows. GH#33 stays open for macOS, which is not covered on
+    5.40 or below.
+
     Stop the SYNOPSIS of both modules importing behaviour-changing tags
     (GH#91). A SYNOPSIS invites pasting, and both lists pulled in every
     tag the module has. Pasted as written, NetAddr::IP's list warned
