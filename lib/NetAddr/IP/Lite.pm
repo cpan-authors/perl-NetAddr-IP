@@ -10,7 +10,7 @@ package NetAddr::IP::Lite;
 
 use parent 'Exporter';
 use Carp qw( croak );
-use Scalar::Util qw( looks_like_number );
+use Scalar::Util qw( blessed looks_like_number );
 
 use NetAddr::IP::Constants qw(
     $IPV6_BITS
@@ -437,27 +437,29 @@ Returns B<undef> if the difference is out of range.
 
 =cut
 
-my $_smsk = pack('L3N', 0xffffffff, 0xffffffff, 0xffffffff, 0x80000000);
+# the largest difference minus() returns; one more is allowed below zero
+my $_int32_max = 0x7fff_ffff;
 
 sub minus {
-    my $ip    = shift;
-    my $arg    = shift;
-    my $swapped    = shift;
+    my ($ip, $arg, $swapped) = @_;
     croak 'cannot subtract a NetAddr::IP::Lite object from a constant'
-    if $swapped;
-    unless (ref $arg) {
-    # negate numbers only, so plus() sees and rejects anything else
-    return plus($ip, looks_like_number($arg) ? -$arg : $arg);
+        if $swapped;
+    # A Math::BigInt is a reference too, so test for an address rather
+    # than for any reference. blessed first, or the isa call on an
+    # unblessed reference dies instead of being answered.
+    unless (blessed $arg && $arg->isa(__PACKAGE__)) {
+        # negate numbers only, so plus() sees and rejects anything else
+        return plus($ip, looks_like_number($arg) ? -$arg : $arg);
     }
-    my ($carry, $dif) = sub128($ip->{addr}, $arg->{addr});
-    if ($carry) {                    # value is positive
-    return undef if hasbits($dif & $_smsk);        # all sign bits should be 0's
-    return (unpack('L3N', $dif))[3];
-    }
-    else {
-    return undef if hasbits(($dif & $_smsk) ^ $_smsk);    # sign is 1's
-    return (unpack('L3N', $dif))[3] - 4294967296;
-    }
+    # subtract the lower address from the higher, then give the difference its sign
+    my ($sign, $high, $low) = $ip->{addr} lt $arg->{addr}
+        ? (-1, $arg->{addr}, $ip->{addr})
+        : (1, $ip->{addr}, $arg->{addr});
+    my (undef, $dif) = sub128($high, $low);
+    my $magnitude = (unpack('N4', $dif))[3];
+    my $limit = $sign > 0 ? $_int32_max : $_int32_max + 1;
+    return undef if hasbits($dif & $_v4mask) || $magnitude > $limit;
+    return $sign * $magnitude;
 }
 
 =item B<Auto-increment>
