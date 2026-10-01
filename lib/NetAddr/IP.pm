@@ -40,14 +40,12 @@ our $_netlimit;
     V4mask
     V4net
     netlimit
-    :aton
-    :lower
-    :upper
-    :old_storable
-    :old_nth
-    :rfc3021
-    :nofqdn
   );
+
+The import tags C<:lower>, C<:upper>, C<:old_storable>, C<:old_nth> and
+C<:nofqdn> change behaviour for the whole program, so each is shown
+where it applies; C<:aton> and C<:rfc3021> are listed under
+L</DEPRECATED>.
 
 NOTE: NetAddr::IP::Util has a full complement of network address
 utilities to convert back and forth between binary and text.
