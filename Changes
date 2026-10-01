@@ -30,14 +30,23 @@ Revision history for Perl extension NetAddr::IP
     five author tests' prerequisites, and asks for gmake explicitly with
     MAKE=gmake so the Makefile flavour does not vary with the perl.
 
-    Skip local/ in the author line-ending check. On Windows the setup
-    action installs dependencies into local/lib/perl5 inside the project
-    directory, and the file list is gathered when the distribution is
-    built, so the check was reading third-party modules and failing on
-    Data::Binary's line endings.
+    The Windows job does not set AUTHOR_TESTING, unlike the others. On
+    that platform the setup action installs dependencies into
+    local/lib/perl5 inside the project directory, and Test::EOF walks the
+    working directory, so the check was reading third-party modules and
+    failing on Data::Binary's trailing newlines. Test::EOF takes no file
+    list and no finder, so it cannot be pointed elsewhere. The five
+    author tests skip themselves without the variable. The four release
+    tests do not, and still run; they need the develop phase, which is
+    still installed, and they pass on Windows.
 
-    Verified on Windows, pure Perl, perl 5.24: 160 files and 3676 tests,
-    with the one failure above. t/013-util-binet_pton.t and
+    Skip local/ in the other line-ending check as well, the one built on
+    the EOLFiles finder, for the same reason. Both checks walk the tree
+    and neither can be given a file list from dist.ini.
+
+    Verified on Windows, pure Perl, perl 5.24: 160 files and 3676 tests
+    with the one failure above, and 2531 with it gone and the author
+    tests skipped. t/013-util-binet_pton.t and
     t/025-util-inet_pton.t, which hard-code the output of inet_ntop, both
     pass, so the difference in GH#33 is glibc against BSD and does not
     reach Windows. GH#33 stays open for macOS, which is not covered on
