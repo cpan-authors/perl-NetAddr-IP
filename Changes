@@ -2,6 +2,35 @@ Revision history for Perl extension NetAddr::IP
 
 {{$NEXT}}
 
+    Stop the SYNOPSIS of both modules importing behaviour-changing tags
+    (GH#91). A SYNOPSIS invites pasting, and both lists pulled in every
+    tag the module has. Pasted as written, NetAddr::IP's list warned
+    twice, for :aton and :rfc3021, and NetAddr::IP::Lite's warned
+    once, for :aton. Under "use warnings FATAL => 'all'" both died at
+    compile time, in a program that had only asked for Compact and
+    Zeros.
+
+    Worse, the tags change behaviour for the whole program rather than
+    returning something. A paste of the NetAddr::IP list also switched
+    on the legacy Storable and nth() behaviour, and its :lower did
+    nothing at all, because import() handles :lower before :upper, so
+    :upper wins whichever order they appear in.
+
+    Each list now names functions only. NetAddr::IP points at where
+    the tags are documented: :lower, :upper, :old_storable and
+    :nofqdn each have a one-line example where they apply, and :aton
+    and :rfc3021 are under DEPRECATED. Lite.pm is the smaller module
+    and gets no sentence, and its EXPORT_OK drops the tags to match
+    NetAddr::IP's, which lists functions only.
+
+    The tags themselves are unchanged and still import as before; this
+    is POD only. No test asserted the SYNOPSIS list, and none needed
+    changing.
+
+    Verified that each list now loads clean under both plain and FATAL
+    warnings, that all twelve tags across the two modules still import,
+    and podchecker is clean on both files.
+
 4.080_03  2026-09-30 23:07:41+10:00 Australia/Sydney (TRIAL RELEASE)
 
     Reformat the test files with perltidy's default profile. Nine of
