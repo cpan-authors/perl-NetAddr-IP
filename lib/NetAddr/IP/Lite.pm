@@ -62,11 +62,6 @@ our $AUTOLOAD;
       Ones
       V4mask
       V4net
-      :aton
-      :old_nth
-      :upper
-      :lower
-      :nofqdn
   );
 
   my $ip = NetAddr::IP::Lite->new('192.0.2.1');
@@ -1683,11 +1678,6 @@ sub import {
   Ones
   V4mask
   V4net
-  :aton        DEPRECATED
-  :old_nth
-  :upper
-  :lower
-  :nofqdn
 
 =head1 DEPRECATED
 
