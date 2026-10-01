@@ -15,6 +15,7 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
+
   build:
     name: Build distribution
     runs-on: ubuntu-latest
@@ -38,6 +39,7 @@ jobs:
           name: build_dir
           path: build_dir
           if-no-files-found: error
+
   test_linux:
     runs-on: ubuntu-latest
     name: Perl ${{ matrix.perl-version }} on ubuntu-latest
@@ -92,6 +94,7 @@ jobs:
           perl Makefile.PL
           make
           make test
+
   test_linux_pureperl:
     runs-on: ubuntu-latest
     name: Perl ${{ matrix.perl-version }} on ubuntu-latest (pure Perl)
@@ -130,6 +133,7 @@ jobs:
           perl Makefile.PL -noxs
           make
           make test
+
   test_macos:
     runs-on: ${{ matrix.os }}
     strategy:
@@ -182,20 +186,15 @@ jobs:
           make test
         env:
           AUTHOR_TESTING: 1
+
   test_windows_pureperl:
     runs-on: ${{ matrix.os }}
     strategy:
       fail-fast: false
       matrix:
         os: ["windows-latest"]
-        perl-version:
-          # 5.10 and 5.12 are left out until the setup action can provide
-          # them: https://github.com/shogo82148/actions-setup-perl/issues/223
-          - "5.24"
-          - "5.26"
-          - "5.28"
-          - "5.30"
-    name: Perl ${{ matrix.perl-version }} on ${{ matrix.os }} (pure Perl)
+        perl-version: ["5.24", "5.26", "5.28", "5.30"]
+    name: "Perl ${{ matrix.perl-version }} on ${{ matrix.os }} (pure Perl)"
     needs: build
     steps:
       - uses: actions/checkout@v6
@@ -208,34 +207,52 @@ jobs:
         with:
           name: build_dir
           path: .
-      - uses: perl-actions/setup-cpm@v1
+      # No shell: bash anywhere in this job. Git Bash prepends its own
+      # /usr/bin to PATH, where there is a Cygwin perl 5.42.3 with no
+      # ExtUtils::MakeMaker, so every step ran against the wrong perl and
+      # the installer reported a core module as missing.
+      #
+      # cpm via the setup action, not cpm as a separate step and not cpanm.
+      # The separate setup-cpm step ships a cpm that needs installing first.
+      # cpanm ran and appeared to succeed, 49 distributions, but silently
+      # skipped three: Test::CPAN::Meta, Test::EOL and Test::NoBreakpoints
+      # were fetched and configured and never installed, which left three
+      # author tests unable to load. This route gets all of them.
+      #
+      # --with-develop is required, not optional. The build_dir artifact
+      # contains five author tests whose prerequisites are in the develop
+      # phase of the cpanfile, and the disabled job never installed them.
+      - name: install deps
+        uses: shogo82148/actions-setup-perl@v1
         with:
-          version: compat
-      # setup-cpm with version "compat" ships skaji-cpm 1.1.5, a plain
-      # script rather than a fat-packed one, so it needs its own
-      # prerequisites already installed. CPAN::Meta::Requirements is core
-      # in perl, but Strawberry Perl prunes core modules it does not
-      # ship, and cpm dies at compile time without it:
-      #   Can't locate CPAN/Meta/Requirements.pm in @INC
-      - name: Install cpm's prerequisite
-        shell: bash
-        run: cpanm --notest CPAN::Meta::Requirements
-      - name: install deps using cpanm
-        shell: bash
-        run: cpm install -g
-              --cpanfile cpanfile
-              --with-develop
-              --with-recommends
-              --with-suggests
-              --mirror https://cpan.metacpan.org
-      - run: perl -V
-        shell: bash
+          perl-version: ${{ matrix.perl-version }}
+          distribution: strawberry
+          install-modules-with: cpm
+          install-modules-args: --with-develop --with-recommends --with-suggests
+      - name: which perl is in use
+        run: |
+          (Get-Command perl).Source
+          perl -V:version -V:archname -V:osname
+          perl -MExtUtils::MakeMaker -e 'print "EUMM $ExtUtils::MakeMaker::VERSION\n"'
       - name: Build and test the distribution
         # Pure Perl only, so the runner needs no C toolchain. Strawberry Perl
         # ships a compiler, but nothing here should pay for building XS.
-        shell: bash
+        #
+        # MAKE=gmake, and gmake to run it, because the flavour EUMM picks
+        # by default depends on the perl: 5.24 says "Generating a
+        # dmake-style Makefile" and 5.26 says "Generating a gmake-style
+        # Makefile". Strawberry also warns that dmake is no longer part of
+        # the distribution and to use gmake instead, so gmake is the flavour
+        # to ask for on every version. EUMM reads the MAKE value's basename
+        # when deciding which quirks to apply, so this is the documented way
+        # to pin it, and MAKE is recorded in the generated Makefile and in
+        # its own distdir rule, so a rebuild from the tarball keeps it.
+        #
+        # dmake over this fails on 5.24 with "gmake: *** [blibdirs] Error 2",
+        # and gmake over it fails the other way round, so neither works
+        # across the matrix without pinning the flavour.
         run: |
-          perl Makefile.PL -noxs
+          perl Makefile.PL -noxs MAKE=gmake
           gmake
           gmake test
         env:
