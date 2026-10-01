@@ -2,6 +2,15 @@ Revision history for Perl extension NetAddr::IP
 
 {{$NEXT}}
 
+    Correct the :nofqdn example in NetAddr::IP's POD (GH#92). The
+    FQDN paragraph under new() told the reader to load NetAddr::IP::Lite,
+    which works, since the flag lives there and both modules read it, but
+    every other tag example on that page imports through NetAddr::IP and
+    a reader of the NetAddr::IP page has no reason to load Lite. Both
+    forms set the same $NetAddr::IP::Lite::NoFQDN, checked here, and
+    t/124-nofqdn.t already covers the tag arriving through NetAddr::IP.
+    POD only.
+
     Fix the xs/config.h target never reaching the Makefile. The header
     declares $begin as a file-scoped "my", and the footer referred to
     $main::begin, which is the package variable of a different thing and
