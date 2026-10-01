@@ -590,7 +590,7 @@ A Fully Qualified Domain Name which returns an ipV4 address or an ipV6
 address, embodied in that order. This previously undocumented feature
 may be disabled with:
 
-  use NetAddr::IP::Lite ':nofqdn';
+  use NetAddr::IP qw(:nofqdn);
 
 If called with no arguments, 'default' is assumed. An explicit undef
 argument returns undef.
