@@ -50,8 +50,6 @@ END
     }
 }
 
-my $begin = '';
-
 while ($useXS) {
     local $ENV{TMPDIR} = File::Spec->tmpdir() if $^O eq 'android';
 
@@ -85,13 +83,6 @@ while ($useXS) {
 |;
     close F;
 
-    $begin = q|
-config  :: xs/config.h
-	@$(NOOP)
-
-xs/config.h :
-	cd xs && $(SHELL) configure
-|;
     last;
 }
 
@@ -159,25 +150,30 @@ close F;
 #
 our @mm_args;
 if ($useXS) {
+    # Extra libraries configure found, from "#define LIBS -lnsl -lsocket".
+    # Read before the list is built: this used to replace @mm_args[-1],
+    # which is depend's hash ref, not LIBS', so the libraries turned
+    # depend into an array ref and EUMM died before writing a Makefile.
+    my @libs;
+    if (open(my $fh, 'xs/config.h')) {
+        while (<$fh>) {
+            if (/^#define LIBS\s+(.+)/) {
+                @libs = ($1);
+                last;
+            }
+        }
+        close $fh;
+    }
+
     @mm_args = (
         NAME   => 'NetAddr::IP::Util',
         XS     => { 'xs/Util.xs' => 'lib/NetAddr/IP/Util.c' },
         C      => ['lib/NetAddr/IP/Util.c'],
         OBJECT => 'lib/NetAddr/IP/Util.o',
         INC    => '-Ixs',
-        LIBS   => [],
+        LIBS   => \@libs,
         depend => { 'lib/NetAddr/IP/Util.c' => 'xs/localconf.h xs/config.h' },
     );
-
-    if (open(my $fh, 'xs/config.h')) {
-        while (<$fh>) {
-            if (/^#define LIBS\s+(.+)/) {
-                $mm_args[-1] = [$1];    # replace LIBS value
-                last;
-            }
-        }
-        close $fh;
-    }
 }
 
 sub _test_cc {
