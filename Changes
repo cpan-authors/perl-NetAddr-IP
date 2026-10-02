@@ -11,17 +11,36 @@ Revision history for Perl extension NetAddr::IP
     t/124-nofqdn.t already covers the tag arriving through NetAddr::IP.
     POD only.
 
-    Fix the xs/config.h target never reaching the Makefile. The header
-    declares $begin as a file-scoped "my", and the footer referred to
-    $main::begin, which is the package variable of a different thing and
-    is always unset. MakeMaker concatenates the two into one Makefile.PL,
-    so the lexical is in scope and the reference should have been plain
-    $begin. Every build since 0da215c warned
+    Fix LIBS from configure reaching ExtUtils::MakeMaker by the wrong
+    name (GH#95). header.pl read xs/config.h and then replaced
+    @mm_args[-1], which is depend's hash ref rather than LIBS', so the
+    libraries turned depend into an array ref, LIBS stayed empty, and
+    EUMM died before writing a Makefile:
+        WARNING: depend takes a HASH reference not a ARRAY reference
+        Not a HASH reference at ExtUtils/MakeMaker.pm line 837
+    Any library configure had to add, which is libnsl or libsocket on
+    illumos and older Solaris, was enough to do it. config.h is only
+    rewritten when it is missing, so the tree then stayed broken until it
+    was deleted by hand. Read the file first and pass the libraries by
+    name now.
+
+    Stop emitting the xs/config.h make rule, and stop referring to $begin
+    to do it (GH#93). The rule ran xs/configure, a script this
+    distribution has not shipped since 4.069, so it could never succeed;
+    it only stayed out of the Makefile by accident, because the footer
+    referred to $main::begin, which is the package variable of a
+    different thing and is always unset. Every build warned
         Name "main::begin" used only once: possible typo
         Use of uninitialized value $begin in concatenation (.) or string
-    and silently dropped the target, so "cd xs && configure" was never a
-    declared dependency of the top-level build. On the perls where that
-    warning is fatal the build could not start at all.
+    and on the perls where that is fatal the build could not start.
+    Remove the reference and the warnings go; remove the rule and the
+    generated Makefile is byte for byte what it was before, and a
+    missing xs/config.h stops the build with make's own
+        No rule to make target 'xs/config.h', needed by 'Util.c'
+    rather than a failed script. The depend entry still lists it as a
+    prerequisite. Makefile.PL itself probes configure.gcc, then
+    configure.cc, then falls back to pure Perl before writing anything,
+    which a make rule cannot repeat.
 
     Re-enable the Windows test job, pure Perl only, so the runner needs
     no C toolchain. It had been disabled long enough that the reason was
