@@ -32,7 +32,13 @@ Revision history for Perl extension NetAddr::IP
     different thing and is always unset. Every build warned
         Name "main::begin" used only once: possible typo
         Use of uninitialized value $begin in concatenation (.) or string
-    and on the perls where that is fatal the build could not start.
+    and then carried on. No perl makes those fatal. The generated
+    Makefile.PL enables warnings with a plain "use warnings", which
+    [MakeMaker::Awesome] puts there, so both messages printed, the
+    Makefile was written and the suite passed, on every perl in the
+    matrix. Only a caller that imposes fatal warnings on the whole
+    process, as PERL5OPT=-Mwarnings=FATAL does, turns the first one into
+    a build that stops.
     Remove the reference and the warnings go; remove the rule and the
     generated Makefile is byte for byte what it was before, and a
     missing xs/config.h stops the build with make's own
