@@ -55,8 +55,6 @@ END
     }
 }
 
-my $begin = '';
-
 while ($useXS) {
     local $ENV{TMPDIR} = File::Spec->tmpdir() if $^O eq 'android';
 
@@ -90,13 +88,6 @@ while ($useXS) {
 |;
     close F;
 
-    $begin = q|
-config  :: xs/config.h
-	@$(NOOP)
-
-xs/config.h :
-	cd xs && $(SHELL) configure
-|;
     last;
 }
 
@@ -228,12 +219,6 @@ EOF
         }
     }
     return undef;
-}
-
-sub MY::top_targets {
-    package MY;
-    my $inherited = shift->SUPER::top_targets(@_);
-    $begin . $inherited;
 }
 
 sub MY::postamble {
