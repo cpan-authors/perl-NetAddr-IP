@@ -83,8 +83,11 @@ Revision history for Perl extension NetAddr::IP
     tests skipped. t/013-util-binet_pton.t and
     t/025-util-inet_pton.t, which hard-code the output of inet_ntop, both
     pass, so the difference in GH#33 is glibc against BSD and does not
-    reach Windows. GH#33 stays open for macOS, which is not covered on
-    5.40 or below.
+    reach Windows. GH#33 is closed as unreproduced: all forty macOS jobs
+    pass, ten perls from 5.24 across four images, with Socket6 built
+    into each so libc, not the pure Perl fallback, is under test. The
+    tests still assert the rendered string, so a libc rendering these
+    three addresses differently would fail them again.
 
     Stop the SYNOPSIS of both modules importing behaviour-changing tags
     (GH#91). A SYNOPSIS invites pasting, and both lists pulled in every
