@@ -383,14 +383,11 @@ and produce text following RFC 5952 s4.  Which case they produce depends
 on the process-wide setting described under L<NetAddr::IP::InetBase>,
 except for C<ipv6_ntoa> and C<inet_ntop>, which are always lowercase.
 
+=head1 FUNCTIONS
+
+=head2 Text to binary
+
 =over 4
-
-=item $dotquad = inet_ntoa($netaddr);
-
-Convert a packed IPv4 network address to a dot-quad IP address.
-
-  input:    packed network address
-  returns:  IP address i.e. 10.4.12.123
 
 =item $netaddr = inet_aton($dotquad);
 
@@ -407,6 +404,34 @@ address.
 
   input:    ipv6 text
   returns:  128 bit RDATA string, or undef
+
+=item $ipv6naddr = inet_any2n($dotquad or $ipv6_text);
+
+This function converts a text IPv4 or IPv6 address in text format in any
+standard notation into a 128 bit IPv6 string address. It prefixes any
+dot-quad address (if found) with '::' and passes it to B<ipv6_aton>.
+
+  input:    dot-quad or RFC 4291 s2.2 address
+  returns:  128 bit IPv6 string
+
+=item $netaddr = inet_pton($AF_family,$hex_text);
+
+This function takes an IP address in IPv4 or IPv6 text format and converts it into
+binary format. The type of IP address conversion is controlled by the FAMILY
+argument.
+
+=back
+
+=head2 Binary to text
+
+=over 4
+
+=item $dotquad = inet_ntoa($netaddr);
+
+Convert a packed IPv4 network address to a dot-quad IP address.
+
+  input:    packed network address
+  returns:  IP address i.e. 10.4.12.123
 
 =item $ipv6_text = ipv6_ntoa($ipv6naddr);
 
@@ -435,54 +460,66 @@ representation.
   input:    128 bit RDATA string
   returns:  x:x:x:x:x:x:d.d.d.d
 
-=item $ipv6naddr = inet_any2n($dotquad or $ipv6_text);
+=item $dotquad or $hex_text = inet_n2dx($ipv6naddr);
 
-This function converts a text IPv4 or IPv6 address in text format in any
-standard notation into a 128 bit IPv6 string address. It prefixes any
-dot-quad address (if found) with '::' and passes it to B<ipv6_aton>.
-
-  input:    dot-quad or RFC 4291 s2.2 address
-  returns:  128 bit IPv6 string
-
-=item $rv = hasbits($bits128);
-
-This function returns true if there are one's present in the 128 bit string
-and false if all the bits are zero.
-
-  i.e.    if (hasbits($bits128)) {
-      &do_something;
-    }
-
-  or    if (hasbits($bits128 & $mask128)) {
-      &do_something;
-    }
-
-This allows the implementation of logical functions of the form of:
-
-    if ($bits128 & $mask128) {
-        ...
+This function B<does the right thing> and returns the text for either a
+dot-quad IPv4 or a hex notation IPv6 address.
 
   input:    128 bit IPv6 string
-  returns:  true if any bits are present
+  returns:  ddd.ddd.ddd.ddd
+        or  x:x:x:x:x:x:x:x
 
-=item $ipv6naddr = inet_4map6($netaddr or $ipv6naddr);
+=item $dotquad or $dec_text = inet_n2ad($ipv6naddr);
 
-Return an IPv4-mapped IPv6 address: the first 80 bits zero, the next 16
-bits one, and the low 32 bits the IPv4 address.  RFC 4291 s2.5.5.2.
+This function B<does the right thing> and returns the text for either a
+dot-quad IPv4 or a hex::decimal notation IPv6 address.
 
-  input:    4 byte packed IPv4
-        or  16 byte packed IPv6 already in one of the two
-            IPv4-embedded spaces
-  returns:  16 byte packed IPv6
-        or  undef
+  input:    128 bit IPv6 string
+  returns:  ddd.ddd.ddd.ddd
+        or  x:x:x:x:x:x:ddd.ddd.ddd.ddd
 
-  my $mapped = inet_4map6(inet_aton('192.0.2.1'));
-  print ipv6_n2x($mapped);     # 0:0:0:0:0:FFFF:C000:201
+=item $hex_text = inet_ntop($AF_family,$netaddr);
 
-An IPv6 input must already be in one of the two IPv4-embedded spaces.
-i.e.
+This function takes and IP address in binary format and converts it into
+text format. The type of IP address conversion is controlled by the FAMILY
+argument.
 
-  ::ffff:d.d.d.d    or    ::d.d.d.d
+NOTE: inet_ntop ALWAYS returns lowercase characters.
+
+=item $hex_text = packzeros($hex_text);
+
+Shortens an eight-group IPv6 hex address by substituting B<::> for the
+longest run of zero groups, per RFC 5952 s4.2.1.  Where two runs are
+equally long the first is shortened, s4.2.3, and a run of one zero group
+is never shortened at all, s4.2.2.  Case follows the current setting,
+which is uppercase by default here.
+
+  print packzeros('0:0:0:0:0:ffff:c000:201');   # ::FFFF:C000:201
+  print packzeros('2001:db8:0:1:1:1:1:1');      # 2001:DB8:0:1:1:1:1:1
+  print packzeros('2001:db8:0:0:1:0:0:1');      # 2001:DB8::1:0:0:1
+  print packzeros('2001:db8:0:1:1:0:0:1');      # 2001:DB8:0:1:1::1
+  print packzeros('2001:0db8:0:1:2:3:4:5');     # 2001:DB8:0:1:2:3:4:5
+  print packzeros('2001:db8:0:0:1:0:0:1:1');   # 2001::1:0:0:1:1
+
+=back
+
+=head2 Case
+
+=over 4
+
+=item NetAddr::IP::Util::lower();
+
+Return IPv6 strings in lowercase.
+
+=item NetAddr::IP::Util::upper();
+
+Return IPv6 strings in uppercase.  This is the default.
+
+=back
+
+=head2 Family tests
+
+=over 4
 
 =item $rv = isIPv4($bits128);
 
@@ -512,52 +549,32 @@ the low 32 bits, of either form
 which is the union of the RFC 4291 s2.5.5.1 compatible prefix and the
 s2.5.5.2 mapped prefix.
 
-=item $dotquad or $hex_text = inet_n2dx($ipv6naddr);
+=item $rv = hasbits($bits128);
 
-This function B<does the right thing> and returns the text for either a
-dot-quad IPv4 or a hex notation IPv6 address.
+This function returns true if there are one's present in the 128 bit string
+and false if all the bits are zero.
+
+  i.e.    if (hasbits($bits128)) {
+      &do_something;
+    }
+
+  or    if (hasbits($bits128 & $mask128)) {
+      &do_something;
+    }
+
+This allows the implementation of logical functions of the form of:
+
+    if ($bits128 & $mask128) {
+        ...
 
   input:    128 bit IPv6 string
-  returns:  ddd.ddd.ddd.ddd
-        or  x:x:x:x:x:x:x:x
+  returns:  true if any bits are present
 
-=item $dotquad or $dec_text = inet_n2ad($ipv6naddr);
+=back
 
-This function B<does the right thing> and returns the text for either a
-dot-quad IPv4 or a hex::decimal notation IPv6 address.
+=head2 Widening and narrowing
 
-  input:    128 bit IPv6 string
-  returns:  ddd.ddd.ddd.ddd
-        or  x:x:x:x:x:x:ddd.ddd.ddd.ddd
-
-=item $netaddr = inet_pton($AF_family,$hex_text);
-
-This function takes an IP address in IPv4 or IPv6 text format and converts it into
-binary format. The type of IP address conversion is controlled by the FAMILY
-argument.
-
-=item $hex_text = inet_ntop($AF_family,$netaddr);
-
-This function takes and IP address in binary format and converts it into
-text format. The type of IP address conversion is controlled by the FAMILY
-argument.
-
-NOTE: inet_ntop ALWAYS returns lowercase characters.
-
-=item $hex_text = packzeros($hex_text);
-
-Shortens an eight-group IPv6 hex address by substituting B<::> for the
-longest run of zero groups, per RFC 5952 s4.2.1.  Where two runs are
-equally long the first is shortened, s4.2.3, and a run of one zero group
-is never shortened at all, s4.2.2.  Case follows the current setting,
-which is uppercase by default here.
-
-  print packzeros('0:0:0:0:0:ffff:c000:201');   # ::FFFF:C000:201
-  print packzeros('2001:db8:0:1:1:1:1:1');      # 2001:DB8:0:1:1:1:1:1
-  print packzeros('2001:db8:0:0:1:0:0:1');      # 2001:DB8::1:0:0:1
-  print packzeros('2001:db8:0:1:1:0:0:1');      # 2001:DB8:0:1:1::1
-  print packzeros('2001:0db8:0:1:2:3:4:5');     # 2001:DB8:0:1:2:3:4:5
-  print packzeros('2001:db8:0:0:1:0:0:1:1');   # 2001::1:0:0:1:1
+=over 4
 
 =item $ipv6naddr = ipv4to6($netaddr);
 
@@ -598,6 +615,31 @@ Truncate the upper 96 bits of a 128 bit address and return the lower
 
   input:    128 bit network address
   returns:  32 bit inet_aton network address
+
+=item $ipv6naddr = inet_4map6($netaddr or $ipv6naddr);
+
+Return an IPv4-mapped IPv6 address: the first 80 bits zero, the next 16
+bits one, and the low 32 bits the IPv4 address.  RFC 4291 s2.5.5.2.
+
+  input:    4 byte packed IPv4
+        or  16 byte packed IPv6 already in one of the two
+            IPv4-embedded spaces
+  returns:  16 byte packed IPv6
+        or  undef
+
+  my $mapped = inet_4map6(inet_aton('192.0.2.1'));
+  print ipv6_n2x($mapped);     # 0:0:0:0:0:FFFF:C000:201
+
+An IPv6 input must already be in one of the two IPv4-embedded spaces.
+i.e.
+
+  ::ffff:d.d.d.d    or    ::d.d.d.d
+
+=back
+
+=head2 Arithmetic
+
+=over 4
 
 =item $bitsXn = shiftleft($bits128,$n);
 
@@ -663,6 +705,12 @@ rightmost '0's are removed.
             contiguous one's,
         128 bit cidr number
 
+=back
+
+=head2 Decimal strings
+
+=over 4
+
 =item $bcdtext = bin2bcd($bits128);
 
 Convert a 128 bit binary string into binary coded decimal text digits.
@@ -717,13 +765,11 @@ Convert a bcd text string to 128 bit string variable
 #
 #Similar to pack("H*", $bcdtext);
 
-=item $modetext = mode;
+=back
 
-Returns the operating mode of this module.
+=head2 Resolver
 
-    input:     none
-    returns:  "Pure Perl"
-           or "CC XS"
+=over 4
 
 =item ($name,$aliases,$addrtype,$length,@addrs)=naip_gethostbyname(NAME);
 
@@ -759,15 +805,22 @@ This function returns TRUE if Socket6 has a functioning B<gethostbyname2>,
 otherwise it returns FALSE. See the comments above about the behavior of
 B<naip_gethostbyname>.
 
-=item NetAddr::IP::Util::lower();
+=back
 
-Return IPv6 strings in lowercase.
+=head2 Build mode
 
-=item NetAddr::IP::Util::upper();
+=over 4
 
-Return IPv6 strings in uppercase.  This is the default.
+=item $modetext = mode;
+
+Returns the operating mode of this module.
+
+    input:     none
+    returns:  "Pure Perl"
+           or "CC XS"
 
 =back
+
 
 =head1 EXAMPLES
 

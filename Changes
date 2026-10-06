@@ -2,6 +2,54 @@ Revision history for Perl extension NetAddr::IP
 
 {{$NEXT}}
 
+    Group the remaining method and function entries (GH#100, C2 and the
+    grouped layout). IP.pm was grouped in the previous commit; this does
+    the other four.
+
+      Util.pm      34 entries into Text to binary, Binary to text, Case,
+                   Family tests, Widening and narrowing, Arithmetic,
+                   Decimal strings, Resolver, Build mode
+      InetBase.pm  21 entries into Text to binary, Binary to text,
+                   Family tests, Address family, Short IPv4 text, Case
+      UtilPP.pm    13 entries into Family test and shift, Arithmetic,
+                   Widening and narrowing, Decimal strings
+      Lite.pm      27 entries into the six groups it has, the same names
+                   IP.pm uses where they overlap
+
+    Each entry block was moved whole and checked to have survived
+    verbatim, and both the definition count and the POD item count are
+    unchanged in all six modules:
+
+      IP.pm       31 subs, 67 items
+      Lite.pm     50 subs, 39 items
+      Util.pm      7 subs, 41 items
+      InetBase.pm 29 subs, 25 items
+      UtilPP.pm   28 subs, 13 items
+      Constants.pm 0 subs, 14 items
+
+    Two things worth recording about how this went.
+
+    podchecker needs =head2 outside an =over, so each group is its own
+    list rather than headings inside one list. It also needs a blank line
+    before =back, or the =back is swallowed as ordinary text and the list
+    reads as unclosed. That only bit one group, because the group whose
+    entries happened to be last in the old order had no trailing blank
+    line to inherit. The error pointed at the next =head2, which sent the
+    first two attempts looking for an imbalance that was not there; the
+    cause only showed up when the block was reproduced in three lines.
+
+    UtilPP.pm had two =head1 DESCRIPTION sections, one of them a single
+    line left over from the step 2 rewrite, and no FUNCTIONS heading at
+    all. Both fixed here.
+
+    C3 finished at the same time: INSTALLATION is now gone from every
+    module. It was already gone from Util.pm, InetBase.pm, UtilPP.pm and
+    Constants.pm; IP.pm and Lite.pm still had it, so the build steps live
+    in README.md alone, and the two pages point at it from DESCRIPTION.
+    Nothing linked to the removed sections.
+
+    Documentation only, no code change.
+
     Fix README.md (GH#100, step 4, the last one). It had errors of its own,
     and three of them meant a reader's first attempt at the advanced
     methods died.
