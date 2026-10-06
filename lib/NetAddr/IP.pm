@@ -32,116 +32,79 @@ our $_netlimit;
 
 =head1 SYNOPSIS
 
-  use NetAddr::IP qw(
-    Compact
-    Coalesce
-    Zeros
-    Ones
-    V4mask
-    V4net
-    netlimit
-  );
+  use NetAddr::IP qw(Compact Coalesce);
+  use NetAddr::IP::Util qw(inet_aton);
 
-The import tags C<:lower>, C<:upper>, C<:old_storable>, C<:old_nth> and
-C<:nofqdn> change behaviour for the whole program, so each is shown
-where it applies; C<:aton> and C<:rfc3021> are listed under
-L</DEPRECATED>.
+  my $ip = NetAddr::IP->new('192.0.2.1/24');
 
-NetAddr::IP::Util has the full complement of network address utilities
-for converting between binary and text:
+  print $ip->addr, "\n";         # 192.0.2.1
+  print $ip->mask, "\n";         # 255.255.255.0
+  print $ip->network, "\n";      # 192.0.2.0/24
+  print $ip->broadcast, "\n";    # 192.0.2.255/24
+  print "$ip\n";                 # 192.0.2.1/24
 
-inet_aton, inet_ntoa,  ipv6_aton,  ipv6_ntoa
-ipv6_n2x,  ipv6_n2d,   inet_any2n, inet_n2dx,
-inet_n2ad, ipanyto6,    ipv6to4
-
-See L<NetAddr::IP::Util>
-
-  my $ip = NetAddr::IP->new('192.0.2.1');
-  # from a packed IPv4 address
-  $ip = NetAddr::IP->new_from_aton(inet_aton('192.0.2.1'));
-  # from an octal filtered IPv4 address
-  $ip = NetAddr::IP->new_no('192.012.0.0');
-
-  print 'The address is ', $ip->addr, ' with mask ', $ip->mask, "\n";
-
-  if ($ip->within(NetAddr::IP->new('192.0.2.0', '255.255.255.224'))) {
-      print "Is within 192.0.2.0/27\n";
+  if ($ip->within(NetAddr::IP->new('192.0.2.0', 24))) {
+      print "within the /24\n";                  # within the /24
   }
 
-  # This prints 192.0.2.1/32
-  print "You can also say $ip...\n";
+  my $next = $ip + 5;            # 192.0.2.6/24
+  my @hosts = $ip->hostenum;     # every usable address, 254 of them
+  my @halves = $ip->split(25);   # 192.0.2.0/25, 192.0.2.128/25
 
-* The following four functions return 128-bit vectors; the following shows
-their string form via C<ipv6_n2x()>:
+  my @merged = Compact(@subnets);        # merge adjacent subnets
+  my $one     = Coalesce(24, 2, @subnets);   # summarise
 
-  ::                                       = Zeros();
-  FFFF:FFFF:FFFF:FFFF:FFFF:FFFF:FFFF:FFFF  = Ones();
-  FFFF:FFFF:FFFF:FFFF:FFFF:FFFF::          = V4mask();
-  ::FFFF:FFFF                              = V4net();
+  my $v6 = NetAddr::IP->new('2001:db8::1');
+  print $v6->addr, "\n";         # 2001:DB8:0:0:0:0:0:1
+  print $v6->cidr, "\n";         # 2001:DB8:0:0:0:0:0:1/128
 
-  Will also return an ipV4 or ipV6 representation of a
-  resolvable Fully Qualified Domain Name (FQDN).
+  # from a packed IPv4 address, or an octal filtered one
+  my $a = NetAddr::IP->new_from_aton(inet_aton('192.0.2.1'));
+  my $b = NetAddr::IP->new_no('192.012.0.0');
 
-* To enable usage of legacy data files containing NetAddr::IP
-  objects stored using the L<Storable> module.
+The other entry points are Zeros, Ones, V4mask and V4net, which return
+128 bit vectors, and netlimit, described under L</FUNCTIONS>.
 
-  use NetAddr::IP qw(:old_storable);
+=head1 IMPORT TAGS
 
-* To compact many smaller subnets (see: C<$me-E<gt>compact($addr1,$addr2,...)>)
+Every tag here is process-wide: it changes behaviour for the whole
+program, not for one object, and each is shown where it applies.
 
-  @compacted_object_list = Compact(@object_list)
+=over 4
 
-* Return a reference to list of C<NetAddr::IP> subnets of
-C<$masklen> mask length, when C<$number> or more addresses from
-C<@list_of_subnets> are found to be contained in said subnet.
+=item C<:lower> and C<:upper>
 
-  $arrayref = Coalesce($masklen, $number, @list_of_subnets)
-
-* By default B<NetAddr::IP> functions and methods return string IPv6
-addresses in uppercase.  To change that to lowercase:
-
-NOTE: the AUGUST 2010 RFC5952 states:
-
-  4.3. Lowercase
-
-    The characters "a", "b", "c", "d", "e", and "f" in an IPv6
-    address MUST be represented in lowercase.
-
-It is recommended that all NEW applications using NetAddr::IP be
-invoked as shown on the next line.
+By default the library returns IPv6 text in uppercase. Import C<:lower>
+for lowercase, which RFC 5952 s4.3 recommends:
 
   use NetAddr::IP qw(:lower);
 
-* To ensure the current IPv6 string case behavior even if the default changes:
+  use NetAddr::IP qw(:upper);   # pin it, whatever the default becomes
 
-  use NetAddr::IP qw(:upper);
+=item C<:nofqdn>
 
-* To set a limit on the size of B<nets> processed or returned by NetAddr::IP.
+Turn off resolving a fully qualified domain name in the constructor,
+which is otherwise done for you:
 
-Set the maximum number of nets beyond which NetAddr::IP will return
-an error as a power of 2 (default 16 or 65536 nets). Each 2**16
-consumes approximately 4 megs of memory. A 2**20 consumes 64 megs of
-memory, A 2**24 consumes 1 gigabyte of memory.
+  use NetAddr::IP qw(:nofqdn);
 
-  use NetAddr::IP qw(netlimit);
-  netlimit 20;
+=item C<:old_storable>
 
-The maximum B<netlimit> allowed is 2**24. Attempts to set limits below
-the default of 16 or above the maximum of 24 are ignored.
+Read legacy data files holding objects stored with L<Storable> before
+this module had its own serialisation hooks:
 
-Returns true on success, otherwise C<undef>.
+  use NetAddr::IP qw(:old_storable);
 
-=cut
+=item C<:old_nth>
 
-$_netlimit = 2 ** $DEFAULT_NETLIMIT_EXP;    # default
+Restore the pre-4.00 C<nth()> and C<num()> behaviour, which counted the
+broadcast address and had a undef zeroth index:
 
-sub netlimit($) {
-    return undef unless $_[0];
-    return undef if $_[0] =~ /[^0-9]/;
-    return undef if $_[0] < $DEFAULT_NETLIMIT_EXP;
-    return undef if $_[0] > $MAX_NETLIMIT_EXP;
-    $_netlimit = 2 ** $_[0];
-};
+  use NetAddr::IP qw(:old_nth);
+
+=back
+
+C<:aton> and C<:rfc3021> are listed under L</DEPRECATED>.
 
 =head1 INSTALLATION
 
@@ -162,6 +125,43 @@ type:
   make
   make test
   make install
+
+=head1 FUNCTIONS
+
+=head2 netlimit
+
+  use NetAddr::IP qw(netlimit);
+  netlimit 20;
+
+Sets the maximum number of nets beyond which the library will return an
+error, as a power of 2.  The default is C<$DEFAULT_NETLIMIT_EXP>, or
+C<2**16 = 65536> nets.  Each C<2**16> consumes roughly 4 MB, so C<2**20>
+is about 64 MB and C<2**24> about 1 GB.
+
+Returns the new limit, C<2**$n>, or undef if the request was ignored.
+Anything below the default of 16 or above the maximum of 24 is ignored,
+as is a non-numeric argument:
+
+  netlimit(20);        # 1048576
+  netlimit(16);        # 65536, the default
+  netlimit(24);        # 16777216, the maximum
+  netlimit(10);        # undef, below the default
+  netlimit(25);        # undef, above the maximum
+
+C<hostenum()> and C<hostenumref()> die with C<netlimit exceeded> past
+this limit, rather than returning a partial list.
+
+=cut
+
+$_netlimit = 2 ** $DEFAULT_NETLIMIT_EXP;    # default
+
+sub netlimit($) {
+    return undef unless $_[0];
+    return undef if $_[0] =~ /[^0-9]/;
+    return undef if $_[0] < $DEFAULT_NETLIMIT_EXP;
+    return undef if $_[0] > $MAX_NETLIMIT_EXP;
+    $_netlimit = 2 ** $_[0];
+};
 
 =head1 DESCRIPTION
 
@@ -520,9 +520,9 @@ sub do_prefix ($$$) {
 }
 
 
-=head2 Methods
+=head2 Constructors
 
-=over
+=over 4
 
 =item C<-E<gt>new([$addr, [ $mask|IPv6 ]])>
 
@@ -635,18 +635,56 @@ argument returns undef.
 
 If called with an empty string as the argument, returns 'undef'
 
-=item C<-E<gt>broadcast()>
+=back
 
-Returns a new object referring to the broadcast address of a given
-subnet. The broadcast address has all ones in all the bit positions
-where the netmask has zero bits. This is normally used to address all
-the hosts in a given subnet.
+=head3 Accepted forms in full
 
-=item C<-E<gt>network()>
+The list above is abbreviated. These are the forms worth knowing about,
+all verified on both builds.
 
-Returns a new object referring to the network address of a given
-subnet. A network address has all zero bits where the bits of the
-netmask are zero. Normally this is used to refer to a subnet.
+Range and prefix notation, where the prefix has to name a valid subnet:
+
+  NetAddr::IP->new('192.0.2.0-192.0.2.255');   # 192.0.2.0/24
+  NetAddr::IP->new('192.0.2.4-7');             # 192.0.2.4/30
+  NetAddr::IP->new('192.0.2.');                # 192.0.2.0/24
+  NetAddr::IP->new('192.0.');                  # 192.0.0.0/16
+  NetAddr::IP->new('10.');                     # 10.0.0.0/8
+  NetAddr::IP->new('192.0-3.');                # 192.0.0.0/14
+
+Short dotted forms change meaning when a mask argument is given, which
+is the one trap here worth writing out. On its own the short form is a
+host address; with a mask it is the network of that size:
+
+  NetAddr::IP->new('10.1');          # 10.0.0.1/32
+  NetAddr::IP->new('10.1', 8);       # 10.1.0.0/8
+  NetAddr::IP->new('10.1.2');        # 10.1.0.2/32
+  NetAddr::IP->new('10.1.2', 24);    # 10.1.2.0/24
+
+RFC 3986 brackets around an IPv6 literal, which is how a URI carries one:
+
+  NetAddr::IP->new('[2001:db8::1]/64');   # 2001:DB8:0:0:0:0:0:1/64
+  NetAddr::IP->new('[2001:db8::1]');      # 2001:DB8:0:0:0:0:0:1/128
+
+Brackets around an IPv4 literal are not accepted and return undef.
+
+Keywords. The set is not the same for both constructors, which is worth
+knowing before reaching for one:
+
+  NetAddr::IP->new('broadcast');      # 255.255.255.255/32
+  NetAddr::IP->new('unspecified');    # 0:0:0:0:0:0:0:0/128
+  NetAddr::IP->new('any');            # 0.0.0.0/0
+  NetAddr::IP->new('default');        # 0.0.0.0/0
+  NetAddr::IP->new('loopback');       # 127.0.0.1/8
+  NetAddr::IP->new('localhost');      # 127.0.0.1/32, via the resolver
+
+C<broadcast> is IPv4 only. C<new6('broadcast')> returns undef, while
+C<new6('unspecified')> gives an IPv6 unspecified address. C<loopback> is
+a /8, not a /32. C<localhost> is not a keyword at all: it is resolved,
+so it is undef under C<:nofqdn> and resolver-dependent otherwise.
+
+=head2 Address and mask
+
+=over 4
 
 =item C<-E<gt>addr()>
 
@@ -688,57 +726,45 @@ as the C<inet_aton()> or C<ipv6_aton> function respectively. If the object
 was created using ->new6($ip), the address returned will always be in ipV6
 format, even for addresses in ipV4 address space.
 
+=back
+
+=head2 Boundaries
+
+=over 4
+
+=item C<-E<gt>network()>
+
+Returns a new object referring to the network address of a given
+subnet. A network address has all zero bits where the bits of the
+netmask are zero. Normally this is used to refer to a subnet.
+
+=item C<-E<gt>broadcast()>
+
+Returns a new object referring to the broadcast address of a given
+subnet. The broadcast address has all ones in all the bit positions
+where the netmask has zero bits. This is normally used to address all
+the hosts in a given subnet.
+
+=item C<-E<gt>first()>
+
+Returns a new object representing the first usable IP address within
+the subnet (ie, the first host address).
+
+=item C<-E<gt>last()>
+
+Returns a new object representing the last usable IP address within
+the subnet (ie, one less than the broadcast address).
+
 =item C<-E<gt>range()>
 
 Returns a scalar with the base address and the broadcast address
 separated by a dash and spaces. This is called range notation.
 
-=item C<-E<gt>prefix()>
+=back
 
-Returns a scalar with the address and mask in ipV4 prefix
-representation. This is useful for some programs, which expect its
-input to be in this format.
+=head2 Numeric forms
 
-The range encoded starts at C<first()>, not at C<network()>, so it
-includes the broadcast address:
-
-  print NetAddr::IP->new('192.0.2.4/30')->prefix();   # 192.0.2.5-7
-  print NetAddr::IP->new('192.0.2.0/24')->prefix();   # 192.0.2.
-  print NetAddr::IP->new('192.0.2.0/20')->prefix();   # 192.0.0-15.
-  print NetAddr::IP->new('192.0.2.9/32')->prefix();   # 192.0.2.9
-
-Returns undef for an IPv6 address.
-
-=cut
-
-# only applicable to ipV4
-sub prefix($) {
-    return undef if $_[0]->{isv6};
-    my $mask = (notcontiguous($_[0]->{mask}))[1];
-    return $_[0]->addr if $mask == $IPV6_BITS;
-    $mask -= $IPV4_OFFSET;
-    my @faddr = split (/\./, $_[0]->first->addr);
-    my @laddr = split (/\./, $_[0]->broadcast->addr);
-    return do_prefix $mask, \@faddr, \@laddr;
-}
-
-=item C<-E<gt>nprefix()>
-
-Just as C<-E<gt>prefix()>, but does not include the broadcast address.
-
-=cut
-
-# only applicable to ipV4
-sub nprefix($) {
-    return undef if $_[0]->{isv6};
-    my $mask = (notcontiguous($_[0]->{mask}))[1];
-    return $_[0]->addr if $mask == $IPV6_BITS;
-    $mask -= $IPV4_OFFSET;
-    my @faddr = split (/\./, $_[0]->first->addr);
-    my @laddr = split (/\./, $_[0]->last->addr);
-    return do_prefix $mask, \@faddr, \@laddr;
-}
-
+=over 4
 
 =item C<-E<gt>numeric()>
 
@@ -776,26 +802,11 @@ an array context, it returns a list of two elements, The first
 element is as described, the second element is the Math::BigInt
 representation of the netmask.
 
-=item C<-E<gt>wildcard()>
+=back
 
-When called in a scalar context, returns the wildcard bits
-corresponding to the mask, in dotted-quad or ipV6 format as applicable.
+=head2 Text forms
 
-When called in an array context, returns a two-element array. The
-first element, is the address part. The second element, is the
-wildcard translation of the mask.
-
-=cut
-
-sub wildcard($) {
-    my $copy = $_[0]->copy;
-    $copy->{addr} = ~ $copy->{mask};
-    $copy->{addr} &= V4net unless $copy->{isv6};
-    if (wantarray) {
-        return ($_[0]->addr, $copy->addr);
-    }
-    return $copy->addr;
-}
+=over 4
 
 =item C<-E<gt>short()>
 
@@ -882,6 +893,80 @@ Returns the address part in FULL ipV6 notation
 
 Returns the mask part in FULL ipV6 notation
 
+=item C<-E<gt>prefix()>
+
+Returns a scalar with the address and mask in ipV4 prefix
+representation. This is useful for some programs, which expect its
+input to be in this format.
+
+The range encoded starts at C<first()>, not at C<network()>, so it
+includes the broadcast address:
+
+  print NetAddr::IP->new('192.0.2.4/30')->prefix();   # 192.0.2.5-7
+  print NetAddr::IP->new('192.0.2.0/24')->prefix();   # 192.0.2.
+  print NetAddr::IP->new('192.0.2.0/20')->prefix();   # 192.0.0-15.
+  print NetAddr::IP->new('192.0.2.9/32')->prefix();   # 192.0.2.9
+
+Returns undef for an IPv6 address.
+
+=cut
+
+# only applicable to ipV4
+sub prefix($) {
+    return undef if $_[0]->{isv6};
+    my $mask = (notcontiguous($_[0]->{mask}))[1];
+    return $_[0]->addr if $mask == $IPV6_BITS;
+    $mask -= $IPV4_OFFSET;
+    my @faddr = split (/\./, $_[0]->first->addr);
+    my @laddr = split (/\./, $_[0]->broadcast->addr);
+    return do_prefix $mask, \@faddr, \@laddr;
+}
+
+=item C<-E<gt>nprefix()>
+
+Just as C<-E<gt>prefix()>, but does not include the broadcast address.
+
+=cut
+
+# only applicable to ipV4
+sub nprefix($) {
+    return undef if $_[0]->{isv6};
+    my $mask = (notcontiguous($_[0]->{mask}))[1];
+    return $_[0]->addr if $mask == $IPV6_BITS;
+    $mask -= $IPV4_OFFSET;
+    my @faddr = split (/\./, $_[0]->first->addr);
+    my @laddr = split (/\./, $_[0]->last->addr);
+    return do_prefix $mask, \@faddr, \@laddr;
+}
+
+
+=item C<-E<gt>wildcard()>
+
+When called in a scalar context, returns the wildcard bits
+corresponding to the mask, in dotted-quad or ipV6 format as applicable.
+
+When called in an array context, returns a two-element array. The
+first element, is the address part. The second element, is the
+wildcard translation of the mask.
+
+=cut
+
+sub wildcard($) {
+    my $copy = $_[0]->copy;
+    $copy->{addr} = ~ $copy->{mask};
+    $copy->{addr} &= V4net unless $copy->{isv6};
+    if (wantarray) {
+        return ($_[0]->addr, $copy->addr);
+    }
+    return $copy->addr;
+}
+
+=back
+
+=head2 Containment
+
+=over 4
+
 =item C<$me-E<gt>contains($other)>
 
 Returns true when C<$me> completely contains C<$other>. False is
@@ -918,6 +1003,18 @@ Returns true when C<$me> is a local network address.
 
 An IPv4 loopback address held in an IPv6 object, whether from C<new6> or
 as a mapped address, is local, the same as its IPv4 form.
+
+=back
+
+=head2 Splitting
+
+=over 4
+
+=item C<-E<gt>split($bits,[optional $bits1,$bits2,...])>
+
+Similar to C<-E<gt>splitref> above but returns the list rather than a list
+reference. You may not want to use this if a large number of objects is
+expected.
 
 =item C<-E<gt>splitref($bits,[optional $bits1,$bits2,...])>
 
@@ -980,34 +1077,6 @@ the C<bits> list.
 
 NOTE: that /26 replicates twice beyond the original request and /28 fills
 the remaining return object requirement.
-
-=item C<-E<gt>rsplitref($bits,[optional $bits1,$bits2,...])>
-
-C<-E<gt>rsplitref> is the same as C<-E<gt>splitref> above except that the split plan is
-applied to the original object in reverse order.
-
-  i.e.
-
-  my $ip     = NetAddr::IP->new('192.0.2.0/24');
-  my $objptr = $ip->rsplitref(28, 29, 28, 29, 26);
-
-  has split plan 28 26 26 26 29 28 29 28
-  and returns this list of objects
-
-  192.0.2.0/28
-  192.0.2.16/26
-  192.0.2.80/26
-  192.0.2.144/26
-  192.0.2.208/29
-  192.0.2.216/28
-  192.0.2.232/29
-  192.0.2.240/28
-
-=item C<-E<gt>split($bits,[optional $bits1,$bits2,...])>
-
-Similar to C<-E<gt>splitref> above but returns the list rather than a list
-reference. You may not want to use this if a large number of objects is
-expected.
 
 =item C<-E<gt>rsplit($bits,[optional $bits1,$bits2,...])>
 
@@ -1129,32 +1198,33 @@ sub _splitref {
 }
 
 
-=item C<-E<gt>hostenum()>
+=item C<-E<gt>rsplitref($bits,[optional $bits1,$bits2,...])>
 
-Returns the list of hosts within a subnet.
+C<-E<gt>rsplitref> is the same as C<-E<gt>splitref> above except that the split
+plan is applied to the original object in reverse order.
 
-ERROR conditions:
+  i.e.
 
-  ->hostenum will DIE with the message 'netlimit exceeded'
-    if the number of return objects exceeds 'netlimit'.
-    See function 'netlimit' above (default 2**16 or 65536 nets).
+  my $ip     = NetAddr::IP->new('192.0.2.0/24');
+  my $objptr = $ip->rsplitref(28, 29, 28, 29, 26);
 
-=cut
+  has split plan 28 26 26 26 29 28 29 28
+  and returns this list of objects
 
-sub hostenum ($) {
-    return @{$_[0]->hostenumref};
-}
+  192.0.2.0/28
+  192.0.2.16/26
+  192.0.2.80/26
+  192.0.2.144/26
+  192.0.2.208/29
+  192.0.2.216/28
+  192.0.2.232/29
+  192.0.2.240/28
 
+=back
 
-=item C<-E<gt>hostenumref()>
+=head2 Set operations
 
-Faster version of C<-E<gt>hostenum()>, returning a reference to a list.
-
-NOTE: hostenum and hostenumref report two (2) useable hosts in a /31 or
-/127 point-to-point network (RFC 3021), the same as C<first>, C<last>,
-C<nth> and C<num>. Versions before 4.080 reported zero hosts unless the
-B<:rfc3021> tag was imported, so the tag is no longer needed and is
-deprecated. See L</DEPRECATED>.
+=over 4
 
 =item C<$me-E<gt>compact($addr1, $addr2, ...)>
 
@@ -1173,8 +1243,6 @@ Note that C<$me> and all C<$addr>'s must be C<NetAddr::IP> objects.
 IPv4 and IPv6 objects are compacted separately. The returned list holds the
 IPv4 results followed by the IPv6 results. The objects passed in are not
 modified; the results are new objects.
-
-=item C<$me-E<gt>compactref(\@list)>
 
 =item C<$compacted_object_list = Compact(\@list)>
 
@@ -1254,6 +1322,8 @@ sub _merge_sorted {
     return @r;
 }
 
+
+=item C<$me-E<gt>compactref(\@list)>
 
 =item C<$me-E<gt>coalesce($masklen, $number, @list_of_subnets)>
 
@@ -1345,15 +1415,42 @@ sub coalesce
 }
 
 
-=item C<-E<gt>first()>
+=back
 
-Returns a new object representing the first usable IP address within
-the subnet (ie, the first host address).
+=head2 Hosts
 
-=item C<-E<gt>last()>
+=over 4
 
-Returns a new object representing the last usable IP address within
-the subnet (ie, one less than the broadcast address).
+=item C<-E<gt>num()>
+
+Returns the number of usable addresses in the subnet: the host count,
+excluding the network and broadcast addresses.  A /31 or /127 counts as 2
+usable addresses per RFC 3021, and a /32 or /128 counts as 1:
+
+  print NetAddr::IP->new('192.0.2.0/31')->num();    # 2
+  print NetAddr::IP->new('2001:db8::/127')->num();  # 2
+  print NetAddr::IP->new('192.0.2.0/30')->num();    # 2
+  print NetAddr::IP->new('192.0.2.0/28')->num();    # 14
+  print NetAddr::IP->new('192.0.2.1/32')->num();    # 1
+
+
+To use the old behavior for C<-E<gt>nth($index)> and C<-E<gt>num()>:
+
+  use NetAddr::IP qw(:old_nth);
+
+WARNING:
+
+NetAddr::IP will calculate and return a numeric string for network
+ranges as large as 2**128. These values are TEXT strings and perl
+can treat them as integers for numeric calculations.
+
+Perl on 32 bit platforms only handles integer numbers up to 2**32
+and on 64 bit platforms to 2**64.
+
+If you wish to manipulate numeric strings returned by NetAddr::IP
+that are larger than 2**32 or 2**64, respectively,  you must load
+additional modules such as Math::BigInt, bignum or some similar
+package to do the integer math.
 
 =item C<-E<gt>nth($index)>
 
@@ -1396,36 +1493,38 @@ two usable addresses for point-to-point addressing. The first
 index (0) returns the address immediately following the network address
 except for a /31 or /127 when it return the network address.
 
-=item C<-E<gt>num()>
+=item C<-E<gt>hostenum()>
 
-Returns the number of usable addresses in the subnet: the host count,
-excluding the network and broadcast addresses.  A /31 or /127 counts as 2
-usable addresses per RFC 3021, and a /32 or /128 counts as 1:
+Returns the list of hosts within a subnet.
 
-  print NetAddr::IP->new('192.0.2.0/31')->num();    # 2
-  print NetAddr::IP->new('2001:db8::/127')->num();  # 2
-  print NetAddr::IP->new('192.0.2.0/30')->num();    # 2
-  print NetAddr::IP->new('192.0.2.0/28')->num();    # 14
-  print NetAddr::IP->new('192.0.2.1/32')->num();    # 1
+ERROR conditions:
+
+  ->hostenum will DIE with the message 'netlimit exceeded'
+    if the number of return objects exceeds 'netlimit'.
+    See function 'netlimit' above (default 2**16 or 65536 nets).
+
+=cut
+
+sub hostenum ($) {
+    return @{$_[0]->hostenumref};
+}
 
 
-To use the old behavior for C<-E<gt>nth($index)> and C<-E<gt>num()>:
+=item C<-E<gt>hostenumref()>
 
-  use NetAddr::IP qw(:old_nth);
+Faster version of C<-E<gt>hostenum()>, returning a reference to a list.
 
-WARNING:
+NOTE: hostenum and hostenumref report two (2) useable hosts in a /31 or
+/127 point-to-point network (RFC 3021), the same as C<first>, C<last>,
+C<nth> and C<num>. Versions before 4.080 reported zero hosts unless the
+B<:rfc3021> tag was imported, so the tag is no longer needed and is
+deprecated. See L</DEPRECATED>.
 
-NetAddr::IP will calculate and return a numeric string for network
-ranges as large as 2**128. These values are TEXT strings and perl
-can treat them as integers for numeric calculations.
+=back
 
-Perl on 32 bit platforms only handles integer numbers up to 2**32
-and on 64 bit platforms to 2**64.
+=head2 Regular expressions
 
-If you wish to manipulate numeric strings returned by NetAddr::IP
-that are larger than 2**32 or 2**64, respectively,  you must load
-additional modules such as Math::BigInt, bignum or some similar
-package to do the integer math.
+=over 4
 
 =item C<-E<gt>re()>
 
@@ -1621,8 +1720,9 @@ sub mod_version {
     &STORABLE_thaw;
 }
 
-
 =back
+
+
 
 =head1 EXPORT_OK
 

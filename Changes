@@ -2,6 +2,89 @@ Revision history for Perl extension NetAddr::IP
 
 {{$NEXT}}
 
+    Group the IP.pm methods, rewrite its SYNOPSIS, and document netlimit
+    (GH#100, step 3 continued). The Methods section was one flat =over of
+    forty-eight entries, so a reader looking for how to enumerate hosts
+    scanned forty-eight headings. It is now ten =head2 groups, each its
+    own =over:
+
+      Constructors           new new6 new_no new_from_aton
+                             new_cis new_cis6
+      Address and mask       addr mask masklen bits version cidr aton
+      Boundaries             network broadcast first last range
+      Numeric forms          numeric bigint
+      Text forms             short canon full full6 full6m prefix
+                             nprefix wildcard
+      Containment            contains within is_rfc1918 is_local
+      Splitting              split splitref rsplit rsplitref
+      Set operations         compact compactref coalesce
+      Hosts                  num nth hostenum hostenumref
+      Regular expressions    re re6
+
+    That reorders entries, so each block was moved whole and checked to
+    have survived verbatim; 48 of 48 did, and the POD item count is
+    unchanged at 63. podchecker needs =head2 outside an =over, so each
+    group is its own list rather than one list with headings inside it.
+
+    The SYNOPSIS was 113 lines: an import list, every signature, the
+    case policy, the FQDN note, Storable, Compact, Coalesce and
+    netlimit, all of it mixed together. It is now fifteen pasteable lines
+    with results in comments, and the material that was not a synopsis
+    moved to its own IMPORT TAGS section:
+
+      print $ip->addr, "\n";         # 192.0.2.1
+      print $ip->mask, "\n";         # 255.255.255.0
+      print $ip->network, "\n";      # 192.0.2.0/24
+      print $ip->broadcast, "\n";    # 192.0.2.255/24
+      print "$ip\n";                 # 192.0.2.1/24
+      my $next = $ip + 5;            # 192.0.2.6/24
+      my @halves = $ip->split(25);   # 192.0.2.0/25, 192.0.2.128/25
+
+    B11, netlimit was documented only inside the SYNOPSIS, which is where
+    the code lived too, and it returns the new limit rather than "true on
+    success". It has a FUNCTIONS section now, and the values are the
+    measured ones:
+
+      netlimit(20)   1048576
+      netlimit(16)   65536
+      netlimit(24)   16777216
+      netlimit(10)   undef, below the default
+      netlimit(25)   undef, above the maximum
+
+    B4 through B7 are documented under the constructor, where the
+    abbreviated accepted-forms list is, with the mask-argument trap
+    spelled out since it is the one that surprises:
+
+      new('10.1')        10.0.0.1/32
+      new('10.1', 8)     10.1.0.0/8
+      new('10.1.2')      10.1.0.2/32
+      new('10.1.2', 24)  10.1.2.0/24
+
+      new('192.0.2.4-7')         192.0.2.4/30
+      new('192.0-3.')            192.0.0.0/14
+      new('[2001:db8::1]/64')    2001:DB8:0:0:0:0:0:1/64
+      new('[192.0.2.1]/24')      undef
+
+      new('broadcast')       255.255.255.255/32
+      new6('broadcast')      undef, IPv4 keywords only
+      new('loopback')        127.0.0.1/8, not /32
+
+    And one correction to what I wrote in the previous commit for this
+    step: moving the SYNOPSIS deleted the netlimit sub and its $_netlimit
+    default, because the code sat between that heading and INSTALLATION
+    and the replacement spanned both. perl -c did not catch it and the
+    suite still passed 2535 tests, since nothing calls netlimit. What
+    caught it was documenting the function and finding
+    NetAddr::IP->can("netlimit") was undef. Restored, in the FUNCTIONS
+    section this time. Every edited file was then checked for lost
+    definitions:
+
+      IP.pm 31 subs before, 31 after, identical set
+      Lite.pm 50/50, Util.pm 7/7, InetBase.pm 29/29,
+      UtilPP.pm 28/28, Constants.pm 0/0
+
+    plus the glob aliases, which also match.
+
     Fix NetAddr::IP and NetAddr::IP::Lite (GH#100, step 3). The two pages
     carry the same object API and have drifted, so they go in one commit
     and the merged text is written once.
