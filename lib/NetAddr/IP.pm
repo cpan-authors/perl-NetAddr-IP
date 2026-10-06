@@ -527,9 +527,8 @@ C<new> and C<new6> create a new address with the supplied address in
 C<$addr> and an optional netmask C<$mask>, which can be omitted to get
 a /32 or /128 netmask for IPv4 / IPv6 addresses respectively.
 
-C<new6FFFF> is the third constructor. It is not listed in the item
-headings above but works through inheritance, and is what makes an
-IPv4-mapped address:
+C<new6FFFF> is the third constructor, and is what makes an IPv4-mapped
+address:
 
   NetAddr::IP->new6FFFF('192.0.2.1');   # 0:0:0:0:0:FFFF:C000:201/128
 
@@ -547,8 +546,7 @@ address/mask pairs with a B<space> as a separator instead of a slash (/).
 Both are deprecated in favour of B<new> and B<new6>, which do the same.
 See L</DEPRECATED>.
 
-C<-E<gt>new6> and
-C<-E<gt>new_cis6> mark the address as being in ipV6 address space even
+C<-E<gt>new6> and C<-E<gt>new_cis6> mark the address as being in ipV6 address space even
 if the format would suggest otherwise.
 
   i.e.  ->new6('1.2.3.4') will result in ::102:304
@@ -560,9 +558,10 @@ if the format would suggest otherwise.
 
   The C<addr()> value is what stringifies as the first part.
 
-C<$addr> can be almost anything that can be resolved to an IP address
-in all the notations I have seen over time. It can optionally contain
-the mask in CIDR notation.
+C<$addr> can be almost anything that can be resolved to an IP address.
+It can optionally contain the mask in CIDR notation. If the optional
+module Socket6 is installed, ipV6 host names are resolved as well as
+ipV4 ones; without it, only the ipV4 path runs.
 
 B<prefix> notation is understood, with the limitation that the range
 specified by the prefix must match with a valid subnet.
@@ -572,27 +571,26 @@ C<gethostbyname> can also be understood, although no mask can be
 specified for them. The default is to not attempt to recognize this
 format, as it seems to be seldom used.
 
-If called with no arguments, 'default' is assumed. An explicit undef
-argument returns undef.
-
-If called with an empty string as the argument, returns 'undef'
-
 C<$addr> can be any of the following and possibly more...
 
   n.n
   n.n/mm
+  n.n mm
   n.n.n
   n.n.n/mm
+  n.n.n mm
   n.n.n.n
   n.n.n.n/mm        32 bit cidr notation
+  n.n.n.n mm
   n.n.n.n/m.m.m.m
+  n.n.n.n m.m.m.m
   loopback, localhost, broadcast, any, default
   host, as a mask keyword
+  x.x.x.x/host
   x:x:x/host
   0xABCDEF, 0b111111000101011110, (a bcd number)
   a netaddr as returned by 'inet_aton', but only with the deprecated
   :aton tag; without it a packed string returns undef
-
 
 Any RFC 4291 s2.2 notation
 
@@ -617,10 +615,8 @@ may be disabled with:
 
   use NetAddr::IP qw(:nofqdn);
 
-If called with no arguments, 'default' is assumed. An explicit undef
-argument returns undef.
-
-If called with an empty string as the argument, returns 'undef'
+Called with no arguments, 'default' is assumed. An explicit undef
+argument returns undef, and an empty string returns undef.
 
 =back
 
@@ -676,8 +672,8 @@ so it is undef under C<:nofqdn> and resolver-dependent otherwise.
 =item C<-E<gt>addr()>
 
 Returns a scalar with the address part of the object as an IPv4 or IPv6 text
-string as appropriate. This is useful for printing or for passing the
-address part of the NetAddr::IP object to other components that expect an IP
+string as appropriate. This is useful for printing or for passing the address
+part of the NetAddr::IP object to other components that expect an IP
 address. If the object is an ipV6 address or was created using ->new6($ip)
 it will be reported in ipV6 hex format otherwise it will be reported in dot
 quad format only if it resides in ipV4 address space.
