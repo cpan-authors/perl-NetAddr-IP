@@ -47,12 +47,12 @@ C<:nofqdn> change behaviour for the whole program, so each is shown
 where it applies; C<:aton> and C<:rfc3021> are listed under
 L</DEPRECATED>.
 
-NOTE: NetAddr::IP::Util has a full complement of network address
-utilities to convert back and forth between binary and text.
+NetAddr::IP::Util has the full complement of network address utilities
+for converting between binary and text:
 
 inet_aton, inet_ntoa,  ipv6_aton,  ipv6_ntoa
-ipv6_n2x,  ipv6_n2d,   inet_any2d, inet_n2dx,
-inet_n2ad, inetanyto6, ipv6to4
+ipv6_n2x,  ipv6_n2d,   inet_any2n, inet_n2dx,
+inet_n2ad, ipanyto6,    ipv6to4
 
 See L<NetAddr::IP::Util>
 
@@ -166,12 +166,12 @@ type:
 =head1 DESCRIPTION
 
 This module provides an object-oriented abstraction on top of IP
-addresses or IP subnets that allows for easy manipulations.  Version
-4.xx of NetAddr::IP will work with older versions of Perl and is
-compatible with Math::BigInt.
+addresses or IP subnets that allows for easy manipulations. It is
+compatible with Math::BigInt, and requires perl 5.14 or later.
 
 The internal representation of all IP objects is in 128 bit IPv6 notation.
-IPv4 and IPv6 objects may be freely mixed.
+IPv4 and IPv6 objects may be freely mixed: every address carries its
+family, and a /24 IPv4 subnet and an /24 IPv6 subnet are distinct objects.
 
 =head2 Overloaded Operators
 
@@ -232,18 +232,22 @@ the operands is equal.
 
 =item B<Comparison via E<gt>, E<lt>, E<gt>=, E<lt>=, E<lt>=E<gt> and C<cmp>>
 
-Internally, all network objects are represented in 128 bit format.
-The numeric representation of the network is compared through the
-corresponding operation. Comparisons are tried first on the address portion
-of the object and if that is equal then the NUMERIC cidr portion of the
-masks are compared. This leads to the counterintuitive result that
+Internally, all network objects are represented in 128 bit format, and the
+comparison runs on that numeric form. The order is deterministic: the
+address portion first, then, when the addresses are equal, the numeric
+value of the masks. Since a longer mask is the larger number, this leads
+to the counterintuitive result that
 
   /24 > /16
 
-Comparison should not be done on netaddr objects with different CIDR as
-this may produce indeterminate - unexpected results,
-rather the determination of which netblock is larger or smaller should be
-done by comparing
+The same order applies to C<sort>:
+
+  print join(', ', sort map { "$_" } @nets), "\n";
+  # 10.0.0.1/16, 10.0.0.1/24, 10.0.0.1/32
+
+So the ordering is predictable, but it is not the ordering most people
+mean by "bigger". To rank netblocks by size, compare the mask lengths
+directly:
 
   $ip1->masklen <=> $ip2->masklen
 
@@ -283,6 +287,32 @@ objects address parts as a 32 bit signed number.
 Returns B<undef> if the difference is out of range.
 
 (See range restrictions on Addition above)
+
+=item B<Array dereference (C<@{...}>)>
+
+C<@{$ip}> is overloaded and returns the host list, so a NetAddr::IP
+object can be treated as the addresses it contains:
+
+  my $ip = NetAddr::IP->new('192.0.2.0/28');
+  print scalar @{$ip}, "\n";                # 14
+  my @hosts = @{$ip};
+  print "$hosts[0]\n";                       # 192.0.2.1/32
+  print "$hosts[-1]\n";                      # 192.0.2.14/32
+
+This is B<hostenum> in list form, so the same network and broadcast rule
+applies: no network or broadcast address, except on a /31, /127, /32 or
+/128.
+
+=item B<Negation and absolute value (C<-> and C<abs>)>
+
+Both croak.  An address has no meaningful negation, and C<abs> would be
+the identity at best:
+
+  -$ip;      # cannot negate a NetAddr::IP object
+  abs $ip;   # cannot take the absolute value of a NetAddr::IP object
+
+To move to another address, add or subtract a constant with the overloaded
+C<+> and C<->, or use C<nth()>.
 
 =item B<Auto-increment>
 
@@ -502,18 +532,24 @@ sub do_prefix ($$$) {
 
 =item C<-E<gt>new_from_aton($netaddr)>
 
-=item C<-E<gt>new_cis("$addr $mask)>
+=item C<-E<gt>new_cis("$addr $mask")>
 
-=item C<-E<gt>new_cis6("$addr $mask)>
+=item C<-E<gt>new_cis6("$addr $mask")>
 
-The first two methods create a new address with the supplied address in
+C<new> and C<new6> create a new address with the supplied address in
 C<$addr> and an optional netmask C<$mask>, which can be omitted to get
 a /32 or /128 netmask for IPv4 / IPv6 addresses respectively.
 
-The third method C<new_no> is exclusively for IPv4 addresses and filters
-improperly formatted
-dot quad strings for leading 0's that would normally be interpreted as octal
-format by NetAddr per the specifications for inet_aton.
+C<new6FFFF> is the third constructor. It is not listed in the item
+headings above but works through inheritance, and is what makes an
+IPv4-mapped address:
+
+  NetAddr::IP->new6FFFF('192.0.2.1');   # 0:0:0:0:0:FFFF:C000:201/128
+
+C<new_no> is exclusively for IPv4 addresses and filters improperly
+formatted dot quad strings for leading 0's that would normally be
+interpreted as octal format by NetAddr per the specifications for
+inet_aton.
 
 B<new_from_aton> takes a packed IPv4 address and assumes a /32 mask. This
 function replaces the :aton functionality which is fundamentally
@@ -535,7 +571,7 @@ if the format would suggest otherwise.
   ->new('::1.2.3.4') will result in ::102:304
   whereas new('1.2.3.4') would print out as 1.2.3.4
 
-  See "STRINGIFICATION" below.
+  The C<addr()> value is what stringifies as the first part.
 
 C<$addr> can be almost anything that can be resolved to an IP address
 in all the notations I have seen over time. It can optionally contain
@@ -564,12 +600,14 @@ C<$addr> can be any of the following and possibly more...
   n.n.n.n/mm        32 bit cidr notation
   n.n.n.n/m.m.m.m
   loopback, localhost, broadcast, any, default
-  x.x.x.x/host
+  host, as a mask keyword
+  x:x:x/host
   0xABCDEF, 0b111111000101011110, (a bcd number)
-  a netaddr as returned by 'inet_aton'
+  a netaddr as returned by 'inet_aton', but only with the deprecated
+  :aton tag; without it a packed string returns undef
 
 
-Any RFC1884 notation
+Any RFC 4291 s2.2 notation
 
   ::n.n.n.n
   ::n.n.n.n/mmm        128 bit cidr notation
@@ -578,7 +616,7 @@ Any RFC1884 notation
   ::x:x/mmm
   x:x:x:x:x:x:x:x
   x:x:x:x:x:x:x:x/mmm
-  x:x:x:x:x:x:x:x/m:m:m:m:m:m:m:m any RFC1884 notation
+  x:x:x:x:x:x:x:x/m:m:m:m:m:m:m:m with a mask
   loopback, localhost, unspecified, any, default
   ::x:x/host
   0xABCDEF, 0b111111000101011110 within the limits
@@ -659,8 +697,17 @@ separated by a dash and spaces. This is called range notation.
 
 Returns a scalar with the address and mask in ipV4 prefix
 representation. This is useful for some programs, which expect its
-input to be in this format. This method will include the broadcast
-address in the encoding.
+input to be in this format.
+
+The range encoded starts at C<first()>, not at C<network()>, so it
+includes the broadcast address:
+
+  print NetAddr::IP->new('192.0.2.4/30')->prefix();   # 192.0.2.5-7
+  print NetAddr::IP->new('192.0.2.0/24')->prefix();   # 192.0.2.
+  print NetAddr::IP->new('192.0.2.0/20')->prefix();   # 192.0.0-15.
+  print NetAddr::IP->new('192.0.2.9/32')->prefix();   # 192.0.2.9
+
+Returns undef for an IPv6 address.
 
 =cut
 
@@ -697,12 +744,29 @@ sub nprefix($) {
 
 When called in a scalar context, will return a numeric representation
 of the address part of the IP address. When called in an array
-contest, it returns a list of two elements. The first element is as
+context, it returns a list of two elements. The first element is as
 described, the second element is the numeric representation of the
 netmask.
 
 This method is essential for serializing the representation of a
 subnet.
+
+The ipV6 value has more digits than a Perl number holds, so C<==>,
+C<E<lt>=E<gt>> and C<sort> on two C<numeric()> results compare them as
+floats and call distinct addresses equal:
+
+  my $x = NetAddr::IP->new('2001:db8::1');
+  my $y = NetAddr::IP->new('2001:db8::2');
+  print $x->numeric, "\n";      # 42540766411282592856903984951653826561
+  print $x->numeric == $y->numeric ? 'same' : 'different';
+  # same, though the addresses differ in the last digit
+
+Compare the objects directly, since both operators are overloaded, or use
+C<-E<gt>bigint()>:
+
+  print $x == $y ? 'same' : 'different';     # different
+  print $x <=> $y;                            # -1
+  print $x->bigint == $y->bigint ? 'same' : 'different';   # different
 
 =item C<-E<gt>bigint()>
 
@@ -832,7 +896,8 @@ are not both C<NetAddr::IP> objects.
 
 An IPv4 object and an IPv6 object never contain each other, even when
 the IPv6 address is the IPv4 address in C<::a.b.c.d> or C<::ffff:a.b.c.d>
-form.
+form. Compare C<-E<gt>addr()> of the two to see why: they print as
+different addresses.
 
 =item C<-E<gt>is_rfc1918()>
 
@@ -848,6 +913,11 @@ Returns true when C<$me> is a local network address.
 
   i.e.    ipV4    127.0.0.0 - 127.255.255.255
   or      ipV6    === ::1
+  or      ipV6    ::127.0.0.0 - ::127.255.255.255
+  or      ipV6    ::ffff:127.0.0.0 - ::ffff:127.255.255.255
+
+An IPv4 loopback address held in an IPv6 object, whether from C<new6> or
+as a mapped address, is local, the same as its IPv4 form.
 
 =item C<-E<gt>splitref($bits,[optional $bits1,$bits2,...])>
 
@@ -855,6 +925,18 @@ Returns a reference to a list of objects, representing subnets of C<bits> mask
 produced by splitting the original object, which is left
 unchanged. Note that C<$bits> must be longer than the original
 mask in order for it to be splittable.
+
+Croaks when the plan does not fit, rather than returning undef:
+
+  NetAddr::IP->new('192.0.2.0/24')->splitref(16);
+  # netmask error: overrange or spurious bits
+
+So a plan whose first element is not longer than the original mask, or
+whose elements do not add up to it, is a fatal error. A plan that does
+fit returns every piece:
+
+  my $p = NetAddr::IP->new('192.0.2.0/24')->splitref(25);
+  # 192.0.2.0/25  192.0.2.128/25
 
 ERROR conditions:
 
@@ -1082,8 +1164,7 @@ Given a list of objects (including C<$me>), this method will compact
 all the addresses and subnets into the largest (ie, least specific)
 subnets possible that contain exactly all of the given objects.
 
-Note that in versions prior to 3.02, if fed with the same IP subnets
-multiple times, these subnets would be returned. From 3.02 on, a more
+Note that if fed with the same IP subnets multiple times, a more
 "correct" approach has been adopted and only one address would be
 returned.
 
@@ -1281,10 +1362,8 @@ the subnet (ie, the I<n>-th host address).  If no address is available
 (for example, when the network is too small for C<$index> hosts),
 C<undef> is returned.
 
-Version 4.00 of NetAddr::IP and version 1.00 of NetAddr::IP::Lite implements
-C<-E<gt>nth($index)> and C<-E<gt>num()> exactly as the documentation states.
-Previous versions behaved slightly differently and not in a consistent
-manner. See the README file for details.
+See L</DEPRECATED> and the Changes file for the change, and the
+C<:old_nth> tag for the old behaviour.
 
 To use the old behavior for C<-E<gt>nth($index)> and C<-E<gt>num()>:
 
@@ -1319,17 +1398,16 @@ except for a /31 or /127 when it return the network address.
 
 =item C<-E<gt>num()>
 
-As of version 4.42 of NetAddr::IP and version 1.27 of NetAddr::IP::Lite
-a /31 and /127 with return a net B<num> value of 2 instead of 0 (zero)
-for point-to-point networks.
+Returns the number of usable addresses in the subnet: the host count,
+excluding the network and broadcast addresses.  A /31 or /127 counts as 2
+usable addresses per RFC 3021, and a /32 or /128 counts as 1:
 
-Version 4.00 of NetAddr::IP and version 1.00 of NetAddr::IP::Lite
-return the number of usable IP addresses within the subnet,
-not counting the broadcast or network address.
+  print NetAddr::IP->new('192.0.2.0/31')->num();    # 2
+  print NetAddr::IP->new('2001:db8::/127')->num();  # 2
+  print NetAddr::IP->new('192.0.2.0/30')->num();    # 2
+  print NetAddr::IP->new('192.0.2.0/28')->num();    # 14
+  print NetAddr::IP->new('192.0.2.1/32')->num();    # 1
 
-Previous versions worked only for ipV4 addresses, returned a
-maximum span of 2**32 and returned the number of IP addresses
-not counting the broadcast address. (one greater than the new behavior)
 
 To use the old behavior for C<-E<gt>nth($index)> and C<-E<gt>num()>:
 
@@ -1595,18 +1673,11 @@ place of a slash. C<->new()> and C<->new6()> do the same.
 
 =head1 NOTES / BUGS ... FEATURES
 
-NetAddr::IP only runs in Pure Perl mode on Windows boxes because I don't
-have the resources or know how to get the "configure" stuff working in the
-Windows environment. Volunteers WELCOME to port the "C" portion of this
-module to Windows.
+On Windows this distribution builds and tests in pure Perl mode, with no
+C toolchain.  The choice is made in F<inc/MakeMaker/header.pl>, which
+sets an emulated C<AF_INET6> when C<$^O> matches F</win/i>; README.md
+carries the build steps and F<mode()> reports which mode is running.
 
-=head1 HISTORY
-
-=over 4
-
-See the Changes file
-
-=back
 
 =head1 ADDITIONAL LICENSE
 
