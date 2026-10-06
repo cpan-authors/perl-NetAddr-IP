@@ -509,11 +509,11 @@ which is uppercase by default here.
 
 =item NetAddr::IP::Util::lower();
 
-Return IPv6 strings in lowercase.
+Sets lowercase for the IPv6 text from every NetAddr::IP module.
 
 =item NetAddr::IP::Util::upper();
 
-Return IPv6 strings in uppercase.  This is the default.
+Sets uppercase, the default once NetAddr::IP::Util is loaded.
 
 =back
 
