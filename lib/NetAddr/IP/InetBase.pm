@@ -331,7 +331,9 @@ sub ipv6_aton {
     return undef if
         $ipv6 =~ /[^:0-9a-fA-F]/ ||            # non-hex character
         (($c = $ipv6) =~ s/::/x/ && $c =~ /(?:x|:):/) ||    # double :: ::?
-        $ipv6 =~ /[0-9a-fA-F]{5,}/;            # more than 4 digits
+        $ipv6 =~ /[0-9a-fA-F]{5,}/ ||            # more than 4 digits
+        $ipv6 =~ /^:(?!:)/ ||                # single leading colon
+        $ipv6 =~ /(?<!:):$/;                # single trailing colon
     $c = $ipv6 =~ tr/:/:/;                # count the colons
     return undef if $c < 7 && $ipv6 !~ /::/;
     if ($c > 7) {                        # strip leading or trailing ::
@@ -345,6 +347,7 @@ sub ipv6_aton {
     }
     $ipv6 .= 0 if $ipv6 =~ /:$/;
     my @hex = split(/:/, $ipv6);
+    return undef if @hex > 8;                # too many fields
     foreach(0..$#hex) {
         $hex[$_] = hex($hex[$_] || 0);
     }
