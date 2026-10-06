@@ -785,7 +785,8 @@ sub _xnew($$;$$) {
     my ($mask, $tmp);
 
     # IP to lower case AFTER ref test for Math::BigInt. 'lc' strips blessing
-
+    # keep the untouched input for the :aton binary branch, lc corrupts bytes 0x41-0x5A
+    my $raw = $ip;
     $ip = lc $ip;
 
     # strip surrounding whitespace so "10.0.0.1\n" and " 10.0.0.1" are treated alike.
@@ -1076,10 +1077,11 @@ sub _xnew($$;$$) {
         last;
             }
             elsif ($Accept_Binary_IP && ! $hasmask) {
-        if (length($ip) == $V4_PACKED_BYTES) {
-            $ip = ipv4to6($ip);
+        if (length($raw) == $V4_PACKED_BYTES) {
+            $ip = ipv4to6($raw);
         }
-        elsif (length($ip) == $V6_PACKED_BYTES) {
+        elsif (length($raw) == $V6_PACKED_BYTES) {
+            $ip = $raw;
             $isV6 = 1;
         }
         else {
