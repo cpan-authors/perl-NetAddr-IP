@@ -88,6 +88,11 @@ C<:upper> wins if both are given, whichever order they are in:
   use NetAddr::IP qw(:upper :lower);
   print NetAddr::IP->new('2001:db8::1')->addr, "\n";   # 2001:DB8:0:0:0:0:0:1
 
+Note that :lower and :upper set one process-wide variable shared by
+NetAddr::IP, NetAddr::IP::Lite, NetAddr::IP::Util and NetAddr::IP::InetBase.
+Importing either tag in one module changes the output of every other module
+in the same program. The last import wins.
+
 =item C<:nofqdn>
 
 Turn off resolving a fully qualified domain name in the constructor,
