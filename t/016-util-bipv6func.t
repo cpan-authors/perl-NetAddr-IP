@@ -39,4 +39,11 @@ subtest 'ipv6_n2x and ipv6_n2d' => sub {
 like( dies { ipv6_n2x('1234') }, qr/Bad arg/, 'ipv6_n2x dies on bad length' );
 like( dies { ipv6_n2d('1234') }, qr/Bad arg/, 'ipv6_n2d dies on bad length' );
 
+subtest 'malformed text with a single leading or trailing colon' => sub {
+    foreach my $t ('1::2:', ':1:2:3:4:5:6:7', '1:2:3:4:5:6:7:') {
+        my $rv = ipv6_aton($t);
+        is( $rv, undef, "ipv6_aton returns undef for '$t'" );
+    }
+};
+
 done_testing;
