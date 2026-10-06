@@ -112,9 +112,11 @@ The entries below are the same ones NetAddr::IP::Util documents, kept
 here because this module is the one that implements them.  Where the two
 pages ever disagree, L<NetAddr::IP::Util> is the fuller description.
 
-=head1 DESCRIPTION
+=head1 FUNCTIONS
 
-B<NetAddr::IP::UtilPP> provides pure Perl functions for B<NetAddr::IP::Util>
+These implement the same operations as NetAddr::IP::Util.
+
+=head2 Family test and shift
 
 =over 4
 
@@ -274,6 +276,12 @@ sub _sa128 {
     return $carry;
 }
 
+=back
+
+=head2 Arithmetic
+
+=over 4
+
 =item addconst($ipv6naddr, $signed_32con);
 
 Add a signed constant to a 128 bit string variable.
@@ -377,6 +385,12 @@ sub notcontiguous {
     return ($spurious, $count);
 }
 
+=back
+
+=head2 Widening and narrowing
+
+=over 4
+
 =item $ipv6naddr = ipv4to6($netaddr);
 
 Convert an ipv4 network address into an ipv6 network address.
@@ -471,6 +485,12 @@ sub ipv6to4 {
     return pack('H8', @{_}[3..10]);
 }
 
+=back
+
+=head2 Decimal strings
+
+=over 4
+
 =item $bcdtext = bin2bcd($bits128);
 
 Convert a 128 bit binary string into binary coded decimal text digits.
@@ -503,6 +523,7 @@ sub bcd2bin {
 }
 
 =back
+
 
 =cut
 

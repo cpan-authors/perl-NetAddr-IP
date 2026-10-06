@@ -90,26 +90,12 @@ our $AUTOLOAD;
   Will also return an ipV4 or ipV6 representation of a
   resolvable Fully Qualified Domain Name (FQDN).
 
-=head1 INSTALLATION
-
-Un-tar the distribution in an appropriate directory and type:
-
-  perl Makefile.PL
-  make
-  make test
-  make install
-
-B<NetAddr::IP::Lite> depends on B<NetAddr::IP::Util> which installs by default with its primary functions compiled
-using Perl's XS extensions to build a 'C' library. If you do not have a 'C'
-compiler available or would like the slower Pure Perl version for some other
-reason, then type:
-
-  perl Makefile.PL -noxs
-  make
-  make test
-  make install
-
 =head1 DESCRIPTION
+
+The build steps, including the pure Perl mode, are in README.md. This
+module does not choose how it was built; C<mode()> from
+L<NetAddr::IP::Util> reports which implementation is active.
+
 
 This module provides an object-oriented abstraction on top of IP
 addresses or IP subnets, that allows for easy manipulations. Most of the
@@ -536,9 +522,9 @@ sub _new ($$$) {
 
 =back
 
-=head2 Methods
+=head2 Constructors
 
-=over
+=over 4
 
 =item C<-E<gt>new([$addr, [ $mask|IPv6 ]])>
 
@@ -1142,32 +1128,11 @@ sub _xnew($$;$$) {
     return bless $self, $class;
 }
 
-=item C<-E<gt>broadcast()>
+=back
 
-Returns a new object referring to the broadcast address of a given
-subnet. The broadcast address has all ones in all the bit positions
-where the netmask has zero bits. This is normally used to address all
-the hosts in a given subnet.
+=head2 Address and mask
 
-=cut
-
-sub broadcast ($) {
-    my $ip = _new($_[0], $_[0]->{addr} | ~$_[0]->{mask}, $_[0]->{mask});
-    $ip->{addr} &= V4net unless $ip->{isv6};
-    return $ip;
-}
-
-=item C<-E<gt>network()>
-
-Returns a new object referring to the network address of a given
-subnet. A network address has all zero bits where the bits of the
-netmask are zero. Normally this is used to refer to a subnet.
-
-=cut
-
-sub network ($) {
-    return _new($_[0], $_[0]->{addr} & $_[0]->{mask}, $_[0]->{mask});
-}
+=over 4
 
 =item C<-E<gt>addr()>
 
@@ -1266,6 +1231,74 @@ sub aton {
         : $_[0]->{addr};
 }
 
+=back
+
+=head2 Boundaries
+
+=over 4
+
+=item C<-E<gt>network()>
+
+Returns a new object referring to the network address of a given
+subnet. A network address has all zero bits where the bits of the
+netmask are zero. Normally this is used to refer to a subnet.
+
+=cut
+
+sub network ($) {
+    return _new($_[0], $_[0]->{addr} & $_[0]->{mask}, $_[0]->{mask});
+}
+
+=item C<-E<gt>broadcast()>
+
+Returns a new object referring to the broadcast address of a given
+subnet. The broadcast address has all ones in all the bit positions
+where the netmask has zero bits. This is normally used to address all
+the hosts in a given subnet.
+
+=cut
+
+sub broadcast ($) {
+    my $ip = _new($_[0], $_[0]->{addr} | ~$_[0]->{mask}, $_[0]->{mask});
+    $ip->{addr} &= V4net unless $ip->{isv6};
+    return $ip;
+}
+
+=item C<-E<gt>first()>
+
+Returns a new object representing the first usable IP address within
+the subnet (ie, the first host address).
+
+=cut
+
+my $_cidr127 = pack('N4', 0xffffffff, 0xffffffff, 0xffffffff, 0xfffffffe);
+
+sub first ($) {
+    if (hasbits($_[0]->{mask} ^ $_cidr127)) {
+        return $_[0]->network + 1;
+    }
+    else {
+        return $_[0]->network;
+    }
+#  return $_[0]->network + 1;
+}
+
+=item C<-E<gt>last()>
+
+Returns a new object representing the last usable IP address within
+the subnet (ie, one less than the broadcast address).
+
+=cut
+
+sub last ($) {
+    if (hasbits($_[0]->{mask} ^ $_cidr127)) {
+        return $_[0]->broadcast - 1;
+    }
+    else {
+        return $_[0]->broadcast;
+    }
+}
+
 =item C<-E<gt>range()>
 
 Returns a scalar with the base address and the broadcast address
@@ -1276,6 +1309,12 @@ separated by a dash and spaces. This is called range notation.
 sub range ($) {
     return $_[0]->network->addr . ' - ' . $_[0]->broadcast->addr;
 }
+
+=back
+
+=head2 Numeric forms
+
+=over 4
 
 =item C<-E<gt>numeric()>
 
@@ -1390,6 +1429,12 @@ sub bigint($) {
     }
 }
 
+=back
+
+=head2 Containment
+
+=over 4
+
 =item C<$me-E<gt>contains($other)>
 
 Returns true when C<$me> completely contains C<$other>. False is
@@ -1492,38 +1537,59 @@ sub is_local ($) {
         ? 1 : 0;
 }
 
-=item C<-E<gt>first()>
+=back
 
-Returns a new object representing the first usable IP address within
-the subnet (ie, the first host address).
+=head2 Hosts
+
+=over 4
+
+=item C<-E<gt>num()>
+
+Returns the number of usable addresses in the subnet: the host count,
+excluding the network and broadcast addresses.  A /31 or /127 counts as 2
+usable addresses per RFC 3021, and a /32 or /128 counts as 1:
+
+  print NetAddr::IP->new('192.0.2.0/31')->num();    # 2
+  print NetAddr::IP->new('2001:db8::/127')->num();  # 2
+  print NetAddr::IP->new('192.0.2.0/30')->num();    # 2
+  print NetAddr::IP->new('192.0.2.0/28')->num();    # 14
+  print NetAddr::IP->new('192.0.2.1/32')->num();    # 1
+
+
+To use the old behavior for C<-E<gt>nth($index)> and C<-E<gt>num()>:
+
+  use NetAddr::IP::Lite qw(:old_nth);
+
+WARNING:
+
+NetAddr::IP will calculate and return a numeric string for network
+ranges as large as 2**128. These values are TEXT strings and perl
+can treat them as integers for numeric calculations.
+
+Perl on 32 bit platforms only handles integer numbers up to 2**32
+and on 64 bit platforms to 2**64.
+
+If you wish to manipulate numeric strings returned by NetAddr::IP
+that are larger than 2**32 or 2**64, respectively,  you must load
+additional modules such as Math::BigInt, bignum or some similar
+package to do the integer math.
 
 =cut
 
-my $_cidr127 = pack('N4', 0xffffffff, 0xffffffff, 0xffffffff, 0xfffffffe);
-
-sub first ($) {
-    if (hasbits($_[0]->{mask} ^ $_cidr127)) {
-        return $_[0]->network + 1;
+sub num ($) {
+    if ($Old_nth) {
+        my @net = unpack('L3N', $_[0]->{mask} ^ Ones);
+        # number of ip's less broadcast
+        return 0xfffffffe if $net[0] || $net[1] || $net[2]; # 2**32 - 2
+        return $net[3] if $net[3];
     }
-    else {
-        return $_[0]->network;
-    }
-#  return $_[0]->network + 1;
-}
-
-=item C<-E<gt>last()>
-
-Returns a new object representing the last usable IP address within
-the subnet (ie, one less than the broadcast address).
-
-=cut
-
-sub last ($) {
-    if (hasbits($_[0]->{mask} ^ $_cidr127)) {
-        return $_[0]->broadcast - 1;
-    }
-    else {
-        return $_[0]->broadcast;
+    else {    # returns 1 for /32 /128, 2 for /31 /127 else n-2 up to 2**32
+        (undef, my $net) = addconst($_[0]->{mask}, 1);
+        return 1 unless hasbits($net);    # ipV4/32 or ipV6/128
+        $net = $net ^ Ones;
+        return 2 unless hasbits($net);    # ipV4/31 or ipV6/127
+        $net &= $_v4net unless $_[0]->{isv6};
+        return bin2bcd($net);
     }
 }
 
@@ -1593,57 +1659,8 @@ sub nth ($$) {
     return $self->network + $count;
 }
 
-=item C<-E<gt>num()>
-
-Returns the number of usable addresses in the subnet: the host count,
-excluding the network and broadcast addresses.  A /31 or /127 counts as 2
-usable addresses per RFC 3021, and a /32 or /128 counts as 1:
-
-  print NetAddr::IP->new('192.0.2.0/31')->num();    # 2
-  print NetAddr::IP->new('2001:db8::/127')->num();  # 2
-  print NetAddr::IP->new('192.0.2.0/30')->num();    # 2
-  print NetAddr::IP->new('192.0.2.0/28')->num();    # 14
-  print NetAddr::IP->new('192.0.2.1/32')->num();    # 1
-
-
-To use the old behavior for C<-E<gt>nth($index)> and C<-E<gt>num()>:
-
-  use NetAddr::IP::Lite qw(:old_nth);
-
-WARNING:
-
-NetAddr::IP will calculate and return a numeric string for network
-ranges as large as 2**128. These values are TEXT strings and perl
-can treat them as integers for numeric calculations.
-
-Perl on 32 bit platforms only handles integer numbers up to 2**32
-and on 64 bit platforms to 2**64.
-
-If you wish to manipulate numeric strings returned by NetAddr::IP
-that are larger than 2**32 or 2**64, respectively,  you must load
-additional modules such as Math::BigInt, bignum or some similar
-package to do the integer math.
-
-=cut
-
-sub num ($) {
-    if ($Old_nth) {
-        my @net = unpack('L3N', $_[0]->{mask} ^ Ones);
-        # number of ip's less broadcast
-        return 0xfffffffe if $net[0] || $net[1] || $net[2]; # 2**32 - 2
-        return $net[3] if $net[3];
-    }
-    else {    # returns 1 for /32 /128, 2 for /31 /127 else n-2 up to 2**32
-        (undef, my $net) = addconst($_[0]->{mask}, 1);
-        return 1 unless hasbits($net);    # ipV4/32 or ipV6/128
-        $net = $net ^ Ones;
-        return 2 unless hasbits($net);    # ipV4/31 or ipV6/127
-        $net &= $_v4net unless $_[0]->{isv6};
-        return bin2bcd($net);
-    }
-}
-
 =back
+
 
 =cut
 

@@ -296,30 +296,11 @@ The IPv6 functions accept every text form in RFC 4291 s2.2.
     ::x:d.d.d.d
   and so on...
 
+=head1 FUNCTIONS
+
+=head2 Text to binary
+
 =over 4
-
-=item $dotquad = inet_ntoa($netaddr);
-
-Convert a packed IPv4 network address to a dot-quad IP address.
-
-  input:    packed network address
-  returns:  IP address i.e. 10.4.12.123
-
-=cut
-
-sub inet_ntoa {
-    my $packed = $_[0];
-    die 'Bad arg length for '. __PACKAGE__ ."::inet_ntoa, length is ".
-        (defined $packed ? length($packed) : 'undefined') .
-        " should be $V4_PACKED_BYTES"
-                unless defined $packed && length($packed) == $V4_PACKED_BYTES;
-    my @hex = (unpack("n2", $packed));
-    $hex[3] = $hex[1] & $MAX_OCTET;
-    $hex[2] = $hex[1] >> $OCTET_BITS;
-    $hex[1] = $hex[0] & $MAX_OCTET;
-    $hex[0] >>= $OCTET_BITS;
-    return sprintf("%d.%d.%d.%d", @hex);
-}
 
 =item $netaddr = inet_aton($dotquad);
 
@@ -370,6 +351,77 @@ sub ipv6_aton {
     pack("n8", @hex);
 }
 
+=item $ipv6naddr = inet_any2n($dotquad or $ipv6_text);
+
+This function converts a text IPv4 or IPv6 address in text format in any
+standard notation into a 128 bit IPv6 string address. It prefixes any
+dot-quad address (if found) with '::' and passes it to B<ipv6_aton>.
+
+  input:    dot-quad or RFC 4291 s2.2 address
+  returns:  128 bit IPv6 string
+
+=cut
+
+sub inet_any2n($) {
+    my ($addr) = @_;
+    $addr = '' unless $addr;
+    $addr = '::' . $addr
+        unless $addr =~ /:/;
+    return ipv6_aton($addr);
+}
+
+=item $netaddr = inet_pton($AF_family,$text_addr);
+
+This function takes an IP address in IPv4 or IPv6 text format and converts it into
+binary format. The type of IP address conversion is controlled by the FAMILY
+argument.
+
+NOTE: inet_pton, inet_ntop and AF_INET6 come from the Socket6 library if it
+is present on this host.
+
+=cut
+
+sub _inet_pton {
+    my ($af, $ip) = @_;
+    die 'Bad address family for '. __PACKAGE__ ."::inet_pton, got $af"
+        unless $af == AF_INET6() || $af == AF_INET();
+    if ($af == AF_INET()) {
+        inet_aton($ip);
+    }
+    else {
+        ipv6_aton($ip);
+    }
+}
+
+=back
+
+=head2 Binary to text
+
+=over 4
+
+=item $dotquad = inet_ntoa($netaddr);
+
+Convert a packed IPv4 network address to a dot-quad IP address.
+
+  input:    packed network address
+  returns:  IP address i.e. 10.4.12.123
+
+=cut
+
+sub inet_ntoa {
+    my $packed = $_[0];
+    die 'Bad arg length for '. __PACKAGE__ ."::inet_ntoa, length is ".
+        (defined $packed ? length($packed) : 'undefined') .
+        " should be $V4_PACKED_BYTES"
+                unless defined $packed && length($packed) == $V4_PACKED_BYTES;
+    my @hex = (unpack("n2", $packed));
+    $hex[3] = $hex[1] & $MAX_OCTET;
+    $hex[2] = $hex[1] >> $OCTET_BITS;
+    $hex[1] = $hex[0] & $MAX_OCTET;
+    $hex[0] >>= $OCTET_BITS;
+    return sprintf("%d.%d.%d.%d", @hex);
+}
+
 =item $ipv6text = ipv6_ntoa($ipv6naddr);
 
 Convert a 128 bit binary IPv6 address to compressed rfc 1884
@@ -416,25 +468,6 @@ representation.
   Note: this function does NOT compress adjacent
   strings of 0:0:0:0 into the :: format
 
-=item $ipv6naddr = inet_any2n($dotquad or $ipv6_text);
-
-This function converts a text IPv4 or IPv6 address in text format in any
-standard notation into a 128 bit IPv6 string address. It prefixes any
-dot-quad address (if found) with '::' and passes it to B<ipv6_aton>.
-
-  input:    dot-quad or RFC 4291 s2.2 address
-  returns:  128 bit IPv6 string
-
-=cut
-
-sub inet_any2n($) {
-    my ($addr) = @_;
-    $addr = '' unless $addr;
-    $addr = '::' . $addr
-        unless $addr =~ /:/;
-    return ipv6_aton($addr);
-}
-
 =item $dotquad or $hex_text = inet_n2dx($ipv6naddr);
 
 This function B<does the right thing> and returns the text for either a
@@ -480,29 +513,6 @@ sub inet_n2ad($) {
     local $1;
     $addr =~ /([^:]+)$/;
     return $1;
-}
-
-=item $netaddr = inet_pton($AF_family,$text_addr);
-
-This function takes an IP address in IPv4 or IPv6 text format and converts it into
-binary format. The type of IP address conversion is controlled by the FAMILY
-argument.
-
-NOTE: inet_pton, inet_ntop and AF_INET6 come from the Socket6 library if it
-is present on this host.
-
-=cut
-
-sub _inet_pton {
-    my ($af, $ip) = @_;
-    die 'Bad address family for '. __PACKAGE__ ."::inet_pton, got $af"
-        unless $af == AF_INET6() || $af == AF_INET();
-    if ($af == AF_INET()) {
-        inet_aton($ip);
-    }
-    else {
-        ipv6_aton($ip);
-    }
 }
 
 =item $text_addr = inet_ntop($AF_family,$netaddr);
@@ -603,6 +613,12 @@ sub _packzeros {
         : $x6;
 }
 
+=back
+
+=head2 Family tests
+
+=over 4
+
 =item $rv = isIPv4($bits128);
 
 This function returns true if there are no on bits present in the IPv6
@@ -624,19 +640,11 @@ This function return true if the IPv6 bit string is of the form
 
     ::d.d.d.d    or    ::ffff:d.d.d.d
 
-=item NetAddr::IP::InetBase::lower();
+=back
 
-Return IPv6 strings in lowercase.  This is the default for this module on
-its own.  See L</"IMPORT TAGS"> for the whole of the case policy, and for
-what loading NetAddr::IP::Util does to it.
+=head2 Address family
 
-=item NetAddr::IP::InetBase::upper();
-
-Return IPv6 strings in uppercase.
-
-Neither name is importable.  Call them fully qualified:
-
-    NetAddr::IP::InetBase::upper();
+=over 4
 
 =item $constant = AF_INET;
 
@@ -655,6 +663,12 @@ is present on this host.
 
 This function return FALSE if AF_INET6 is provided by Socket or Socket6. Otherwise, it returns the best guess
 value based on name of the host operating system.
+
+=back
+
+=head2 Short IPv4 text
+
+=over 4
 
 =item $ip_filled = fillIPv4($shortIP);
 
@@ -681,6 +695,27 @@ The argument is text, not a packed address.  A packed string does not
 match, so it is returned unchanged too.
 
 =back
+
+=head2 Case
+
+=over 4
+
+=item NetAddr::IP::InetBase::lower();
+
+Return IPv6 strings in lowercase.  This is the default for this module on
+its own.  See L</"IMPORT TAGS"> for the whole of the case policy, and for
+what loading NetAddr::IP::Util does to it.
+
+=item NetAddr::IP::InetBase::upper();
+
+Return IPv6 strings in uppercase.
+
+Neither name is importable.  Call them fully qualified:
+
+    NetAddr::IP::InetBase::upper();
+
+=back
+
 
 =head1 EXPORTS
 
