@@ -2,6 +2,49 @@ Revision history for Perl extension NetAddr::IP
 
 {{$NEXT}}
 
+    Unify the argument names and finish the import tag tables (GH#100, C5
+    and C7), the last two items from the structure list.
+
+    C5 named one concept six ways across the three function pages. For a
+    16 byte string there were $ipv6naddr, $ipv6addr, $pv6naddr, $bits128
+    and $netaddr. Now $bits128 is the 16 byte string, $ipv6naddr an
+    address being converted, and $netaddr a 4 byte one:
+
+      $bits128     52 -> 60 uses, after the sweep
+      $ipv6naddr   48 -> 50
+      $netaddr     29
+      $ipv6addr     8 -> 0
+      $pv6naddr     2 -> 0
+
+    $pv6naddr was a typo for $ipv6naddr, in two places. Checked first that
+    every occurrence of both names was POD or POD inside a comment, so no
+    code was renamed:
+
+      $ipv6addr in non-POD code   0 lines in each of the three files
+
+    C7, three pages carried an import tag section and Lite.pm carried none,
+    and none of them said what happens when :lower and :upper are both
+    given. Verified rather than assumed, in both classes:
+
+      NetAddr::IP          :lower          2001:db8:0:0:0:0:0:1
+      NetAddr::IP          :upper          2001:DB8:0:0:0:0:0:1
+      NetAddr::IP          :lower :upper   2001:DB8:0:0:0:0:0:1
+      NetAddr::IP          :upper :lower   2001:DB8:0:0:0:0:0:1
+
+    :upper wins either way, because :lower is handled first in import.
+    Lite.pm now has an IMPORT TAGS section covering the five tags it
+    accepts, each marked process-wide, and the precedence stated. Which is
+    the five was measured, since :old_storable and :rfc3021 belong to
+    NetAddr::IP alone:
+
+      :old_storable   rejected by Lite
+      :rfc3021        rejected by Lite
+      :aton           accepted
+      :old_nth        accepted
+      :nofqdn         accepted
+
+    Documentation only, no code change.
+
     Group the remaining method and function entries (GH#100, C2 and the
     grouped layout). IP.pm was grouped in the previous commit; this does
     the other four.
