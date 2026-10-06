@@ -15,12 +15,3 @@ $util_o : $util_c
 
 END_POSTAMBLE
 }
-
-# Remove lib/NetAddr/IP/Util.c from the clean target.
-# EUMM adds C_FILES to clean automatically; we need this file tracked in git
-# for CPAN distribution, so it must survive make clean.
-sub clean {
-    my $inherited = shift->SUPER::clean(@_);
-    $inherited =~ s{['"]?lib/NetAddr/IP/Util\.c['"]?\s*}{}g;
-    $inherited;
-}
