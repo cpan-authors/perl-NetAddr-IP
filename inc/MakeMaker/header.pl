@@ -176,6 +176,12 @@ if ($useXS) {
     );
 }
 
+# make clean removes the files Makefile.PL rewrites on every run,
+# make realclean also removes the configure results
+push @mm_args,
+    clean     => { FILES => 'lib/NetAddr/IP/Util_IS.pm xs/localperl.h' },
+    realclean => { FILES => 'xs/config.h xs/config.log xs/config.status' };
+
 sub _test_cc {
     print "Testing if you have a C compiler and the needed header files....\n";
 
