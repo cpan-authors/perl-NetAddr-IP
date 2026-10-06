@@ -299,141 +299,89 @@ sub naip_gethostbyname {
 =head1 SYNOPSIS
 
   use NetAddr::IP::Util qw(
-    inet_aton
-    inet_ntoa
-    ipv6_aton
-    ipv6_ntoa
-    ipv6_n2x
-    ipv6_n2d
-    inet_any2n
-    hasbits
-    isIPv4
-    isNewIPv4
-    isAnyIPv4
-    inet_n2dx
-    inet_n2ad
-    inet_pton
-    inet_ntop
-    inet_4map6
-    ipv4to6
-    mask4to6
-    ipanyto6
-    maskanyto6
-    ipv6to4
-    packzeros
-    shiftleft
-    addconst
-    add128
-    sub128
-    notcontiguous
-    bin2bcd
-    bcd2bin
-    mode
-    AF_INET
-    AF_INET6
-    naip_gethostbyname
+    inet_aton inet_ntoa ipv6_aton ipv6_ntoa ipv6_n2x ipv6_n2d
+    inet_any2n inet_n2dx inet_n2ad inet_pton inet_ntop inet_4map6
+    packzeros ipv4to6 mask4to6 ipanyto6 maskanyto6 ipv6to4
+    hasbits isIPv4 isNewIPv4 isAnyIPv4
+    shiftleft addconst add128 sub128 notcontiguous
+    bin2bcd bcd2bin mode
+    AF_INET AF_INET6 naip_gethostbyname
   );
 
-  use NetAddr::IP::Util qw(:all :inet :ipv4 :ipv6 :math)
+  # text to packed, and back
+  $netaddr    = inet_aton('192.0.2.1');           # 4 bytes
+  $dotquad    = inet_ntoa($netaddr);              # '192.0.2.1'
+  $ipv6naddr  = ipv6_aton('2001:db8::1');         # 16 bytes
+  $ipv6_text  = ipv6_ntoa($ipv6naddr);            # '2001:db8::1'
+  $ipv6naddr  = inet_any2n('192.0.2.1');          # 0:0:0:0:0:0:C000:201
+  $hex_text   = ipv6_n2x($ipv6naddr);             # '2001:DB8:0:0:0:0:0:1'
+  $dec_text   = ipv6_n2d($ipv6naddr);             # '2001:DB8:0:0:0:0:0.0.0.1'
+  $hex_text   = packzeros('0:0:0:0:0:ffff:c000:201');
+                                                 # '::FFFF:C000:201'
 
-  :inet      =>    inet_aton, inet_ntoa, ipv6_aton
-        ipv6_ntoa, ipv6_n2x, ipv6_n2d,
-        inet_any2n, inet_n2dx, inet_n2ad,
-        inet_pton, inet_ntop, inet_4map6,
-        ipv4to6, mask4to6, ipanyto6, packzeros
-        maskanyto6, ipv6to4, naip_gethostbyname
+  # the family tests
+  $rv         = hasbits($bits128);                # true if any bit is set
+  $rv         = isIPv4($bits128);                 # ::d.d.d.d, deprecated
+  $rv         = isNewIPv4($bits128);              # ::ffff:d.d.d.d
+  $rv         = isAnyIPv4($bits128);              # either of the above
 
-  :ipv4      =>    inet_aton, inet_ntoa
+  # widening and narrowing
+  $ipv6naddr  = ipv4to6($netaddr);                # 0:0:0:0:0:0:C000:201
+  $ipv6naddr  = inet_4map6($netaddr);             # 0:0:0:0:0:FFFF:C000:201
+  $netaddr    = ipv6to4($ipv6naddr);              # low 32 bits
 
-  :ipv6      =>    ipv6_aton, ipv6_ntoa, ipv6_n2x,
-        ipv6_n2d, inet_any2n, inet_n2dx,
-        inet_n2ad, inet_pton, inet_ntop,
-        inet_4map6, ipv4to6, mask4to6,
-        ipanyto6, maskanyto6, ipv6to4,
-        packzeros, naip_gethostbyname
+  # 128 bit arithmetic, carry in scalar context
+  $carry      = addconst($bits128, $signed_32bit);
+  ($carry, $bits128) = addconst($bits128, $signed_32bit);
+  $carry      = sub128($bits1281, $bits1282);
+  ($spurious, $cidr) = notcontiguous($mask128);
 
-  :math      =>    hasbits, isIPv4, isNewIPv4, isAnyIPv4,
-        addconst, add128, sub128, notcontiguous,
-        bin2bcd, bcd2bin, shiftleft
-
-  $dotquad          = inet_ntoa($netaddr);
-  $netaddr          = inet_aton($dotquad);
-  $ipv6naddr        = ipv6_aton($ipv6_text);
-  $ipv6_text        = ipv6_ntoa($ipv6naddr);
-  $hex_text         = ipv6_n2x($ipv6naddr);
-  $dec_text         = ipv6_n2d($ipv6naddr);
-  $hex_text         = packzeros($hex_text);
-  $ipv6naddr        = inet_any2n($dotquad or $ipv6_text);
-  $ipv6naddr        = inet_4map6($netaddr or $ipv6naddr);
-  $rv               = hasbits($bits128);
-  $rv               = isIPv4($bits128);
-  $rv               = isNewIPv4($bits128);
-  $rv               = isAnyIPv4($bits128);
-  $dotquad or $hex_text = inet_n2dx($ipv6naddr);
-  $dotquad or $dec_text = inet_n2ad($ipv6naddr);
-  $netaddr          = inet_pton($AF_family,$hex_text);
-  $hex_text         = inet_ntop($AF_family,$netaddr);
-  $ipv6naddr        = ipv4to6($netaddr);
-  $ipv6naddr        = mask4to6($netaddr);
-  $ipv6naddr        = ipanyto6($netaddr);
-  $ipv6naddr        = maskanyto6($netaddr);
-  $netaddr          = ipv6to4($pv6naddr);
-  $bitsX2           = shiftleft($bits128,$n);
-  $carry            = addconst($ipv6naddr,$signed_32con);
-  ($carry,$ipv6naddr) = addconst($ipv6naddr,$signed_32con);
-  $carry            = add128($ipv6naddr1,$ipv6naddr2);
-  ($carry,$ipv6naddr) = add128($ipv6naddr1,$ipv6naddr2);
-  $carry            = sub128($ipv6naddr1,$ipv6naddr2);
-  ($carry,$ipv6naddr) = sub128($ipv6naddr1,$ipv6naddr2);
-  ($spurious,$cidr) = notcontiguous($mask128);
-  $bcdtext          = bin2bcd($bits128);
-  $bits128          = bcd2bin($bcdtxt);
-  $modetext         = mode;
-  ($name,$aliases,$addrtype,$length,@addrs) = naip_gethostbyname(NAME);
-  $trueif           = havegethostbyname2();
-
-  NetAddr::IP::Util::lower();
-  NetAddr::IP::Util::upper();
-
-=head1 INSTALLATION
-
-Un-tar the distribution in an appropriate directory and type:
-
-  perl Makefile.PL
-  make
-  make test
-  make install
-
-B<NetAddr::IP::Util> installs by default with its primary functions compiled
-using Perl's XS extensions to build a 'C' library. If you do not have a 'C'
-compiler available or would like the slower Pure Perl version for some other
-reason, then type:
-
-  perl Makefile.PL -noxs
-  make
-  make test
-  make install
+  $modetext   = mode;                             # 'CC XS' or 'Pure Perl'
 
 =head1 DESCRIPTION
 
-B<NetAddr::IP::Util> provides a suite of tools for manipulating and
-converting IPv4 and IPv6 addresses into 128 bit string context and back to
-text. The strings can be manipulated with Perl's logical operators:
+B<NetAddr::IP::Util> converts IPv4 and IPv6 addresses to and from 128
+bit binary strings, and does arithmetic on those strings.  A 128 bit
+string here means 16 bytes, whatever the family: an IPv4 address is
+carried in the low 32 bits with the rest zero.  That is what lets one
+set of functions take either family.
+
+  use NetAddr::IP::Util qw(inet_any2n ipv6_n2x);
+
+  my $v4 = inet_any2n('192.0.2.1');
+  my $v6 = inet_any2n('2001:db8::1');
+  print length($v4), "\n";      # 16, not 4
+  print ipv6_n2x($v4), "\n";    # 0:0:0:0:0:0:C000:201
+
+The strings behave like C<vec> strings under the bit operators:
 
   and   &
   or    |
   xor   ^
         ~    compliment
 
-in the same manner as 'vec' strings.
+so masks and tests are written as arithmetic on them, which is what the
+family tests below and C<netbroad> in L</EXAMPLES> do.
 
-The IPv6 functions support all rfc1884 formats.
+The functions come in two implementations.  The XS build compiles them
+with Perl's XS extensions; C<-noxs> selects the pure Perl build, and
+C<mode()> reports which one is loaded:
 
-  i.e.    x:x:x:x:x:x:x:x:x
-    x:x:x:x:x:x:x:d.d.d.d
-    ::x:x:x
-    ::x:d.d.d.d
-  and so on...
+  print mode();      # 'CC XS' or 'Pure Perl'
+
+The two agree on every input tried, including every error message.
+
+The IPv6 functions accept every text form in RFC 4291 s2.2:
+
+  x:x:x:x:x:x:x:x
+  x:x:x:x:x:x:x:d.d.d.d
+  ::x:x:x
+  ::x:d.d.d.d
+  ::ffff:d.d.d.d
+
+and produce text following RFC 5952 s4.  Which case they produce depends
+on the process-wide setting described under L<NetAddr::IP::InetBase>,
+except for C<ipv6_ntoa> and C<inet_ntop>, which are always lowercase.
 
 =over 4
 
@@ -453,19 +401,23 @@ Convert a dot-quad IP address into an IPv4 packed network address.
 
 =item $ipv6addr = ipv6_aton($ipv6_text);
 
-Takes an IPv6 address of the form described in rfc1884
-and returns a 128 bit binary RDATA string.
+Takes an IPv6 address in any of the RFC 4291 s2.2 text forms and returns
+a 128 bit binary RDATA string.  Returns undef if the text is not a valid
+address.
 
   input:    ipv6 text
-  returns:  128 bit RDATA string
+  returns:  128 bit RDATA string, or undef
 
 =item $ipv6_text = ipv6_ntoa($ipv6naddr);
 
-Convert a 128 bit binary IPv6 address to compressed rfc 1884
-text representation.
+Convert a 128 bit binary IPv6 address to the compressed RFC 5952 s4
+text representation, which is lowercase whatever the case setting.
 
   input:    128 bit RDATA string
   returns:  ipv6 text
+
+NOTE: for an address with an IPv4 address in the low 32 bits the output
+depends on whether Socket6 is installed.  See the entry for C<inet_ntop>.
 
 =item $hex_text = ipv6_n2x($ipv6addr);
 
@@ -489,7 +441,7 @@ This function converts a text IPv4 or IPv6 address in text format in any
 standard notation into a 128 bit IPv6 string address. It prefixes any
 dot-quad address (if found) with '::' and passes it to B<ipv6_aton>.
 
-  input:    dot-quad or rfc1844 address
+  input:    dot-quad or RFC 4291 s2.2 address
   returns:  128 bit IPv6 string
 
 =item $rv = hasbits($bits128);
@@ -501,7 +453,7 @@ and false if all the bits are zero.
       &do_something;
     }
 
-  or    if (hasbits($bits128 & $mask128) {
+  or    if (hasbits($bits128 & $mask128)) {
       &do_something;
     }
 
@@ -513,22 +465,24 @@ This allows the implementation of logical functions of the form of:
   input:    128 bit IPv6 string
   returns:  true if any bits are present
 
-=item $ipv6naddr = inet_4map6($netaddr or $ipv6naddr
+=item $ipv6naddr = inet_4map6($netaddr or $ipv6naddr);
 
-This function returns an ipV6 network address with the first 80 bits
-set to zero and the next 16 bits set to one, while the last 32 bits
-are filled with the ipV4 address.
+Return an IPv4-mapped IPv6 address: the first 80 bits zero, the next 16
+bits one, and the low 32 bits the IPv4 address.  RFC 4291 s2.5.5.2.
 
-  input:    ipV4 netaddr
-        or  ipV6 netaddr
-  returns:  ipV6 netaddr
+  input:    4 byte packed IPv4
+        or  16 byte packed IPv6 already in one of the two
+            IPv4-embedded spaces
+  returns:  16 byte packed IPv6
+        or  undef
 
-  returns: undef on error
+  my $mapped = inet_4map6(inet_aton('192.0.2.1'));
+  print ipv6_n2x($mapped);     # 0:0:0:0:0:FFFF:C000:201
 
-An ipV6 network address must be in one of the two compatible ipV4
-mapped address spaces. i.e.
+An IPv6 input must already be in one of the two IPv4-embedded spaces.
+i.e.
 
-  ::ffff::d.d.d.d    or    ::d.d.d.d
+  ::ffff:d.d.d.d    or    ::d.d.d.d
 
 =item $rv = isIPv4($bits128);
 
@@ -541,15 +495,22 @@ Note: this is an old and deprecated ipV4 compatible ipV6 address
 
 =item $rv = isNewIPv4($bits128);
 
-This function return true if the IPv6 128 bit string is of the form
+This function returns true if the 128 bit string is an IPv4-mapped
+address, of the form
 
-  ::ffff::d.d.d.d
+  ::ffff:d.d.d.d
+
+which is the RFC 4291 s2.5.5.2 prefix C<::ffff:0:0/96>.
 
 =item $rv = isAnyIPv4($bits128);
 
-This function return true if the IPv6 bit string is of the form
+This function returns true if the 128 bit string has an IPv4 address in
+the low 32 bits, of either form
 
-  ::d.d.d.d    or    ::ffff::d.d.d.d
+  ::d.d.d.d    or    ::ffff:d.d.d.d
+
+which is the union of the RFC 4291 s2.5.5.1 compatible prefix and the
+s2.5.5.2 mapped prefix.
 
 =item $dotquad or $hex_text = inet_n2dx($ipv6naddr);
 
@@ -567,7 +528,7 @@ dot-quad IPv4 or a hex::decimal notation IPv6 address.
 
   input:    128 bit IPv6 string
   returns:  ddd.ddd.ddd.ddd
-        or  x:x:x:x:x:x:ddd.ddd.ddd.dd
+        or  x:x:x:x:x:x:ddd.ddd.ddd.ddd
 
 =item $netaddr = inet_pton($AF_family,$hex_text);
 
@@ -585,9 +546,18 @@ NOTE: inet_ntop ALWAYS returns lowercase characters.
 
 =item $hex_text = packzeros($hex_text);
 
-This function optimizes and rfc 1884 IPv6 hex address to reduce the number of
-long strings of zero bits as specified in rfc 1884, 2.2 (2) by substituting
-B<::> for the first occurrence of the longest string of zeros in the address.
+Shortens an eight-group IPv6 hex address by substituting B<::> for the
+longest run of zero groups, per RFC 5952 s4.2.1.  Where two runs are
+equally long the first is shortened, s4.2.3, and a run of one zero group
+is never shortened at all, s4.2.2.  Case follows the current setting,
+which is uppercase by default here.
+
+  print packzeros('0:0:0:0:0:ffff:c000:201');   # ::FFFF:C000:201
+  print packzeros('2001:db8:0:1:1:1:1:1');      # 2001:DB8:0:1:1:1:1:1
+  print packzeros('2001:db8:0:0:1:0:0:1');      # 2001:DB8::1:0:0:1
+  print packzeros('2001:db8:0:1:1:0:0:1');      # 2001:DB8:0:1:1::1
+  print packzeros('2001:0db8:0:1:2:3:4:5');     # 2001:DB8:0:1:2:3:4:5
+  print packzeros('2001:db8:0:0:1:0:0:1:1');   # 2001::1:0:0:1:1
 
 =item $ipv6naddr = ipv4to6($netaddr);
 
@@ -631,12 +601,21 @@ Truncate the upper 96 bits of a 128 bit address and return the lower
 
 =item $bitsXn = shiftleft($bits128,$n);
 
-  input:    128 bit string variable,
-        number of shifts [optional]
-  returns:  bits X n shifts
+Shift a 128 bit string left by C<$n> bits.  Bits shifted past the top are
+discarded.
 
-  NOTE: a single shift is performed
-    if $n is not specified
+  input:    128 bit string,
+        number of shifts [optional]
+  returns:  128 bit string, shifted left by n
+
+With no C<$n>, or with C<$n> of 0, the input is returned unchanged, on
+both the XS and the pure Perl build:
+
+  my $bits128 = ipv6_aton('ffff:ffff:ffff:ffff:ffff:ffff:ffff:ffff');
+  print ipv6_n2x(shiftleft($bits128));     # FFFF:...:FFFF unchanged
+  print ipv6_n2x(shiftleft($bits128, 8));  # FFFF:...:FF00, top 8 gone
+
+C<$n> above C<$MAX_SHIFTLEFT> of 128 croaks.
 
 =item addconst($ipv6naddr,$signed_32con);
 
@@ -757,9 +736,11 @@ structure, and an array of one or more netaddr's
 In SCALAR context, returns the first netaddr.
 
 This function ALWAYS returns an IPv6 address, even on IPv4 only systems.
-IPv4 addresses are mapped into IPv6 space in the form:
+IPv4 answers are mapped into IPv6 space in the RFC 4291 s2.5.5.2 form:
 
-  ::FFFF:FFFF:d.d.d.d
+  ::FFFF:d.d.d.d
+
+so an answer for 127.0.0.1 is C<0:0:0:0:0:FFFF:7F00:1>.
 
 This is NOT the expected result from Perl's gethostbyname2. It is instead equivalent to:
 
@@ -790,150 +771,211 @@ Return IPv6 strings in uppercase.  This is the default.
 
 =head1 EXAMPLES
 
+The four subs below are the ones this distribution used to carry as
+examples.  Every one of them runs as written; the results are comments.
 
-  # convert any textual IP address into a 128 bit vector
-  #
-  sub text2vec {
-    my ($anyIP, $anyMask) = @_;
+Convert any text address and mask into a 128 bit vector, extending a 32
+bit mask over the IPv6 side:
 
-  # not IPv4 bit mask
-    my $notiv4 = ipv6_aton('FFFF:FFFF:FFFF:FFFF:FFFF:FFFF::');
-
-    my $vecip    = inet_any2n($anyIP);
-    my $mask    = inet_any2n($anyMask);
-
-  # extend mask bits for IPv4
-    my $bits = 128;    # default
-    unless (hasbits($mask & $notiv4)) {
-      $mask |= $notiv4;
-      $bits = 32;
-    }
-    return ($vecip, $mask, $bits);
-  }
-
-  ... alternate implementation, a little faster
+  use NetAddr::IP::Util qw(ipv6_aton inet_any2n hasbits ipv6_n2x);
 
   sub text2vec {
-    my ($anyIP, $anyMask) = @_;
+      my ($anyIP, $anyMask) = @_;
 
   # not IPv4 bit mask
-    my $notiv4 = ipv6_aton('FFFF:FFFF:FFFF:FFFF:FFFF:FFFF::');
+      my $notiv4 = ipv6_aton('FFFF:FFFF:FFFF:FFFF:FFFF:FFFF::');
 
-    my $vecip    = inet_any2n($anyIP);
-    my $mask    = inet_any2n($anyMask);
-
-  # extend mask bits for IPv4
-    my $bits = 128;    # default
-    if (isIPv4($mask)) {
-      $mask |= $notiv4;
-      $bits = 32;
-    }
-    return ($vecip, $mask, $bits);
+      my $vecip = inet_any2n($anyIP);
+      my $mask  = inet_any2n($anyMask);
+      my $bits  = 128;              # default
+      unless (hasbits($mask & $notiv4)) {
+          $mask |= $notiv4;
+          $bits  = 32;
+      }
+      return ($vecip, $mask, $bits);
   }
 
-  ... elsewhere
-    $nip = {
-      addr  => $vecip,
-      mask  => $mask,
-      bits  => $bits,
-    };
+  my ($addr, $mask, $bits) = text2vec('192.0.2.9', '255.255.255.0');
+  print ipv6_n2x($addr), "\n";         # 0:0:0:0:0:0:C000:209
+  print ipv6_n2x($mask), "\n";         # FFFF:...:FF00, all 128 bits
+  print "$bits\n";                     # 32
 
-  # return network and broadcast addresses from IP and Mask
-  #
+  my ($a6, $m6, $b6) = text2vec('2001:db8::1', 'ffff:ffff:ffff:ffff::');
+  print "$b6\n";                       # 128
+
+The same thing keyed off C<isIPv4> instead of C<hasbits>, which is a
+little faster and needs no mask constant:
+
+  my $bits = 128;
+  if (isIPv4($mask)) {
+      $mask |= $notiv4;
+      $bits  = 32;
+  }
+
+Network and broadcast addresses from a vector.  Note the C<$bcast>
+name, which was C<$broadcast> in the original and never declared:
+
+  use NetAddr::IP::Util qw(ipv6_n2d);
+
   sub netbroad {
-    my ($nip) = shift;
-    my $notmask  = ~ $nip->{mask};
-    my $bcast    = $nip->{addr} | $notmask;
-    my $network  = $nip->{addr} & $nip->{mask};
-    return ($network, $broadcast);
+      my ($nip) = @_;
+      my $notmask = ~ $nip->{mask};
+      my $bcast   = $nip->{addr} | $notmask;
+      my $network = $nip->{addr} & $nip->{mask};
+      return ($network, $bcast);
   }
 
-  # check if address is within a network
-  #
+  print ipv6_n2d((netbroad($nip))[0]), "\n";    # 0:0:0:0:0:0:192.0.2.0
+  print ipv6_n2d((netbroad($nip))[1]), "\n";    # 0:0:0:0:0:0:192.0.2.255
+
+Whether one address falls inside a net, using C<sub128>, whose carry is
+C<NOT borrow>:
+
+  use NetAddr::IP::Util qw(sub128);
+
   sub within {
-    my ($nip, $net) = @_;
-    my $addr = $nip->{addr}
-    my ($nw, $bc) = netbroad($net);
-  # arg1 >= arg2, sub128 returns true
-    return (sub128($addr,$nw) && sub128($bc,$addr))
-    ? 1 : 0;
+      my ($nip, $net) = @_;
+      my $addr = $nip->{addr};             # a semicolon, which was missing
+      my ($nw, $bc) = netbroad($net);
+      return (sub128($addr, $nw) && sub128($bc, $addr)) ? 1 : 0;
   }
 
-  # truely hard way to do $ip++
-  # add a constant, wrapping at netblock boundaries
-  # to subtract the constant, negate it before calling
-  # 'addwrap' since 'addconst' will extend the sign bits
-  #
-  sub addwrap {
-    my ($nip, $const) = @_;
-    my $addr    = $nip->{addr};
-    my $mask    = $nip->{mask};
-    my $bits    = $nip->{bits};
-    my $notmask = ~ $mask;
-    my $hibits  = $addr & $mask;
-    $addr = addconst($addr,$const);
-    my $wraponly = $addr & $notmask;
-    my $newip = {
-        addr => $hibits | $wraponly,
-        mask => $mask,
-        bits => $bits,
-    };
-    # bless $newip as appropriate
-    return $newip;
+  print within($nip, $nip), "\n";            # 1
+  print within($other, $nip), "\n";          # 0
+
+C<addconst> stores the carry in scalar context and C<($carry, $result)>
+in list context, so wrapping a net at a boundary means taking the second
+element.  The original example assigned the scalar form to C<$addr>,
+which quietly stored the carry:
+
+  use NetAddr::IP::Util qw(addconst);
+  use NetAddr::IP ();
+
+  my $ip = NetAddr::IP->new('192.0.2.0/24');
+  my $nextnet = 256;                          # one /24 step
+
+  my $before = "$ip";                         # stringification copies
+  $ip++;
+  if ("$ip" lt $before) {                     # host part wrapped
+      (undef, $ip->{addr}) = addconst($ip->{addr}, $nextnet);
   }
 
-  # something more useful
-  # increment a /24 net to the NEXT net at the boundry
+  print "$ip\n";                             # 192.0.2.1/24
 
-  my $nextnet = 256;    # for /24
-  LOOP:
-  while (...continuing) {
-    your code....
-    ...
-    my $lastip = $ip-copy();
-    $ip++;
-    if ($ip < $lastip) {    # host part wrapped?
-  # discard carry
-      (undef, $ip->{addr} = addconst($ip->{addr}, $nextnet);
-    }
-    next LOOP;
+The original had C<$ip-copy()>, which is not Perl, and compared with
+C<< $ip < $lastip >>, which uses the overloaded C<lt> rather than a
+numeric test.  Comparing the string forms is what detects the wrap:
+
+  my $ip = NetAddr::IP->new('192.0.2.252/30');
+  for my $step (0 .. 3) {
+      my $before = "$ip";
+      $ip++;
+      printf "step %d: %-16s wrapped: %d\n", $step, "$ip",
+          ("$ip" lt $before ? 1 : 0);
   }
 
+  step 0: 192.0.2.253/30   wrapped: 0
+  step 1: 192.0.2.254/30   wrapped: 0
+  step 2: 192.0.2.255/30   wrapped: 0
+  step 3: 192.0.2.252/30   wrapped: 1
+
+=head1 EXPORTS
+
+Nothing is exported by default.  Use explicit import tags:
+
+  use NetAddr::IP::Util qw(:all);
+  use NetAddr::IP::Util qw(:math);
+
+The tags are:
+
+=over 4
+
+=item C<:all>
+
+Everything in L</"EXPORT_OK">.
+
+=item C<:inet>
+
+Nineteen names: the text and binary conversions, the family tests, the
+widening helpers and the resolver.
+
+  inet_aton inet_ntoa ipv6_aton ipv6_ntoa ipv6_n2x ipv6_n2d
+  inet_any2n inet_n2dx inet_n2ad inet_pton inet_ntop inet_4map6
+  ipv4to6 mask4to6 ipanyto6 maskanyto6 ipv6to4
+  packzeros naip_gethostbyname
+
+=item C<:ipv4>
+
+Two names:
+
+  inet_aton inet_ntoa
+
+=item C<:ipv6>
+
+Sixteen names.  This is C<:inet> without C<inet_aton> and
+C<inet_ntoa>:
+
+  ipv6_aton ipv6_ntoa ipv6_n2x ipv6_n2d inet_any2n
+  inet_n2dx inet_n2ad inet_pton inet_ntop
+  ipv4to6 mask4to6 ipanyto6 maskanyto6 ipv6to4
+  packzeros naip_gethostbyname
+
+=item C<:math>
+
+Eleven names:
+
+  hasbits isIPv4 isNewIPv4 isAnyIPv4 addconst add128 sub128
+  notcontiguous bin2bcd bcd2bin shiftleft
+
+=back
 
 =head1 EXPORT_OK
 
-  inet_aton
-  inet_ntoa
-  ipv6_aton
-  ipv6_ntoa
-  ipv6_n2x
-  ipv6_n2d
-  inet_any2n
-  hasbits
-  isIPv4
-  isNewIPv4
-  isAnyIPv4
-  inet_n2dx
-  inet_n2ad
-  inet_pton
-  inet_ntop
-  inet_4map6
-  ipv4to6
-  mask4to6
-  ipanyto6
-  maskanyto6
-  ipv6to4
-  packzeros
-  shiftleft
-  addconst
-  add128
-  sub128
-  notcontiguous
-  bin2bcd
-  bcd2bin
-  mode
-  naip_gethostbyname
+The functions this module can export.  The first group is the documented
+API; the last five are helpers for the test suite, exported so that
+C<UtilPP> and the XS build can be compared against each other, and not
+stable API.
+
+  inet_aton         inet_ntoa          ipv6_aton          ipv6_ntoa
+  ipv6_n2x          ipv6_n2d           inet_any2n         inet_n2dx
+  inet_n2ad         inet_pton          inet_ntop          inet_4map6
+  shiftleft         addconst           add128             sub128
+  notcontiguous     bin2bcd            bcd2bin            mode
+  ipv4to6           mask4to6           ipanyto6           maskanyto6
+  ipv6to4           packzeros          naip_gethostbyname
   havegethostbyname2
+  AF_INET           AF_INET6
+
+Test helpers, not API:
+
+  bin2bcdn          bcdn2txt           bcdn2bin           simple_pack
+  comp128
+
+C<bin2bcd> returns text digits and C<simple_pack> turns text digits into
+a packed string, padding to C<$MAX_BCD_DIGITS> first.  C<bcdn2txt> is the
+inverse of the packing and C<bcdn2bin> turns it back to 128 bits.
+C<comp128> exists because Perl's C<~> is faster than calling into the XS
+routine for a one's complement, so it is published only for testing.
+
+=head1 IMPORT TAGS THAT CHANGE BEHAVIOUR
+
+Two tags change what the module does rather than which names it exports.
+
+=over 4
+
+=item C<:noSock6>
+
+Forces C<naip_gethostbyname> to report that Socket6 is unavailable, so
+the resolver fallback can be tested on a host that has it.  Test hook,
+not API.
+
+=item C<:upper> and C<:lower>
+
+These are in L<NetAddr::IP::InetBase>, and see the note there: the case
+setting is one package global, so importing either affects every user of
+the module in the process.
+
+=back
 
 =head1 ADDITIONAL LICENSE
 
