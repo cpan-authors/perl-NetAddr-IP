@@ -106,26 +106,6 @@ broadcast address and had a undef zeroth index:
 
 C<:aton> and C<:rfc3021> are listed under L</DEPRECATED>.
 
-=head1 INSTALLATION
-
-Un-tar the distribution in an appropriate directory and type:
-
-  perl Makefile.PL
-  make
-  make test
-  make install
-
-B<NetAddr::IP> depends on B<NetAddr::IP::Util> which installs by
-default with its primary functions compiled using Perl's XS extensions
-to build a C library. If you do not have a C compiler available or
-would like the slower Pure Perl version for some other reason, then
-type:
-
-  perl Makefile.PL -noxs
-  make
-  make test
-  make install
-
 =head1 FUNCTIONS
 
 =head2 netlimit
