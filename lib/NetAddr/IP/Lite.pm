@@ -540,19 +540,19 @@ sub _new ($$$) {
 
 =item C<-E<gt>new_cis6("$addr $mask")>
 
-The first three methods create a new address with the supplied address in
+C<new> and C<new6> create a new address with the supplied address in
 C<$addr> and an optional netmask C<$mask>, which can be omitted to get
 a /32 or /128 netmask for IPv4 / IPv6 addresses respectively.
 
-new6FFFF specifically returns an IPv4 address in IPv6 format according to RFC4291
+C<new6FFFF> is the third constructor, and is what makes an IPv4-mapped
+address:
 
-  new6             ::xxxx:xxxx
-  new6FFFF    ::FFFF:xxxx:xxxx
+  NetAddr::IP::Lite->new6FFFF('192.0.2.1');   # 0:0:0:0:0:FFFF:C000:201/128
 
-The third method C<new_no> is exclusively for IPv4 addresses and filters
-improperly formatted
-dot quad strings for leading 0's that would normally be interpreted as octal
-format by NetAddr per the specifications for inet_aton.
+C<new_no> is exclusively for IPv4 addresses and filters improperly
+formatted dot quad strings for leading 0's that would normally be
+interpreted as octal format by NetAddr per the specifications for
+inet_aton.
 
 B<new_from_aton> takes a packed IPv4 address and assumes a /32 mask. This
 function replaces the :aton functionality which is fundamentally
@@ -563,24 +563,22 @@ address/mask pairs with a B<space> as a separator instead of a slash (/).
 Both are deprecated in favour of B<new> and B<new6>, which do the same.
 See L</DEPRECATED>.
 
-C<-E<gt>new6> and
-C<-E<gt>new_cis6> mark the address as being in ipV6 address space even
+C<-E<gt>new6> and C<-E<gt>new_cis6> mark the address as being in ipV6 address space even
 if the format would suggest otherwise.
 
   i.e.  ->new6('1.2.3.4') will result in ::102:304
 
   addresses submitted to ->new in ipV6 notation will
   remain in that notation permanently. i.e.
-        ->new('::1.2.3.4') will result in ::102:304
+  ->new('::1.2.3.4') will result in ::102:304
   whereas new('1.2.3.4') would print out as 1.2.3.4
 
   The C<addr()> value is what stringifies as the first part.
 
-C<$addr> can be almost anything that can be resolved to an IP address
-in all the notations I have seen over time. It can optionally contain
-the mask in CIDR notation. If the OPTIONAL perl module Socket6 is
-available in the local library it will autoload and ipV6 host6
-names will be resolved as well as ipV4 hostnames.
+C<$addr> can be almost anything that can be resolved to an IP address.
+It can optionally contain the mask in CIDR notation. If the optional
+module Socket6 is installed, ipV6 host names are resolved as well as
+ipV4 ones; without it, only the ipV4 path runs.
 
 B<prefix> notation is understood, with the limitation that the range
 specified by the prefix must match with a valid subnet.
@@ -589,11 +587,6 @@ Addresses in the same format returned by C<inet_aton> or
 C<gethostbyname> can also be understood, although no mask can be
 specified for them. The default is to not attempt to recognize this
 format, as it seems to be seldom used.
-
-If called with no arguments, 'default' is assumed. An explicit undef
-argument returns undef.
-
-If called with an empty string as the argument, returns 'undef'
 
 C<$addr> can be any of the following and possibly more...
 
@@ -609,11 +602,12 @@ C<$addr> can be any of the following and possibly more...
   n.n.n.n/m.m.m.m
   n.n.n.n m.m.m.m
   loopback, localhost, broadcast, any, default
+  host, as a mask keyword
   x.x.x.x/host
-  0xABCDEF, 0b111111000101011110, (or a bcd number)
+  x:x:x/host
+  0xABCDEF, 0b111111000101011110, (a bcd number)
   a netaddr as returned by 'inet_aton', but only with the deprecated
   :aton tag; without it a packed string returns undef
-
 
 Any RFC 4291 s2.2 notation
 
@@ -636,12 +630,10 @@ A Fully Qualified Domain Name which returns an ipV4 address or an ipV6
 address, embodied in that order. This previously undocumented feature
 may be disabled with:
 
-  use NetAddr::IP::Lite ':nofqdn';
+  use NetAddr::IP::Lite qw(:nofqdn);
 
-If called with no arguments, 'default' is assumed. An explicit undef
-argument returns undef.
-
-If called with and empty string as the argument, 'undef' is returned;
+Called with no arguments, 'default' is assumed. An explicit undef
+argument returns undef, and an empty string returns undef.
 
 =cut
 
@@ -1329,8 +1321,20 @@ subnet.
 
 The ipV6 value has more digits than a Perl number holds, so C<==>,
 C<E<lt>=E<gt>> and C<sort> on two C<numeric()> results compare them as
-floats and call distinct addresses equal. Compare the objects directly,
-both operators are overloaded, or use C<-E<gt>bigint()>.
+floats and call distinct addresses equal:
+
+  my $x = NetAddr::IP::Lite->new('2001:db8::1');
+  my $y = NetAddr::IP::Lite->new('2001:db8::2');
+  print $x->numeric, "\n";      # 42540766411282592856903984951653826561
+  print $x->numeric == $y->numeric ? 'same' : 'different';
+  # same, though the addresses differ in the last digit
+
+Compare the objects directly, since both operators are overloaded, or use
+C<-E<gt>bigint()>:
+
+  print $x == $y ? 'same' : 'different';     # different
+  print $x <=> $y;                            # -1
+  print $x->bigint == $y->bigint ? 'same' : 'different';   # different
 
 =cut
 
@@ -1352,7 +1356,7 @@ sub numeric ($) {
 
 =item C<-E<gt>bigint()>
 
-When called in a scalar context, will return a Math::BigInt
+When called in scalar context, will return a Math::BigInt
 representation of the address part of the IP address. When called in
 an array context, it returns a list of two elements, The first
 element is as described, the second element is the Math::BigInt
@@ -1477,9 +1481,9 @@ sub within ($$) {
 
 Returns true when C<$me> is an RFC 1918 address.
 
-  10.0.0.0        -   10.255.255.255  (10/8 prefix)
-  172.16.0.0      -   172.31.255.255  (172.16/12 prefix)
-  192.168.0.0     -   192.168.255.255 (192.168/16 prefix)
+  10.0.0.0     -  10.255.255.255  (10/8 prefix)
+  172.16.0.0   -  172.31.255.255  (172.16/12 prefix)
+  192.168.0.0  -  192.168.255.255 (192.168/16 prefix)
 
 =cut
 
@@ -1549,11 +1553,11 @@ Returns the number of usable addresses in the subnet: the host count,
 excluding the network and broadcast addresses.  A /31 or /127 counts as 2
 usable addresses per RFC 3021, and a /32 or /128 counts as 1:
 
-  print NetAddr::IP->new('192.0.2.0/31')->num();    # 2
-  print NetAddr::IP->new('2001:db8::/127')->num();  # 2
-  print NetAddr::IP->new('192.0.2.0/30')->num();    # 2
-  print NetAddr::IP->new('192.0.2.0/28')->num();    # 14
-  print NetAddr::IP->new('192.0.2.1/32')->num();    # 1
+  print NetAddr::IP::Lite->new('192.0.2.0/31')->num();    # 2
+  print NetAddr::IP::Lite->new('2001:db8::/127')->num();  # 2
+  print NetAddr::IP::Lite->new('192.0.2.0/30')->num();    # 2
+  print NetAddr::IP::Lite->new('192.0.2.0/28')->num();    # 14
+  print NetAddr::IP::Lite->new('192.0.2.1/32')->num();    # 1
 
 
 To use the old behavior for C<-E<gt>nth($index)> and C<-E<gt>num()>:
@@ -1600,10 +1604,8 @@ the subnet (ie, the I<n>-th host address).  If no address is available
 (for example, when the network is too small for C<$index> hosts),
 C<undef> is returned.
 
-Version 4.00 of NetAddr::IP and version 1.00 of NetAddr::IP::Lite implements
-C<-E<gt>nth($index)> and C<-E<gt>num()> exactly as the documentation states.
-Previous versions behaved slightly differently and not in a consistent
-manner.
+See L</DEPRECATED> and the Changes file for the change, and the
+C<:old_nth> tag for the old behaviour.
 
 To use the old behavior for C<-E<gt>nth($index)> and C<-E<gt>num()>:
 
