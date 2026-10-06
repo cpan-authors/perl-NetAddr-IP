@@ -2,6 +2,52 @@ Revision history for Perl extension NetAddr::IP
 
 {{$NEXT}}
 
+    Fix NetAddr::IP::Constants (GH#100, step 1 of the POD overhaul).
+    Unindent the item bodies, which rendered as verbatim blocks under
+    pod2text, group the constants by the RFC they come from, and drop the
+    claim that importing one "ensures that each constant resolves at
+    compile time".
+
+    That claim is false and the opposite is worth saying plainly, since
+    the constants are read in the hot path of the 128 bit arithmetic.
+    They are our variables, so an assignment writes through to the
+    module's own copy, which is what the rest of the distribution reads:
+
+      use NetAddr::IP::Constants qw($IPV6_BITS);
+      print "$IPV6_BITS\n";                             # 128
+      $IPV6_BITS = 999;
+      print "$IPV6_BITS\n";                             # 999
+      print "$NetAddr::IP::Constants::IPV6_BITS\n";     # 999
+
+    A caller who has already declared a name the import wants is not
+    overwritten, because Exporter only installs the alias when the name
+    is free, so overriding is reachable and order dependent. InetBase,
+    Util and UtilPP each import these and read their own copy, so a
+    caller's reassignment changes nothing inside the library. Documented
+    as reachable but unsupported rather than as a supported feature.
+
+    One more correction the issue did not list. $MAX_BCD_DIGITS was
+    documented as "40 (i.e. ceil(128 * log10(2)))", and that ceiling is
+    39, not 40:
+
+      ceil(128*log10(2)) = 39      decimal digits in 2**128 = 39
+      bin2bcd of all ones        = 39 digits, unpadded
+
+    40 is right for a different reason. BCD holds one digit per nibble,
+    and a packed string has to be a whole number of bytes, so 39 nibbles
+    round up to 40, which is the 20 bytes $PACKED_BCD_BYTES holds, and
+    simple_pack is what pads to 40 before pack("H40"). The entry now
+    gives that reasoning instead of the false equivalence.
+
+    $IPV4_OFFSET gained the two section numbers it covers, RFC 4291
+    s2.5.5.1 for the deprecated compatible prefix and s2.5.5.2 for the
+    mapped prefix, since both sit at that offset and the entry had only
+    the umbrella citation. Table D's note that inet_aton short forms
+    such as 127.1 are the BSD convention and not RFC 791 is left for the
+    Util.pm commit that rewrites the function entries.
+
+    POD only, no code change. Every example run on both builds.
+
     Narrow what canon() claims to follow, and document what it does with
     an IPv4 address in the low 32 bits (GH#98). The POD said ipV6 output
     is "as per RFC5952", which overclaims. Sections 4.1 to 4.3 hold:
