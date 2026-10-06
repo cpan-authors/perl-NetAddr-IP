@@ -57,39 +57,60 @@ sub _callersub {
 =head1 SYNOPSIS
 
   use NetAddr::IP::UtilPP qw(
-    hasbits
-    shiftleft
-    addconst
-    add128
-    sub128
-    notcontiguous
-    ipv4to6
-    mask4to6
-    ipanyto6
-    maskanyto6
-    ipv6to4
-    bin2bcd
-    bcd2bin
+    hasbits shiftleft addconst add128 sub128 notcontiguous
+    ipv4to6 mask4to6 ipanyto6 maskanyto6 ipv6to4
+    bin2bcd bcd2bin
   );
 
-  use NetAddr::IP::UtilPP qw(:all)
+  # the family test and the shift
+  $rv         = hasbits($bits128);        # true if any bit is set
+  $bitsXn     = shiftleft($bits128, $n);  # with no $n, returns the input
 
-  $rv        = hasbits($bits128);
-  $bitsX2    = shiftleft($bits128, $n);
-  $carry     = addconst($ipv6naddr, $signed_32con);
-  ($carry, $ipv6naddr) = addconst($ipv6naddr, $signed_32con);
-  $carry     = add128($ipv6naddr1, $ipv6naddr2);
-  ($carry,$ipv6naddr)  = add128($ipv6naddr1, $ipv6naddr2);
-  $carry     = sub128($ipv6naddr1,$ipv6naddr2);
-  ($spurious, $cidr)   = notcontiguous($mask128);
-  ($carry, $ipv6naddr) = sub128($ipv6naddr1, $ipv6naddr2);
-  $ipv6naddr = ipv4to6($netaddr);
-  $ipv6naddr = mask4to6($netaddr);
-  $ipv6naddr = ipanyto6($netaddr);
-  $ipv6naddr = maskanyto6($netaddr);
-  $netaddr   = ipv6to4($pv6naddr);
-  $bcdtext   = bin2bcd($bits128);
-  $bits128   = bcd2bin($bcdtxt);
+  # arithmetic, carry in scalar context and (carry, result) in list
+  $carry      = addconst($bits128, $signed_32bit);
+  ($carry, $bits128) = addconst($bits128, $signed_32bit);
+  $carry      = add128($bits1281, $bits1282);
+  ($carry, $bits128) = add128($bits1281, $bits1282);
+  $carry      = sub128($bits1281, $bits1282);
+  ($spurious, $cidr) = notcontiguous($mask128);
+
+  # widening and narrowing
+  $ipv6naddr  = ipv4to6($netaddr);        # ::d.d.d.d
+  $ipv6naddr  = ipanyto6($netaddr);       # either family in, 128 bits out
+  $netaddr    = ipv6to4($ipv6naddr);      # low 32 bits
+
+  # decimal text
+  $bcdtext    = bin2bcd($bits128);
+  $bits128    = bcd2bin($bcdtext);
+
+=head1 DESCRIPTION
+
+B<NetAddr::IP::UtilPP> is the pure Perl implementation of the functions in
+B<NetAddr::IP::Util> that touch 128 bit strings.  It is loaded instead of
+the XS module when C<Makefile.PL> is run with C<-noxs>, and
+B<NetAddr::IP::Util>'s C<mode()> then reports C<Pure Perl>.
+
+  perl Makefile.PL -noxs
+  make
+  make test
+
+README.md carries the build steps for both modes.  Nothing on this page
+is about building; it is about what the module does.
+
+The two implementations are meant to be interchangeable, and agree on
+every input tried, down to the wording of the error messages:
+
+  mode()   'CC XS' or 'Pure Perl'
+
+Both croak on a wrong-length argument with the same message, naming the
+function and both lengths:
+
+  Bad arg length for NetAddr::IP::Util::hasbits, length is 40,
+  should be 128
+
+The entries below are the same ones NetAddr::IP::Util documents, kept
+here because this module is the one that implements them.  Where the two
+pages ever disagree, L<NetAddr::IP::Util> is the fuller description.
 
 =head1 DESCRIPTION
 
@@ -108,7 +129,7 @@ and false if all the bits are zero.
   }
 
   # or
-  if (hasbits($bits128 & $mask128) {
+  if (hasbits($bits128 & $mask128)) {
       &do_something;
   }
 
@@ -672,6 +693,9 @@ sub simple_pack {
 
 =head1 EXPORT_OK
 
+The functions this module can export.  NetAddr::IP::Util documents all
+of them; see L<NetAddr::IP::Util>.
+
     hasbits
     shiftleft
     addconst
@@ -690,7 +714,9 @@ sub simple_pack {
     bcdn2txt
     bcdn2bin
     simple_pack
-    threads
+
+C<threads> was listed here until this rewrite and is not a function of
+this module, nor of NetAddr::IP::Util.  It never existed.
 
 =head1 ADDITIONAL LICENSE
 
