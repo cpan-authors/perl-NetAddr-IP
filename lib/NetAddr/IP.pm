@@ -88,6 +88,11 @@ C<:upper> wins if both are given, whichever order they are in:
   use NetAddr::IP qw(:upper :lower);
   print NetAddr::IP->new('2001:db8::1')->addr, "\n";   # 2001:DB8:0:0:0:0:0:1
 
+Note that :lower and :upper set one process-wide variable shared by
+NetAddr::IP, NetAddr::IP::Lite, NetAddr::IP::Util and NetAddr::IP::InetBase.
+Importing either tag in one module changes the output of every other module
+in the same program. The last import wins.
+
 =item C<:nofqdn>
 
 Turn off resolving a fully qualified domain name in the constructor,
@@ -338,6 +343,10 @@ objects stored using the L<Storable> module.
 my $full_format = "%04X:%04X:%04X:%04X:%04X:%04X:%D.%D.%D.%D";
 my $full6_format = "%04X:%04X:%04X:%04X:%04X:%04X:%04X:%04X";
 
+# the same formats in lowercase, used while NetAddr::IP::InetBase::lower() is in force
+my $full_lower  = lc $full_format;
+my $full6_lower = lc $full6_format;
+
 # Storable hooks live at file scope so that "require NetAddr::IP" and
 # "use NetAddr::IP" serialize the same way. The :old_storable tag removes them.
 sub STORABLE_freeze
@@ -382,20 +391,7 @@ sub import
     $NetAddr::IP::Lite::NoFQDN = 1;
     @_ = grep { $_ ne ':nofqdn' } @_;
     }
-    if (grep { $_ eq ':lower' } @_)
-    {
-        $full_format = lc($full_format);
-        $full6_format = lc($full6_format);
-        NetAddr::IP::Util::lower();
-    @_ = grep { $_ ne ':lower' } @_;
-    }
-    if (grep { $_ eq ':upper' } @_)
-    {
-        $full_format = uc($full_format);
-        $full6_format = uc($full6_format);
-        NetAddr::IP::Util::upper();
-    @_ = grep { $_ ne ':upper' } @_;
-    }
+    NetAddr::IP::InetBase::_case_tags(\@_);
     if (grep { $_ eq ':rfc3021' } @_)
     {
     warnings::warnif('deprecated',
@@ -457,7 +453,7 @@ sub full($) {
         $hex[8] = $hex[7] >> 8;
         $hex[7] = $hex[6] & 0xff;
         $hex[6] >>= 8;
-        return sprintf($full_format, @hex);
+        return sprintf($NetAddr::IP::InetBase::Upper ? $full_format : $full_lower, @hex);
     }
     else {
         &full6;
@@ -466,12 +462,12 @@ sub full($) {
 
 sub full6($) {
     my @hex = (unpack('n8', $_[0]->{addr}));
-    return sprintf($full6_format, @hex);
+    return sprintf($NetAddr::IP::InetBase::Upper ? $full6_format : $full6_lower, @hex);
 }
 
 sub full6m($) {
     my @hex = (unpack('n8', $_[0]->{mask}));
-    return sprintf($full6_format, @hex);
+    return sprintf($NetAddr::IP::InetBase::Upper ? $full6_format : $full6_lower, @hex);
 }
 
 sub DESTROY {};
