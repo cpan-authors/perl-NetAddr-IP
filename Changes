@@ -2,6 +2,120 @@ Revision history for Perl extension NetAddr::IP
 
 {{$NEXT}}
 
+    Fix NetAddr::IP and NetAddr::IP::Lite (GH#100, step 3). The two pages
+    carry the same object API and have drifted, so they go in one commit
+    and the merged text is written once.
+
+    A4, both said splitref "returns undef when bits ... will not fit". It
+    croaks:
+
+      NetAddr::IP->new('192.0.2.0/24')->splitref(16);
+      # netmask error: overrange or spurious bits
+
+    A6, the IP.pm SYNOPSIS listed inet_any2d and inetanyto6. Neither
+    exists; they are inet_any2n and ipanyto6, both of which Util has.
+
+    A11, both new() entries said 'See "STRINGIFICATION" below.' There is
+    no such section on either page.
+
+    A12, "The first two methods create..." followed by "The third method
+    new_no", after six constructors had been listed. new6FFFF was absent
+    from IP.pm's list altogether and works through inheritance, so the
+    entry now names it and shows the object it makes:
+
+      NetAddr::IP->new6FFFF('192.0.2.1');
+      # 0:0:0:0:0:FFFF:C000:201/128
+
+    A13 is Util.pm, A17 is below. A19, IP.pm's DESCRIPTION promised
+    NetAddr::IP "will work with older versions of Perl". META.json says
+    5.014, so that is now stated.
+
+    A20 and A22 are the drift between the two pages. IP.pm listed two
+    is_local forms where Lite.pm listed four, and Lite.pm's within()
+    carried a sentence about comparing addr() that IP.pm lacked. Both are
+    merged, verified against the code:
+
+      127.0.0.1        is_local=1
+      ::1              is_local=1
+      ::127.0.0.1      is_local=1
+      ::ffff:127.0.0.1 is_local=1
+      ::ffff:10.0.0.1  is_local=0
+      128.0.0.1        is_local=0
+
+    The entries are now byte-identical between the two files, which is
+    checkable:
+
+      is_local()  identical    mask()  identical     first()  identical
+      within()    identical    bits()  identical     last()   identical
+
+    A21, Lite.pm carried the numeric() float-comparison warning and IP.pm
+    did not. It is on both now, with the hazard shown rather than
+    described, because it is silent:
+
+      $x->numeric == $y->numeric   same    for 2001:db8::1 and ::2
+      $x == $y                     different
+      $x->bigint == $y->bigint     different
+
+    A23, both new_cis item headings had an unbalanced quote.
+
+    A25, prefix() was documented as including the broadcast address. The
+    range starts at first(), not network():
+
+      192.0.2.4/30  ->  192.0.2.5-7
+      192.0.2.0/24  ->  192.0.2.
+      192.0.2.0/20  ->  192.0.0-15.
+      192.0.2.9/32  ->  192.0.2.9
+
+    A27, both pages warned that comparing objects of differing CIDR "may
+    produce indeterminate - unexpected results". It is deterministic:
+    address first, then the mask as a number. The warning was wrong, and
+    the real caveat is that the order is not the one most people mean by
+    "bigger", so it says that instead and shows the sort order.
+
+    A28, both listed "a netaddr as returned by 'inet_aton'" among the
+    accepted forms without saying it needs the deprecated :aton tag.
+    Without it a packed string returns undef, which is now stated. The
+    RFC 1884 citations became RFC 4291 s2.2 on both pages.
+
+    A17, the IP.pm NOTES / BUGS section said in the first person that the
+    author lacked the resources to get the configure step working on
+    Windows and asked for volunteers. It now states the fact and where it
+    comes from, which is that header.pl selects pure Perl when $^O
+    matches /win/i, and points at README.md for the build steps.
+
+    B1 and B2, the @{} overload and the croaking neg and abs, were
+    undocumented on both pages:
+
+      scalar @{$ip}   14 for a /28
+      -$ip            cannot negate a NetAddr::IP object
+      abs $ip         cannot take the absolute value of a NetAddr::IP object
+
+    B3, the sort order is now given as part of the comparison entry.
+
+    C4, version history inside method text is gone from nth() and num() on
+    both pages. Both entries carry measured output instead:
+
+      /32 nth(0) is the address itself, num 1
+      /31 nth(0) is the network address, num 2
+      /30 nth(0) is the first host, num 2
+      /28 num 14
+
+    and the C<:old_nth> tag still restores the old behaviour, verified:
+
+      old_nth 192.0.2.0/30  nth 0 undef, 1..3 the hosts, num 3
+
+    C9, IP.pm's HISTORY section, which said only "See the Changes file",
+    is removed and the internal link now points at DEPRECATED.
+
+    Also fixed in passing: "array contest" for "array context" in IP.pm
+    and Lite.pm numeric(), a doubled space in Lite.pm bigint(), and the
+    C3.02 version note in compact().
+
+    POD only, no code change. Still outstanding from this step: the
+    =head2 method groups, the SYNOPSIS rewrite, and B4 through B12 for the
+    constructor entry, which is where the accepted-forms list lives and is
+    long enough to need more than a correction.
+
     Fix NetAddr::IP::InetBase and NetAddr::IP::UtilPP (GH#100, step 2,
     continued). The two carry copies of the entries fixed in Util.pm, so
     they go in the same step.
