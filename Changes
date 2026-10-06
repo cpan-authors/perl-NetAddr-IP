@@ -2,6 +2,34 @@ Revision history for Perl extension NetAddr::IP
 
 {{$NEXT}}
 
+    Drop docs/rfc1884.txt (GH#97). The full text of RFC 1884, "IP
+    Version 6 Addressing Architecture", December 1995, shipped with
+    4.001 in August 2006 and moved to docs/ by 4.004 a fortnight
+    later, and nothing has touched it since. It is 37,854 bytes, 3.98%
+    of the unpacked distribution, and the only thing under docs/.
+
+    Nothing read it. No POD links to it, no test opened it, no code
+    names the path, and the only reference to docs/ anywhere in the
+    tree was the skip line in dist.ini that existed to keep the EOL
+    test away from it. The generated t/author-eol.t lists 185 files and
+    none under docs/, so removing the file and the skip line leaves
+    that test at the same 185 files.
+
+    RFC 1884 was obsoleted by RFC 2373 in July 1998, which RFC 3513
+    replaced in April 2003, which RFC 4291 replaced in February 2006.
+    The addressing architecture is RFC 4291, and the text
+    representation rules that :lower and canon() follow are RFC 5952
+    from August 2010. Shipping the 1995 text beside code that
+    implements the 2006 rules invites a reader to take it for the
+    reference.
+
+    The ten mentions of rfc1884 in the POD name the specification, not
+    the file, and are unchanged here. They are being replaced with RFC
+    4291 and RFC 5952 citations in the POD work.
+
+    The text remains at https://www.rfc-editor.org/rfc/rfc1884 for
+    anyone who wants the history.
+
     Give the shipped Makefile.PL a clean and realclean list again
     (GH#96). The checkout Makefile.PL has listed the generated files
     since 4.079, but header.pl has not, so the shipped one has had no
