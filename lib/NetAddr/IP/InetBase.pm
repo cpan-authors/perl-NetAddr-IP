@@ -705,20 +705,25 @@ match, so it is returned unchanged too.
 
 =item NetAddr::IP::InetBase::lower();
 
-Return IPv6 strings in lowercase.  This is the default for this module on
-its own.  See L</"IMPORT TAGS"> for the whole of the case policy, and for
-what loading NetAddr::IP::Util does to it.
+Return IPv6 strings in lowercase.  This is the default only when
+NetAddr::IP::InetBase is loaded on its own. NetAddr::IP::Util loads this
+module with the :upper tag, so a program that loads NetAddr::IP::Util,
+NetAddr::IP::Lite or NetAddr::IP gets uppercase output unless it imports
+:lower.
 
 =item NetAddr::IP::InetBase::upper();
 
 Return IPv6 strings in uppercase.
 
-Neither name is importable.  Call them fully qualified:
+The case setting is one package-wide variable. Calling lower() or upper(),
+or importing :lower or :upper from any of the modules named above, changes
+the output for every user of these modules in the running program, not
+only the caller. The last call wins.
 
-    NetAddr::IP::InetBase::upper();
+The default may be set to uppercase when the module is loaded by invoking
+the TAG :upper. i.e.
 
 =back
-
 
 =head1 EXPORTS
 
