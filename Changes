@@ -2,6 +2,96 @@ Revision history for Perl extension NetAddr::IP
 
 {{$NEXT}}
 
+    Fix NetAddr::IP::InetBase and NetAddr::IP::UtilPP (GH#100, step 2,
+    continued). The two carry copies of the entries fixed in Util.pm, so
+    they go in the same step.
+
+    A7, the InetBase SYNOPSIS said "use NetAddr::IP::Base qw(...)", and
+    the module is NetAddr::IP::InetBase, so the line as printed could not
+    run. It was also followed by a NetAddr::IP::Util line pasted from
+    Util.pm showing Util's tags, which InetBase does not have. Both are
+    gone; the SYNOPSIS is now InetBase's own nineteen names with measured
+    output, and its four tags are listed with their real contents,
+    recovered by importing each into a scratch package:
+
+      :ipv4   fillIPv4 inet_aton inet_ntoa, three names
+      :ipv6   eleven names
+
+    The old list for :ipv6 was missing four of those.
+
+    A8, InetBase documented ipv4to6. It is neither defined nor exported
+    there; the function belongs to NetAddr::IP::Util, and
+    InetBase->can("ipv4to6") is undef. The entry is removed.
+
+    A9, InetBase said lower() "is the default" and Util.pm said upper()
+    "is the default", and both were right about themselves and wrong
+    about the reader's program. Measured:
+
+      InetBase alone:          ipv6_n2x = 2001:db8:0:0:0:0:0:1
+      after InetBase::upper() ipv6_n2x = 2001:DB8:0:0:0:0:0:1
+      Util loaded:             ipv6_n2x = 2001:DB8:0:0:0:0:0:1
+
+    InetBase defaults to lowercase, and loading Util, Lite or NetAddr::IP
+    imports :upper for you, so in practice uppercase is the default for
+    nearly every program. There is now one section, THE CASE POLICY, that
+    says so once, shows the process-wide behaviour where an unrelated
+    package importing :lower changes the output for everyone else, and
+    points at GH#7 for the open question of what the policy should be.
+    ipv6_ntoa and inet_ntop are called out as always lowercase.
+
+    Worth recording, since the old entries implied otherwise: neither
+    lower nor upper is importable from either module.
+
+      NetAddr::IP::InetBase->can("lower")   undef
+      NetAddr::IP::Util->can("lower")       undef
+
+    They must be called fully qualified, NetAddr::IP::InetBase::upper(),
+    and the entries now say so.
+
+    fillIPv4 was documented as converting "127.1 to the long form
+    127.0.0.1", which is right, but nothing said what it does with
+    anything else, and it is not what a reader would guess. Measured:
+
+      fillIPv4('192.0.2.1')      192.0.2.1
+      fillIPv4('192.0.2')        192.0.0.2
+      fillIPv4('192.0')          192.0.0.0
+      fillIPv4('10')             0.0.0.10
+      fillIPv4('example.com')    example.com, unchanged
+      fillIPv4('256.1.1.1')      undef
+
+    The argument is text, not a packed address, which is the trap: a
+    packed string does not match, so it comes back unchanged. It is also
+    the BSD inet_aton convention and not RFC 791, which is the note
+    table D asks for, and which belongs here rather than on inet_aton.
+
+    A14, the missing paren in the hasbits example was in this file too,
+    at UtilPP.pm:111, so it is fixed in both.
+
+    A15, the UtilPP EXPORT_OK list ended with "threads", which is not a
+    function of that module nor of NetAddr::IP::Util; it never existed.
+    Removed, and the list now cross references NetAddr::IP::Util instead
+    of being a bare list of eighteen names.
+
+    A18's rfc1844 typo was here as well as in Util.pm, and the two rfc1884
+    citations became RFC 4291 s2.2.
+
+    UtilPP gets a DESCRIPTION, which it did not have beyond one sentence.
+    It explains when the module is selected, that the two implementations
+    are meant to be interchangeable and agree down to the error message
+    wording, and that README.md carries the build steps, so no page
+    discusses building.
+
+    INSTALLATION is removed from InetBase too, per C3.
+
+    A new section on InetBase, SOCKET6 SUBSTITUTION, names the three
+    symbols that come from Socket6 when it is installed, says the choice
+    is made at load time, and points at GH#99 and GH#21 for where the two
+    paths disagree.
+
+    POD only, no code change. The grouped =head2 sections the issue asks
+    for across all three function pages, and the table D note about
+    inet_aton short forms, are still outstanding.
+
     Fix NetAddr::IP::Util (GH#100, step 2 of the POD overhaul). The
     SYNOPSIS was a 118 line import list followed by every signature, a
     table of contents rather than a synopsis; it is now about forty lines

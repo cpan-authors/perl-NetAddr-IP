@@ -247,76 +247,48 @@ sub import {
 
 =head1 SYNOPSIS
 
-  use NetAddr::IP::Base qw(
-    :upper
-    inet_aton
-    inet_ntoa
-    ipv6_aton
-    ipv6_ntoa
-    ipv6_n2x
-    ipv6_n2d
-    inet_any2n
-    inet_n2dx
-    inet_n2ad
-    inet_pton
-    inet_ntop
-    packzeros
-    isIPv4
-    isNewIPv4
-    isAnyIPv4
-    AF_INET
-    AF_INET6
-    fake_AF_INET6
-    fillIPv4
+  use NetAddr::IP::InetBase qw(
+    inet_aton inet_ntoa
+    ipv6_aton ipv6_ntoa ipv6_n2x ipv6_n2d
+    inet_any2n inet_n2dx inet_n2ad
+    inet_pton inet_ntop packzeros
+    isIPv4 isNewIPv4 isAnyIPv4
+    AF_INET AF_INET6
+    fake_AF_INET6 fillIPv4
   );
 
-  use NetAddr::IP::Util qw(:all :inet :ipv4 :ipv6 :math)
+  # text to packed, and back
+  $netaddr    = inet_aton('192.0.2.1');       # 4 bytes
+  $dotquad    = inet_ntoa($netaddr);          # '192.0.2.1'
+  $ipv6naddr  = ipv6_aton('2001:db8::1');     # 16 bytes
+  $ipv6_text  = ipv6_ntoa($ipv6naddr);        # '2001:db8::1'
+  $ipv6naddr  = inet_any2n('192.0.2.1');      # 0:0:0:0:0:0:C000:201
+  $hex_text   = packzeros('0:0:0:0:0:ffff:c000:201');
+                                               # '::ffff:c000:201'
+  $dotquad    = fillIPv4('192.0.2');          # '192.0.0.2'
 
-  :ipv4      =>    inet_aton, inet_ntoa, fillIPv4
+  # the family tests
+  $rv         = isIPv4($ipv6naddr);           # ::d.d.d.d, deprecated
+  $rv         = isNewIPv4($ipv6naddr);        # ::ffff:d.d.d.d
+  $rv         = isAnyIPv4($ipv6naddr);        # either of the above
 
-  :ipv6      =>    ipv6_aton, ipv6_ntoa,ipv6_n2x, ipv6_n2d,
-        inet_any2n, inet_n2dx, inet_n2ad
-        inet_pton, inet_ntop, packzeros
+  # AF_INET6, emulated on a platform that has no IPv6
+  $af         = AF_INET6();                   # real, or emulated
+  $trueif     = fake_AF_INET6();              # true when emulated
 
-  $dotquad = inet_ntoa($netaddr);
-  $netaddr = inet_aton($dotquad);
-  $ipv6naddr = ipv6_aton($ipv6_text);
-  $ipv6_text = ipv6_ntoa($ipv6naddr);
-  $hex_text = ipv6_n2x($ipv6naddr);
-  $dec_text = ipv6_n2d($ipv6naddr);
-  $ipv6naddr = inet_any2n($dotquad or $ipv6_text);
-  $dotquad or $hex_text = inet_n2dx($ipv6naddr);
-  $dotquad or $dec_text = inet_n2ad($ipv6naddr);
-  $netaddr = inet_pton($AF_family,$text_addr);
-  $text_addr = inet_ntop($AF_family,$netaddr);
-  $hex_text = packzeros($hex_text);
-  $rv = isIPv4($bits128);
-  $rv = isNewIPv4($bits128);
-  $rv = isAnyIPv4($bits128);
-  $constant = AF_INET();
-  $constant = AF_INET6();
-  $trueif   = fake_AF_INET6();
-  $ip_filled = fillIPv4($shortIP);
-
-  NetAddr::IP::InetBase::lower();
+  NetAddr::IP::InetBase::lower();            # case, see IMPORT TAGS
   NetAddr::IP::InetBase::upper();
-
-=head1 INSTALLATION
-
-Un-tar the distribution in an appropriate directory and type:
-
-    perl Makefile.PL
-    make
-    make test
-    make install
 
 =head1 DESCRIPTION
 
-B<NetAddr::IP::InetBase> provides a suite network of conversion functions
-written in pure Perl for converting both IPv4 and IPv6 addresses to
-and from network address format and text format.
+B<NetAddr::IP::InetBase> is the pure Perl layer that converts IPv4 and
+IPv6 addresses between binary and text.  Everything here is pure Perl on
+every host.  B<NetAddr::IP::Util> and the XS build take these functions
+from it rather than reimplementing them, except that C<inet_pton>,
+C<inet_ntop> and C<AF_INET6> come from Socket6 when it is installed.
+See L</"Socket6 substitution">.
 
-The IPv6 functions support all rfc1884 formats.
+The IPv6 functions accept every text form in RFC 4291 s2.2.
 
   i.e.    x:x:x:x:x:x:x:x:x
     x:x:x:x:x:x:x:d.d.d.d
@@ -450,7 +422,7 @@ This function converts a text IPv4 or IPv6 address in text format in any
 standard notation into a 128 bit IPv6 string address. It prefixes any
 dot-quad address (if found) with '::' and passes it to B<ipv6_aton>.
 
-  input:    dot-quad or rfc1844 address
+  input:    dot-quad or RFC 4291 s2.2 address
   returns:  128 bit IPv6 string
 
 =cut
@@ -631,13 +603,6 @@ sub _packzeros {
         : $x6;
 }
 
-=item $ipv6naddr = ipv4to6($netaddr);
-
-Convert an ipv4 network address into an ipv6 network address.
-
-  input:    32 bit network address
-  returns:  128 bit network address
-
 =item $rv = isIPv4($bits128);
 
 This function returns true if there are no on bits present in the IPv6
@@ -661,16 +626,17 @@ This function return true if the IPv6 bit string is of the form
 
 =item NetAddr::IP::InetBase::lower();
 
-Return IPv6 strings in lowercase. This is the default.
+Return IPv6 strings in lowercase.  This is the default for this module on
+its own.  See L</"IMPORT TAGS"> for the whole of the case policy, and for
+what loading NetAddr::IP::Util does to it.
 
 =item NetAddr::IP::InetBase::upper();
 
 Return IPv6 strings in uppercase.
 
-The default may be set to uppercase when the module is loaded by invoking
-the TAG :upper. i.e.
+Neither name is importable.  Call them fully qualified:
 
-    use NetAddr::IP::InetBase qw( :upper );
+    NetAddr::IP::InetBase::upper();
 
 =item $constant = AF_INET;
 
@@ -692,44 +658,118 @@ value based on name of the host operating system.
 
 =item $ip_filled = fillIPv4($shortIP);
 
-This function converts IPv4 addresses of the form 127.1 to the long form
-127.0.0.1
+Expands a short IPv4 text address to the four part form, padding the
+missing octets with zeros.  This is the BSD C<inet_aton> convention and
+is not RFC 791.
 
-If the function is passed an argument that does not match the form of an IP
-address, the original argument is returned. i.e. pass it a hostname or a
-short IP and it will return a hostname or a filled IP.
+  input:    short or full IPv4 text
+  returns:  the four part form, or undef
+
+  print fillIPv4('192.0.2.1'), "\n";   # 192.0.2.1
+  print fillIPv4('192.0.2'),   "\n";   # 192.0.0.2
+  print fillIPv4('192.0'),     "\n";   # 192.0.0.0
+  print fillIPv4('10'),        "\n";   # 0.0.0.10
+
+An argument that does not look like a short or full IPv4 address is
+returned unchanged, so a hostname passes straight through, and an octet
+out of range gives undef:
+
+  print fillIPv4('example.com'), "\n"; # example.com
+  print fillIPv4('256.1.1.1'),   "\n"; # undef
+
+The argument is text, not a packed address.  A packed string does not
+match, so it is returned unchanged too.
 
 =back
 
+=head1 EXPORTS
+
+Nothing is exported by default.
+
 =head1 EXPORT_OK
 
-    :upper
-    inet_aton
-    inet_ntoa
-    ipv6_aton
-    ipv6_ntoa
-    ipv6_n2x
-    ipv6_n2d
-    inet_any2n
-    inet_n2dx
-    inet_n2ad
-    inet_pton
-    inet_ntop
-    packzeros
-    isIPv4
-    isNewIPv4
-    isAnyIPv4
-    AF_INET
-    AF_INET6
-    fake_AF_INET6
-    fillIPv4
+  inet_aton     inet_ntoa      ipv6_aton      ipv6_ntoa
+  ipv6_n2x      ipv6_n2d       inet_any2n     inet_n2dx
+  inet_n2ad     inet_pton      inet_ntop      packzeros
+  isIPv4        isNewIPv4      isAnyIPv4      AF_INET
+  AF_INET6      fake_AF_INET6  fillIPv4
 
-=head1 %EXPORT_TAGS
+=head1 IMPORT TAGS
 
-    :all
-    :ipv4
-    :ipv6
-    :upper
+=over 4
+
+=item C<:all>
+
+Every name in L</EXPORT_OK>.
+
+=item C<:ipv4>
+
+  inet_aton inet_ntoa fillIPv4
+
+=item C<:ipv6>
+
+  ipv6_aton ipv6_ntoa ipv6_n2x ipv6_n2d
+  inet_any2n inet_n2dx inet_n2ad
+  inet_pton inet_ntop packzeros
+
+=item C<:upper>
+
+The case tag.  See below.
+
+=back
+
+=head1 THE CASE POLICY
+
+The case of IPv6 text output is one package global, not a setting per
+object or per module, so it applies to every user of the library in the
+process.  Two consequences worth stating plainly.
+
+This module defaults to lowercase:
+
+  use NetAddr::IP::InetBase qw(ipv6_n2x);
+  print ipv6_n2x($bits128);          # 2001:db8:0:0:0:0:0:1
+
+Importing C<:upper> switches it, either here or on import of
+B<NetAddr::IP::Util>, B<NetAddr::IP::Lite> or B<NetAddr::IP>, since
+B<NetAddr::IP::Util> imports C<:upper> on your behalf:
+
+  use NetAddr::IP::InetBase qw(:upper ipv6_n2x);
+  print ipv6_n2x($bits128);          # 2001:DB8:0:0:0:0:0:1
+
+And once set, an unrelated package importing C<:lower> changes it back for
+everyone:
+
+  use NetAddr::IP;
+  package Other;
+  use NetAddr::IP::Lite qw(:lower);
+  package main;
+  print NetAddr::IP->new('2001:db8::1')->addr, "\n";   # 2001:db8:0:0:0:0:0:1
+
+Whether uppercase or lowercase should be the default, and whether the
+setting should be process-wide at all, is an open question: see GH#7.
+
+Two functions ignore the setting entirely and are always lowercase, since
+they mirror the platform's C<inet_ntop>: C<ipv6_ntoa> and
+C<inet_ntop>.  Which of them you get depends on Socket6: see below.
+
+=head1 Socket6 substitution
+
+C<inet_pton>, C<inet_ntop> and C<AF_INET6> are bound to Socket6 when it is
+installed, and to this module's own implementations when it is not.  The
+choice is made at load time, so two hosts differing only in that one
+optional module can behave differently.
+
+Socket6 is a runtime recommendation, not a requirement.  Where the
+substitution matters for output it is noted on the entry: for C<inet_ntop>
+and C<ipv6_ntoa>, an address with an IPv4 address in the low 32 bits is
+rendered in mixed notation with Socket6 and in hex without it.  The parse
+side differs too, in the other direction, and is GH#21.
+
+When there is no IPv6 on the platform at all, C<AF_INET6> is emulated and
+C<fake_AF_INET6()> returns true:
+
+  print AF_INET6();          # a platform constant, or 10 here
+  print fake_AF_INET6();     # true when emulated
 
 =head1 ADDITIONAL LICENSE
 
