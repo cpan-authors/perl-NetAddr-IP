@@ -102,8 +102,7 @@ addresses or IP subnets, that allows for easy manipulations. Most of the
 operations of NetAddr::IP are supported. This module will work with older
 versions of Perl and is compatible with Math::BigInt.
 
-* By default B<NetAddr::IP> functions and methods return string IPv6
-addresses in uppercase.  To change that to lowercase:
+* IPv6 text comes back in uppercase unless C<:lower> is imported.
 
 NOTE: the AUGUST 2010 RFC5952 states:
 
@@ -117,7 +116,7 @@ invoked as shown on the next line.
 
   use NetAddr::IP::Lite qw(:lower);
 
-* To ensure the current IPv6 string case behavior even if the default changes:
+* To keep uppercase whatever the default becomes:
 
   use NetAddr::IP::Lite qw(:upper);
 
@@ -1680,16 +1679,7 @@ sub import {
         $Old_nth = 1;
         @_ = grep { $_ ne ':old_nth' } @_;
     }
-    if (grep { $_ eq ':lower' } @_)
-    {
-        NetAddr::IP::Util::lower();
-        @_ = grep { $_ ne ':lower' } @_;
-    }
-    if (grep { $_ eq ':upper' } @_)
-    {
-        NetAddr::IP::Util::upper();
-        @_ = grep { $_ ne ':upper' } @_;
-    }
+    NetAddr::IP::InetBase::_case_tags(\@_);
     if (grep { $_ eq ':nofqdn' } @_)
     {
         $NoFQDN = 1;
@@ -1729,6 +1719,11 @@ both C<:lower> and C<:upper> are given, whichever order they are in:
   use NetAddr::IP::Lite qw(:upper :lower);
   print NetAddr::IP::Lite->new('2001:db8::1')->addr, "\n";
   # 2001:DB8:0:0:0:0:0:1
+
+Note that :lower and :upper set one process-wide variable shared by
+NetAddr::IP, NetAddr::IP::Lite, NetAddr::IP::Util and NetAddr::IP::InetBase.
+Importing either tag in one module changes the output of every other module
+in the same program. The last import wins.
 
 =item C<:nofqdn>
 

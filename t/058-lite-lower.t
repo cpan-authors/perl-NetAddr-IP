@@ -5,10 +5,8 @@ use Test2::Plugin::NoWarnings;
 
 use NetAddr::IP::Lite qw(:lower);
 
-my $exp = 'ff:0:0:0:0:0:0:eeaa/128';
-my $ip  = NetAddr::IP::Lite->new('FF::eeAA');
-my $got = sprintf $ip;
-
-ok( $got eq $exp, "lower case $got" );
+my $ip = NetAddr::IP::Lite->new('2001:DB8::AbCd');
+is( "$ip", '2001:db8:0:0:0:0:0:abcd/128',
+    ':lower from NetAddr::IP::Lite stringifies in lowercase' );
 
 done_testing;

@@ -138,22 +138,33 @@ sub fake_AF_INET6 {
     return $emulateAF_INET6;
 }
 
-# allow user to choose upper or lower case
-our ($n2x_format, $n2d_format);
+our ($n2x_format, $n2d_format, $Upper);
 BEGIN {
     $n2x_format = "%x:%x:%x:%x:%x:%x:%x:%x";
     $n2d_format = "%x:%x:%x:%x:%x:%x:%d.%d.%d.%d";
+    $Upper      = 0;    # one case setting for IPv6 text in every NetAddr::IP module, uppercase while true
 }
 
-my $case = 0;    # default lower case
+# the same formats in uppercase, used while $Upper is true
+my $n2x_upper = uc $n2x_format;
+my $n2d_upper = uc $n2d_format;
 
-sub upper { $n2x_format = uc($n2x_format); $n2d_format = uc($n2d_format); $case = 1; }
-sub lower { $n2x_format = lc($n2x_format); $n2d_format = lc($n2d_format); $case = 0; }
+sub upper { $Upper = 1 }
+sub lower { $Upper = 0 }
+
+# sets the case from the :lower and :upper tags, :upper last so it wins, and drops both from the list
+sub _case_tags {
+    my ($args) = @_;
+    lower() if grep { $_ eq ':lower' } @$args;
+    upper() if grep { $_ eq ':upper' } @$args;
+    @$args = grep { $_ ne ':lower' && $_ ne ':upper' } @$args;
+    return;
+}
 
 sub ipv6_n2x {
     die sprintf('Bad arg length for \'ipv6_n2x\', length is %d should be %d', length($_[0]), $V6_PACKED_BYTES)
         unless length($_[0]) == $V6_PACKED_BYTES;
-    return sprintf($n2x_format,unpack("n8", $_[0]));
+    return sprintf($Upper ? $n2x_upper : $n2x_format, unpack("n8", $_[0]));
 }
 
 sub ipv6_n2d {
@@ -164,7 +175,7 @@ sub ipv6_n2d {
     $hex[8] = $hex[7] >> $OCTET_BITS;
     $hex[7] = $hex[6] & $MAX_OCTET;
     $hex[6] >>= $OCTET_BITS;
-    return sprintf($n2d_format, @hex);
+    return sprintf($Upper ? $n2d_upper : $n2d_format, @hex);
 }
 
 # if Socket lib is broken in some way, check for overange values
@@ -236,10 +247,7 @@ sub isAnyIPv4 {
 sub DESTROY {};
 
 sub import {
-    if (grep { $_ eq ':upper' } @_) {
-        upper();
-        @_ = grep { $_ ne ':upper' } @_;
-    }
+    _case_tags(\@_);
     NetAddr::IP::InetBase->export_to_level(1, @_);
 }
 
@@ -553,7 +561,7 @@ sub _inet_ntop {
         inet_ntoa($naddr);
     }
     else {
-        return ($case)
+        return ($Upper)
         ? lc packzeros(ipv6_n2x($naddr))
         : _packzeros(ipv6_n2x($naddr));
     }
@@ -610,7 +618,7 @@ sub _packzeros {
         $x6 = substr($x6, 1,-1);            # remove leading & trailing ':'
     }
     $x6 .= $d;                    # append digits if any
-    return $case
+    return $Upper
         ? uc $x6
         : $x6;
 }
@@ -704,20 +712,25 @@ match, so it is returned unchanged too.
 
 =item NetAddr::IP::InetBase::lower();
 
-Return IPv6 strings in lowercase.  This is the default for this module on
-its own.  See L</"IMPORT TAGS"> for the whole of the case policy, and for
-what loading NetAddr::IP::Util does to it.
+Return IPv6 strings in lowercase.  This is the default only when
+NetAddr::IP::InetBase is loaded on its own. NetAddr::IP::Util loads this
+module with the :upper tag, so a program that loads NetAddr::IP::Util,
+NetAddr::IP::Lite or NetAddr::IP gets uppercase output unless it imports
+:lower.
 
 =item NetAddr::IP::InetBase::upper();
 
 Return IPv6 strings in uppercase.
 
-Neither name is importable.  Call them fully qualified:
+The case setting is one package-wide variable. Calling lower() or upper(),
+or importing :lower or :upper from any of the modules named above, changes
+the output for every user of these modules in the running program, not
+only the caller. The last call wins.
 
-    NetAddr::IP::InetBase::upper();
+The default may be set to uppercase when the module is loaded by invoking
+the TAG :upper. i.e.
 
 =back
-
 
 =head1 EXPORTS
 
