@@ -160,7 +160,7 @@ my %makeparms = (
     ABSTRACT     => 'Manages IPv4 and IPv6 addresses and subnets',
     AUTHOR       => 'Luis E. Muñoz <luismunoz@cpan.org>, Michael Robinton <miker@cpan.org>',
     INC          => '-Ixs',
-    clean        => { FILES => "*.bs *.o *~ tmp* META.yml Util_IS.pm localperl.h auto* lib/NetAddr/IP/Util.o lib/NetAddr/IP/Util_IS.pm xs/config.h xs/config.log xs/config.status xs/localperl.h" },
+    clean        => { FILES => "*.bs *.o *~ tmp* META.yml Util_IS.pm localperl.h auto* lib/NetAddr/IP/Util.o lib/NetAddr/IP/Util_IS.pm xs/localperl.h" },
     realclean    => { FILES => "config.h config.log config.status xs/config.h xs/localperl.h" },
 );
 
