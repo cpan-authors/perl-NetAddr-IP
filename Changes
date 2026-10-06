@@ -2,6 +2,46 @@ Revision history for Perl extension NetAddr::IP
 
 {{$NEXT}}
 
+    Give the shipped Makefile.PL a clean and realclean list again
+    (GH#96). The checkout Makefile.PL has listed the generated files
+    since 4.079, but header.pl has not, so the shipped one has had no
+    list at all since 0da215c, and six files survived make realclean:
+    lib/NetAddr/IP/Util.c, lib/NetAddr/IP/Util_IS.pm, xs/config.h,
+    xs/config.log, xs/config.status and xs/localperl.h. Pure Perl left
+    Util_IS.pm behind.
+
+    The stale xs/config.h was the part that mattered. Configure runs
+    only when that file is missing, so the next perl Makefile.PL in the
+    same tree reused the old results and never probed again, whatever
+    had changed in between.
+
+    Restore the 4.079 split: make clean removes what Makefile.PL
+    rewrites on every run, which is Util_IS.pm in both builds and
+    localperl.h in the XS build, and make realclean removes the
+    configure results. make clean moves the Makefile aside, so
+    perl Makefile.PL runs again before the next build and puts those
+    three back; the configure results survive until realclean.
+
+    That required dropping the sub clean override from the footer,
+    which kept lib/NetAddr/IP/Util.c out of make clean on the grounds
+    that "we need this file tracked in git for CPAN distribution". It
+    stopped being tracked at 335f5eb, which untracked it, and 4.080_03
+    does not ship it, so the override was protecting nothing. The file
+    is not needed in the tree either: the postamble regenerates it from
+    xs/Util.xs through xsubpp, and a make clean followed by
+    perl Makefile.PL and make builds and tests clean.
+
+    The checkout Makefile.PL loses xs/config.h, xs/config.log and
+    xs/config.status from its clean list for the same reason, so the
+    two copies do not disagree about what a clean build reuses.
+
+    Verified: XS build then make realclean leaves none of the six;
+    pure Perl then make realclean leaves none; after make clean,
+    Util.c, Util_IS.pm and localperl.h are gone and the three configure
+    results are kept; Util.c comes back on the next make, and the next
+    perl Makefile.PL --xs after a realclean probes again. Both builds
+    161 files and 2535 tests, all pass.
+
     Correct the :nofqdn example in NetAddr::IP's POD (GH#92). The
     FQDN paragraph under new() told the reader to load NetAddr::IP::Lite,
     which works, since the flag lives there and both modules read it, but
