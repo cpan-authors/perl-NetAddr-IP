@@ -2,6 +2,106 @@ Revision history for Perl extension NetAddr::IP
 
 {{$NEXT}}
 
+    Fix NetAddr::IP::Util (GH#100, step 2 of the POD overhaul). The
+    SYNOPSIS was a 118 line import list followed by every signature, a
+    table of contents rather than a synopsis; it is now about forty lines
+    that a reader can paste, and every value in it is the measured output
+    rather than a placeholder. INSTALLATION is removed, per the rules,
+    and README.md keeps the build steps. The EXAMPLES section did not
+    compile at all and now runs on both builds.
+
+    The four defects the issue found in the examples, and what each was:
+
+      $addr = addconst($addr,$const)      scalar context stores the
+                                          carry, not the sum
+      return ($network, $broadcast)       $broadcast never declared,
+                                          the local is $bcast
+      my $addr = $nip->{addr}             missing semicolon
+      my $lastip = $ip-copy()             not Perl; stringification
+                                          copies, "$ip"
+
+    plus an unbalanced paren in (undef, $ip->{addr} = addconst(. The wrap
+    is now detected with "$ip" lt $before, since the comparison is on the
+    string forms rather than the overloaded operators, and the list
+    context form of addconst takes the second element. The loop is shown
+    wrapping a /30, so the branch is actually exercised:
+
+      step 3: 192.0.2.252/30   wrapped: 1
+
+    A1, shiftleft with no count. Util.pm said "a single shift is
+    performed if $n is not specified" and UtilPP.pm said it returns the
+    input. UtilPP was right and both builds agree:
+
+      shiftleft($bits128) eq $bits128      yes, on XS and pure Perl
+
+    Both entries now say so, with an example, and note that $n above
+    $MAX_SHIFTLEFT croaks.
+
+    A2, naip_gethostbyname documented IPv4 answers as ::FFFF:FFFF:d.d.d.d,
+    which is not an address. The answer for 127.0.0.1 is:
+
+      0:0:0:0:0:FFFF:7F00:1
+
+    so the form is ::FFFF:d.d.d.d, the RFC 4291 s2.5.5.2 mapped prefix,
+    which is what the function actually produces on both builds.
+
+    A3, three entries wrote ::ffff::d.d.d.d, which has one colon too
+    many. Corrected to ::ffff:d.d.d.d, and the isNewIPv4 and isAnyIPv4
+    entries now name the prefixes they test, s2.5.5.2 and the union of
+    s2.5.5.1 with it.
+
+    A14, "if (hasbits($bits128 & $mask128) {" was missing its closing
+    paren here and in UtilPP.pm.
+
+    A16, the EXPORT_OK list omitted seven names that are in @EXPORT_OK:
+    AF_INET, AF_INET6, bin2bcdn, bcdn2txt, bcdn2bin, simple_pack and
+    comp128. All seven are now listed, the last five under a heading that
+    says they are exported for the test suite and are not stable API,
+    which is what the code comments about comp128 said all along. The
+    import tags are now listed with their real contents, measured by
+    importing each into a scratch package, which turned up that :ipv6 is
+    :inet without the two IPv4 names and nothing else, and that the
+    original list for it was missing four.
+
+    A18, inet_n2ad was documented as returning x:x:x:x:x:x:ddd.ddd.ddd.dd,
+    which has a truncated octet. The real form is x:x:x:x:x:x:ddd.ddd.ddd.ddd,
+    and inet_n2ad(2001:db8::1) is 2001:DB8:0:0:0:0:0.0.0.1. Two rfc1844
+    typos became RFC 4291 s2.2.
+
+    A24, "=item $ipv6naddr = inet_4map6($netaddr or $ipv6naddr" was
+    missing its closing paren in the item heading.
+
+    B9, the :noSock6 import tag, which forces havegethostbyname2 to
+    report false so the resolver fallback can be tested on a host that
+    has Socket6, was undocumented. It has its own section now, labelled
+    a test hook. C7's point that there is no single place listing the
+    tags that change behaviour is partly answered; the case tags live in
+    NetAddr::IP::InetBase and are cross referenced.
+
+    B10, the split between the functions that return undef on bad input
+    and the ones that croak on a wrong length, now stated in the
+    entries: ipv6_aton, inet_aton and inet_4map6 return undef, while
+    hasbits and isIPv4 croak with "Bad arg length ... length is N,
+    should be 128". B11's netlimit is a NetAddr::IP function rather than
+    one of these, and is left to step 3.
+
+    The RFC 1884 citations become RFC 4291 s2.2 for the accepted forms
+    and RFC 5952 s4 for the output, with packzeros documented against
+    s4.2.1, s4.2.2 and s4.2.3 separately and an example for each,
+    including that a single zero group is never shortened. Table D's
+    note that inet_aton short forms are the BSD convention rather than
+    RFC 791 is still outstanding; inet_aton('127.1') is 127.0.0.1 and
+    inet_aton('192.168.1') is 192.168.0.1, and inet_aton croaks on
+    '0x7f.1', so it belongs with a rewritten inet_aton entry.
+
+    Five names for one concept were unified to $bits128 for a 16 byte
+    string and $ipv6naddr for an address, per C5, though the full sweep
+    across all three function pages is part of finishing this step.
+
+    POD only, no code change. InetBase.pm and UtilPP.pm carry copies of
+    several of these entries and are corrected in the commit that
+    follows.
+
     Fix NetAddr::IP::Constants (GH#100, step 1 of the POD overhaul).
     Unindent the item bodies, which rendered as verbatim blocks under
     pod2text, group the constants by the RFC they come from, and drop the
