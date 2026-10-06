@@ -119,7 +119,7 @@ extendipv4(void * aa, void * ux)
   *a++ = 0;
   *a++ = 0;
   *a++ = 0;
-  *a = *((u_int32_t *)aa);
+  memcpy(a, aa, sizeof(*a));	/*	aa may be an unaligned Perl buffer	*/
 }
 
 void
@@ -129,7 +129,7 @@ extendmask4(void * aa, void * ux)
   *a++ = 0xffffffff;
   *a++ = 0xffffffff;
   *a++ = 0xffffffff;
-  *a = *((u_int32_t *)aa);
+  memcpy(a, aa, sizeof(*a));	/*	aa may be an unaligned Perl buffer	*/
 }
 
 void
@@ -192,9 +192,10 @@ addercon(void * aa, u_int32_t * bb, n128 * ap128, int32_t con)
 int
 have128(void * bp)
 {
-  register u_int32_t * p = bp;
+  u_int32_t w[4];
 
-  if (*p++ || *p++ || *p++ || *p++)
+  memcpy(w, bp, sizeof(w));	/*	bp may be an unaligned Perl buffer	*/
+  if (w[0] || w[1] || w[2] || w[3])
     return 1;
   return 0;
 }
@@ -213,20 +214,23 @@ _isipv4(void * bp)
 void
 netswap_copy(void * dest, void * src, int len)
 {
-  register u_int32_t * d = dest, * s = src;
+  register u_int32_t * d = dest;
+  register unsigned char * s = src;
+  u_int32_t w;
 
   for (/* -- */;len>0;len--) {
+    memcpy(&w, s, sizeof(w));	/*	src may be an unaligned Perl buffer	*/
 #ifdef host_is_LITTLE_ENDIAN
-    *d++ =  (((*s & 0xff000000) >> 24) | ((*s & 0x00ff0000) >>  8) | \
-	     ((*s & 0x0000ff00) <<  8) | ((*s & 0x000000ff) << 24));
+    *d++ =  (((w & 0xff000000) >> 24) | ((w & 0x00ff0000) >>  8) | \
+	     ((w & 0x0000ff00) <<  8) | ((w & 0x000000ff) << 24));
 #else
 # ifdef host_is_BIG_ENDIAN
-    *d++ = *s;
+    *d++ = w;
 # else
 # error ENDIANness not defined
 # endif
 #endif
-    s++;
+    s += sizeof(w);
   }
 }
 
