@@ -309,7 +309,7 @@ Convert a dot-quad IP address into an IPv4 packed network address.
   input:    IP address i.e. 192.5.16.32
   returns:  packed network address
 
-=item $ipv6addr = ipv6_aton($ipv6_text);
+=item $bits128 = ipv6_aton($ipv6_text);
 
 Takes an IPv6 address of the form described in rfc1884
 and returns a 128 bit binary RDATA string.
@@ -446,7 +446,7 @@ sub ipv6_ntoa {
     return inet_ntop(AF_INET6(), $_[0]);
 }
 
-=item $hex_text = ipv6_n2x($ipv6addr);
+=item $hex_text = ipv6_n2x($bits128);
 
 Takes an IPv6 RDATA string and returns an 8 segment IPv6 hex address
 
@@ -456,7 +456,7 @@ Takes an IPv6 RDATA string and returns an 8 segment IPv6 hex address
   Note: this function does NOT compress adjacent
   strings of 0:0:0:0 into the :: format
 
-=item $dec_text = ipv6_n2d($ipv6addr);
+=item $dec_text = ipv6_n2d($bits128);
 
 Takes an IPv6 RDATA string and returns a mixed hex - decimal IPv6 address
 with the 6 uppermost chunks in hex and the lower 32 bits in dot-quad

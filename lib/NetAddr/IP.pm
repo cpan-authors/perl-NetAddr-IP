@@ -81,6 +81,13 @@ for lowercase, which RFC 5952 s4.3 recommends:
 
   use NetAddr::IP qw(:upper);   # pin it, whatever the default becomes
 
+C<:upper> wins if both are given, whichever order they are in:
+
+  use NetAddr::IP qw(:lower :upper);
+  print NetAddr::IP->new('2001:db8::1')->addr, "\n";   # 2001:DB8:0:0:0:0:0:1
+  use NetAddr::IP qw(:upper :lower);
+  print NetAddr::IP->new('2001:db8::1')->addr, "\n";   # 2001:DB8:0:0:0:0:0:1
+
 =item C<:nofqdn>
 
 Turn off resolving a fully qualified domain name in the constructor,

@@ -1700,6 +1700,50 @@ sub import {
   V4mask
   V4net
 
+=head1 IMPORT TAGS
+
+Five tags are accepted by this module. All of them are process-wide: they
+change behaviour for the whole program, not for one object, so an import
+in an unrelated package changes the output for everyone.
+
+=over 4
+
+=item C<:lower>
+
+Return IPv6 text in lowercase, which RFC 5952 s4.3 recommends.
+
+=item C<:upper>
+
+Return IPv6 text in uppercase, which is the default. C<:upper> wins if
+both C<:lower> and C<:upper> are given, whichever order they are in:
+
+  use NetAddr::IP::Lite qw(:lower :upper);
+  print NetAddr::IP::Lite->new('2001:db8::1')->addr, "\n";
+  # 2001:DB8:0:0:0:0:0:1
+
+  use NetAddr::IP::Lite qw(:upper :lower);
+  print NetAddr::IP::Lite->new('2001:db8::1')->addr, "\n";
+  # 2001:DB8:0:0:0:0:0:1
+
+=item C<:nofqdn>
+
+Do not resolve a fully qualified domain name in the constructor, which is
+otherwise done for you.
+
+=item C<:old_nth>
+
+Restore the pre-4.00 C<nth()> and C<num()> behaviour. Deprecated; see
+L</DEPRECATED>.
+
+=item C<:aton>
+
+Accept a raw packed address in C<new()>. Deprecated; see L</DEPRECATED>.
+
+=back
+
+C<NetAddr::IP> accepts two more, C<:old_storable> and C<:rfc3021>, and
+rejects nothing that this module accepts.
+
 =head1 DEPRECATED
 
 Everything listed here is deprecated and will be removed in version 5.
