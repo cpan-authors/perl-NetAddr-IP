@@ -396,7 +396,7 @@ Convert a dot-quad IP address into an IPv4 packed network address.
   input:    IP address i.e. 192.5.16.32
   returns:  packed network address
 
-=item $ipv6addr = ipv6_aton($ipv6_text);
+=item $bits128 = ipv6_aton($ipv6_text);
 
 Takes an IPv6 address in any of the RFC 4291 s2.2 text forms and returns
 a 128 bit binary RDATA string.  Returns undef if the text is not a valid
@@ -444,14 +444,14 @@ text representation, which is lowercase whatever the case setting.
 NOTE: for an address with an IPv4 address in the low 32 bits the output
 depends on whether Socket6 is installed.  See the entry for C<inet_ntop>.
 
-=item $hex_text = ipv6_n2x($ipv6addr);
+=item $hex_text = ipv6_n2x($bits128);
 
 Takes an IPv6 RDATA string and returns an 8 segment IPv6 hex address
 
   input:    128 bit RDATA string
   returns:  x:x:x:x:x:x:x:x
 
-=item $dec_text = ipv6_n2d($ipv6addr);
+=item $dec_text = ipv6_n2d($bits128);
 
 Takes an IPv6 RDATA string and returns a mixed hex - decimal IPv6 address
 with the 6 uppermost chunks in hex and the lower 32 bits in dot-quad
@@ -608,7 +608,7 @@ netmask and always returns a 128 bit IPv6 netmask.
   input:    32 or 128 bit network mask
   returns:  128 bit network mask
 
-=item $netaddr = ipv6to4($pv6naddr);
+=item $netaddr = ipv6to4($ipv6naddr);
 
 Truncate the upper 96 bits of a 128 bit address and return the lower
 32 bits. Returns an IPv4 address as returned by inet_aton.
@@ -727,7 +727,7 @@ Convert a bcd text string to 128 bit string variable
 
 =cut
 
-#=item $onescomp=NetAddr::IP::Util::comp128($ipv6addr);
+#=item $onescomp=NetAddr::IP::Util::comp128($bits128);
 #
 #This function is not exported because it is more efficient to use perl " ~ "
 #on the bit string directly. This interface to the B<C> routine is published for
@@ -1026,7 +1026,8 @@ not API.
 
 These are in L<NetAddr::IP::InetBase>, and see the note there: the case
 setting is one package global, so importing either affects every user of
-the module in the process.
+the module in the process. C<:upper> wins if both are given, whichever
+order they are in.
 
 =back
 

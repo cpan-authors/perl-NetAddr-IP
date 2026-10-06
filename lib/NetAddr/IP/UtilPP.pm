@@ -467,7 +467,7 @@ sub maskanyto6 {
     return _deadlen($len, "$IPV4_BITS or $IPV6_BITS");
 }
 
-=item $netaddr = ipv6to4($pv6naddr);
+=item $netaddr = ipv6to4($ipv6naddr);
 
 Truncate the upper 96 bits of a 128 bit address and return the lower
 32 bits. Returns an IPv4 address as returned by inet_aton.
@@ -527,7 +527,7 @@ sub bcd2bin {
 
 =cut
 
-#=item $onescomp = comp128($ipv6addr);
+#=item $onescomp = comp128($bits128);
 #
 #This function is for testing, it is more efficient to use perl " ~ "
 #on the bit string directly. This interface to the B<C> routine is published for
