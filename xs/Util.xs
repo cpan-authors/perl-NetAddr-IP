@@ -323,7 +323,7 @@ _128x10(n128 * ap128, n128 * tp128)
 }
 
 /*	reads a count or constant once, magic included: 0 if undef or empty,
-	1 with *nvp set if numeric or numifying through overloading, else -1	*/
+*	1 with *nvp set if numeric or numifying through overloading, else -1	*/
 static int
 _num_arg(SV * sv, NV * nvp)
 {
@@ -348,6 +348,14 @@ _num_arg(SV * sv, NV * nvp)
 
 int
 have128(void * bp)
+{
+  U32 w[4];
+
+  memcpy(w, bp, sizeof(w));	/*	bp may be an unaligned Perl buffer	*/
+  if (w[0] || w[1] || w[2] || w[3])
+    return 1;
+  return 0;
+}
 
 int
 _simple_pack(const unsigned char * sp, int len, BCD * n, unsigned char * bad)
