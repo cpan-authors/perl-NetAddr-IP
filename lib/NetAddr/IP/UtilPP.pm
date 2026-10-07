@@ -62,10 +62,20 @@ sub _callersub {
     ipv4to6 mask4to6 ipanyto6 maskanyto6 ipv6to4
     bin2bcd bcd2bin
   );
+  use NetAddr::IP::InetBase qw(inet_aton ipv6_aton);
+
+  # inputs for the calls below
+  $netaddr    = inet_aton('192.0.2.1');
+  $bits128    = ipv6_aton('2001:db8::1');
+  $bits1281   = ipv6_aton('2001:db8::2');
+  $bits1282   = ipv6_aton('2001:db8::1');
+  $mask128    = ipv6_aton('ffff:ffff:ffff:ffff:ffff:ffff:ffff:ff00');
+  $signed_32bit = 1;
+  $n          = 8;
 
   # the family test and the shift
   $rv         = hasbits($bits128);        # true if any bit is set
-  $bitsXn     = shiftleft($bits128, $n);  # with no $n, returns the input
+  $bitsXn     = shiftleft($bits128, $n);  # 8 bits left; no $n returns the input
 
   # arithmetic, carry in scalar context and (carry, result) in list
   $carry      = addconst($bits128, $signed_32bit);
