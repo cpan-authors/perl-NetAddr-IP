@@ -10,6 +10,7 @@ package NetAddr::IP::UtilPP;
 
 use parent 'Exporter';
 use Carp qw( croak );
+use Scalar::Util qw( looks_like_number );
 use NetAddr::IP::Constants qw(
     $IPV4_BITS
     $IPV6_BITS
@@ -216,18 +217,29 @@ sub _128x10 {
     return $overflow;
 }
 
+# a count or constant as a plain scalar: an object goes through its numeric
+# conversion, as the XS reads it, or else its text
+sub _plain_number {
+    my ($n) = @_;
+    return $n unless ref $n;
+    return looks_like_number($n) ? sprintf('%.17g', $n) : "$n";
+}
+
 sub shiftleft {
     _deadlen(length($_[0]))
         if !defined($_[0]) || length($_[0]) != $V6_PACKED_BYTES;
-    my ($bits, $shifts) = @_;
-    return $bits unless $shifts;
-    croak "Bad arg value for NetAddr::IP::Util::shiftleft, is $shifts, should be 0 thru $MAX_SHIFTLEFT"
-        if $shifts < 0 || $shifts > $MAX_SHIFTLEFT;
+    my ($bits, $given) = @_;
+    my $shifts = _plain_number($given);
+    return $bits unless defined $shifts && $shifts ne '';
+    # an integer count from 0 to 128; undef or the empty string returns the input
+    croak "Bad arg value for NetAddr::IP::Util::shiftleft, is $given, should be 0 thru $MAX_SHIFTLEFT"
+        unless looks_like_number($shifts)
+        && $shifts >= 0
+        && $shifts <= $MAX_SHIFTLEFT
+        && $shifts == int($shifts);
+    return $bits if $shifts == 0;
     my @uint32t = unpack('N4', $bits);
-    do {
-        $bits = _128x2(\@uint32t);
-        $shifts--;
-    } while $shifts > 0;
+    _128x2(\@uint32t) for 1 .. $shifts;
     return pack('N4', @uint32t);
 }
 
@@ -293,12 +305,20 @@ Add a signed constant to a 128 bit string variable.
 =cut
 
 sub addconst {
-    my ($a128, $const) = @_;
+    my ($a128, $given) = @_;
+    my $const = _plain_number($given);
     _deadlen(length($a128))
         if !defined($a128) || length($a128) != $V6_PACKED_BYTES;
-    unless ($const) {
-        return (wantarray) ? ($const, $a128) : $const;
+    unless (defined $const && $const ne '') {
+        return (wantarray) ? (0, $a128) : 0;
     }
+    # an integer in the signed 32 bit range, the rule the XS applies
+    croak "Bad arg value for NetAddr::IP::Util::addconst, is $given, should be an integer from -2147483648 thru 2147483647"
+        unless looks_like_number($const)
+        && $const >= -2_147_483_648
+        && $const <= 2_147_483_647
+        && $const == int($const);
+    return (wantarray) ? (0, $a128) : 0 if $const == 0;
     my $sign = ($const < 0) ? 0xffffffff : 0;
     my $b128 = pack('N4', $sign, $sign, $sign, $const);
     @_ = ($a128, $b128, 0);
@@ -641,18 +661,31 @@ sub bcdn2txt {
 # returns:    128 bit string variable
 #
 
+=item $bits128 = bcdn2bin($bcdpacked,$ndigits);
+
+Convert a packed bcd string into a 128 bit string variable
+
+  input:    packed bcd string
+        number of digits in string
+  returns:    128 bit string variable
+
+=cut
+
 sub bcdn2bin {
     croak q|Bad usage, should have NetAddr::IP::Util::bcdn2bin('packedbcd','length')|
         if @_ < 2;
-    my ($bcd, $dc) = @_;
-    $dc = 0 unless $dc;
+    my ($bcd, $given) = @_;
+    my $dc = _plain_number($given);
+    $dc = 0 unless defined $dc && $dc ne '';
     my $digits = defined $bcd
         ? 2 * length($bcd)
         : 'undefined';
     croak "Bad arg length for NetAddr::IP::Util::bcdn2bin, length is $digits, should be 1 to $MAX_BCD_DIGITS digits"
         if !defined($bcd) || length($bcd) > $PACKED_BCD_BYTES;
+    # an integer count, made plain because it goes into an unpack template
     croak "Bad digit count for NetAddr::IP::Util::bcdn2bin, is $dc, should be 1 to $digits digits"
-        if $dc < 1 || $dc > $digits;
+        unless looks_like_number($dc) && $dc >= 1 && $dc < $digits + 1 && $dc == int($dc);
+    $dc = int($dc);
     return _bcd2bin(unpack("H$dc", $bcd), 'NetAddr::IP::Util::bcdn2bin');
 }
 
