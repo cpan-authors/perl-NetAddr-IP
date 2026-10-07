@@ -155,6 +155,21 @@ sub netlimit($) {
     $_netlimit = 2 ** $_[0];
 };
 
+=head2 Zeros, Zero, Ones, V4mask and V4net
+
+  use NetAddr::IP qw(Ones V4mask V4net Zeros);
+  use NetAddr::IP::Util qw(ipv6_n2x);
+
+  print ipv6_n2x(Zeros()), "\n";    # 0:0:0:0:0:0:0:0
+  print ipv6_n2x(Ones()), "\n";     # FFFF:FFFF:FFFF:FFFF:FFFF:FFFF:FFFF:FFFF
+  print ipv6_n2x(V4mask()), "\n";   # FFFF:FFFF:FFFF:FFFF:FFFF:FFFF:0:0
+  print ipv6_n2x(V4net()), "\n";    # 0:0:0:0:0:0:FFFF:FFFF
+
+Each returns a 128 bit string, the form an object keeps its address and
+mask in.  The first is all zero bits and the second all one bits.  The
+IPv4 pair, C<V4mask> and C<V4net>, has ones above the low 32 bits and in
+them respectively.  Another name for C<Zeros> is C<Zero>.
+
 =head1 DESCRIPTION
 
 This module provides an object-oriented abstraction on top of IP
@@ -522,6 +537,8 @@ sub do_prefix ($$$) {
 
 =item C<-E<gt>new6([$addr, [ $mask]])>
 
+=item C<-E<gt>new6FFFF([$addr, [ $mask]])>
+
 =item C<-E<gt>new_no([$addr, [ $mask]])>
 
 =item C<-E<gt>new_from_aton($netaddr)>
@@ -535,7 +552,7 @@ C<$addr> and an optional netmask C<$mask>, which can be omitted to get
 a /32 or /128 netmask for IPv4 / IPv6 addresses respectively.
 
 C<new6FFFF> is the third constructor, and is what makes an IPv4-mapped
-address:
+address, RFC 4291 s2.5.5.2:
 
   NetAddr::IP->new6FFFF('192.0.2.1');   # 0:0:0:0:0:FFFF:C000:201/128
 
@@ -595,7 +612,7 @@ C<$addr> can be any of the following and possibly more...
   n.n.n.n mm
   n.n.n.n/m.m.m.m
   n.n.n.n m.m.m.m
-  loopback, localhost, broadcast, any, default
+  default, any, broadcast, loopback (keywords, see below)
   host, as a mask keyword
   x.x.x.x/host
   x:x:x/host
@@ -613,7 +630,7 @@ Any RFC 4291 s2.2 notation
   x:x:x:x:x:x:x:x
   x:x:x:x:x:x:x:x/mmm
   x:x:x:x:x:x:x:x/m:m:m:m:m:m:m:m with a mask
-  loopback, localhost, unspecified, any, default
+  default, any, loopback, unspecified (keywords, see below)
   ::x:x/host
   0xABCDEF, 0b111111000101011110 within the limits
   of perl's number resolution
@@ -671,10 +688,11 @@ knowing before reaching for one:
   NetAddr::IP->new('loopback');       # 127.0.0.1/8
   NetAddr::IP->new('localhost');      # 127.0.0.1/32, via the resolver
 
-C<broadcast> is IPv4 only. C<new6('broadcast')> returns undef, while
-C<new6('unspecified')> gives an IPv6 unspecified address. C<loopback> is
-a /8, not a /32. C<localhost> is not a keyword at all: it is resolved,
-so it is undef under C<:nofqdn> and resolver-dependent otherwise.
+The C<broadcast> keyword is IPv4 only: C<new6('broadcast')> returns
+undef, while C<new6('unspecified')> gives an IPv6 unspecified address.
+The C<loopback> keyword gives a /8, not a /32. The name C<localhost> is
+not a keyword at all: it is resolved, so it is undef under C<:nofqdn>
+and resolver-dependent otherwise.
 
 =head2 Address and mask
 
@@ -965,13 +983,13 @@ sub wildcard($) {
 
 Returns true when C<$me> completely contains C<$other>. False is
 returned otherwise and C<undef> is returned if C<$me> and C<$other>
-are not both C<NetAddr::IP> objects.
+are not both C<NetAddr::IP> or C<NetAddr::IP::Lite> objects.
 
 =item C<$me-E<gt>within($other)>
 
 The complement of C<-E<gt>contains()>. Returns true when C<$me> is
 completely contained within C<$other>, undef if C<$me> and C<$other>
-are not both C<NetAddr::IP> objects.
+are not both C<NetAddr::IP> or C<NetAddr::IP::Lite> objects.
 
 An IPv4 object and an IPv6 object never contain each other, even when
 the IPv6 address is the IPv4 address in C<::a.b.c.d> or C<::ffff:a.b.c.d>
@@ -1017,14 +1035,21 @@ produced by splitting the original object, which is left
 unchanged. Note that C<$bits> must be longer than the original
 mask in order for it to be splittable.
 
-Croaks when the plan does not fit, rather than returning undef:
+Croaks when the plan does not fit or a mask is malformed, rather than
+returning undef:
 
   NetAddr::IP->new('192.0.2.0/24')->splitref(16);
   # netmask error: overrange or spurious bits
 
-So a plan whose first element is not longer than the original mask, or
-whose elements do not add up to it, is a fatal error. A plan that does
-fit returns every piece:
+The plan does not fit when one of its elements is shorter than the
+original mask, or has no room left when its turn comes.  On a /24,
+C<splitref(24, 25)> croaks because the /24 leaves no room for the /25,
+and so does C<splitref(25, 25, 25)>.  A plan whose elements add up to
+less than the original is not an error, since the last element repeats
+until the object is full, and neither is a last element too large for
+the space left, which is filled with smaller pieces from the plan, as
+described below.  A C<$bits> equal to the original mask returns the
+network as the only piece.  A plan that fits returns every piece:
 
   my $p = NetAddr::IP->new('192.0.2.0/24')->splitref(25);
   # 192.0.2.0/25  192.0.2.128/25
@@ -1490,7 +1515,10 @@ except for a /31 or /127 when it return the network address.
 
 =item C<-E<gt>hostenum()>
 
-Returns the list of hosts within a subnet.
+Returns the list of hosts within a subnet.  The network and broadcast
+addresses are left out, except on a /31 or /127, which gives both, and
+on a /32 or /128, which gives its one address.  So a /28 gives 14 hosts
+and a /30 gives 2.
 
 ERROR conditions:
 
@@ -1726,6 +1754,7 @@ sub mod_version {
   Compact
   Coalesce
   Zeros
+  Zero
   Ones
   V4mask
   V4net
@@ -1739,7 +1768,7 @@ Everything listed here is deprecated and will be removed in version 5.
 
 =item C<:aton>
 
-Enables C<->new()> to accept a raw packed address of four or sixteen
+Enables C<-E<gt>new()> to accept a raw packed address of four or sixteen
 bytes, and stops it stripping surrounding whitespace, which a packed
 address may begin or end with. Plain C<inet_aton> notation is accepted
 without this tag.
@@ -1761,7 +1790,7 @@ C<first>, C<last>, C<nth> and C<num>. Importing it warns.
 =item C<new_cis> and C<new_cis6>
 
 Accept the Cisco address and mask notation, with a space separator in
-place of a slash. C<->new()> and C<->new6()> do the same.
+place of a slash. C<-E<gt>new()> and C<-E<gt>new6()> do the same.
 
   ->new('192.0.2.0 24')      in place of   ->new_cis('192.0.2.0 24')
   ->new6('::192.0.2.0 120')  in place of   ->new_cis6('::192.0.2.0 120')
@@ -1770,10 +1799,10 @@ place of a slash. C<->new()> and C<->new6()> do the same.
 
 =head1 NOTES / BUGS ... FEATURES
 
-On Windows this distribution builds and tests in pure Perl mode, with no
-C toolchain.  The choice is made in F<inc/MakeMaker/header.pl>, which
-sets an emulated C<AF_INET6> when C<$^O> matches F</win/i>; README.md
-carries the build steps and F<mode()> reports which mode is running.
+On Windows, Cygwin and macOS a plain C<perl Makefile.PL> builds pure
+Perl, with no C toolchain, and C<--xs> asks for the XS build.  The choice
+is made in F<inc/MakeMaker/header.pl>.  The build steps are in README.md,
+and C<mode()> reports which mode is running.
 
 
 =head1 ADDITIONAL LICENSE

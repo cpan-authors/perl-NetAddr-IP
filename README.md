@@ -158,8 +158,10 @@ These are methods on an object, not functions called on the class name:
     $ip->full                     # full expanded IPv4
     $ip->full6                    # full expanded IPv6
 
-A split plan whose parts do not add up to the subnet croaks rather than
-returning undef:
+A split plan too small for the subnet is not an error, since its last size
+repeats. A plan that does not fit croaks rather than returning undef, and
+so does a malformed mask. A plan does not fit when one of its sizes is
+larger than the subnet or has no room left when its turn comes:
 
     NetAddr::IP->new('192.0.2.0/24')->split(16);
     # netmask error: overrange or spurious bits

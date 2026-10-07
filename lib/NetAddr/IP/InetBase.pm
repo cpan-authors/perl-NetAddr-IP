@@ -121,13 +121,8 @@ else {
     else {
         $emulateAF_INET6 = 0;            # clear, have it from elsewhere
     }
-      # Without Socket6 the module's own parsers and formatters are used.
-      # They agree with libc except for an address with an IPv4 address in
-      # the low 32 bits, where libc renders mixed notation and these render
-      # hex: ::ffff:192.0.2.1 against ::ffff:c000:201. Socket6 is only
-      # recommended, so the output then depends on what is installed, and
-      # which side should win is an open question: see GH#99. _inet_pton
-      # also accepts three forms libc rejects, see GH#21.
+      # Without Socket6 these give hex for IPv4-embedded addresses where libc
+      # gives mixed notation (GH#99), and accept IPv4 short forms and names.
       *inet_pton = \&_inet_pton;
       *inet_ntop = \&_inet_ntop;
 }
@@ -247,34 +242,15 @@ sub import {
 
 =head1 SYNOPSIS
 
-  use NetAddr::IP::InetBase qw(
-    inet_aton inet_ntoa
-    ipv6_aton ipv6_ntoa ipv6_n2x ipv6_n2d
-    inet_any2n inet_n2dx inet_n2ad
-    inet_pton inet_ntop packzeros
-    isIPv4 isNewIPv4 isAnyIPv4
-    AF_INET AF_INET6
-    fake_AF_INET6 fillIPv4
-  );
+  use NetAddr::IP::InetBase qw(fillIPv4 inet_any2n inet_aton inet_n2dx
+      inet_ntoa ipv6_aton ipv6_n2x);
 
-  # text to packed, and back
-  $netaddr    = inet_aton('192.0.2.1');       # 4 bytes
-  $dotquad    = inet_ntoa($netaddr);          # '192.0.2.1'
-  $ipv6naddr  = ipv6_aton('2001:db8::1');     # 16 bytes
-  $ipv6_text  = ipv6_ntoa($ipv6naddr);        # '2001:db8::1'
-  $ipv6naddr  = inet_any2n('192.0.2.1');      # 0:0:0:0:0:0:C000:201
-  $hex_text   = packzeros('0:0:0:0:0:ffff:c000:201');
-                                               # '::ffff:c000:201'
-  $dotquad    = fillIPv4('192.0.2');          # '192.0.0.2'
-
-  # the family tests
-  $rv         = isIPv4($ipv6naddr);           # ::d.d.d.d, deprecated
-  $rv         = isNewIPv4($ipv6naddr);        # ::ffff:d.d.d.d
-  $rv         = isAnyIPv4($ipv6naddr);        # either of the above
-
-  # AF_INET6, emulated on a platform that has no IPv6
-  $af         = AF_INET6();                   # real, or emulated
-  $trueif     = fake_AF_INET6();              # true when emulated
+  my $packed = inet_aton('192.0.2.1');
+  print length($packed), "\n";                      # 4
+  print inet_ntoa($packed), "\n";                   # 192.0.2.1
+  print ipv6_n2x(ipv6_aton('2001:db8::1')), "\n";   # 2001:db8:0:0:0:0:0:1
+  print inet_n2dx(inet_any2n('192.0.2.1')), "\n";   # 192.0.2.1
+  print fillIPv4('192.0.2'), "\n";                  # 192.0.0.2
 
   NetAddr::IP::InetBase::lower();            # case, see IMPORT TAGS
   NetAddr::IP::InetBase::upper();
@@ -296,6 +272,11 @@ The IPv6 functions accept every text form in RFC 4291 s2.2.
     ::x:d.d.d.d
   and so on...
 
+Text that is not an address is not an error.  Four functions,
+C<inet_aton>, C<ipv6_aton>, C<inet_any2n> and C<inet_pton>, return undef
+for it.  A binary argument of the wrong length is an error, and each
+entry below says which functions croak on one.
+
 =head1 FUNCTIONS
 
 =head2 Text to binary
@@ -306,16 +287,22 @@ The IPv6 functions accept every text form in RFC 4291 s2.2.
 
 Convert a dot-quad IP address into an IPv4 packed network address.
 
-  input:    IP address i.e. 192.5.16.32
-  returns:  packed network address
+  input:    IP address i.e. 192.0.2.1
+  returns:  packed network address, or undef
+
+Short forms follow the BSD C<inet_aton> convention, not RFC 791:
+C<127.1> is 127.0.0.1 and C<192.0.2> is 192.0.0.2.  Other text goes to
+C<gethostbyname>, so a host name is resolved.  Returns undef for an
+octet above 255 and for text that does not resolve.
 
 =item $bits128 = ipv6_aton($ipv6_text);
 
-Takes an IPv6 address of the form described in rfc1884
-and returns a 128 bit binary RDATA string.
+Takes an IPv6 address in any of the RFC 4291 s2.2 text forms and returns
+a 128 bit binary RDATA string.  Returns undef if the text is not a valid
+address.
 
   input:    ipv6 text
-  returns:  128 bit RDATA string
+  returns:  128 bit RDATA string, or undef
 
 =cut
 
@@ -361,7 +348,10 @@ standard notation into a 128 bit IPv6 string address. It prefixes any
 dot-quad address (if found) with '::' and passes it to B<ipv6_aton>.
 
   input:    dot-quad or RFC 4291 s2.2 address
-  returns:  128 bit IPv6 string
+  returns:  128 bit IPv6 string, or undef
+
+Returns undef if the text is not an address.  An empty or undefined
+argument is read as C<::>, the all-zero address.
 
 =cut
 
@@ -379,8 +369,13 @@ This function takes an IP address in IPv4 or IPv6 text format and converts it in
 binary format. The type of IP address conversion is controlled by the FAMILY
 argument.
 
+Returns undef for text that is not an address of that family, and croaks
+on a family other than C<AF_INET> and C<AF_INET6>.
+
 NOTE: inet_pton, inet_ntop and AF_INET6 come from the Socket6 library if it
-is present on this host.
+is present on this host.  The two sources differ on IPv4 text: without
+Socket6, C<inet_pton(AF_INET, ...)> is C<inet_aton> and also takes short
+forms such as C<127.1> and host names, which Socket6 rejects.
 
 =cut
 
@@ -407,7 +402,9 @@ sub _inet_pton {
 Convert a packed IPv4 network address to a dot-quad IP address.
 
   input:    packed network address
-  returns:  IP address i.e. 10.4.12.123
+  returns:  IP address i.e. 192.0.2.1
+
+Croaks if the argument is not 4 bytes.
 
 =cut
 
@@ -427,7 +424,7 @@ sub inet_ntoa {
 
 =item $ipv6text = ipv6_ntoa($ipv6naddr);
 
-Convert a 128 bit binary IPv6 address to compressed rfc 1884
+Convert a 128 bit binary IPv6 address to the compressed RFC 5952 s4
 text representation.
 
   input:    128 bit RDATA string
@@ -483,6 +480,8 @@ dot-quad IPv4 or a hex notation IPv6 address.
   Note: this function does NOT compress adjacent
   strings of 0:0:0:0 into the :: format
 
+Croaks if the argument is not 16 bytes.
+
 =cut
 
 sub inet_n2dx($) {
@@ -502,10 +501,12 @@ dot-quad IPv4 or a hex::decimal notation IPv6 address.
 
   input:    128 bit IPv6 string
   returns:  ddd.ddd.ddd.ddd
-        or  x:x:x:x:x:x:ddd.ddd.ddd.dd
+        or  x:x:x:x:x:x:ddd.ddd.ddd.ddd
 
   Note: this function does NOT compress adjacent
   strings of 0:0:0:0 into the :: format
+
+Croaks if the argument is not 16 bytes.
 
 =cut
 
@@ -629,19 +630,34 @@ portion of the 128 bit string and false otherwise.
 
   i.e.    the address must be of the form - ::d.d.d.d
 
-Note: this is an old and deprecated ipV4 compatible ipV6 address
+which is the RFC 4291 s2.5.5.1 IPv4-compatible prefix C<::/96>, deprecated
+by that RFC.
+
+Croaks if the argument is not 16 bytes.  The message names the sub that
+called C<isIPv4>, not C<isIPv4> itself, unless the call is made from file
+scope.
 
 =item $rv = isNewIPv4($bits128);
 
-This function return true if the IPv6 128 bit string is of the form
+This function returns true if the 128 bit string is an IPv4-mapped
+address, of the form
 
-    ::ffff:d.d.d.d
+  ::ffff:d.d.d.d
+
+which is the RFC 4291 s2.5.5.2 prefix C<::ffff:0:0/96>.
+
+Returns false for an argument shorter than 16 bytes and croaks for a
+longer one.
 
 =item $rv = isAnyIPv4($bits128);
 
-This function return true if the IPv6 bit string is of the form
+This function returns true if the 128 bit string has an IPv4 address in
+the low 32 bits, of either form
 
-    ::d.d.d.d    or    ::ffff:d.d.d.d
+  ::d.d.d.d    or    ::ffff:d.d.d.d
+
+which is the union of the RFC 4291 s2.5.5.1 compatible prefix and the
+s2.5.5.2 mapped prefix.  Croaks if the argument is not 16 bytes.
 
 =back
 
@@ -651,21 +667,25 @@ This function return true if the IPv6 bit string is of the form
 
 =item $constant = AF_INET;
 
-This function returns the system value for AF_INET.
+Returns the system value for AF_INET, taken from Socket.
 
 =item $constant = AF_INET6;
 
-AF_INET6 is sometimes present in the Socket library and always present in the Socket6 library. When the Socket
-library does not contain AF_INET6 and when Socket6 is not present, a place holder value is C<guessed> based on
-the underlying host operating system. See B<fake_AF_INET6> below.
+Returns the value for AF_INET6.  It comes from Socket6 when Socket6 is
+installed.  Without Socket6 it is a value guessed from the name of the
+operating system, which is 10 on Linux.
+
+  use NetAddr::IP::InetBase qw(AF_INET AF_INET6);
+  print AF_INET(), ' ', AF_INET6(), "\n";   # 2 10 on Linux
 
 NOTE: inet_pton, inet_ntop and AF_INET6 come from the Socket6 library if it
 is present on this host.
 
 =item $trueif = fake_AF_INET6;
 
-This function return FALSE if AF_INET6 is provided by Socket or Socket6. Otherwise, it returns the best guess
-value based on name of the host operating system.
+Returns false when Socket6 is installed.  Without Socket6 it returns the
+guessed value that C<AF_INET6> also returns, 10 on Linux, even where the
+Socket module has its own AF_INET6.
 
 =back
 
@@ -808,10 +828,13 @@ Socket6 is a runtime recommendation, not a requirement.  Where the
 substitution matters for output it is noted on the entry: for C<inet_ntop>
 and C<ipv6_ntoa>, an address with an IPv4 address in the low 32 bits is
 rendered in mixed notation with Socket6 and in hex without it.  The parse
-side differs too, in the other direction, and is GH#21.
+side agrees on IPv6 text and differs on IPv4 text: without Socket6,
+C<inet_pton(AF_INET, ...)> is C<inet_aton>, so it takes short forms such
+as C<127.1> and host names, which Socket6 rejects.
 
-When there is no IPv6 on the platform at all, C<AF_INET6> is emulated and
-C<fake_AF_INET6()> returns true:
+When Socket6 is not installed, C<AF_INET6> is a value guessed from the
+name of the operating system, and C<fake_AF_INET6()> returns that same
+value, which is true:
 
   print AF_INET6();          # a platform constant, or 10 here
   print fake_AF_INET6();     # true when emulated
