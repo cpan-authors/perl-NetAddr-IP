@@ -2,6 +2,38 @@ Revision history for Perl extension NetAddr::IP
 
 {{$NEXT}}
 
+    Fix GH#109: The wrap check in the Util EXAMPLES compared addresses as
+    strings, so text order stood in for address order. Two snippets stepped an
+    address with the overloaded ++ and decided whether the host part had wrapped
+    by comparing the string forms before and after. As text 192.0.2.10 sorts
+    before 192.0.2.9, so the step from .9 to .10 read as a wrap, and the real
+    wrap from .11 back to .8 sorted after, so it read as no wrap. Both snippets
+    happened to print what the page said: the first never wrapped, so its
+    addconst branch never ran, and every address in the loop had three digits in
+    the last octet, where text order and address order agree.
+
+    Stepping every aligned subnet of 192.0.2.0/24 from /24 to /31, 255 nets and
+    2048 steps, each net wrapping once, the string test reported 13 false
+    wraps and missed 6 of the 255 real ones, in 192.0.2.64/26, 192.0.2.96/27,
+    192.0.2.96/28, 192.0.2.8/29, 192.0.2.96/29 and 192.0.2.8/30. Six IPv6 nets
+    in 2001:db8::/32 gave 3 false wraps and no missed ones. Comparing the
+    objects got all 2048 IPv4 steps and all 4648 IPv6 steps right on both
+    builds.
+
+    Both snippets now take $before = $ip->copy and test $ip < $before, the
+    overloaded comparison, which subtracts the two 128 bit addresses and is
+    address order for either family. A step inside the net raises the address
+    and a wrap drops it to the network address, so the new address is the lower
+    one only at a wrap. The first snippet starts at 192.0.2.127/26 and steps by
+    64, so it takes the wrap branch and shows the addconst list assignment the
+    paragraph above it is about; it prints 192.0.2.128/26, where the string
+    test prints 192.0.2.64/26. The loop starts at 192.0.2.8/30, which passes
+    both failure points, and its output follows as result comments. The
+    paragraph between them had called the overloaded < the wrong test, when it
+    is the right one, and had said comparing string forms is what detects the
+    wrap; the only fault in the original test was $ip-copy(), which is not
+    Perl. No code outside the examples changes.
+
     Fix GH#111: Build pure Perl on every platform, including Linux, and stop
     compiling the checkout Makefile.PL at all. Three edits in 4f61b57 combined
     to disable the compiler test: $useXS was initialised to 0 rather than left
