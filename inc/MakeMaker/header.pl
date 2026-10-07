@@ -1,7 +1,7 @@
 use Config;
 use Getopt::Long qw(GetOptions);
 
-my $useXS = 0;
+my $useXS;
 GetOptions(
     'xs!' => \$useXS,
     'pm'  => sub {
@@ -17,12 +17,13 @@ if (!defined $useXS && ($Config{osname} =~ /win/i || $Config{osname} eq 'dos')) 
     $useXS = 0;
 }
 
-# Check if we have a C compiler, only if --xs was given
-if ($useXS) {
+# build XS when a C compiler works, unless --xs or -noxs was given
+unless (defined $useXS) {
     my $compiler = _test_cc();
     if ($compiler) {
         $ENV{CC} = $compiler;
         print "You have a working compiler.\n";
+        $useXS = 1;
     }
     else {
         $useXS = 0;
@@ -113,9 +114,22 @@ if ($useXS) {
     );
 }
 
-# make clean removes the file Makefile.PL rewrites on every run
+# make clean removes the files Makefile.PL rewrites on every run.
+# The XS build also writes Util.o and Util.c under lib/, where ExtUtils::MakeMaker
+# does not look for them: its C_FILES and OBJECT are set only when $useXS is true,
+# so in a pure Perl build neither is known and a stray Util.o left by an earlier
+# XS build is picked up as a module to copy into blib. That pulls the postamble's
+# xsubpp rule into the build, where $(XSUBPP) is undefined in a pure Perl Makefile
+# and it dies on "-ypemap". Both are generated, so both go.
 push @mm_args,
-    clean => { FILES => 'lib/NetAddr/IP/Util_IS.pm xs/localperl.h' };
+    clean => {
+        FILES => join q{ },
+        'lib/NetAddr/IP/Util_IS.pm',
+        'lib/NetAddr/IP/Util.c',
+        'lib/NetAddr/IP/Util.o',
+        'lib/NetAddr/IP/Util.c.xsc',
+        'xs/localperl.h',
+    };
 
 sub _test_cc {
     print "Testing if you have a C compiler and the needed header files....\n";
