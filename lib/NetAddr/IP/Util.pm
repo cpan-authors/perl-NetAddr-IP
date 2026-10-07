@@ -911,33 +911,34 @@ which quietly stored the carry:
   use NetAddr::IP::Util qw(addconst);
   use NetAddr::IP ();
 
-  my $ip = NetAddr::IP->new('192.0.2.0/24');
-  my $nextnet = 256;                          # one /24 step
+  my $ip = NetAddr::IP->new('192.0.2.127/26');
+  my $nextnet = 64;                           # one /26 step
 
-  my $before = "$ip";                         # stringification copies
+  my $before = $ip->copy;                     # a new object, same address
   $ip++;
-  if ("$ip" lt $before) {                     # host part wrapped
+  if ($ip < $before) {                        # host part wrapped
       (undef, $ip->{addr}) = addconst($ip->{addr}, $nextnet);
   }
 
-  print "$ip\n";                             # 192.0.2.1/24
+  print "$ip\n";                              # 192.0.2.128/26
 
-The original had C<$ip-copy()>, which is not Perl, and compared with
-C<< $ip < $lastip >>, which uses the overloaded C<lt> rather than a
-numeric test.  Comparing the string forms is what detects the wrap:
+The test hands both objects to the overloaded C<< < >>, which compares
+the addresses as 128 bit numbers.  Comparing their string forms instead
+gives wrong answers, because text order is not address order.  As text,
+192.0.2.10 sorts before 192.0.2.9, and the wrap from 192.0.2.11 back to
+192.0.2.8 sorts after.  Stepping a /30 from 192.0.2.8 passes both points:
 
-  my $ip = NetAddr::IP->new('192.0.2.252/30');
+  my $ip = NetAddr::IP->new('192.0.2.8/30');
   for my $step (0 .. 3) {
-      my $before = "$ip";
+      my $before = $ip->copy;
       $ip++;
       printf "step %d: %-16s wrapped: %d\n", $step, "$ip",
-          ("$ip" lt $before ? 1 : 0);
+          ($ip < $before ? 1 : 0);
   }
-
-  step 0: 192.0.2.253/30   wrapped: 0
-  step 1: 192.0.2.254/30   wrapped: 0
-  step 2: 192.0.2.255/30   wrapped: 0
-  step 3: 192.0.2.252/30   wrapped: 1
+  # step 0: 192.0.2.9/30     wrapped: 0
+  # step 1: 192.0.2.10/30    wrapped: 0
+  # step 2: 192.0.2.11/30    wrapped: 0
+  # step 3: 192.0.2.8/30     wrapped: 1
 
 =head1 EXPORTS
 
