@@ -6,8 +6,8 @@ sub postamble {
     my $util_o  = 'lib/NetAddr/IP/Util.o';
 
     return <<"END_POSTAMBLE";
-$util_c : $util_xs xs/typemap
-\tcd xs && \$(PERLRUN) \$(XSUBPP) -typemap typemap \$(XSUBPPARGS) Util.xs > ../$util_c.xsc
+$util_c : $util_xs
+\tcd xs && \$(PERLRUN) \$(XSUBPP) \$(XSUBPPARGS) Util.xs > ../$util_c.xsc
 \t\$(MV) $util_c.xsc $util_c
 
 $util_o : $util_c
