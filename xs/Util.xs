@@ -21,21 +21,9 @@
 extern "C" {
 #endif
 
-#ifdef _CYGWIN
-#include <windows.h>
-#endif
-
 #include "EXTERN.h"
 #include "perl.h"
 #include "XSUB.h"
-
-/*	needed for testing with 'printf'
-#include <stdio.h>
- */
-
-#ifdef _CYGWIN
-#include <Win32-Extensions.h>
-#endif
 
 #include "localconf.h"
 
@@ -52,13 +40,13 @@ typedef union
   unsigned char c[16];
 } n128;
 
-const char * is_ipv6to4 = "ipv6to4", * is_shiftleft = "shiftleft", * is_comp128 = "comp128";
-const char * is_sub128 = "sub128", * is_add128 = "add128";
-const char * is_hasbits = "hasbits";
+static const char * is_ipv6to4 = "ipv6to4", * is_shiftleft = "shiftleft", * is_comp128 = "comp128";
+static const char * is_sub128 = "sub128", * is_add128 = "add128";
+static const char * is_hasbits = "hasbits";
 /* , * is_isIPv4 = "isIPv4"; */
-const char * is_bcd2bin = "bcd2bin", * is_simple_pack = "simple_pack", * is_bcdn2bin = "bcdn2bin";
-const char * is_mask4to6 = "mask4to6", * is_ipv4to6 = "ipv4to6";
-const char * is_maskanyto6 = "maskanyto6", * is_ipanyto6 = "ipanyto6";
+static const char * is_bcd2bin = "bcd2bin", * is_simple_pack = "simple_pack", * is_bcdn2bin = "bcdn2bin";
+static const char * is_mask4to6 = "mask4to6", * is_ipv4to6 = "ipv4to6";
+static const char * is_maskanyto6 = "maskanyto6", * is_ipanyto6 = "ipanyto6";
 
 typedef struct bcdstuff
 {		/*	character array of 40 bytes			*/
@@ -68,74 +56,30 @@ typedef struct bcdstuff
 
 #define zero ('0' & 0x7f)
 
-/*	useful for debug, prints the 128 bits of 8, 16 bit registers	*/
-void
-printb128(char * b)
-{
-  int c;
-  for(c=0;c<16;c++) {
-    if (b[c] &0x80)
-      printf("1");
-    else
-      printf("0");
-    if (b[c] &0x40)
-      printf("1");
-    else
-      printf("0");
-    if (b[c] &0x20)
-      printf("1");
-    else
-      printf("0");
-    if (b[c] &0x10)
-      printf("1");
-    else
-      printf("0");
-    if (b[c] &0x8)
-      printf("1");
-    else
-      printf("0");
-    if (b[c] &0x4)
-      printf("1");
-    else
-      printf("0");
-    if (b[c] &0x2)
-      printf("1");
-    else
-      printf("0");
-    if (b[c] &0x1)
-      printf("1");
-    else
-      printf("0");
-    if (c == 3 || c == 7 || c == 11)
-      printf("\n");
-  }
-  printf("\n\n");
-}
-
-void
+static void
 extendipv4(void * aa, void * ux)
 {
-  register U32 * a = ux;
+  U32 * a = ux;
   *a++ = 0;
   *a++ = 0;
   *a++ = 0;
   memcpy(a, aa, sizeof(*a));	/*	aa may be an unaligned Perl buffer	*/
 }
 
-void
+static void
 extendmask4(void * aa, void * ux)
 {
-  register U32 * a = ux;
+  U32 * a = ux;
   *a++ = 0xffffffff;
   *a++ = 0xffffffff;
   *a++ = 0xffffffff;
   memcpy(a, aa, sizeof(*a));	/*	aa may be an unaligned Perl buffer	*/
 }
 
-void
+static void
 fastcomp128(void * aa)
 {
-  register U32 * a = aa;
+  U32 * a = aa;
 
   *a++ ^= 0xffffffff;
   *a++ ^= 0xffffffff;
@@ -145,13 +89,13 @@ fastcomp128(void * aa)
 
 /*	add two 128 bit numbers
 	return the carry
- */
+	*/
 
-int
+static int
 adder128(void * aa, void * bb, n128 * ap128, int carry)
 {
   int i;
-  register U32 a, b, r;
+  U32 a, b, r;
 
   for (i=3; i >= 0; i--) {
     a = *((U32 *)aa + i);
@@ -172,10 +116,10 @@ adder128(void * aa, void * bb, n128 * ap128, int carry)
   return carry;
 }
 
-int
+static int
 addercon(void * aa, U32 * bb, n128 * ap128, I32 con)
 {
-  register U32 tmp = 0x80000000;
+  U32 tmp = 0x80000000;
 
   if (con & tmp)
     tmp = 0xffffffff;
@@ -211,7 +155,7 @@ _num_arg(SV * sv, NV * nvp)
   return 1;
 }
 
-int
+static int
 have128(void * bp)
 {
   U32 w[4];
@@ -222,22 +166,12 @@ have128(void * bp)
   return 0;
 }
 
-int
-_isipv4(void * bp)
-{
-  register U32 * p = bp;
-
-  if (*p++ || *p++ || *p++)
-    return 0;
-  return 1;
-}
-
 /*	network byte swap and copy	*/
-void
+static void
 netswap_copy(void * dest, void * src, int len)
 {
-  register U32 * d = dest;
-  register unsigned char * s = src;
+  U32 * d = dest;
+  unsigned char * s = src;
   U32 w;
 
   for (/* -- */;len>0;len--) {
@@ -258,11 +192,11 @@ netswap_copy(void * dest, void * src, int len)
 
 /*	do ntohl / htonl changes as necessary for this OS
  */
-void
+static void
 netswap(void * ap, int len)
 {
 #ifdef host_is_LITTLE_ENDIAN
-  register U32 * a = ap;
+  U32 * a = ap;
   for (/* -- */;len >0;len--) {
     *a =  (((*a & 0xff000000) >> 24) | ((*a & 0x00ff0000) >>  8) | \
 	     ((*a & 0x0000ff00) <<  8) | ((*a & 0x000000ff) << 24));
@@ -275,10 +209,10 @@ netswap(void * ap, int len)
 	return mask bit count and remainder value,
 	left fill with ones
  */
-unsigned char
+static unsigned char
 _countbits(void *ap)
 {
-  register U32 * p0 = (U32 *)ap, * p1 = p0 +1, * p2 = p1 +1, * p3 = p2 +1;
+  U32 * p0 = (U32 *)ap, * p1 = p0 +1, * p2 = p1 +1, * p3 = p2 +1;
   unsigned char count = 128;
 
   fastcomp128(ap);
@@ -304,10 +238,10 @@ _countbits(void *ap)
 /*	multiply 128 bit number x 2
 	returns non-zero if the result overflowed 128 bits
  */
-int
+static int
 _128x2(U32 * ap)
 {
-  register U32 * p = ap +3, tmpc, carry = 0;
+  U32 * p = ap +3, tmpc, carry = 0;
 
   do {
     tmpc = *p & 0x80000000;	/*	propagate hi bit to next word	*/
@@ -323,10 +257,10 @@ _128x2(U32 * ap)
 /*	multiply 128 bit number X10
 	returns non-zero if the result overflowed 128 bits
  */
-int
+static int
 _128x10(n128 * ap128, n128 * tp128)
 {
-  register U32 * ap = ap128->u, * tp = tp128->u;
+  U32 * ap = ap128->u, * tp = tp128->u;
   int overflow;
   overflow = _128x2(ap);					/*	multiply by two		*/
   *tp		= *ap;				/*	temp save		*/
@@ -343,10 +277,10 @@ _128x10(n128 * ap128, n128 * tp128)
 /*	multiply 128 bit number by 10, add bcd digit to result
 	returns non-zero if the result overflowed 128 bits
  */
-int
+static int
 _128x10plusbcd(n128 * ap128, n128 * tp128, char digit)
 {
-  register U32 * ap = ap128->u, * tp = tp128->u;
+  U32 * ap = ap128->u, * tp = tp128->u;
   int overflow;
 /* printf("digit %X + %X = ",digit,*(ap +3)); */
   overflow = _128x10(ap128,tp128);
@@ -361,7 +295,7 @@ _128x10plusbcd(n128 * ap128, n128 * tp128, char digit)
 
 /*	packs 1 to 40 digits into 20 bytes of bcd, right aligned; returns 1 with
 	*bad set to the first byte outside 0-9, else 0	*/
-int
+static int
 _simple_pack(const unsigned char * sp, int len, BCD * n, unsigned char * bad)
 {
   int i, j = 19, lo = 1;
@@ -394,11 +328,11 @@ _simple_pack(const unsigned char * sp, int len, BCD * n, unsigned char * bad)
 /*	convert a packed bcd string to 128 bit binary string
 	returns non-zero if the value does not fit in 128 bits
  */
-int
+static int
 _bcdn2bin(void * bp, n128 * ap128, n128 * cp128, int len)
 {
   int i = 0, hasdigits = 0, lo, overflow = 0;
-  register unsigned char c, * cp = (unsigned char *)bp;
+  unsigned char c, * cp = (unsigned char *)bp;
 
   memset(ap128->c, 0, 16);
   memset(cp128->c, 0, 16);
@@ -484,10 +418,10 @@ _bin2bcd (unsigned char * binary, BCD * n)
 /*	convert a bcd number string to a bcd text string
 	returns the number of digits
  */
-int
+static int
 _bcd2txt(unsigned char * bcd2p, BCD * n)
 {
-  register unsigned char bcd, dchar;
+  unsigned char bcd, dchar;
   int	i, j = 0;
 
   for (i=0;i<20;i++) {
