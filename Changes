@@ -2,6 +2,72 @@ Revision history for Perl extension NetAddr::IP
 
 {{$NEXT}}
 
+    Fix GH#111: Build pure Perl on every platform, including Linux, and stop
+    compiling the checkout Makefile.PL at all. Three edits in 4f61b57 combined
+    to disable the compiler test: $useXS was initialised to 0 rather than left
+    undefined, which also made the new "!defined $useXS" test in the Windows
+    rule permanently false; the probe condition became "if ($useXS)" rather
+    than "unless (defined $useXS)", so it ran only when --xs was given; and a
+    successful probe no longer set $useXS = 1. So a plain "perl Makefile.PL"
+    wrote the pure Perl Makefile everywhere. That is the command cpan and
+    cpanm run, so an install from the next release would have built pure Perl
+    even where a compiler works, and the Linux CI job meant to test the XS
+    has been testing pure Perl while staying green. The same commit also
+    dropped the closing brace of an "if ($useXS)" block, so the checked-out
+    Makefile.PL no longer compiled at all.
+
+    header.pl leaves $useXS undefined until an option or the platform rule
+    sets it, runs the probe when neither --xs nor -noxs was given, and sets
+    $useXS = 1 when a compiler works. That restores the 4.079 default while
+    keeping the 4f61b57 change that lets --xs override the Windows rule. With
+    --xs the probe is skipped and the build is XS, as in 4.079; a broken
+    compiler now fails at make instead of falling back to pure Perl, which is
+    what asking for the XS explicitly should mean.
+
+    Each of the four build jobs now checks the mode it got rather than
+    passing as whichever build it happened to produce. t/033-util-mode.t
+    cannot do this: it derives its expectation from Util_IS->not_pure, so it
+    agrees with the build either way. The macOS job asserts Pure Perl, which
+    is the point of pinning it down, since it gets there by the accident that
+    "darwin" contains "win" and so matches the /win/i platform rule.
+
+    The checked-out Makefile.PL is deleted rather than repaired. It is
+    excluded from the distribution, nothing regenerates it, and it had
+    drifted from inc/MakeMaker: it still used the older %makeparms spelling
+    instead of @mm_args, and carried a realclean naming xs/config.h,
+    xs/config.log and xs/config.status, which GH#101 stopped generating, plus
+    a clean override protecting lib/NetAddr/IP/Util.c, which GH#96 established
+    is not tracked in git. README.md now says so and gives the dzil build
+    path.
+
+    Restoring the XS build exposed a fault in the clean list that the pure
+    Perl default had been hiding. make clean did not remove
+    lib/NetAddr/IP/Util.o, because ExtUtils::MakeMaker only knows about
+    C_FILES and OBJECT when the XS branch fills them in, so the file survived
+    a clean, then a later perl Makefile.PL -noxs in the same tree copied it
+    into blib as though it were a module, which dragged the postamble's xsubpp
+    rule into a pure Perl build where $(XSUBPP) is unset. That failed on
+    "-ypemap". The clean list now names Util.c, Util.o and Util.c.xsc as well.
+    All three are generated, and in a pure Perl tree naming absent files costs
+    nothing.
+
+    Fix GH#114: The XS build had not compiled since 6d38292, so CI never
+    noticed: its Linux XS job builds pure Perl, see GH#111. The file carried
+    two definitions of _num_arg and two of have128 with no body, was missing
+    _isipv4 and _128x10plusbcd that bcdn2bin still called, and used k and nv
+    in three functions that declared neither. Restored GH#106 as filed,
+    tests included: the duplicate is gone, have128 keeps its GH#102 unaligned
+    access fix, the missing helpers are back, the packed argument is read
+    with SvPVbyte while the digit text in bcd2bin and simple_pack stays SvPV,
+    and a count or constant is read before a pointer into the address is
+    taken. A fifth defect in the same area: a packed address reached through
+    get magic looked undefined, and an upgraded string was read at its
+    expanded length. _packed_ok runs the magic once and reports whether the
+    value is then defined, _packed_bytes reads the bytes without running the
+    magic again and through a downgraded copy when the argument is upgraded.
+    SvPVbyte_nomg would do this in one call but needs perl 5.31.4, so this
+    uses only calls available from 5.9.2.
+
     Fix GH#104: Mangle the caller's packed address when reading it as 32-bit
     words through a cast, which faults on strict-alignment hardware when the
     string was chopped in place. Four helpers in xs/Util.xs read the caller's
