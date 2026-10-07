@@ -51,16 +51,16 @@ our $_netlimit;
   my @hosts = $ip->hostenum;     # every usable address, 254 of them
   my @halves = $ip->split(25);   # 192.0.2.0/25, 192.0.2.128/25
 
-  my @merged = Compact(@subnets);        # merge adjacent subnets
-  my $one     = Coalesce(24, 2, @subnets);   # summarise
+  my @merged = Compact(@halves);           # 192.0.2.0/24
+  my $one    = Coalesce(24, 2, @halves);   # an arrayref holding 192.0.2.0/24
 
   my $v6 = NetAddr::IP->new('2001:db8::1');
   print $v6->addr, "\n";         # 2001:DB8:0:0:0:0:0:1
   print $v6->cidr, "\n";         # 2001:DB8:0:0:0:0:0:1/128
 
   # from a packed IPv4 address, or an octal filtered one
-  my $a = NetAddr::IP->new_from_aton(inet_aton('192.0.2.1'));
-  my $b = NetAddr::IP->new_no('192.012.0.0');
+  my $a = NetAddr::IP->new_from_aton(inet_aton('192.0.2.1'));   # 192.0.2.1/32
+  my $b = NetAddr::IP->new_no('198.051.100.001');               # 198.51.100.1/32
 
 The other entry points are Zeros, Ones, V4mask and V4net, which return
 128 bit vectors, and netlimit, described under L</FUNCTIONS>.
@@ -234,8 +234,10 @@ to the counterintuitive result that
 
 The same order applies to C<sort>:
 
-  print join(', ', sort map { "$_" } @nets), "\n";
-  # 10.0.0.1/16, 10.0.0.1/24, 10.0.0.1/32
+  my @nets = map { NetAddr::IP->new($_) }
+    qw(192.0.2.1/32 192.0.2.1/8 192.0.2.1/24 192.0.2.1/16);
+print join(', ', sort @nets), "\n";
+# 192.0.2.1/8, 192.0.2.1/16, 192.0.2.1/24, 192.0.2.1/32
 
 So the ordering is predictable, but it is not the ordering most people
 mean by "bigger". To rank netblocks by size, compare the mask lengths
@@ -554,12 +556,16 @@ See L</DEPRECATED>.
 C<-E<gt>new6> and C<-E<gt>new_cis6> mark the address as being in ipV6 address space even
 if the format would suggest otherwise.
 
-  i.e.  ->new6('1.2.3.4') will result in ::102:304
+print NetAddr::IP->new6('192.0.2.1'), "\n";    # 0:0:0:0:0:0:C000:201/128
 
-  addresses submitted to ->new in ipV6 notation will
-  remain in that notation permanently. i.e.
-  ->new('::1.2.3.4') will result in ::102:304
-  whereas new('1.2.3.4') would print out as 1.2.3.4
+Addresses submitted to C<-E<gt>new> in ipV6 notation will
+remain in that notation permanently, whereas the same address in dotted quad notation
+prints as IPv4:
+
+  print NetAddr::IP->new('::192.0.2.1'), "\n";   # 0:0:0:0:0:0:C000:201/128
+  print NetAddr::IP->new('192.0.2.1'), "\n";     # 192.0.2.1/32
+
+The C<addr()> value is what stringifies as the first part.
 
   The C<addr()> value is what stringifies as the first part.
 
@@ -771,7 +777,7 @@ floats and call distinct addresses equal:
 
   my $x = NetAddr::IP->new('2001:db8::1');
   my $y = NetAddr::IP->new('2001:db8::2');
-  print $x->numeric, "\n";      # 42540766411282592856903984951653826561
+  print scalar $x->numeric, "\n";   # 42540766411282592856903984951653826561
   print $x->numeric == $y->numeric ? 'same' : 'different';
   # same, though the addresses differ in the last digit
 
@@ -1029,11 +1035,12 @@ ERROR conditions:
     if the number of return objects exceeds 'netlimit'.
     See function 'netlimit' above (default 2**16 or 65536 nets).
 
-  ->splitref returns undef when C<bits> or the (bits list)
-    will not fit within the original object.
+->splitref will DIE with the message 'netmask error: overrange
+  or spurious bits' when bits or the (bits list) will not fit
+  within the original object.
 
-  ->splitref returns undef if a supplied ipV4, ipV6, or NetAddr
-    mask in inappropriately formatted,
+  ->splitref will DIE with the same message if a supplied ipV4,
+    ipV6, or NetAddr mask is inappropriately formatted,
 
 B<bits> may be a CIDR mask, a dot quad or ipV6 string or a NetAddr::IP object.
 If C<bits> is missing, the object is split for into all available addresses
@@ -1594,8 +1601,10 @@ embedding either one in a larger pattern does not change the numbering of
 the caller's own capture groups. Wrap the result yourself if you want the
 matched text:
 
-  my $re = $ip->re6;
-  if ($text =~ /addr=($re)\s/) { print "matched $1\n" }
+  my $ip   = NetAddr::IP->new('2001:db8::/32');
+  my $text = 'addr=2001:db8::1 port=443';
+  my $re   = $ip->re6;
+  if ($text =~ /addr=($re)\s/) { print "matched $1\n" }   # matched 2001:db8::1
 
 =cut
 

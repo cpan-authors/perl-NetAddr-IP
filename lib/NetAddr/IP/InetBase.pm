@@ -290,7 +290,7 @@ See L</"Socket6 substitution">.
 
 The IPv6 functions accept every text form in RFC 4291 s2.2.
 
-  i.e.    x:x:x:x:x:x:x:x:x
+  i.e.    x:x:x:x:x:x:x:x
     x:x:x:x:x:x:x:d.d.d.d
     ::x:x:x
     ::x:d.d.d.d
@@ -692,7 +692,7 @@ returned unchanged, so a hostname passes straight through, and an octet
 out of range gives undef:
 
   print fillIPv4('example.com'), "\n"; # example.com
-  print fillIPv4('256.1.1.1'),   "\n"; # undef
+  print defined(fillIPv4('256.1.1.1')) ? 'defined' : 'undef', "\n";   # undef
 
 The argument is text, not a packed address.  A packed string does not
 match, so it is returned unchanged too.
@@ -769,14 +769,16 @@ process.  Two consequences worth stating plainly.
 
 This module defaults to lowercase:
 
-  use NetAddr::IP::InetBase qw(ipv6_n2x);
+  use NetAddr::IP::InetBase qw(ipv6_aton ipv6_n2x);
+  my $bits128 = ipv6_aton('2001:db8::1');
   print ipv6_n2x($bits128);          # 2001:db8:0:0:0:0:0:1
 
 Importing C<:upper> switches it, either here or on import of
 B<NetAddr::IP::Util>, B<NetAddr::IP::Lite> or B<NetAddr::IP>, since
 B<NetAddr::IP::Util> imports C<:upper> on your behalf:
 
-  use NetAddr::IP::InetBase qw(:upper ipv6_n2x);
+  use NetAddr::IP::InetBase qw(:upper ipv6_aton ipv6_n2x);
+  my $bits128 = ipv6_aton('2001:db8::1');
   print ipv6_n2x($bits128);          # 2001:DB8:0:0:0:0:0:1
 
 And once set, an unrelated package importing C<:lower> changes it back for

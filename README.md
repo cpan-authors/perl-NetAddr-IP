@@ -13,7 +13,7 @@ Manages IPv4 and IPv6 addresses and subnets.
     # IPv6 works the same way
     my $ip6 = NetAddr::IP->new('2001:db8::1/64');
     print $ip6->network;   # 2001:DB8:0:0:0:0:0:0/64
-    print $ip6->broadcast; # 2001:DB8:0:0:0:FFFF:FFFF:FFFF:FFFF/64
+    print $ip6->broadcast; # 2001:DB8:0:0:FFFF:FFFF:FFFF:FFFF/64
 
 The addresses above are from RFC 5737 and RFC 3849, the documentation
 ranges, so they are safe to paste anywhere.
@@ -219,4 +219,4 @@ Michael Robinton <miker@cpan.org>
 ## License
 
 Dual licensed under the GNU GPL v2 and the Artistic License.
-See [Copying](Copying) and [Artistic](Artistic) for details.
+See [LICENSE](LICENSE) and [Artistic](Artistic) for details.
