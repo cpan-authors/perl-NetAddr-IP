@@ -189,26 +189,30 @@ addercon(void * aa, U32 * bb, n128 * ap128, I32 con)
   return adder128(aa,bb,ap128,0);
 }
 
-int
-have128(void * bp)
+static int
+_num_arg(SV * sv, NV * nvp)
 {
-  U32 w[4];
-
-  memcpy(w, bp, sizeof(w));	/*	bp may be an unaligned Perl buffer	*/
-  if (w[0] || w[1] || w[2] || w[3])
-    return 1;
-  return 0;
-}
-
-int
-_isipv4(void * bp)
-{
-  register U32 * p = bp;
-
-  if (*p++ || *p++ || *p++)
+  SvGETMAGIC(sv);
+  if (!SvOK(sv) || (SvPOKp(sv) && SvCUR(sv) == 0))
     return 0;
+  if (SvROK(sv)) {
+    if (!SvAMAGIC(sv) || !(sv = AMG_CALLunary(sv, numer_amg)) || SvROK(sv))
+      return -1;
+  }
+  if (SvPOKp(sv)) {
+    STRLEN l;
+    const char * p = SvPV_nomg(sv, l);
+    if (!grok_number(p, l, NULL))
+      return -1;
+  }
+  else if (!(SvFLAGS(sv) & (SVf_NOK|SVp_NOK|SVf_IOK|SVp_IOK)))
+    return -1;
+  *nvp = SvNV_nomg(sv);
   return 1;
 }
+
+int
+have128(void * bp)
 
 /*	network byte swap and copy	*/
 void
@@ -318,52 +322,59 @@ _128x10(n128 * ap128, n128 * tp128)
 /* printf("x  %04X:%04X:%04X:%04X\n",*((U32 *)ap),*((U32 *)ap +1),*((U32 *)ap +2),*((U32 *)ap +3)); */
 }
 
-/*	multiply 128 bit number by 10, add bcd digit to result
-	returns non-zero if the result overflowed 128 bits
- */
-int
-_128x10plusbcd(n128 * ap128, n128 * tp128, char digit)
+/*	reads a count or constant once, magic included: 0 if undef or empty,
+	1 with *nvp set if numeric or numifying through overloading, else -1	*/
+static int
+_num_arg(SV * sv, NV * nvp)
 {
-  register U32 * ap = ap128->u, * tp = tp128->u;
-  int overflow;
-/* printf("digit %X + %X = ",digit,*(ap +3)); */
-  overflow = _128x10(ap128,tp128);
-  *tp		= 0;
-  *(tp + 1)	= 0;
-  *(tp + 2)	= 0;
-  *(tp + 3)	= digit;
-  overflow |= adder128(ap,tp,ap128,0);
-  return overflow;
-/* printf("%d %04X:%04X:%04X:%04X\n",digit,*((U32 *)ap),*((U32 *)ap +1),*((U32 *)ap +2),*((U32 *)ap +3)); */
+  SvGETMAGIC(sv);
+  if (!SvOK(sv) || (SvPOKp(sv) && SvCUR(sv) == 0))
+    return 0;
+  if (SvROK(sv)) {
+    if (!SvAMAGIC(sv) || !(sv = AMG_CALLunary(sv, numer_amg)) || SvROK(sv))
+      return -1;
+  }
+  if (SvPOKp(sv)) {
+    STRLEN l;
+    const char * p = SvPV_nomg(sv, l);
+    if (!grok_number(p, l, NULL))
+      return -1;
+  }
+  else if (!(SvFLAGS(sv) & (SVf_NOK|SVp_NOK|SVf_IOK|SVp_IOK)))
+    return -1;
+  *nvp = SvNV_nomg(sv);
+  return 1;
 }
 
-char
-_simple_pack(void * str,int len, BCD * n)
+int
+have128(void * bp)
+
+int
+_simple_pack(const unsigned char * sp, int len, BCD * n, unsigned char * bad)
 {
-  int i = len -1, j=19, lo=1;
-  register unsigned char c, * bcdn = (unsigned char *)(n->bcd), * sp = (unsigned char *) str;
+  int i, j = 19, lo = 1;
+  unsigned char * bcdn = (unsigned char *)(n->bcd);
 
-  if (len > 40)
-    return '*';				/*	error, input string too long	*/
-
-  memset (bcdn, 0, 20);
-
-  do {
-    c = *(sp + i) & 0x7f;
-    if (c < zero || c > (zero + 9))
-      return c;				/*	error, out of range	*/
-
-    if (lo) {			/*	lo byte ?		*/
-      *(bcdn + j) = c & 0xF;
-      lo = 0;
+  if (len < 1 || len > 40)
+    return 1;
+  for (int i = 0; i < len; i++) {
+    if (sp[i] < '0' || sp[i] > '9') {
+      *bad = sp[i];
+      return 1;
     }
-    else {
-      c <<= 4;
-      *(bcdn + j) |= c;
-      lo = 1;			/*	lo byte next		*/
+  }
+  memset(bcdn, 0, 20);
+  for (int i = len - 1; i >= 0; i--) {
+    unsigned char c = (unsigned char)(sp[i] - '0');
+    if (lo) {
+      bcdn[j] = c;
+      lo = 0;
+    } else {
+      bcdn[j] |= (unsigned char)(c << 4);
+      lo = 1;
       j--;
     }
-  } while (i-- > 0);
+  }
   return 0;
 }
 
@@ -522,25 +533,39 @@ PPCODE:
 	  XPUSHs(sv_2mortal(newSVpvn((char *)(ap +12),4)));
 	  XSRETURN(1);
 	}
-	else if (ix == 1) {
+if (ix == 1) {
 	  if (items < 2) {
 	    memcpy(wa,ap,16);
 	  }
-	  else if ((i = SvIV(ST(1))) == 0) {
-	    memcpy(wa,ap,16);
-	  }
-	  else if (i < 0 || i > 128) {
-	    croak("Bad arg value for %s, is %d, should be 0 thru 128",
-		"NetAddr::IP::Util::shiftleft",i);
-	  }
 	  else {
-	    netswap_copy(wa,ap,4);
-	    do {
+	    /* the count is read before ap, which its magic or overloading could free */
+	    sv_2mortal(SvREFCNT_inc_simple_NN(s));	/* and could free s itself */
+	    k = _num_arg(ST(1), &nv);
+	    if (!SvOK(s))
+	      croak("Bad arg length for %s%s, length is undefined, should be 128",
+		"NetAddr::IP::Util::",subname);
+	    ap = (unsigned char *) SvPVbyte(s,len);
+	    if (len != 16) {
+	      croak("Bad arg length for %s%s, length is %" UVuf ", should be %d",
+		"NetAddr::IP::Util::",subname,(UV)(len *8),128);
+	    }
+	    if (k == 0) {
+	      nv = 0;
+	    } else if (k < 0 || !(nv >= 0 && nv <= 128) || nv != (NV)(IV)nv) {
+	      croak("Bad arg value for %s, is %s, should be 0 thru 128",
+		"NetAddr::IP::Util::shiftleft",SvPV_nomg_nolen(ST(1)));
+	    } else if (nv == 0) {
+	      memcpy(wa,ap,16);
+	    }
+	    else {
+	      i = (int)nv;
+	      netswap_copy(wa,ap,4);
+	      do {
 		_128x2(wa);
 		i--;
-	    } while (i > 0);
-	    netswap(wa,4);
-	  }
+	      } while (i > 0);
+	      netswap(wa,4);
+	    }
 	}
 	else {
 	  memcpy(wa,ap,16);
@@ -597,23 +622,36 @@ PPCODE:
 	XSRETURN(1);
 
 void
-addconst(s,cnst)
+addconst(s,c)
 	SV * s
-	I32 cnst
+	SV * c
 PREINIT:
 	n128 a128;
 	unsigned char * ap;
 	U32 wa[4], wb[4];
 	STRLEN len;
+	NV nv;
+	I32 cnst;
+	int k;
 PPCODE:
+	/* the constant is read before ap, which its magic or overloading could free */
+	sv_2mortal(SvREFCNT_inc_simple_NN(s));	/* and could free s itself */
+	k = _num_arg(c, &nv);
 	if (!SvOK(s))
 	  croak("Bad arg length for %s, length is undefined, should be 128",
 		"NetAddr::IP::Util::addconst");
-	ap = (unsigned char *) SvPV(s,len);
+	ap = (unsigned char *) SvPVbyte(s,len);
 	if (len != 16) {
 	  croak("Bad arg length for %s, length is %" UVuf ", should be %d",
 		"NetAddr::IP::Util::addconst",(UV)(len *8),128);
 	}
+	if (k == 0)
+	  cnst = 0;
+	else if (k < 0 || !(nv >= -2147483648.0 && nv <= 2147483647.0) || nv != (NV)(I32)nv)
+	  croak("Bad arg value for %s, is %s, should be an integer from -2147483648 thru 2147483647",
+		"NetAddr::IP::Util::addconst",SvPV_nomg_nolen(c));
+	else
+	  cnst = (I32)nv;
 	netswap_copy(wa,ap,4);
 	XPUSHs(sv_2mortal(newSViv((I32)addercon(wa,wb,&a128,cnst))));
 	if (GIMME_V == G_ARRAY) {
@@ -716,7 +754,7 @@ PPCODE:
 	if (!SvOK(s))
 	  croak("Bad arg length for %s%s, length is undefined, should be 1 to 40 digits",
 		"NetAddr::IP::Util::",subname);
-	cp = (unsigned char *) SvPV(s,len);
+	cp = (unsigned char *) SvPVbyte(s,len);
 	/* bcdn2bin takes packed bcd, two digits per byte; the others take one digit per byte */
 	if (ix == 2)
 	  len <<= 1;
@@ -730,11 +768,12 @@ PPCODE:
 	    croak("Bad usage, should have %s('packedbcd','length')",
 		"NetAddr::IP::Util::bcdn2bin");
 	  }
-	  digits = SvIV(ST(1));
-	  if (digits < 1 || digits > (int)(len << 1)) {
-	    croak("Bad digit count for %s%s, is %d, should be 1 to %d digits",
-		"NetAddr::IP::Util::",subname,digits,(int)(len << 1));
+	  digits = _num_arg(ST(1), &nv);
+	  if (k <= 0 || !(nv >= 1 && nv < (NV)(len << 1) + 1) || nv != (NV)(int)nv) {
+	    croak("Bad digit count for %s%s, is %s, should be 1 to %d digits",
+		"NetAddr::IP::Util::",subname,k == 0 ? "0" : SvPV_nomg_nolen(ST(1)),(int)(len << 1));
 	  }
+	  digits = (int)nv;
 	  subname = is_bcdn2bin;
 	  if (_bcdn2bin(cp,&a128,&c128,digits))
 	    croak("Bad arg value for %s%s, number is larger than 128 bits",
