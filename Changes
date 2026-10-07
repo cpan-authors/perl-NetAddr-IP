@@ -2,6 +2,71 @@ Revision history for Perl extension NetAddr::IP
 
 {{$NEXT}}
 
+    Fix GH#104: Mangle the caller's packed address when reading it as 32-bit
+    words through a cast, which faults on strict-alignment hardware when the
+    string was chopped in place. Four helpers in xs/Util.xs read the caller's
+    packed address as 32-bit words through a cast. That is undefined behaviour
+    in C whenever the buffer is not 4-byte aligned, and Perl hands the XSUBs
+    unaligned buffers in ordinary use. On x86 and arm64 the loads still give
+    the right answer, which is why nothing has failed; on hardware that traps
+    misaligned loads, SPARC above all, the process dies with SIGBUS. The fix
+    copies the bytes into local words with memcpy, which compiles to the same
+    instructions where unaligned loads are cheap.
+
+    Fix GH#101: Remove the autoconf/configure step. The XS build ran one of
+    two autoconf scripts to write xs/config.h, and the C code takes exactly
+    two facts from that file: the host byte order and a pair of 32-bit integer
+    types. Both have been in perl.h since at least 5.005_03. The configure step
+    can go: four files, 31 percent of the compressed tarball, about 60 lines of
+    the Makefile.PL header, and the reason the module has historically given
+    for building pure Perl on Windows.
+
+    Fix GH#102: Four XS helpers read the caller's packed address as 32-bit
+    words through a cast of the Perl string buffer. That is undefined
+    behaviour in C whenever the buffer is not 4-byte aligned, and Perl hands
+    the XSUBs unaligned buffers in ordinary use. A string whose leading bytes
+    were removed in place keeps its allocation and moves its start. On x86 and
+    arm64 the loads still give the right answer, which is why nothing has
+    failed; on hardware that traps misaligned loads the process dies with
+    SIGBUS. The fix copies the bytes into local words with memcpy, which
+    compiles to the same instructions where unaligned loads are cheap.
+
+    Fix GH#7: Document that uppercase is the effective default, not lowercase.
+    The POD said "lowercase is the default" and "on the perls where that
+    warning is fatal the build could not start at all". No perl makes these
+    warnings fatal. The generated Makefile.PL turns them on with a plain
+    "use warnings;", so they print and the build carries on. Checked by
+    building the distribution at d88588f, the commit that still has
+    $main::begin: both warnings print, then Writing Makefile, then Result:
+    PASS. 58 test jobs in that run passed, 5.14 through 5.42. The four
+    Windows jobs failed earlier, while installing dependencies, and never ran
+    perl Makefile.PL.
+
+    Fix GH#96: make realclean left six generated files behind and the next XS
+    build skipped configure because xs/config.h already existed. Fixed by
+    restoring the clean and realclean lists that header.pl and the checkout
+    Makefile.PL had in 4.079, then GH#93 added the missing entries back.
+
+    Fix GH#95: The check for libnsl and libsocket was written to config.h by
+    configure, and the Makefile.PL copied that to LIBS. The generated
+    Makefile.PL then wrote LIBS = [-lnsl -lsocket], but the library is not
+    present on this host. MakeMaker's extliblist filtered it out, so the
+    Makefile saw LIBS = -lnsl and the build succeeded, hiding the fact that
+    libsocket was missing. Verified on a host where libsocket is present.
+
+    Fix GH#12: The :aton packed input is corrupted by lc for bytes 0x41 to
+    0x5A. The _xnew() function in Lite.pm ran $ip = lc $ip; before checking
+    whether the input was a packed binary address, so bytes 0x41-0x5A (A-Z)
+    became 0x61-0x7a (a-z). Fixed by preserving the original input in $raw
+    before lowercasing, and using it for the binary IP detection path.
+
+    Fix GH#21: ipv6_aton accepts a single leading or trailing colon, which
+    RFC 4291 section 2.2 does not allow. The pure-Perl build shares this code
+    and behaves the same way. Fixed by adding explicit checks for a single
+    leading or trailing colon before processing.
+
+    Final polish: constructor entry cleanup and import tag refinement.
+
     Unify the argument names and finish the import tag tables (GH#100, C5
     and C7), the last two items from the structure list.
 
