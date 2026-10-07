@@ -583,8 +583,8 @@ interpreted as octal format by NetAddr per the specifications for
 inet_aton.
 
 B<new_from_aton> takes a packed IPv4 address and assumes a /32 mask. This
-function replaces the :aton functionality which is fundamentally
-broken. See L</DEPRECATED>.
+function replaces the :aton functionality, which reads a packed string
+as text first and is fundamentally broken. See L</DEPRECATED>.
 
 B<new_cis> and B<new_cis6> accept the common Cisco address notation for
 address/mask pairs with a B<space> as a separator instead of a slash (/).
@@ -613,10 +613,13 @@ ipV4 ones; without it, only the ipV4 path runs.
 B<prefix> notation is understood, with the limitation that the range
 specified by the prefix must match with a valid subnet.
 
-Addresses in the same format returned by C<inet_aton> or
-C<gethostbyname> can also be understood, although no mask can be
-specified for them. The default is to not attempt to recognize this
-format, as it seems to be seldom used.
+Addresses in the packed format returned by C<inet_aton> or
+C<gethostbyname> are understood only under the deprecated C<:aton> tag,
+and no mask can be specified for them. Even then a packed string is
+read as text first and looked up as a host name second, so one whose
+bytes also spell text comes back as a different address or as
+undef; see C<:aton> under L</DEPRECATED>. Use C<new_from_aton> for a packed
+IPv4 address.
 
 C<$addr> can be any of the following and possibly more...
 
@@ -637,7 +640,8 @@ C<$addr> can be any of the following and possibly more...
   x:x:x/host
   0xABCDEF, 0b111111000101011110, (a bcd number)
   a netaddr as returned by 'inet_aton', but only with the deprecated
-  :aton tag; without it a packed string returns undef
+  :aton tag, and only when its bytes do not also read as one of these
+  forms or as a host name; without the tag a packed string returns undef
 
 Any RFC 4291 s2.2 notation
 
@@ -1860,8 +1864,47 @@ bytes, and stops it stripping surrounding whitespace, which a packed
 address may begin or end with. Plain C<inet_aton> notation is accepted
 without this tag.
 
-C<new_from_aton> replaces it for a packed IPv4 address. There is no
-replacement for the packed sixteen byte case.
+The length of the string does not mark it as packed. Every text form
+listed under L</Constructors> is tried first, then a host name lookup,
+and the string is read as packed only when all of them fail. A packed
+address whose bytes also spell text comes back as that text, or as
+undef:
+
+  string   packed address   result of new() under :aton
+  "1 23"   49.32.50.51      1.0.0.0/23, an address and a mask
+  "a bc"   97.32.98.99      undef, a mask that is not valid
+  "1234"   49.50.51.52      0.0.4.210/32, a decimal integer
+  "1.23"   49.46.50.51      1.0.0.23/32, a short dotted form
+  "0x1f"   48.120.49.102    0.0.0.31/32, a hex literal
+  "::1f"   58.58.49.102     0:0:0:0:0:0:0:1F/128, IPv6 text
+
+Strings of digits with dots, hyphens, or an x or b after a leading zero
+can read as integers, short dotted forms, ranges and hex or binary
+literals. A space, tab, newline, carriage return, vertical tab, form
+feed or slash between two runs of letters, digits, dots, colons and
+hyphens splits the string into an address and a mask.
+
+Any byte 0x3A, an ASCII colon, sends the string to the IPv6 text
+parser. Unless the whole string is IPv6 text, as in the last row above,
+the result is undef. Packed IPv4 addresses with an octet of 58, such
+as 192.0.2.58, fall into this group, as does 2001:db8::3a packed into
+sixteen bytes.
+
+A string made only of ASCII letters, digits, dots, hyphens and
+underscores is looked up as a host name before it is read as packed.
+A packed address such as 109.97.105.108, the bytes "mail", makes the
+call wait for the resolver: one lookup, or three when Socket6 is
+installed. If the name resolves, the answer is returned in place of the
+packed address.
+
+The order also affects text. A four or sixteen character string that
+is not valid text and does not resolve, a mistyped host name for
+example, can come back as the address its bytes spell instead of
+undef.
+
+Use C<new_from_aton> for a packed IPv4 address: it reads every four
+byte string as packed and makes no lookup. There is no replacement for
+the packed sixteen byte case.
 
   use NetAddr::IP::Lite qw(:aton);
 

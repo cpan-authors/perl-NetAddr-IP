@@ -35,4 +35,38 @@ subtest 'splitref with multiple cidrs' => sub {
     }
 };
 
+subtest q{splitting leaves the caller's \$_ alone} => sub {
+    my $net  = NetAddr::IP->new('192.0.2.0/30');
+    my %call = (
+        'array dereference' => sub { @{$net} },
+        hostenum            => sub { $net->hostenum },
+        hostenumref         => sub { $net->hostenumref },
+        rsplit              => sub { $net->rsplit(31) },
+        rsplitref           => sub { $net->rsplitref(31) },
+        split               => sub { $net->split(31) },
+        splitref            => sub { $net->splitref(31) },
+    );
+    for my $name ( sort keys %call ) {
+        my @aliased = ('kept');
+        for (@aliased) { my @got = $call{$name}->() }
+        is( $aliased[0], 'kept',
+            "$name leaves the foreach element in \$_ alone" );
+    }
+
+    my @nets   = map { NetAddr::IP->new($_) } qw(192.0.2.0/30 198.51.100.0/30);
+    my @halves = map { $_->split(31) } @nets;
+    is(
+        [ map { "$_" } @nets ],
+        [ '192.0.2.0/30', '198.51.100.0/30' ],
+        'map over split keeps the source objects'
+    );
+    is( scalar @halves, 4, 'map over split returns both halves of each net' );
+    ok(
+        lives {
+            for (qw(a b)) { my @got = $net->split(31) }
+        },
+        'split inside a foreach over a literal list lives'
+    );
+};
+
 done_testing;
