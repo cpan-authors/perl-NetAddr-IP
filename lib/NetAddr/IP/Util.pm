@@ -309,7 +309,7 @@ sub naip_gethostbyname {
   );
 
   # text to packed, and back
-$netaddr    = inet_aton('192.0.2.1');           # 4 bytes
+  $netaddr    = inet_aton('192.0.2.1');           # 4 bytes
   $dotquad    = inet_ntoa($netaddr);              # '192.0.2.1'
   $ipv6naddr  = ipv6_aton('2001:db8::1');         # 16 bytes
   $ipv6_text  = ipv6_ntoa($ipv6naddr);            # '2001:db8::1'
@@ -534,11 +534,11 @@ equally long the first is shortened, s4.2.3, and a run of one zero group
 is never shortened at all, s4.2.2.  Case follows the current setting,
 which is uppercase by default here.
 
-  print packzeros('0:0:0:0:0:ffff:c000:201');   # ::FFFF:C000:201
-  print packzeros('2001:db8:0:1:1:1:1:1');      # 2001:DB8:0:1:1:1:1:1
-  print packzeros('2001:db8:0:0:1:0:0:1');      # 2001:DB8::1:0:0:1
-  print packzeros('2001:db8:0:1:1:0:0:1');      # 2001:DB8:0:1:1::1
-  print packzeros('2001:0db8:0:1:2:3:4:5');     # 2001:DB8:0:1:2:3:4:5
+  print packzeros('0:0:0:0:0:ffff:c000:201');  # ::FFFF:C000:201
+  print packzeros('2001:db8:0:1:1:1:1:1');     # 2001:DB8:0:1:1:1:1:1
+  print packzeros('2001:db8:0:0:1:0:0:1');     # 2001:DB8::1:0:0:1
+  print packzeros('2001:db8:0:1:1:0:0:1');     # 2001:DB8:0:1:1::1
+  print packzeros('2001:0db8:0:1:2:3:4:5');    # 2001:DB8:0:1:2:3:4:5
   print packzeros('2001:db8:0:0:1:0:0:1:1');   # 2001::1:0:0:1:1
 
 =back
