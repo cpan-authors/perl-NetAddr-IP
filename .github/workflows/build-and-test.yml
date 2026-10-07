@@ -93,6 +93,7 @@ jobs:
         run: |
           perl Makefile.PL
           make
+          perl -Mblib -MNetAddr::IP::Util -e 'my $mode = NetAddr::IP::Util::mode(); $mode eq q{CC XS} or die "built $mode, expected CC XS\n"'
           make test
 
   test_linux_pureperl:
@@ -132,6 +133,7 @@ jobs:
         run: |
           perl Makefile.PL -noxs
           make
+          perl -Mblib -MNetAddr::IP::Util -e 'my $mode = NetAddr::IP::Util::mode(); $mode eq q{Pure Perl} or die "built $mode, expected Pure Perl\n"'
           make test
 
   test_macos:
@@ -180,9 +182,14 @@ jobs:
           --with-test
           --mirror https://cpan.metacpan.org
       - name: Build and test the distribution
+        # A plain perl Makefile.PL builds pure Perl on macOS, because
+        # header.pl matches /win/i against $Config{osname} and "darwin"
+        # contains "win". Assert it, so a change to that rule cannot
+        # silently turn this job into the other build.
         run: |
           perl Makefile.PL
           make
+          perl -Mblib -MNetAddr::IP::Util -e 'my $mode = NetAddr::IP::Util::mode(); $mode eq q{Pure Perl} or die "built $mode, expected Pure Perl\n"'
           make test
         env:
           AUTHOR_TESTING: 1
@@ -254,6 +261,9 @@ jobs:
         run: |
           perl Makefile.PL -noxs MAKE=gmake
           gmake
+          # Windows is pure Perl by the osname rule, and -noxs asked for it
+          # anyway. Assert it so the job cannot pass as the other build.
+          perl -Mblib -MNetAddr::IP::Util -e 'my $mode = NetAddr::IP::Util::mode(); $mode eq q{Pure Perl} or die "built $mode, expected Pure Perl\n"'
           gmake test
         # No AUTHOR_TESTING here, unlike every other job. The five
         # author-*.t files guard on it and skip without it, and one of them

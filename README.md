@@ -53,6 +53,13 @@ records which implementation is active; `mode()` reports it at runtime.
 
 ## Installation
 
+There is no `Makefile.PL` in a checkout of this repository. It is generated
+at release time by [Dist::Zilla](https://metacpan.org/pod/Dist::Zilla) from
+`inc/MakeMaker/header.pl` and `inc/MakeMaker/footer.pl`, so build from the
+tarball, or generate one:
+
+    dzil build
+    cd NetAddr-IP-4.080_03   # or whichever version was written
     perl Makefile.PL
     make
     make test
@@ -65,9 +72,12 @@ records which implementation is active; `mode()` reports it at runtime.
     make test
     make install
 
-`mode()` then returns `Pure Perl` instead of `CC XS`. On Windows the build
-selects pure Perl automatically, since the C toolchain is not required to
-run the suite.
+`mode()` then returns `Pure Perl` instead of `CC XS`. With neither `-noxs`
+nor `--xs` given, the build tests for a C compiler and builds the XS when
+one works, on every platform including Linux; that is what `cpan` and `cpanm`
+run. On Windows, Cygwin, macOS and DOS the default is pure Perl, since the C
+toolchain is not required to run the suite there. Pass `--xs` to override
+that, which skips the compiler test and builds the XS regardless.
 
 ## Methods
 
