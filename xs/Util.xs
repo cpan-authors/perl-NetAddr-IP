@@ -48,7 +48,7 @@ extern "C" {
 
 typedef union
 {
-  u_int32_t     u[4];
+  U32     u[4];
   unsigned char c[16];
 } n128;
 
@@ -63,7 +63,7 @@ const char * is_maskanyto6 = "maskanyto6", * is_ipanyto6 = "ipanyto6";
 typedef struct bcdstuff
 {		/*	character array of 40 bytes			*/
   char		txt[41];	/*	40 digits + string terminator	*/
-  u_int32_t	bcd[5];		/*	20 bytes, 40 digits		*/
+  U32	bcd[5];		/*	20 bytes, 40 digits		*/
 } BCD;
 
 #define zero ('0' & 0x7f)
@@ -115,7 +115,7 @@ printb128(char * b)
 void
 extendipv4(void * aa, void * ux)
 {
-  register u_int32_t * a = ux;
+  register U32 * a = ux;
   *a++ = 0;
   *a++ = 0;
   *a++ = 0;
@@ -125,7 +125,7 @@ extendipv4(void * aa, void * ux)
 void
 extendmask4(void * aa, void * ux)
 {
-  register u_int32_t * a = ux;
+  register U32 * a = ux;
   *a++ = 0xffffffff;
   *a++ = 0xffffffff;
   *a++ = 0xffffffff;
@@ -135,7 +135,7 @@ extendmask4(void * aa, void * ux)
 void
 fastcomp128(void * aa)
 {
-  register u_int32_t * a = aa;
+  register U32 * a = aa;
 
   *a++ ^= 0xffffffff;
   *a++ ^= 0xffffffff;
@@ -151,11 +151,11 @@ int
 adder128(void * aa, void * bb, n128 * ap128, int carry)
 {
   int i;
-  register u_int32_t a, b, r;
+  register U32 a, b, r;
 
   for (i=3; i >= 0; i--) {
-    a = *((u_int32_t *)aa + i);
-    b = *((u_int32_t *)bb + i);
+    a = *((U32 *)aa + i);
+    b = *((U32 *)bb + i);
     r = a + b;
     a = 0;			/*	ripple carry forward	*/
     if ( r < a || r < b)	/*	if overflow		*/
@@ -167,15 +167,15 @@ adder128(void * aa, void * bb, n128 * ap128, int carry)
     else
       carry = a;
 
-    *((u_int32_t *)(ap128->u) + i) = b;
+    *((U32 *)(ap128->u) + i) = b;
   }
   return carry;
 }
 
 int
-addercon(void * aa, u_int32_t * bb, n128 * ap128, int32_t con)
+addercon(void * aa, U32 * bb, n128 * ap128, I32 con)
 {
-  register u_int32_t tmp = 0x80000000;
+  register U32 tmp = 0x80000000;
 
   if (con & tmp)
     tmp = 0xffffffff;
@@ -185,14 +185,14 @@ addercon(void * aa, u_int32_t * bb, n128 * ap128, int32_t con)
   bb[0] = tmp;
   bb[1] = tmp;
   bb[2] = tmp;
-  bb[3] = (u_int32_t)con;
+  bb[3] = (U32)con;
   return adder128(aa,bb,ap128,0);
 }
 
 int
 have128(void * bp)
 {
-  u_int32_t w[4];
+  U32 w[4];
 
   memcpy(w, bp, sizeof(w));	/*	bp may be an unaligned Perl buffer	*/
   if (w[0] || w[1] || w[2] || w[3])
@@ -203,7 +203,7 @@ have128(void * bp)
 int
 _isipv4(void * bp)
 {
-  register u_int32_t * p = bp;
+  register U32 * p = bp;
 
   if (*p++ || *p++ || *p++)
     return 0;
@@ -214,9 +214,9 @@ _isipv4(void * bp)
 void
 netswap_copy(void * dest, void * src, int len)
 {
-  register u_int32_t * d = dest;
+  register U32 * d = dest;
   register unsigned char * s = src;
-  u_int32_t w;
+  U32 w;
 
   for (/* -- */;len>0;len--) {
     memcpy(&w, s, sizeof(w));	/*	src may be an unaligned Perl buffer	*/
@@ -240,7 +240,7 @@ void
 netswap(void * ap, int len)
 {
 #ifdef host_is_LITTLE_ENDIAN
-  register u_int32_t * a = ap;
+  register U32 * a = ap;
   for (/* -- */;len >0;len--) {
     *a =  (((*a & 0xff000000) >> 24) | ((*a & 0x00ff0000) >>  8) | \
 	     ((*a & 0x0000ff00) <<  8) | ((*a & 0x000000ff) << 24));
@@ -256,7 +256,7 @@ netswap(void * ap, int len)
 unsigned char
 _countbits(void *ap)
 {
-  register u_int32_t * p0 = (u_int32_t *)ap, * p1 = p0 +1, * p2 = p1 +1, * p3 = p2 +1;
+  register U32 * p0 = (U32 *)ap, * p1 = p0 +1, * p2 = p1 +1, * p3 = p2 +1;
   unsigned char count = 128;
 
   fastcomp128(ap);
@@ -283,9 +283,9 @@ _countbits(void *ap)
 	returns non-zero if the result overflowed 128 bits
  */
 int
-_128x2(u_int32_t * ap)
+_128x2(U32 * ap)
 {
-  register u_int32_t * p = ap +3, tmpc, carry = 0;
+  register U32 * p = ap +3, tmpc, carry = 0;
 
   do {
     tmpc = *p & 0x80000000;	/*	propagate hi bit to next word	*/
@@ -304,7 +304,7 @@ _128x2(u_int32_t * ap)
 int
 _128x10(n128 * ap128, n128 * tp128)
 {
-  register u_int32_t * ap = ap128->u, * tp = tp128->u;
+  register U32 * ap = ap128->u, * tp = tp128->u;
   int overflow;
   overflow = _128x2(ap);					/*	multiply by two		*/
   *tp		= *ap;				/*	temp save		*/
@@ -315,7 +315,7 @@ _128x10(n128 * ap128, n128 * tp128)
   overflow |= _128x2(ap);					/*	times 8			*/
   overflow |= adder128(ap,tp,ap128,0);
   return overflow;
-/* printf("x  %04X:%04X:%04X:%04X\n",*((u_int32_t *)ap),*((u_int32_t *)ap +1),*((u_int32_t *)ap +2),*((u_int32_t *)ap +3)); */
+/* printf("x  %04X:%04X:%04X:%04X\n",*((U32 *)ap),*((U32 *)ap +1),*((U32 *)ap +2),*((U32 *)ap +3)); */
 }
 
 /*	multiply 128 bit number by 10, add bcd digit to result
@@ -324,7 +324,7 @@ _128x10(n128 * ap128, n128 * tp128)
 int
 _128x10plusbcd(n128 * ap128, n128 * tp128, char digit)
 {
-  register u_int32_t * ap = ap128->u, * tp = tp128->u;
+  register U32 * ap = ap128->u, * tp = tp128->u;
   int overflow;
 /* printf("digit %X + %X = ",digit,*(ap +3)); */
   overflow = _128x10(ap128,tp128);
@@ -334,7 +334,7 @@ _128x10plusbcd(n128 * ap128, n128 * tp128, char digit)
   *(tp + 3)	= digit;
   overflow |= adder128(ap,tp,ap128,0);
   return overflow;
-/* printf("%d %04X:%04X:%04X:%04X\n",digit,*((u_int32_t *)ap),*((u_int32_t *)ap +1),*((u_int32_t *)ap +2),*((u_int32_t *)ap +3)); */
+/* printf("%d %04X:%04X:%04X:%04X\n",digit,*((U32 *)ap),*((U32 *)ap +1),*((U32 *)ap +2),*((U32 *)ap +3)); */
 }
 
 char
@@ -416,8 +416,8 @@ _bcdn2bin(void * bp, n128 * ap128, n128 * cp128, int len)
 int
 _bin2bcd (unsigned char * binary, BCD * n)
 {
-   register u_int32_t tmp, add3, msk8, bcd8, carry = 0;
-  u_int32_t word;
+   register U32 tmp, add3, msk8, bcd8, carry = 0;
+  U32 word;
   unsigned char binmsk = 0;
   int c = 0,i, j, p;
 
@@ -500,7 +500,7 @@ ALIAS:
 PREINIT:
 	unsigned char * ap;
 	const char * subname;
-	u_int32_t wa[4];
+	U32 wa[4];
 	STRLEN len;
 	int i;
 PPCODE:
@@ -558,7 +558,7 @@ ALIAS:
 PREINIT:
 	unsigned char * ap, *bp;
 	const char * subname;
-	u_int32_t wa[4], wb[4];
+	U32 wa[4], wb[4];
 	n128 a128;
 	STRLEN len;
 PPCODE:
@@ -603,7 +603,7 @@ addconst(s,cnst)
 PREINIT:
 	n128 a128;
 	unsigned char * ap;
-	u_int32_t wa[4], wb[4];
+	U32 wa[4], wb[4];
 	STRLEN len;
 PPCODE:
 	if (!SvOK(s))
@@ -766,7 +766,7 @@ notcontiguous(s)
 	SV * s
 PREINIT:
 	unsigned char * ap, count;
-	u_int32_t wa[4];
+	U32 wa[4];
 	STRLEN len;
 PPCODE:
 	if (!SvOK(s))
@@ -794,7 +794,7 @@ ALIAS:
 PREINIT:
 	unsigned char * ip;
 	const char * subname;
-	u_int32_t wa[4];
+	U32 wa[4];
 	STRLEN len;
 PPCODE:
 	if (ix == 1)
@@ -824,7 +824,7 @@ ALIAS:
 PREINIT:
 	unsigned char * ip;
 	const char * subname;
-	u_int32_t wa[4];
+	U32 wa[4];
 	STRLEN len;
 PPCODE:
 	if (ix == 1)

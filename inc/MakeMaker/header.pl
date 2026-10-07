@@ -1,16 +1,7 @@
 use Config;
-use Cwd;
-use File::Spec;
 use Getopt::Long qw(GetOptions);
 
-my $pwd = getcwd();
-
-unlink 'Makefile';    # remove Makefile to stabilize CC test
-
-#
-# get any command line arguments
-#
-my ($useXS);
+my $useXS = 0;
 GetOptions(
     'xs!' => \$useXS,
     'pm'  => sub {
@@ -21,20 +12,17 @@ GetOptions(
 
 print STDERR "building for $^O\n";
 
-# force NOXS mode for Windows
-if ($Config{osname} =~ /win/i || $Config{osname} eq 'dos') {
+# pure Perl by default on Windows, Cygwin, macOS and DOS, unless --xs is given
+if (!defined $useXS && ($Config{osname} =~ /win/i || $Config{osname} eq 'dos')) {
     $useXS = 0;
 }
 
-#
-# Check if we have a C compiler
-#
-unless (defined $useXS) {
+# Check if we have a C compiler, only if --xs was given
+if ($useXS) {
     my $compiler = _test_cc();
     if ($compiler) {
         $ENV{CC} = $compiler;
         print "You have a working compiler.\n";
-        $useXS = 1;
     }
     else {
         $useXS = 0;
@@ -48,42 +36,6 @@ You can force installation of the XS version with:
         perl Makefile.PL --xs
 END
     }
-}
-
-while ($useXS) {
-    local $ENV{TMPDIR} = File::Spec->tmpdir() if $^O eq 'android';
-
-    unless (-e 'xs/config.h') {
-        chdir 'xs';
-        system $Config{sh}, 'configure.gcc';
-        chdir $pwd;
-    }
-
-    unless (open(F, 'xs/config.h')) {
-        warn "Cannot read config.h built by 'gcc', trying 'cc'.\n";
-        chdir 'xs';
-        system $Config{sh}, 'configure.cc';
-        chdir $pwd;
-        unless (open(F, 'xs/config.h')) {
-            warn "Cannot read config.h built by 'cc', using 'pure Perl'.\n";
-            $useXS = 0;
-            last;
-        }
-    }
-
-    close F;
-
-    open(F, '>xs/localperl.h') or die "could not open localperl.h for write\n";
-    print F q|
-/*	Written by Makefile.PL
- *
- *	Do not modify this file, modify Makefile.PL instead
- *
- */
-|;
-    close F;
-
-    last;
 }
 
 #
@@ -150,37 +102,20 @@ close F;
 #
 our @mm_args;
 if ($useXS) {
-    # Extra libraries configure found, from "#define LIBS -lnsl -lsocket".
-    # Read before the list is built: this used to replace @mm_args[-1],
-    # which is depend's hash ref, not LIBS', so the libraries turned
-    # depend into an array ref and EUMM died before writing a Makefile.
-    my @libs;
-    if (open(my $fh, 'xs/config.h')) {
-        while (<$fh>) {
-            if (/^#define LIBS\s+(.+)/) {
-                @libs = ($1);
-                last;
-            }
-        }
-        close $fh;
-    }
-
     @mm_args = (
         NAME   => 'NetAddr::IP::Util',
         XS     => { 'xs/Util.xs' => 'lib/NetAddr/IP/Util.c' },
         C      => ['lib/NetAddr/IP/Util.c'],
         OBJECT => 'lib/NetAddr/IP/Util.o',
         INC    => '-Ixs',
-        LIBS   => \@libs,
-        depend => { 'lib/NetAddr/IP/Util.c' => 'xs/localconf.h xs/config.h' },
+        LIBS   => [],
+        depend => { 'lib/NetAddr/IP/Util.c' => 'xs/localconf.h' },
     );
 }
 
-# make clean removes the files Makefile.PL rewrites on every run,
-# make realclean also removes the configure results
+# make clean removes the file Makefile.PL rewrites on every run
 push @mm_args,
-    clean     => { FILES => 'lib/NetAddr/IP/Util_IS.pm xs/localperl.h' },
-    realclean => { FILES => 'xs/config.h xs/config.log xs/config.status' };
+    clean => { FILES => 'lib/NetAddr/IP/Util_IS.pm xs/localperl.h' };
 
 sub _test_cc {
     print "Testing if you have a C compiler and the needed header files....\n";
