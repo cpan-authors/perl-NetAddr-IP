@@ -63,32 +63,29 @@ our $AUTOLOAD;
       V4mask
       V4net
   );
+  use NetAddr::IP::Util qw(inet_aton ipv6_n2x);
 
   my $ip = NetAddr::IP::Lite->new('192.0.2.1');
   # from a packed IPv4 address
-  $ip = NetAddr::IP::Lite->new_from_aton(inet_aton('192.0.2.1'));
-  # from an octal filtered IPv4 address
-  $ip = NetAddr::IP::Lite->new_no('192.012.0.0');
+  my $a = NetAddr::IP::Lite->new_from_aton(inet_aton('192.0.2.1'));   # 192.0.2.1/32
+  # from an octal filtered one
+  my $b = NetAddr::IP::Lite->new_no('198.051.100.001');               # 198.51.100.1/32
 
   print 'The address is ', $ip->addr, ' with mask ', $ip->mask, "\n" ;
+  # The address is 192.0.2.1 with mask 255.255.255.255
 
   if ($ip->within(NetAddr::IP::Lite->new('192.0.2.0', '255.255.255.224'))) {
-      print "Is within 192.0.2.0/27\n";
+      print "Is within 192.0.2.0/27\n";      # Is within 192.0.2.0/27
   }
 
-  # This prints 192.0.2.1/32
-  print "You can also say $ip...\n";
+  print "You can also say $ip...\n";       # You can also say 192.0.2.1/32...
 
-  * The following four functions return 128-bit vectors; the following shows
-  their string form via C<ipv6_n2x()>:
-
-      ::                                       = Zeros();
-      FFFF:FFFF:FFFF:FFFF:FFFF:FFFF:FFFF:FFFF  = Ones();
-      FFFF:FFFF:FFFF:FFFF:FFFF:FFFF::          = V4mask();
-      ::FFFF:FFFF                              = V4net();
-
-  Will also return an ipV4 or ipV6 representation of a
-  resolvable Fully Qualified Domain Name (FQDN).
+  # The following four functions return 128-bit vectors; this shows
+  # their string form via ipv6_n2x():
+  print ipv6_n2x(Zeros()), "\n";      # 0:0:0:0:0:0:0:0
+  print ipv6_n2x(Ones()), "\n";       # FFFF:FFFF:FFFF:FFFF:FFFF:FFFF:FFFF:FFFF
+  print ipv6_n2x(V4mask()), "\n";     # FFFF:FFFF:FFFF:FFFF:FFFF:FFFF:0:0
+  print ipv6_n2x(V4net()), "\n";      # 0:0:0:0:0:0:FFFF:FFFF
 
 =head1 DESCRIPTION
 
@@ -323,8 +320,10 @@ to the counterintuitive result that
 
 The same order applies to C<sort>:
 
-  print join(', ', sort map { "$_" } @nets), "\n";
-  # 10.0.0.1/16, 10.0.0.1/24, 10.0.0.1/32
+  my @nets = map { NetAddr::IP::Lite->new($_) }
+      qw(192.0.2.1/32 192.0.2.1/8 192.0.2.1/24 192.0.2.1/16);
+  print join(', ', sort @nets), "\n";
+  # 192.0.2.1/8, 192.0.2.1/16, 192.0.2.1/24, 192.0.2.1/32
 
 So the ordering is predictable, but it is not the ordering most people
 mean by "bigger". To rank netblocks by size, compare the mask lengths
@@ -566,14 +565,16 @@ See L</DEPRECATED>.
 C<-E<gt>new6> and C<-E<gt>new_cis6> mark the address as being in ipV6 address space even
 if the format would suggest otherwise.
 
-  i.e.  ->new6('1.2.3.4') will result in ::102:304
+  print NetAddr::IP::Lite->new6('192.0.2.1'), "\n";    # 0:0:0:0:0:0:C000:201/128
 
-  addresses submitted to ->new in ipV6 notation will
-  remain in that notation permanently. i.e.
-  ->new('::1.2.3.4') will result in ::102:304
-  whereas new('1.2.3.4') would print out as 1.2.3.4
+Addresses submitted to C<-E<gt>new> in ipV6 notation will
+remain in that notation permanently, whereas the same address in dotted quad notation
+prints as IPv4:
 
-  The C<addr()> value is what stringifies as the first part.
+  print NetAddr::IP::Lite->new('::192.0.2.1'), "\n";   # 0:0:0:0:0:0:C000:201/128
+  print NetAddr::IP::Lite->new('192.0.2.1'), "\n";     # 192.0.2.1/32
+
+The C<addr()> value is what stringifies as the first part.
 
 C<$addr> can be almost anything that can be resolved to an IP address.
 It can optionally contain the mask in CIDR notation. If the optional
@@ -1327,7 +1328,7 @@ floats and call distinct addresses equal:
 
   my $x = NetAddr::IP::Lite->new('2001:db8::1');
   my $y = NetAddr::IP::Lite->new('2001:db8::2');
-  print $x->numeric, "\n";      # 42540766411282592856903984951653826561
+  print scalar $x->numeric, "\n";   # 42540766411282592856903984951653826561
   print $x->numeric == $y->numeric ? 'same' : 'different';
   # same, though the addresses differ in the last digit
 
