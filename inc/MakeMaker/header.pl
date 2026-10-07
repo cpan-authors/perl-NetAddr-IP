@@ -72,8 +72,8 @@ NetAddr::IP::Util_IS - Tell about Pure Perl
 
   use NetAddr::IP::Util_IS;
 
-  $rv = NetAddr::IP::Util_IS->pure;
-  $rv = NetAddr::IP::Util_IS->not_pure;
+  my $is_pure = NetAddr::IP::Util_IS->pure();
+  my $is_xs   = NetAddr::IP::Util_IS->not_pure();
 
 =head1 DESCRIPTION
 
@@ -82,11 +82,11 @@ Perl mode.
 
 =over 4
 
-=item $rv = NetAddr::IP::Util_IS->pure;
+=item C<pure()>
 
 Returns true if PurePerl mode, else false.
 
-=item $rv = NetAddr::IP::Util_IS->not_pure;
+=item C<not_pure()>
 
 Returns true if NOT PurePerl mode, else false
 
