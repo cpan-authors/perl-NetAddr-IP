@@ -4,17 +4,8 @@
 # generated text (including the Util_IS.pm heredoc) belong there.
 use ExtUtils::MakeMaker qw(WriteMakefile);
 use Config;
-use Cwd;
-use File::Spec;
 use Getopt::Long qw(GetOptions);
 
-my $pwd = getcwd();
-
-unlink 'Makefile';    # remove Makefile to stabilize CC test
-
-#
-# get any command line arguments
-#
 my ($useXS);
 GetOptions(
     'xs!' => \$useXS,
@@ -26,20 +17,17 @@ GetOptions(
 
 print STDERR "building for $^O\n";
 
-# force NOXS mode for Windows
-if ($Config{osname} =~ /win/i || $Config{osname} eq 'dos') {
+# pure Perl by default on Windows, Cygwin, macOS and DOS, unless --xs is given
+if (!defined $useXS && ($Config{osname} =~ /win/i || $Config{osname} eq 'dos')) {
     $useXS = 0;
 }
 
-#
-# Check if we have a C compiler
-#
-unless (defined $useXS) {
+# Check if we have a C compiler, only if --xs was given
+if ($useXS) {
     my $compiler = test_cc();
     if ($compiler) {
         $ENV{CC} = $compiler;
         print "You have a working compiler.\n";
-        $useXS = 1;
     }
     else {
         $useXS = 0;
@@ -54,45 +42,6 @@ You can force installation of the XS version with:
 END
     }
 }
-
-while ($useXS) {
-    local $ENV{TMPDIR} = File::Spec->tmpdir() if $^O eq 'android';
-
-    unless (-e 'xs/config.h') {
-        chdir 'xs';
-        system $Config{sh}, 'configure.gcc';
-        chdir $pwd;
-    }
-
-    unless (open(F, 'xs/config.h')) {
-        warn "Cannot read config.h built by 'gcc', trying 'cc'.\n";
-        chdir 'xs';
-        system $Config{sh}, 'configure.cc';
-        chdir $pwd;
-        unless (open(F, 'xs/config.h')) {
-            warn "Cannot read config.h built by 'cc', using 'pure Perl'.\n";
-            $useXS = 0;
-            last;
-        }
-    }
-
-    close F;
-
-    open(F, '>xs/localperl.h') or die "could not open localperl.h for write\n";
-    print F q|
-/*	Written by Makefile.PL
- *
- *	Do not modify this file, modify Makefile.PL instead
- *
- */
-|;
-    close F;
-
-    last;
-}
-
-#
-# Generate Util_IS.pm
 #
 my $util_is_path = 'lib/NetAddr/IP/Util_IS.pm';
 open(F, '>', $util_is_path) or die "Cannot write $util_is_path: $!\n";
@@ -160,27 +109,16 @@ my %makeparms = (
     ABSTRACT     => 'Manages IPv4 and IPv6 addresses and subnets',
     AUTHOR       => 'Luis E. Muñoz <luismunoz@cpan.org>, Michael Robinton <miker@cpan.org>',
     INC          => '-Ixs',
-    clean        => { FILES => "*.bs *.o *~ tmp* META.yml Util_IS.pm localperl.h auto* lib/NetAddr/IP/Util.o lib/NetAddr/IP/Util_IS.pm xs/localperl.h" },
-    realclean    => { FILES => "config.h config.log config.status xs/config.h xs/localperl.h" },
+    clean        => { FILES => "*.bs *.o *~ tmp* META.yml Util_IS.pm auto* lib/NetAddr/IP/Util.o lib/NetAddr/IP/Util_IS.pm" },
+    realclean    => { FILES => "xs/config.h xs/config.log xs/config.status xs/localperl.h" },
 );
 
 if ($useXS) {
     $makeparms{XS}     = { 'xs/Util.xs' => 'lib/NetAddr/IP/Util.c' };
     $makeparms{C}      = ['lib/NetAddr/IP/Util.c'];
     $makeparms{OBJECT} = 'lib/NetAddr/IP/Util.o';
-    $makeparms{depend} = { 'lib/NetAddr/IP/Util.c' => 'xs/localconf.h xs/config.h' };
+    $makeparms{depend} = { 'lib/NetAddr/IP/Util.c' => 'xs/localconf.h' };
     $makeparms{LIBS}   = [];
-
-    if (open(my $fh, 'xs/config.h')) {
-        while (<$fh>) {
-            if (/^#define LIBS\s+(.+)/) {
-                $makeparms{LIBS} = [$1];
-                last;
-            }
-        }
-        close $fh;
-    }
-}
 
 WriteMakefile(%makeparms);
 
