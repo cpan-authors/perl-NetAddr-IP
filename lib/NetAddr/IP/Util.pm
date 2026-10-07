@@ -309,15 +309,15 @@ sub naip_gethostbyname {
   );
 
   # text to packed, and back
-  $netaddr    = inet_aton('192.0.2.1');           # 4 bytes
+$netaddr    = inet_aton('192.0.2.1');           # 4 bytes
   $dotquad    = inet_ntoa($netaddr);              # '192.0.2.1'
   $ipv6naddr  = ipv6_aton('2001:db8::1');         # 16 bytes
   $ipv6_text  = ipv6_ntoa($ipv6naddr);            # '2001:db8::1'
-  $ipv6naddr  = inet_any2n('192.0.2.1');          # 0:0:0:0:0:0:C000:201
+  $bits128    = inet_any2n('192.0.2.1');          # 0:0:0:0:0:0:C000:201
   $hex_text   = ipv6_n2x($ipv6naddr);             # '2001:DB8:0:0:0:0:0:1'
   $dec_text   = ipv6_n2d($ipv6naddr);             # '2001:DB8:0:0:0:0:0.0.0.1'
   $hex_text   = packzeros('0:0:0:0:0:ffff:c000:201');
-                                                 # '::FFFF:C000:201'
+                                                  # '::FFFF:C000:201'
 
   # the family tests
   $rv         = hasbits($bits128);                # true if any bit is set
@@ -331,6 +331,10 @@ sub naip_gethostbyname {
   $netaddr    = ipv6to4($ipv6naddr);              # low 32 bits
 
   # 128 bit arithmetic, carry in scalar context
+  $signed_32bit = 1;
+  $bits1281   = ipv6_aton('2001:db8::2');
+  $bits1282   = ipv6_aton('2001:db8::1');
+  $mask128    = ipv6_aton('ffff:ffff:ffff:ffff:ffff:ffff:ffff:ff00');
   $carry      = addconst($bits128, $signed_32bit);
   ($carry, $bits128) = addconst($bits128, $signed_32bit);
   $carry      = sub128($bits1281, $bits1282);
@@ -791,7 +795,7 @@ so an answer for 127.0.0.1 is C<0:0:0:0:0:FFFF:7F00:1>.
 This is NOT the expected result from Perl's gethostbyname2. It is instead equivalent to:
 
   On an IPv4 only system:
-    $ipv6naddr = ipv4to6 scalar ( gethostbyname( name ));
+    $ipv6naddr = inet_4map6 scalar ( gethostbyname( name ));
 
   On a system with Socket6 and a working gethostbyname2:
     $ipv6naddr = gethostbyname2( name, AF_INET6 );
@@ -868,6 +872,7 @@ little faster and needs no mask constant:
 Network and broadcast addresses from a vector.  Note the C<$bcast>
 name, which was C<$broadcast> in the original and never declared:
 
+  use NetAddr::IP ();
   use NetAddr::IP::Util qw(ipv6_n2d);
 
   sub netbroad {
@@ -878,6 +883,7 @@ name, which was C<$broadcast> in the original and never declared:
       return ($network, $bcast);
   }
 
+  my $nip = NetAddr::IP->new('192.0.2.9/24');
   print ipv6_n2d((netbroad($nip))[0]), "\n";    # 0:0:0:0:0:0:192.0.2.0
   print ipv6_n2d((netbroad($nip))[1]), "\n";    # 0:0:0:0:0:0:192.0.2.255
 
@@ -893,6 +899,7 @@ C<NOT borrow>:
       return (sub128($addr, $nw) && sub128($bc, $addr)) ? 1 : 0;
   }
 
+  my $other = NetAddr::IP->new('198.51.100.1/24');
   print within($nip, $nip), "\n";            # 1
   print within($other, $nip), "\n";          # 0
 
