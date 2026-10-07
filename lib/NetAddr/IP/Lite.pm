@@ -96,8 +96,26 @@ L<NetAddr::IP::Util> reports which implementation is active.
 
 This module provides an object-oriented abstraction on top of IP
 addresses or IP subnets, that allows for easy manipulations. Most of the
-operations of NetAddr::IP are supported. This module will work with older
-versions of Perl and is compatible with Math::BigInt.
+operations of NetAddr::IP are supported. It is compatible with
+Math::BigInt, and requires perl 5.14 or later.
+
+This module is the base class of NetAddr::IP.  It has the constructors,
+the accessors, the containment tests, the host counts and every operator
+except C<@{}>.  The rest is in NetAddr::IP only: the text forms
+C<short>, C<canon>, C<full>, C<full6>, C<full6m>, C<prefix>, C<nprefix>
+and C<wildcard>, the splitting and set operations, C<hostenum>,
+C<hostenumref>, C<re>, C<re6> and C<netlimit>.
+
+Once NetAddr::IP is loaded, a NetAddr::IP::Lite object can call those
+methods too, because the AUTOLOAD in this module passes the call on to
+NetAddr::IP.  Before that the call dies:
+
+  use NetAddr::IP::Lite;
+
+  my $ip = NetAddr::IP::Lite->new('192.0.2.0/30');
+  print eval { $ip->hostenum; 1 } ? "works\n" : "dies\n";   # dies
+  require NetAddr::IP;
+  print join(' ', $ip->hostenum), "\n";   # 192.0.2.1/32 192.0.2.2/32
 
 * By default B<NetAddr::IP> functions and methods return string IPv6
 addresses in uppercase.  To change that to lowercase:
@@ -424,6 +442,17 @@ objects address parts as a 32 bit signed number.
 
 Returns B<undef> if the difference is out of range.
 
+=item B<Negation and absolute value (C<-> and C<abs>)>
+
+Both croak.  An address has no meaningful negation, and C<abs> would be
+the identity at best:
+
+  -$ip;      # cannot negate a NetAddr::IP::Lite object
+  abs $ip;   # cannot take the absolute value of a NetAddr::IP::Lite object
+
+To move to another address, add or subtract a constant with the overloaded
+C<+> and C<->, or use C<nth()>.
+
 =cut
 
 my $_smsk = pack('L3N', 0xffffffff, 0xffffffff, 0xffffffff, 0x80000000);
@@ -544,7 +573,7 @@ C<$addr> and an optional netmask C<$mask>, which can be omitted to get
 a /32 or /128 netmask for IPv4 / IPv6 addresses respectively.
 
 C<new6FFFF> is the third constructor, and is what makes an IPv4-mapped
-address:
+address, RFC 4291 s2.5.5.2:
 
   NetAddr::IP::Lite->new6FFFF('192.0.2.1');   # 0:0:0:0:0:FFFF:C000:201/128
 
@@ -602,7 +631,7 @@ C<$addr> can be any of the following and possibly more...
   n.n.n.n mm
   n.n.n.n/m.m.m.m
   n.n.n.n m.m.m.m
-  loopback, localhost, broadcast, any, default
+  default, any, broadcast, loopback (keywords, see below)
   host, as a mask keyword
   x.x.x.x/host
   x:x:x/host
@@ -620,7 +649,7 @@ Any RFC 4291 s2.2 notation
   x:x:x:x:x:x:x:x
   x:x:x:x:x:x:x:x/mmm
   x:x:x:x:x:x:x:x/m:m:m:m:m:m:m:m with a mask
-  loopback, localhost, unspecified, any, default
+  default, any, loopback, unspecified (keywords, see below)
   ::x:x/host
   0xABCDEF, 0b111111000101011110 within the limits
   of perl's number resolution
@@ -865,11 +894,11 @@ sub _xnew($$;$$) {
         # check these conditions and set isV6 as appropriate
         #
         my $try;
-        $isV6 = 1 if    # check big bcd and IPv6 rfc1884
+        $isV6 = 1 if    # check big bcd and IPv6 RFC 4291 s2.2
         ( $ip !~ /[^0-9]/ &&                   # ip is all decimal
             (length($ip) > 3 || $ip > 255) &&          # exclude a single digit in the range of zero to 255, could be funny IPv4
             ($try = _bcd2bin_or_undef($ip)) && ! isIPv4($try)) ||      # precedence so $try is not corrupted
-        (index($ip,':') >= 0 && ($try = ipv6_aton($ip))); # fails if not an rfc1884 address
+        (index($ip,':') >= 0 && ($try = ipv6_aton($ip))); # fails if not an RFC 4291 s2.2 address
 
         # if either of the above conditions is true, $try contains the NetAddr 128 bit address
 
@@ -1124,6 +1153,52 @@ sub _xnew($$;$$) {
 }
 
 =back
+
+=head3 Accepted forms in full
+
+The list above is abbreviated. These are the forms worth knowing about,
+all verified on both builds.
+
+Range and prefix notation, where the prefix has to name a valid subnet:
+
+  NetAddr::IP::Lite->new('192.0.2.0-192.0.2.255');   # 192.0.2.0/24
+  NetAddr::IP::Lite->new('192.0.2.4-7');             # 192.0.2.4/30
+  NetAddr::IP::Lite->new('192.0.2.');                # 192.0.2.0/24
+  NetAddr::IP::Lite->new('192.0.');                  # 192.0.0.0/16
+  NetAddr::IP::Lite->new('10.');                     # 10.0.0.0/8
+  NetAddr::IP::Lite->new('192.0-3.');                # 192.0.0.0/14
+
+Short dotted forms change meaning when a mask argument is given, which
+is the one trap here worth writing out. On its own the short form is a
+host address; with a mask it is the network of that size:
+
+  NetAddr::IP::Lite->new('10.1');          # 10.0.0.1/32
+  NetAddr::IP::Lite->new('10.1', 8);       # 10.1.0.0/8
+  NetAddr::IP::Lite->new('10.1.2');        # 10.1.0.2/32
+  NetAddr::IP::Lite->new('10.1.2', 24);    # 10.1.2.0/24
+
+RFC 3986 brackets around an IPv6 literal, which is how a URI carries one:
+
+  NetAddr::IP::Lite->new('[2001:db8::1]/64');   # 2001:DB8:0:0:0:0:0:1/64
+  NetAddr::IP::Lite->new('[2001:db8::1]');      # 2001:DB8:0:0:0:0:0:1/128
+
+Brackets around an IPv4 literal are not accepted and return undef.
+
+Keywords. The set is not the same for both constructors, which is worth
+knowing before reaching for one:
+
+  NetAddr::IP::Lite->new('broadcast');      # 255.255.255.255/32
+  NetAddr::IP::Lite->new('unspecified');    # 0:0:0:0:0:0:0:0/128
+  NetAddr::IP::Lite->new('any');            # 0.0.0.0/0
+  NetAddr::IP::Lite->new('default');        # 0.0.0.0/0
+  NetAddr::IP::Lite->new('loopback');       # 127.0.0.1/8
+  NetAddr::IP::Lite->new('localhost');      # 127.0.0.1/32, via the resolver
+
+The C<broadcast> keyword is IPv4 only: C<new6('broadcast')> returns
+undef, while C<new6('unspecified')> gives an IPv6 unspecified address.
+The C<loopback> keyword gives a /8, not a /32. The name C<localhost> is
+not a keyword at all: it is resolved, so it is undef under C<:nofqdn>
+and resolver-dependent otherwise.
 
 =head2 Address and mask
 
@@ -1698,9 +1773,27 @@ sub import {
     NetAddr::IP::Lite->export_to_level(1, @_);
 }
 
+=head1 FUNCTIONS
+
+=head2 Zeros, Zero, Ones, V4mask and V4net
+
+  use NetAddr::IP::Lite qw(Ones V4mask V4net Zeros);
+  use NetAddr::IP::Util qw(ipv6_n2x);
+
+  print ipv6_n2x(Zeros()), "\n";    # 0:0:0:0:0:0:0:0
+  print ipv6_n2x(Ones()), "\n";     # FFFF:FFFF:FFFF:FFFF:FFFF:FFFF:FFFF:FFFF
+  print ipv6_n2x(V4mask()), "\n";   # FFFF:FFFF:FFFF:FFFF:FFFF:FFFF:0:0
+  print ipv6_n2x(V4net()), "\n";    # 0:0:0:0:0:0:FFFF:FFFF
+
+Each returns a 128 bit string, the form an object keeps its address and
+mask in.  The first is all zero bits and the second all one bits.  The
+IPv4 pair, C<V4mask> and C<V4net>, has ones above the low 32 bits and in
+them respectively.  Another name for C<Zeros> is C<Zero>.
+
 =head1 EXPORT_OK
 
   Zeros
+  Zero
   Ones
   V4mask
   V4net
@@ -1762,7 +1855,7 @@ Everything listed here is deprecated and will be removed in version 5.
 
 =item C<:aton>
 
-Enables C<->new()> to accept a raw packed address of four or sixteen
+Enables C<-E<gt>new()> to accept a raw packed address of four or sixteen
 bytes, and stops it stripping surrounding whitespace, which a packed
 address may begin or end with. Plain C<inet_aton> notation is accepted
 without this tag.
@@ -1775,7 +1868,7 @@ replacement for the packed sixteen byte case.
 =item C<new_cis> and C<new_cis6>
 
 Accept the Cisco address and mask notation, with a space separator in
-place of a slash. C<->new()> and C<->new6()> do the same.
+place of a slash. C<-E<gt>new()> and C<-E<gt>new6()> do the same.
 
   ->new('192.0.2.0 24')      in place of   ->new_cis('192.0.2.0 24')
   ->new6('::192.0.2.0 120')  in place of   ->new_cis6('::192.0.2.0 120')

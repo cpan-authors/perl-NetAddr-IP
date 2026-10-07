@@ -97,31 +97,21 @@ sub _callersub {
 =head1 DESCRIPTION
 
 B<NetAddr::IP::UtilPP> is the pure Perl implementation of the functions in
-B<NetAddr::IP::Util> that touch 128 bit strings.  It is loaded instead of
-the XS module when C<Makefile.PL> is run with C<-noxs>, and
-B<NetAddr::IP::Util>'s C<mode()> then reports C<Pure Perl>.
-
-  perl Makefile.PL -noxs
-  make
-  make test
-
-README.md carries the build steps for both modes.  Nothing on this page
-is about building; it is about what the module does.
-
-The two implementations are meant to be interchangeable, and agree on
-every input tried, down to the wording of the error messages:
+B<NetAddr::IP::Util> that touch 128 bit strings.  In a pure Perl build,
+B<NetAddr::IP::Util> loads it in place of its XS code, and C<mode()> from
+B<NetAddr::IP::Util> then reports C<Pure Perl>:
 
   mode()   'CC XS' or 'Pure Perl'
 
-Both croak on a wrong-length argument with the same message, naming the
-function and both lengths:
+Both implementations croak on a wrong-length argument with the same
+message, naming the function and both lengths in bits:
 
   Bad arg length for NetAddr::IP::Util::hasbits, length is 40,
   should be 128
 
-The entries below are the same ones NetAddr::IP::Util documents, kept
-here because this module is the one that implements them.  Where the two
-pages ever disagree, L<NetAddr::IP::Util> is the fuller description.
+The message names the function in B<NetAddr::IP::Util>, the module
+callers normally load, even when this module is called directly.  Each
+entry below says what its function does with a bad argument.
 
 =head1 FUNCTIONS
 
@@ -153,6 +143,8 @@ This allows the implementation of logical functions of the form of:
 
   input:    128 bit IPv6 string
   returns:  true if any bits are present
+
+Croaks if the argument is not 16 bytes.
 
 =cut
 
@@ -199,6 +191,9 @@ sub hasbits {
   returns:  bits X n shifts
 
   NOTE: input bits are returned if $n is not specified
+
+A negative C<$n>, or one above C<$MAX_SHIFTLEFT> of 128, croaks, and so
+does a C<$bits128> that is not 16 bytes.
 
 =cut
 
@@ -312,6 +307,8 @@ Add a signed constant to a 128 bit string variable.
   returns:  scalar  carry
             array   (carry, result)
 
+Croaks if C<$ipv6naddr> is not 16 bytes.
+
 =cut
 
 sub addconst {
@@ -343,6 +340,8 @@ Add two 128 bit string variables.
   returns:  scalar  carry
             array   (carry, result)
 
+Croaks if either argument is not 16 bytes.
+
 =cut
 
 sub add128 {
@@ -369,6 +368,8 @@ complement of ARG2 +1 to the ARG1. It is logically B<NOT borrow>.
   i.e.  if ARG1 >= ARG2 then carry = 1
   or    if ARG1  < ARG2 then carry = 0
 
+Croaks if either argument is not 16 bytes.
+
 =cut
 
 sub sub128 {
@@ -390,6 +391,8 @@ rightmost '0's are removed.
   input:  128 bit netmask
   returns true if there are spurious zero bits remaining in the mask
           false if the mask is contiguous one's, 128 bit cidr
+
+Croaks if the argument is not 16 bytes.
 
 =cut
 
@@ -428,6 +431,7 @@ Convert an ipv4 network address into an ipv6 network address.
   input:    32 bit network address
   returns:  128 bit network address
 
+Croaks if the argument is not 4 bytes.
 =cut
 
 sub ipv4to6 {
@@ -445,6 +449,8 @@ Convert an ipv4 network address into an ipv6 network mask.
 
 NOTE: returns the high 96 bits as one's
 
+Croaks if the argument is not 4 bytes.
+
 =cut
 
 sub mask4to6 {
@@ -461,6 +467,7 @@ input and always returns a 128 bit IPv6 network address.
   input:    32 or 128 bit network address
   returns:  128 bit network address
 
+Croaks if the argument is neither 4 nor 16 bytes.
 =cut
 
 sub ipanyto6 {
@@ -483,6 +490,7 @@ netmask and always returns a 128 bit IPv6 netmask.
   input:    32 or 128 bit network mask
   returns:  128 bit network mask
 
+Croaks if the argument is neither 4 nor 16 bytes.
 =cut
 
 sub maskanyto6 {
@@ -504,6 +512,8 @@ Truncate the upper 96 bits of a 128 bit address and return the lower
 
   input:    128 bit network address
   returns:  32 bit inet_aton network address
+
+Croaks if the argument is not 16 bytes.
 
 =cut
 
@@ -528,6 +538,8 @@ Convert a 128 bit binary string into binary coded decimal text digits.
   input:    128 bit string variable
   returns:  string of bcd text digits
 
+Croaks if the argument is not 16 bytes.
+
 =cut
 
 sub bin2bcd {
@@ -544,6 +556,9 @@ Convert a bcd text string to 128 bit string variable
   input:    string of bcd text digits
   returns:  128 bit string variable
 
+Croaks if the string is empty, is longer than 40 digits, holds a
+character other than 0 to 9, or is a number too large for 128 bits.
+
 =cut
 
 sub bcd2bin {
@@ -552,10 +567,6 @@ sub bcd2bin {
     goto &_bcd2bin;
 }
 
-=back
-
-
-=cut
 
 #=item $onescomp = comp128($bits128);
 #
@@ -754,11 +765,15 @@ sub simple_pack {
     return pack("H$MAX_BCD_DIGITS", $bcd);
 }
 
+=back
 
 =head1 EXPORT_OK
 
-The functions this module can export.  NetAddr::IP::Util documents all
-of them; see L<NetAddr::IP::Util>.
+The functions this module can export, all of them also exported by
+B<NetAddr::IP::Util>.  The C<:all> tag imports every one.  The first
+thirteen are documented above; the last five are helpers for the test
+suite, exported so that this module and the XS build can be compared
+against each other, and not stable API.
 
     hasbits
     shiftleft
@@ -779,14 +794,22 @@ of them; see L<NetAddr::IP::Util>.
     bcdn2bin
     simple_pack
 
-C<threads> was listed here until this rewrite and is not a function of
-this module, nor of NetAddr::IP::Util.  It never existed.
+Where C<bin2bcd> returns text digits, C<simple_pack> turns text digits
+into a packed string, padding to C<$MAX_BCD_DIGITS> first.  The inverse
+of the packing is C<bcdn2txt>, and C<bcdn2bin> turns a packed string back
+to 128 bits.  The last helper, C<comp128>, is published only for testing,
+because Perl's C<~> is faster than calling into the XS routine for a
+one's complement.
 
 =head1 ADDITIONAL LICENSE
 
 This file is also available to redistribute it and/or modify it under
 the terms of the "Artistic License" which comes with this distribution,
 in the file named "Artistic".
+
+=head1 SEE ALSO
+
+L<NetAddr::IP::Util>, L<NetAddr::IP>, L<NetAddr::IP::Lite>
 
 =cut
 
