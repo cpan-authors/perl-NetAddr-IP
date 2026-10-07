@@ -367,18 +367,26 @@ The strings behave like C<vec> strings under the bit operators:
 so masks and tests are written as arithmetic on them, which is what the
 family tests below and C<netbroad> in L</EXAMPLES> do.
 
-The functions come in two implementations.  The XS build compiles them
-with Perl's XS extensions; C<-noxs> selects the pure Perl build, and
+The functions come in two implementations, XS and pure Perl, and
 C<mode()> reports which one is loaded:
 
   print mode();      # 'CC XS' or 'Pure Perl'
 
-The two agree on every input tried, including every error message.
+Text that is not an address is not an error.  Four functions,
+C<inet_aton>, C<ipv6_aton>, C<inet_any2n> and C<inet_pton>, return undef
+for it, and C<inet_4map6> returns undef for an argument it cannot map.
+A binary argument of the wrong length is an error.  Most functions that
+take one croak, on both implementations, with a message that names the
+function and gives both lengths in bits:
+
+  Bad arg length for NetAddr::IP::Util::hasbits, length is 40, should be 128
+
+Each entry below says what its function does with a bad argument.
 
 The IPv6 functions accept every text form in RFC 4291 s2.2:
 
   x:x:x:x:x:x:x:x
-  x:x:x:x:x:x:x:d.d.d.d
+  x:x:x:x:x:x:d.d.d.d
   ::x:x:x
   ::x:d.d.d.d
   ::ffff:d.d.d.d
@@ -397,8 +405,13 @@ except for C<ipv6_ntoa> and C<inet_ntop>, which are always lowercase.
 
 Convert a dot-quad IP address into an IPv4 packed network address.
 
-  input:    IP address i.e. 192.5.16.32
-  returns:  packed network address
+  input:    IP address i.e. 192.0.2.1
+  returns:  packed network address, or undef
+
+Short forms follow the BSD C<inet_aton> convention, not RFC 791:
+C<127.1> is 127.0.0.1 and C<192.0.2> is 192.0.0.2.  Other text goes to
+C<gethostbyname>, so a host name is resolved.  Returns undef for an
+octet above 255 and for text that does not resolve.
 
 =item $bits128 = ipv6_aton($ipv6_text);
 
@@ -416,13 +429,24 @@ standard notation into a 128 bit IPv6 string address. It prefixes any
 dot-quad address (if found) with '::' and passes it to B<ipv6_aton>.
 
   input:    dot-quad or RFC 4291 s2.2 address
-  returns:  128 bit IPv6 string
+  returns:  128 bit IPv6 string, or undef
+
+Returns undef if the text is not an address.  An empty or undefined
+argument is read as C<::>, the all-zero address.
 
 =item $netaddr = inet_pton($AF_family,$hex_text);
 
 This function takes an IP address in IPv4 or IPv6 text format and converts it into
 binary format. The type of IP address conversion is controlled by the FAMILY
 argument.
+
+Returns undef for text that is not an address of that family, and croaks
+on a family other than C<AF_INET> and C<AF_INET6>.
+
+NOTE: inet_pton, inet_ntop and AF_INET6 come from the Socket6 library if it
+is present on this host.  The two sources differ on IPv4 text: without
+Socket6, C<inet_pton(AF_INET, ...)> is C<inet_aton> and also takes short
+forms such as C<127.1> and host names, which Socket6 rejects.
 
 =back
 
@@ -435,7 +459,9 @@ argument.
 Convert a packed IPv4 network address to a dot-quad IP address.
 
   input:    packed network address
-  returns:  IP address i.e. 10.4.12.123
+  returns:  IP address i.e. 192.0.2.1
+
+Croaks if the argument is not 4 bytes.
 
 =item $ipv6_text = ipv6_ntoa($ipv6naddr);
 
@@ -444,6 +470,8 @@ text representation, which is lowercase whatever the case setting.
 
   input:    128 bit RDATA string
   returns:  ipv6 text
+
+Croaks if the argument is not 16 bytes.
 
 NOTE: for an address with an IPv4 address in the low 32 bits the output
 depends on whether Socket6 is installed.  See the entry for C<inet_ntop>.
@@ -455,6 +483,8 @@ Takes an IPv6 RDATA string and returns an 8 segment IPv6 hex address
   input:    128 bit RDATA string
   returns:  x:x:x:x:x:x:x:x
 
+Croaks if the argument is not 16 bytes.
+
 =item $dec_text = ipv6_n2d($bits128);
 
 Takes an IPv6 RDATA string and returns a mixed hex - decimal IPv6 address
@@ -463,6 +493,8 @@ representation.
 
   input:    128 bit RDATA string
   returns:  x:x:x:x:x:x:d.d.d.d
+
+Croaks if the argument is not 16 bytes.
 
 =item $dotquad or $hex_text = inet_n2dx($ipv6naddr);
 
@@ -473,6 +505,8 @@ dot-quad IPv4 or a hex notation IPv6 address.
   returns:  ddd.ddd.ddd.ddd
         or  x:x:x:x:x:x:x:x
 
+Croaks if the argument is not 16 bytes.
+
 =item $dotquad or $dec_text = inet_n2ad($ipv6naddr);
 
 This function B<does the right thing> and returns the text for either a
@@ -481,6 +515,8 @@ dot-quad IPv4 or a hex::decimal notation IPv6 address.
   input:    128 bit IPv6 string
   returns:  ddd.ddd.ddd.ddd
         or  x:x:x:x:x:x:ddd.ddd.ddd.ddd
+
+Croaks if the argument is not 16 bytes.
 
 =item $hex_text = inet_ntop($AF_family,$netaddr);
 
@@ -532,7 +568,12 @@ portion of the 128 bit string and false otherwise.
 
   i.e.    the address must be of the form - ::d.d.d.d
 
-Note: this is an old and deprecated ipV4 compatible ipV6 address
+which is the RFC 4291 s2.5.5.1 IPv4-compatible prefix C<::/96>, deprecated
+by that RFC.
+
+Croaks if the argument is not 16 bytes.  The message names the sub that
+called C<isIPv4>, not C<isIPv4> itself, unless the call is made from file
+scope.
 
 =item $rv = isNewIPv4($bits128);
 
@@ -551,7 +592,7 @@ the low 32 bits, of either form
   ::d.d.d.d    or    ::ffff:d.d.d.d
 
 which is the union of the RFC 4291 s2.5.5.1 compatible prefix and the
-s2.5.5.2 mapped prefix.
+s2.5.5.2 mapped prefix.  Croaks if the argument is not 16 bytes.
 
 =item $rv = hasbits($bits128);
 
@@ -574,6 +615,8 @@ This allows the implementation of logical functions of the form of:
   input:    128 bit IPv6 string
   returns:  true if any bits are present
 
+Croaks if the argument is not 16 bytes.
+
 =back
 
 =head2 Widening and narrowing
@@ -587,6 +630,8 @@ Convert an ipv4 network address into an IPv6 network address.
   input:    32 bit network address
   returns:  128 bit network address
 
+Croaks if the argument is not 4 bytes.
+
 =item $ipv6naddr = mask4to6($netaddr);
 
 Convert an ipv4 network address/mask into an ipv6 network mask.
@@ -596,6 +641,8 @@ Convert an ipv4 network address/mask into an ipv6 network mask.
 
 NOTE: returns the high 96 bits as one's
 
+Croaks if the argument is not 4 bytes.
+
 =item $ipv6naddr = ipanyto6($netaddr);
 
 Similar to ipv4to6 except that this function takes either an IPv4 or IPv6
@@ -603,6 +650,8 @@ input and always returns a 128 bit IPv6 network address.
 
   input:    32 or 128 bit network address
   returns:  128 bit network address
+
+Croaks if the argument is neither 4 nor 16 bytes.
 
 =item $ipv6naddr = maskanyto6($netaddr);
 
@@ -612,6 +661,8 @@ netmask and always returns a 128 bit IPv6 netmask.
   input:    32 or 128 bit network mask
   returns:  128 bit network mask
 
+Croaks if the argument is neither 4 nor 16 bytes.
+
 =item $netaddr = ipv6to4($ipv6naddr);
 
 Truncate the upper 96 bits of a 128 bit address and return the lower
@@ -619,6 +670,8 @@ Truncate the upper 96 bits of a 128 bit address and return the lower
 
   input:    128 bit network address
   returns:  32 bit inet_aton network address
+
+Croaks if the argument is not 16 bytes.
 
 =item $ipv6naddr = inet_4map6($netaddr or $ipv6naddr);
 
@@ -709,6 +762,8 @@ rightmost '0's are removed.
             contiguous one's,
         128 bit cidr number
 
+Croaks if the argument is not 16 bytes.
+
 =back
 
 =head2 Decimal strings
@@ -729,45 +784,8 @@ Convert a bcd text string to 128 bit string variable
   input:    string of bcd text digits
   returns:  128 bit string variable
 
-=cut
-
-#=item $onescomp=NetAddr::IP::Util::comp128($bits128);
-#
-#This function is not exported because it is more efficient to use perl " ~ "
-#on the bit string directly. This interface to the B<C> routine is published for
-#module testing purposes because it is used internally in the B<sub128> routine. The
-#function is very fast, but calling if from perl directly is very slow. It is almost
-#33% faster to use B<sub128> than to do a 1's comp with perl and then call
-#B<add128>.
-#
-#=item $bcdpacked = NetAddr::IP::Util::bin2bcdn($bits128);
-#
-#Convert a 128 bit binary string into binary coded decimal digits.
-#This function is not exported.
-#
-#  input:    128 bit string variable
-#  returns:    string of packed decimal digits
-#
-#  i.e.    text = unpack("H*", $bcd);
-#
-#=item $bcdtext =  NetAddr::IP::Util::bcdn2txt($bcdpacked);
-#
-#Convert a packed bcd string into text digits, suppress the leading zeros.
-#This function is not exported.
-#
-#  input:    string of packed decimal digits
-#  returns:    hexadecimal digits
-#
-#Similar to unpack("H*", $bcd);
-#
-#=item $bcdpacked = NetAddr::IP::Util::simple_pack($bcdtext);
-#
-#Convert a numeric string into a packed bcd string, left fill with zeros
-#
-#  input:    string of decimal digits
-#  returns:    string of packed decimal digits
-#
-#Similar to pack("H*", $bcdtext);
+Croaks if the string is empty, is longer than 40 digits, holds a
+character other than 0 to 9, or is a number too large for 128 bits.
 
 =back
 
@@ -811,6 +829,25 @@ B<naip_gethostbyname>.
 
 =back
 
+=head2 Address family
+
+=over 4
+
+=item $constant = AF_INET;
+
+Returns the system value for AF_INET, taken from Socket.
+
+=item $constant = AF_INET6;
+
+Returns the value for AF_INET6.  It comes from Socket6 when Socket6 is
+installed.  Without Socket6 it is a value guessed from the name of the
+operating system, which is 10 on Linux.
+
+  use NetAddr::IP::Util qw(AF_INET AF_INET6);
+  print AF_INET(), ' ', AF_INET6(), "\n";   # 2 10 on Linux
+
+=back
+
 =head2 Build mode
 
 =over 4
@@ -828,8 +865,8 @@ Returns the operating mode of this module.
 
 =head1 EXAMPLES
 
-The four subs below are the ones this distribution used to carry as
-examples.  Every one of them runs as written; the results are comments.
+The examples below show the functions in use, and the results are
+comments.
 
 Convert any text address and mask into a 128 bit vector, extending a 32
 bit mask over the IPv6 side:
@@ -894,7 +931,7 @@ C<NOT borrow>:
 
   sub within {
       my ($nip, $net) = @_;
-      my $addr = $nip->{addr};             # a semicolon, which was missing
+      my $addr = $nip->{addr};
       my ($nw, $bc) = netbroad($net);
       return (sub128($addr, $nw) && sub128($bc, $addr)) ? 1 : 0;
   }
@@ -905,8 +942,7 @@ C<NOT borrow>:
 
 C<addconst> stores the carry in scalar context and C<($carry, $result)>
 in list context, so wrapping a net at a boundary means taking the second
-element.  The original example assigned the scalar form to C<$addr>,
-which quietly stored the carry:
+element:
 
   use NetAddr::IP::Util qw(addconst);
   use NetAddr::IP ();
@@ -957,8 +993,8 @@ Everything in L</"EXPORT_OK">.
 
 =item C<:inet>
 
-Nineteen names: the text and binary conversions, the family tests, the
-widening helpers and the resolver.
+Nineteen names: the text and binary conversions, the widening helpers
+and the resolver.  The family tests are in C<:math>.
 
   inet_aton inet_ntoa ipv6_aton ipv6_ntoa ipv6_n2x ipv6_n2d
   inet_any2n inet_n2dx inet_n2ad inet_pton inet_ntop inet_4map6
@@ -973,11 +1009,11 @@ Two names:
 
 =item C<:ipv6>
 
-Sixteen names.  This is C<:inet> without C<inet_aton> and
+Seventeen names.  This is C<:inet> without C<inet_aton> and
 C<inet_ntoa>:
 
   ipv6_aton ipv6_ntoa ipv6_n2x ipv6_n2d inet_any2n
-  inet_n2dx inet_n2ad inet_pton inet_ntop
+  inet_n2dx inet_n2ad inet_pton inet_ntop inet_4map6
   ipv4to6 mask4to6 ipanyto6 maskanyto6 ipv6to4
   packzeros naip_gethostbyname
 
@@ -1000,6 +1036,7 @@ stable API.
   inet_aton         inet_ntoa          ipv6_aton          ipv6_ntoa
   ipv6_n2x          ipv6_n2d           inet_any2n         inet_n2dx
   inet_n2ad         inet_pton          inet_ntop          inet_4map6
+  hasbits           isIPv4             isNewIPv4          isAnyIPv4
   shiftleft         addconst           add128             sub128
   notcontiguous     bin2bcd            bcd2bin            mode
   ipv4to6           mask4to6           ipanyto6           maskanyto6

@@ -81,13 +81,16 @@ rest of the distribution reads:
 Which is why reassigning an imported constant changes the library's own
 behaviour, not just the caller's view of it.
 
-A variable of the same name already declared in the importing package is
-not overwritten by the import, because C<Exporter> only installs the
-alias when the name is free.  NetAddr::IP::InetBase, NetAddr::IP::Util
-and NetAddr::IP::UtilPP each import these constants and always read their
-own copy, so a caller's reassignment changes nothing inside the library.
-Overriding a constant is therefore reachable but unsupported, and can
-only be relied on to affect code that reads the imported name.
+An C<our> variable of the same name in the importing package is
+replaced by the import, and a lexical C<my> variable of that name hides
+it.  The library's own modules import these names the same way, so a
+reassignment made in C<NetAddr::IP::InetBase> or C<NetAddr::IP::Util>
+reaches the code that reads them.  After C<$IPV6_BITS = 999> in
+C<NetAddr::IP::InetBase>, the length error from C<isIPv4> reads
+C<should be 999> on both builds; after the same in
+C<NetAddr::IP::Util>, so does the one from C<hasbits> in a pure Perl
+build, while the XS build compiles the length in and keeps its own.
+Overriding a constant is reachable but unsupported.
 
 =head1 CONSTANTS
 
