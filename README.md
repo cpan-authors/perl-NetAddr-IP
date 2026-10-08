@@ -72,12 +72,12 @@ tarball, or generate one:
     make test
     make install
 
-`mode()` then returns `Pure Perl` instead of `CC XS`. With neither `-noxs`
+With `-noxs`, `mode()` returns `Pure Perl` instead of `CC XS`. With neither `-noxs`
 nor `--xs` given, the build tests for a C compiler and builds the XS when
-one works, on every platform including Linux; that is what `cpan` and `cpanm`
-run. On Windows, Cygwin, macOS and DOS the default is pure Perl, since the C
-toolchain is not required to run the suite there. Pass `--xs` to override
-that, which skips the compiler test and builds the XS regardless.
+one works; that is what `cpan` and `cpanm` run. Windows, Cygwin, macOS and
+DOS are the exceptions: there the default is pure Perl and the compiler test
+does not run. Pass `--xs` on any platform to skip the compiler test and build
+the XS regardless.
 
 ## Methods
 
@@ -231,4 +231,5 @@ Michael Robinton <miker@cpan.org>
 ## License
 
 Dual licensed under the GNU GPL v2 and the Artistic License.
-See [LICENSE](LICENSE) and [Artistic](Artistic) for details.
+The GPL v2 text is in the LICENSE file of each release tarball, and
+[Artistic](Artistic) holds the Artistic License.
