@@ -264,13 +264,13 @@ from it rather than reimplementing them, except that C<inet_pton>,
 C<inet_ntop> and C<AF_INET6> come from Socket6 when it is installed.
 See L</"Socket6 substitution">.
 
-The IPv6 functions accept every text form in RFC 4291 s2.2.
+The IPv6 functions accept every text form in RFC 4291 s2.2:
 
-  i.e.    x:x:x:x:x:x:x:x
-    x:x:x:x:x:x:x:d.d.d.d
-    ::x:x:x
-    ::x:d.d.d.d
-  and so on...
+  x:x:x:x:x:x:x:x
+  x:x:x:x:x:x:d.d.d.d
+  ::x:x:x
+  ::x:d.d.d.d
+  ::ffff:d.d.d.d
 
 Text that is not an address is not an error.  Four functions,
 C<inet_aton>, C<ipv6_aton>, C<inet_any2n> and C<inet_pton>, return undef
@@ -435,8 +435,8 @@ address embedded in the low 32 bits the text depends on whether Socket6
 is installed. See the notes on inet_ntop below.
 
 No method of NetAddr::IP or NetAddr::IP::Lite calls this function.
-Stringification goes through ipv6_n2x and packzeros, which are pure Perl
-on every host, so the difference only reaches callers of this function.
+Stringification goes through ipv6_n2x, which is pure Perl on every host,
+so the difference only reaches callers of this function.
 
 =cut
 

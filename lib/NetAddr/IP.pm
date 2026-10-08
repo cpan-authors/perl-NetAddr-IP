@@ -250,9 +250,9 @@ to the counterintuitive result that
 The same order applies to C<sort>:
 
   my @nets = map { NetAddr::IP->new($_) }
-    qw(192.0.2.1/32 192.0.2.1/8 192.0.2.1/24 192.0.2.1/16);
-print join(', ', sort @nets), "\n";
-# 192.0.2.1/8, 192.0.2.1/16, 192.0.2.1/24, 192.0.2.1/32
+      qw(192.0.2.1/32 192.0.2.1/8 192.0.2.1/24 192.0.2.1/16);
+  print join(', ', sort @nets), "\n";
+  # 192.0.2.1/8, 192.0.2.1/16, 192.0.2.1/24, 192.0.2.1/32
 
 So the ordering is predictable, but it is not the ordering most people
 mean by "bigger". To rank netblocks by size, compare the mask lengths
@@ -573,7 +573,7 @@ See L</DEPRECATED>.
 C<-E<gt>new6> and C<-E<gt>new_cis6> mark the address as being in ipV6 address space even
 if the format would suggest otherwise.
 
-print NetAddr::IP->new6('192.0.2.1'), "\n";    # 0:0:0:0:0:0:C000:201/128
+  print NetAddr::IP->new6('192.0.2.1'), "\n";    # 0:0:0:0:0:0:C000:201/128
 
 Addresses submitted to C<-E<gt>new> in ipV6 notation will
 remain in that notation permanently, whereas the same address in dotted quad notation
@@ -583,8 +583,6 @@ prints as IPv4:
   print NetAddr::IP->new('192.0.2.1'), "\n";     # 192.0.2.1/32
 
 The C<addr()> value is what stringifies as the first part.
-
-  The C<addr()> value is what stringifies as the first part.
 
 C<$addr> can be almost anything that can be resolved to an IP address.
 It can optionally contain the mask in CIDR notation. If the optional
@@ -1064,12 +1062,12 @@ ERROR conditions:
     if the number of return objects exceeds 'netlimit'.
     See function 'netlimit' above (default 2**16 or 65536 nets).
 
-->splitref will DIE with the message 'netmask error: overrange
-  or spurious bits' when bits or the (bits list) will not fit
-  within the original object.
+  ->splitref will DIE with the message 'netmask error: overrange
+    or spurious bits' when bits or the (bits list) will not fit
+    within the original object.
 
   ->splitref will DIE with the same message if a supplied ipV4,
-    ipV6, or NetAddr mask is inappropriately formatted,
+    ipV6, or NetAddr mask is inappropriately formatted.
 
 B<bits> may be a CIDR mask, a dot quad or ipV6 string or a NetAddr::IP object.
 If C<bits> is missing, the object is split for into all available addresses
