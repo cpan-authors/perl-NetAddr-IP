@@ -1100,7 +1100,7 @@ sub _xnew($$;$$) {
         last;
             }
             # check for resolvable IPv4 hosts
-            elsif (! $NoFQDN && $ip !~ /[^a-zA-Z0-9\._-]/ && ($tmp = gethostbyname(fillIPv4($ip))) && $tmp ne $_v4zero && $tmp ne $_zero ) {
+            elsif (! $NoFQDN && $ip !~ /[^a-zA-Z0-9\._-]/ && defined($tmp = fillIPv4($ip)) && ($tmp = gethostbyname($tmp)) && $tmp ne $_v4zero && $tmp ne $_zero ) {
         $ip = ipv4to6($tmp);
         last;
             }
