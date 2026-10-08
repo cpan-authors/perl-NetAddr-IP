@@ -319,7 +319,7 @@ sub naip_gethostbyname {
   $hex_text   = ipv6_n2x($ipv6naddr);             # '2001:DB8:0:0:0:0:0:1'
   $dec_text   = ipv6_n2d($ipv6naddr);             # '2001:DB8:0:0:0:0:0.0.0.1'
   $hex_text   = packzeros('0:0:0:0:0:ffff:c000:201');
-                                                  # '::FFFF:C000:201'
+                                                  # '::ffff:c000:201'
 
   # the family tests
   $rv         = hasbits($bits128);                # true if any bit is set
@@ -395,7 +395,8 @@ The IPv6 functions accept every text form in RFC 4291 s2.2:
 
 and produce text following RFC 5952 s4.  Which case they produce depends
 on the process-wide setting described under L<NetAddr::IP::InetBase>,
-except for C<ipv6_ntoa> and C<inet_ntop>, which are always lowercase.
+except for C<ipv6_ntoa>, C<inet_ntop> and C<packzeros>, which are always
+lowercase.
 
 =head1 FUNCTIONS
 
@@ -533,14 +534,14 @@ NOTE: inet_ntop ALWAYS returns lowercase characters.
 Shortens an eight-group IPv6 hex address by substituting B<::> for the
 longest run of zero groups, per RFC 5952 s4.2.1.  Where two runs are
 equally long the first is shortened, s4.2.3, and a run of one zero group
-is never shortened at all, s4.2.2.  Case follows the current setting,
-which is uppercase by default here.
+is never shortened at all, s4.2.2.  The result is always lowercase,
+RFC 5952 s4.3, whatever the case setting.
 
-  print packzeros('0:0:0:0:0:ffff:c000:201');  # ::FFFF:C000:201
-  print packzeros('2001:db8:0:1:1:1:1:1');     # 2001:DB8:0:1:1:1:1:1
-  print packzeros('2001:db8:0:0:1:0:0:1');     # 2001:DB8::1:0:0:1
-  print packzeros('2001:db8:0:1:1:0:0:1');     # 2001:DB8:0:1:1::1
-  print packzeros('2001:0db8:0:1:2:3:4:5');    # 2001:DB8:0:1:2:3:4:5
+  print packzeros('0:0:0:0:0:ffff:c000:201');  # ::ffff:c000:201
+  print packzeros('2001:db8:0:1:1:1:1:1');     # 2001:db8:0:1:1:1:1:1
+  print packzeros('2001:db8:0:0:1:0:0:1');     # 2001:db8::1:0:0:1
+  print packzeros('2001:db8:0:1:1:0:0:1');     # 2001:db8:0:1:1::1
+  print packzeros('2001:0DB8:0:1:2:3:4:5');    # 2001:db8:0:1:2:3:4:5
   print packzeros('2001:0:0:1:0:0:0:1');       # 2001:0:0:1::1
 
 =back

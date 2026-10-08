@@ -220,8 +220,9 @@ for one object.
 
 The default case setting is a process global in
 `NetAddr::IP::InetBase`, so an unrelated package importing `:lower` changes
-the output for everyone. `ipv6_ntoa` and `inet_ntop` are always lowercase
-whatever the setting, since they mirror the platform's `inet_ntop`.
+the output for everyone. Three functions are always lowercase whatever the
+setting: `packzeros`, which follows RFC 5952 s4.3, and `ipv6_ntoa` and
+`inet_ntop`, which mirror the platform's `inet_ntop`.
 
 ## Authors
 
