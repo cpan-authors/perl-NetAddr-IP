@@ -260,7 +260,8 @@ sub _end_gethostbyname {
 unless ( eval { local $SIG{__DIE__}; require Socket6 }) {
     $mygethostbyname = sub {
         # SEE NOTE above about broken BSD
-        my @tip = gethostbyname(NetAddr::IP::InetBase::fillIPv4($_[0]));
+        my $host = NetAddr::IP::InetBase::fillIPv4($_[0]);
+        my @tip = defined $host ? gethostbyname($host) : ();
         return &_end_gethostbyname(@tip);
     };
 }
@@ -279,7 +280,8 @@ else {
         my @tip;
         unless ($_Sock6ok && (@tip = _ghbn2($_[0],NetAddr::IP::Util::AF_INET6())) && @tip > 1) {
             # SEE NOTE above about broken BSD
-            @tip = gethostbyname(NetAddr::IP::InetBase::fillIPv4($_[0]));
+            my $host = NetAddr::IP::InetBase::fillIPv4($_[0]);
+            @tip = defined $host ? gethostbyname($host) : ();
         }
         return &_end_gethostbyname(@tip);
     };
@@ -571,9 +573,8 @@ portion of the 128 bit string and false otherwise.
 which is the RFC 4291 s2.5.5.1 IPv4-compatible prefix C<::/96>, deprecated
 by that RFC.
 
-Croaks if the argument is not 16 bytes.  The message names the sub that
-called C<isIPv4>, not C<isIPv4> itself, unless the call is made from file
-scope.
+Croaks if the argument is not 16 bytes.  The message names C<isIPv4>, or
+C<isNewIPv4> or C<isAnyIPv4> when the argument came in through one of them.
 
 =item $rv = isNewIPv4($bits128);
 
