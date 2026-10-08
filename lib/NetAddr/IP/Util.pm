@@ -362,7 +362,7 @@ The strings behave like C<vec> strings under the bit operators:
   and   &
   or    |
   xor   ^
-        ~    compliment
+        ~    complement
 
 so masks and tests are written as arithmetic on them, which is what the
 family tests below and C<netbroad> in L</EXAMPLES> do.
@@ -539,7 +539,7 @@ which is uppercase by default here.
   print packzeros('2001:db8:0:0:1:0:0:1');     # 2001:DB8::1:0:0:1
   print packzeros('2001:db8:0:1:1:0:0:1');     # 2001:DB8:0:1:1::1
   print packzeros('2001:0db8:0:1:2:3:4:5');    # 2001:DB8:0:1:2:3:4:5
-  print packzeros('2001:db8:0:0:1:0:0:1:1');   # 2001::1:0:0:1:1
+  print packzeros('2001:0:0:1:0:0:0:1');       # 2001:0:0:1::1
 
 =back
 
