@@ -191,6 +191,7 @@ sub fillIPv4 {
             $host = $1.'.0.0.'.$2;
         }
         else {
+            return undef unless $1 >= 0 && $1 < 256;
             $host = '0.0.0.'.$1;
         }
     }
@@ -207,7 +208,11 @@ my $_ipv4mask = pack('L4', 0xffffffff, 0xffffffff, 0xffffffff, 0);
 
 sub isIPv4 {
     if (length($_[0]) != $V6_PACKED_BYTES) {
-        my $sub = (caller(1))[3] || (caller(0))[3];
+        # name the InetBase function the caller entered, else isIPv4 itself
+        my $caller = (caller(1))[3];
+        my $sub = defined $caller && index($caller, __PACKAGE__ . '::') == 0
+            ? $caller
+            : (caller(0))[3];
         die "Bad arg length for $sub, length is ". (length($_[0]) * $OCTET_BITS) .", should be $IPV6_BITS";
     }
     return ($_[0] & $_ipv4mask) eq $_zero
@@ -633,9 +638,8 @@ portion of the 128 bit string and false otherwise.
 which is the RFC 4291 s2.5.5.1 IPv4-compatible prefix C<::/96>, deprecated
 by that RFC.
 
-Croaks if the argument is not 16 bytes.  The message names the sub that
-called C<isIPv4>, not C<isIPv4> itself, unless the call is made from file
-scope.
+Croaks if the argument is not 16 bytes.  The message names C<isIPv4>, or
+C<isNewIPv4> or C<isAnyIPv4> when the argument came in through one of them.
 
 =item $rv = isNewIPv4($bits128);
 
@@ -696,8 +700,9 @@ Socket module has its own AF_INET6.
 =item $ip_filled = fillIPv4($shortIP);
 
 Expands a short IPv4 text address to the four part form, padding the
-missing octets with zeros.  This is the BSD C<inet_aton> convention and
-is not RFC 791.
+missing octets with zeros.  This follows the BSD C<inet_aton> convention
+for padding and is not RFC 791.  Unlike BSD, every part must fit in an
+octet, so C<300> gives undef rather than 0.0.1.44.
 
   input:    short or full IPv4 text
   returns:  the four part form, or undef
@@ -713,6 +718,7 @@ out of range gives undef:
 
   print fillIPv4('example.com'), "\n"; # example.com
   print defined(fillIPv4('256.1.1.1')) ? 'defined' : 'undef', "\n";   # undef
+  print defined(fillIPv4('300'))       ? 'defined' : 'undef', "\n";   # undef
 
 The argument is text, not a packed address.  A packed string does not
 match, so it is returned unchanged too.
