@@ -173,14 +173,23 @@ jobs:
       - uses: perl-actions/setup-cpm@v1
         with:
           version: compat
-      - name: install deps using cpanm
-        run: >
-          cpm install -g --cpanfile cpanfile
-          --with-develop
-          ${{ steps.with-recommends.outputs.flag }}
-          --with-suggests
-          --with-test
-          --mirror https://cpan.metacpan.org
+      - name: install deps using cpm
+        # slow Intel runners overrun the 60 second configure limit, and mirror
+        # fetches fail now and then; a second attempt installs only what is missing
+        run: |
+          for attempt in 1 2; do
+            [ "$attempt" = 1 ] || sleep 30
+            cpm install -g --cpanfile cpanfile \
+              --with-develop \
+              ${{ steps.with-recommends.outputs.flag }} \
+              --with-suggests \
+              --with-test \
+              --configure-timeout=300 \
+              --show-build-log-on-failure \
+              --mirror https://cpan.metacpan.org && exit 0
+            echo "cpm install failed on attempt $attempt"
+          done
+          exit 1
       - name: Build and test the distribution
         # A plain perl Makefile.PL builds pure Perl on macOS, because
         # header.pl matches /win/i against $Config{osname} and "darwin"
