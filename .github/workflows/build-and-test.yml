@@ -259,11 +259,15 @@ jobs:
         # and gmake over it fails the other way round, so neither works
         # across the matrix without pinning the flavour.
         run: |
+          # pwsh fails the step on the last command only, so each one checks its own exit code
           perl Makefile.PL -noxs MAKE=gmake
+          if ($LASTEXITCODE) { exit $LASTEXITCODE }
           gmake
+          if ($LASTEXITCODE) { exit $LASTEXITCODE }
           # Windows is pure Perl by the osname rule, and -noxs asked for it
           # anyway. Assert it so the job cannot pass as the other build.
           perl -Mblib -MNetAddr::IP::Util -e 'my $mode = NetAddr::IP::Util::mode(); $mode eq q{Pure Perl} or die "built $mode, expected Pure Perl\n"'
+          if ($LASTEXITCODE) { exit $LASTEXITCODE }
           gmake test
         # No AUTHOR_TESTING here, unlike every other job. The five
         # author-*.t files guard on it and skip without it, and one of them

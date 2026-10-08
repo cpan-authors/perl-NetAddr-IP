@@ -1,6 +1,12 @@
 use Config;
 use Getopt::Long qw(GetOptions);
 
+# an XS build writes these under lib/, where a pure Perl build would copy them into blib
+my @xs_outputs = qw(lib/NetAddr/IP/Util.c lib/NetAddr/IP/Util.c.xsc lib/NetAddr/IP/Util.o);
+
+# and puts its shared object here, which a pure Perl build would install
+my $xs_blib_dir = 'blib/arch/auto/NetAddr/IP/Util';
+
 my $useXS;
 GetOptions(
     'xs!' => \$useXS,
@@ -37,6 +43,12 @@ You can force installation of the XS version with:
         perl Makefile.PL --xs
 END
     }
+}
+
+# a pure Perl build drops what an earlier XS build left behind
+unless ($useXS) {
+    unlink @xs_outputs, glob "$xs_blib_dir/* $xs_blib_dir/.exists";
+    rmdir $xs_blib_dir;
 }
 
 #
@@ -114,22 +126,8 @@ if ($useXS) {
     );
 }
 
-# make clean removes the files Makefile.PL rewrites on every run.
-# The XS build also writes Util.o and Util.c under lib/, where ExtUtils::MakeMaker
-# does not look for them: its C_FILES and OBJECT are set only when $useXS is true,
-# so in a pure Perl build neither is known and a stray Util.o left by an earlier
-# XS build is picked up as a module to copy into blib. That pulls the postamble's
-# xsubpp rule into the build, where $(XSUBPP) is undefined in a pure Perl Makefile
-# and it dies on "-ypemap". Both are generated, so both go.
-push @mm_args,
-    clean => {
-        FILES => join q{ },
-        'lib/NetAddr/IP/Util_IS.pm',
-        'lib/NetAddr/IP/Util.c',
-        'lib/NetAddr/IP/Util.o',
-        'lib/NetAddr/IP/Util.c.xsc',
-        'xs/localperl.h',
-    };
+# make clean removes the file Makefile.PL writes and the XS build's output
+push @mm_args, clean => { FILES => join q{ }, $util_is_path, @xs_outputs };
 
 sub _test_cc {
     print "Testing if you have a C compiler and the needed header files....\n";
