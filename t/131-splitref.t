@@ -35,7 +35,7 @@ subtest 'splitref with multiple cidrs' => sub {
     }
 };
 
-subtest q{splitting leaves the caller's \$_ alone} => sub {
+subtest q{splitting leaves the caller's $_ alone} => sub {
     my $net  = NetAddr::IP->new('192.0.2.0/30');
     my %call = (
         'array dereference' => sub { @{$net} },
