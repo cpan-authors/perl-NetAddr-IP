@@ -6,11 +6,6 @@ use Test2::Plugin::NoWarnings;
 use NetAddr::IP::Util     qw( packzeros );
 use NetAddr::IP::InetBase ();
 
-# packzeros honours the process wide case setting, and loading
-# NetAddr::IP::Util imports :upper (GH#7), so ask for the case this file
-# expects rather than relying on whatever was imported first
-NetAddr::IP::InetBase::lower();
-
 my %addr = (
     'D0:00:0000:0000:000:b00:0000:000' => 'd0::b00:0:0',
     '0d0:00:0000:0000:000:0B00::'      => 'd0::b00:0:0',
@@ -26,11 +21,26 @@ my %addr = (
     '12:0:0:0:34:0:00:000'             => '12::34:0:0:0',
 );
 
+# loading NetAddr::IP::Util sets uppercase, so this loop runs under it
 for my $input ( sort keys %addr ) {
-    my $expected = $addr{$input};
-    my $rv       = packzeros($input);
-    my $exp      = lc $expected;
-    is( $rv, $exp, "packzeros($input)" );
+    is( packzeros($input), $addr{$input}, "packzeros($input)" );
 }
+
+subtest 'packzeros is lowercase whatever the case setting' => sub {
+    my $input = '2001:0DB8:0:0:0:0:A:B';
+    NetAddr::IP::InetBase::upper();
+    is( packzeros($input), '2001:db8::a:b', 'packzeros after upper()' );
+    NetAddr::IP::InetBase::lower();
+    is( packzeros($input), '2001:db8::a:b', 'packzeros after lower()' );
+    NetAddr::IP::InetBase::upper();
+    is(
+        NetAddr::IP::InetBase::inet_ntop(
+            NetAddr::IP::InetBase::AF_INET6(),
+            NetAddr::IP::InetBase::ipv6_aton($input)
+        ),
+        '2001:db8::a:b',
+        'inet_ntop after upper()'
+    );
+};
 
 done_testing;
