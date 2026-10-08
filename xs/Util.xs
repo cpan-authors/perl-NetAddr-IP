@@ -371,10 +371,10 @@ _bcdn2bin(void * bp, n128 * ap128, n128 * cp128, int len)
 /*	convert a 128 bit number string to a bcd number string
 	returns the length of the bcd string === 20
  */
-int
+static int
 _bin2bcd (unsigned char * binary, BCD * n)
 {
-   register U32 tmp, add3, msk8, bcd8, carry = 0;
+  U32 tmp, add3, msk8, bcd8, carry = 0;
   U32 word;
   unsigned char binmsk = 0;
   int c = 0,i, j, p;
