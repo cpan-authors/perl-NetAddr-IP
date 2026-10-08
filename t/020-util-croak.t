@@ -20,7 +20,9 @@ use NetAddr::IP::Util qw(
   ipv6_aton
   ipv6_n2x
   ipv6to4
+  isAnyIPv4
   isIPv4
+  isNewIPv4
   mask4to6
   maskanyto6
   notcontiguous
@@ -88,6 +90,23 @@ like( dies { hasbits('123') }, qr/Bad/, 'hasbits dies on bad length' );
 
 like( dies { isIPv4('12345678901234567') },
     qr/Bad/, 'isIPv4 dies on bad length' );
+
+# the message names the function the caller used, not the caller's own sub
+like(
+    dies { isIPv4('12345678901234567') },
+    qr/^Bad arg length for NetAddr::IP::InetBase::isIPv4, length is 136,/,
+    'isIPv4 names itself when called from a sub'
+);
+like(
+    dies { isNewIPv4('12345678901234567') },
+    qr/^Bad arg length for NetAddr::IP::InetBase::isNewIPv4, length is 136,/,
+    'isNewIPv4 names itself, not the isIPv4 it calls'
+);
+like(
+    dies { isAnyIPv4('12345678901234567') },
+    qr/^Bad arg length for NetAddr::IP::InetBase::isAnyIPv4, length is 136,/,
+    'isAnyIPv4 names itself, not the isIPv4 it calls'
+);
 
 ## add128 – bad vector string length
 
