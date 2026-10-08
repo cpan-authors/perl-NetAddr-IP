@@ -16,6 +16,9 @@ GetOptions(
     },
 );
 
+# runtime minimum from dist.ini; the generated Makefile.PL otherwise declares 5.010
+my $min_perl_version = '5.014';
+
 print STDERR "building for $^O\n";
 
 # pure Perl by default on Windows, Cygwin, macOS and DOS, unless --xs is given
@@ -111,11 +114,11 @@ Returns true if NOT PurePerl mode, else false
 close F;
 
 #
-# Set up extra WriteMakefile args for XS build
+# Set up extra WriteMakefile args, and the XS ones for an XS build
 #
-our @mm_args;
+our @mm_args = (MIN_PERL_VERSION => $min_perl_version);
 if ($useXS) {
-    @mm_args = (
+    push @mm_args, (
         NAME   => 'NetAddr::IP::Util',
         XS     => { 'xs/Util.xs' => 'lib/NetAddr/IP/Util.c' },
         C      => ['lib/NetAddr/IP/Util.c'],
@@ -129,35 +132,13 @@ if ($useXS) {
 # make clean removes the file Makefile.PL writes and the XS build's output
 push @mm_args, clean => { FILES => join q{ }, $util_is_path, @xs_outputs };
 
+# the first compiler that builds and links an empty C program, or undef
 sub _test_cc {
-    print "Testing if you have a C compiler and the needed header files....\n";
-
-    unless (open(F, ">compile.c")) {
-        warn "Cannot write compile.c, skipping test compilation and installing pure Perl version.\n";
-        return 0;
+    print "Testing for a working C compiler....\n";
+    require ExtUtils::CBuilder;
+    foreach my $cc (grep { defined && length } $ENV{CC}, $Config{cc}, $Config{ccname}) {
+        local $ENV{CC} = $cc;    # CBuilder reads the compiler from CC ahead of its config
+        return $cc if ExtUtils::CBuilder->new(quiet => 1)->have_compiler;
     }
-
-    my $CC;
-    foreach $CC (($ENV{CC}, $Config{cc}, $Config{ccname})) {
-        next unless $CC;
-        my $command = qq|$CC compile.c -o compile.output|;
-
-        print F <<'EOF';
-int main() { return 0; }
-EOF
-
-        close(F) or return 0;
-
-        print STDERR $command, "\n";
-
-        my $rv = system($command);
-
-        foreach my $file (glob('compile*')) {
-            unlink($file) || warn "Could not delete $file: $!\n";
-        }
-        if ($rv == 0) {
-            return $CC;
-        }
-    }
-    return undef;
+    return;
 }
