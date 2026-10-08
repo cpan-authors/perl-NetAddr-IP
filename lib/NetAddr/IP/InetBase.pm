@@ -140,10 +140,8 @@ BEGIN {
     $n2d_format = "%x:%x:%x:%x:%x:%x:%d.%d.%d.%d";
 }
 
-my $case = 0;    # default lower case
-
-sub upper { $n2x_format = uc($n2x_format); $n2d_format = uc($n2d_format); $case = 1; }
-sub lower { $n2x_format = lc($n2x_format); $n2d_format = lc($n2d_format); $case = 0; }
+sub upper { $n2x_format = uc($n2x_format); $n2d_format = uc($n2d_format); }
+sub lower { $n2x_format = lc($n2x_format); $n2d_format = lc($n2d_format); }
 
 sub ipv6_n2x {
     die sprintf('Bad arg length for \'ipv6_n2x\', length is %d should be %d', length($_[0]), $V6_PACKED_BYTES)
@@ -560,17 +558,23 @@ sub _inet_ntop {
         inet_ntoa($naddr);
     }
     else {
-        return ($case)
-        ? lc packzeros(ipv6_n2x($naddr))
-        : _packzeros(ipv6_n2x($naddr));
+        return _packzeros(ipv6_n2x($naddr));
     }
 }
 
 =item $hex_text = packzeros($hex_text);
 
-This function optimizes and rfc 1884 IPv6 hex address to reduce the number of
-long strings of zero bits as specified in rfc 1884, 2.2 (2) by substituting
-B<::> for the first occurrence of the longest string of zeros in the address.
+Shortens an eight-group IPv6 hex address by substituting B<::> for the
+longest run of zero groups, per RFC 5952 s4.2.1.  Where two runs are
+equally long the first is shortened, s4.2.3, and a run of one zero group
+is never shortened at all, s4.2.2.  The result is always lowercase,
+RFC 5952 s4.3, whatever the case setting.
+
+  print packzeros('0:0:0:0:0:ffff:c000:201');   # ::ffff:c000:201
+  print packzeros('2001:db8:0:1:1:1:1:1');      # 2001:db8:0:1:1:1:1:1
+  print packzeros('2001:db8:0:0:1:0:0:1');      # 2001:db8::1:0:0:1
+  print packzeros('2001:db8:0:1:1:0:0:1');      # 2001:db8:0:1:1::1
+  print packzeros('2001:0DB8:0:1:2:3:4:5');     # 2001:db8:0:1:2:3:4:5
 
 =cut
 
@@ -617,9 +621,7 @@ sub _packzeros {
         $x6 = substr($x6, 1,-1);            # remove leading & trailing ':'
     }
     $x6 .= $d;                    # append digits if any
-    return $case
-        ? uc $x6
-        : $x6;
+    return $x6;                   # lowercase whatever the case setting, RFC 5952 s4.3
 }
 
 =back
@@ -819,9 +821,10 @@ everyone:
 Whether uppercase or lowercase should be the default, and whether the
 setting should be process-wide at all, is an open question: see GH#7.
 
-Two functions ignore the setting entirely and are always lowercase, since
-they mirror the platform's C<inet_ntop>: C<ipv6_ntoa> and
-C<inet_ntop>.  Which of them you get depends on Socket6: see below.
+Three functions ignore the setting entirely and are always lowercase:
+C<packzeros>, which follows RFC 5952 s4.3, and C<ipv6_ntoa> and
+C<inet_ntop>, which mirror the platform's C<inet_ntop>.  Which version of
+those two you get depends on Socket6: see below.
 
 =head1 Socket6 substitution
 
