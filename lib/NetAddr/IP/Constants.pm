@@ -83,14 +83,18 @@ behaviour, not just the caller's view of it.
 
 An C<our> variable of the same name in the importing package is
 replaced by the import, and a lexical C<my> variable of that name hides
-it.  The library's own modules import these names the same way, so a
-reassignment made in C<NetAddr::IP::InetBase> or C<NetAddr::IP::Util>
-reaches the code that reads them.  After C<$IPV6_BITS = 999> in
-C<NetAddr::IP::InetBase>, the length error from C<isIPv4> reads
-C<should be 999> on both builds; after the same in
-C<NetAddr::IP::Util>, so does the one from C<hasbits> in a pure Perl
-build, while the XS build compiles the length in and keeps its own.
-Overriding a constant is reachable but unsupported.
+it.  Every module in the distribution that reads one of these names
+imports it the same way, so a reassignment through any imported name, or
+through the full name in NetAddr::IP::Constants, reaches them all.  After
+C<$IPV6_BITS = 999>, the length error from C<isIPv4> reads
+C<should be 999> on both builds, and so does the one from C<hasbits> in a
+pure Perl build, while the XS functions compile their lengths in and keep
+their own.  The objects' own arithmetic breaks too:
+C<< NetAddr::IP->new('2001:db8::/64')->masklen >> then dies in
+C<shiftleft>.  The NetAddr::IP::Util module imports only
+C<$V4_PACKED_BYTES> and C<$V6_PACKED_BYTES>, so assigning
+C<$NetAddr::IP::Util::IPV6_BITS> changes nothing.  Overriding a constant
+is reachable but unsupported.
 
 =head1 CONSTANTS
 
