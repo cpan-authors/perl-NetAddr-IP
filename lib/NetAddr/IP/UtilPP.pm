@@ -58,9 +58,19 @@ sub _callersub {
 =head1 SYNOPSIS
 
   use NetAddr::IP::UtilPP qw(
-    hasbits shiftleft addconst add128 sub128 notcontiguous
-    ipv4to6 mask4to6 ipanyto6 maskanyto6 ipv6to4
-    bin2bcd bcd2bin
+    hasbits
+    shiftleft
+    addconst
+    add128
+    sub128
+    notcontiguous
+    ipv4to6
+    mask4to6
+    ipanyto6
+    maskanyto6
+    ipv6to4
+    bin2bcd
+    bcd2bin
   );
   use NetAddr::IP::InetBase qw(inet_aton ipv6_aton);
 
@@ -74,8 +84,8 @@ sub _callersub {
   $n          = 8;
 
   # the family test and the shift
-  $rv         = hasbits($bits128);        # true if any bit is set
-  $bitsXn     = shiftleft($bits128, $n);  # 8 bits left; no $n returns the input
+  $rv         = hasbits($bits128);         # true if any bit is set
+  $bitsXn     = shiftleft($bits128, $n);   # 8 bits left; no $n returns the input
 
   # arithmetic, carry in scalar context and (carry, result) in list
   $carry      = addconst($bits128, $signed_32bit);
@@ -86,9 +96,9 @@ sub _callersub {
   ($spurious, $cidr) = notcontiguous($mask128);
 
   # widening and narrowing
-  $ipv6naddr  = ipv4to6($netaddr);        # ::d.d.d.d
-  $ipv6naddr  = ipanyto6($netaddr);       # either family in, 128 bits out
-  $netaddr    = ipv6to4($ipv6naddr);      # low 32 bits
+  $ipv6naddr  = ipv4to6($netaddr);         # ::d.d.d.d
+  $ipv6naddr  = ipanyto6($netaddr);        # either family in, 128 bits out
+  $netaddr    = ipv6to4($ipv6naddr);       # low 32 bits
 
   # decimal text
   $bcdtext    = bin2bcd($bits128);
