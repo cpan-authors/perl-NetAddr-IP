@@ -34,8 +34,8 @@ Revision history for Perl extension NetAddr::IP
     wrap; the only fault in the original test was $ip-copy(), which is not
     Perl. No code outside the examples changes.
 
-    Fix GH#111: Build the XS by default where a compiler works, as 4.079
-    did, and drop the checkout Makefile.PL. Three edits in 4f61b57 combined
+Fix GH#111: Build XS by default where a compiler works, and delete the
+    checkout Makefile.PL. Three edits in 4f61b57 combined
     to disable the compiler test: $useXS was initialised to 0 rather than left
     undefined, which also made the new "!defined $useXS" test in the Windows
     rule permanently false; the probe condition became "if ($useXS)" rather
@@ -83,7 +83,7 @@ Revision history for Perl extension NetAddr::IP
     All three are generated, and in a pure Perl tree naming absent files costs
     nothing.
 
-    Fix GH#114: The XS build had not compiled since 6d38292, so CI never
+    Fix GH#114: The XS build had not compiled since GH#106, so CI never
     noticed: its Linux XS job builds pure Perl, see GH#111. The file carried
     two definitions of _num_arg and two of have128 with no body. It was
     missing _128x10plusbcd, which _bcdn2bin still called, and the unused
@@ -109,16 +109,16 @@ Revision history for Perl extension NetAddr::IP
     the Makefile.PL header, and the reason the module has historically given
     for building pure Perl on Windows.
 
-    Fix GH#102: Four XS helpers read the caller's packed address as 32-bit
-    words through a cast of the Perl string buffer. That is undefined
+    Fix GH#102: Four helpers in xs/Util.xs read the caller's packed address as
+    32-bit words through a cast of the Perl string buffer. That is undefined
     behaviour in C whenever the buffer is not 4-byte aligned, and Perl hands
     the XSUBs unaligned buffers in ordinary use. A string whose leading bytes
     were removed in place keeps its allocation and moves its start. On x86 and
     arm64 the loads still give the right answer, which is why nothing has
     failed; on hardware that traps misaligned loads, SPARC above all, the
     process dies with SIGBUS. The fix copies the bytes into local words with
-    memcpy, which compiles to the same instructions where unaligned loads
-    are cheap.
+memcpy, which compiles to the same instructions where unaligned loads are
+    cheap.
 
     Fix GH#7: Document that uppercase is the effective default, not lowercase.
     InetBase said "This module defaults to lowercase", which holds only when
