@@ -849,7 +849,7 @@ An IPv4 object and an IPv6 object never contain each other, even when
 the IPv6 address is the IPv4 address in C<::a.b.c.d> or C<::ffff:a.b.c.d>
 form.
 
-=item C-E<gt>is_rfc1918()>
+=item C<-E<gt>is_rfc1918()>
 
 Returns true when C<$me> is an RFC 1918 address.
 
