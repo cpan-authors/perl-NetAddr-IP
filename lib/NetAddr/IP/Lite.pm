@@ -1462,7 +1462,7 @@ sub within ($$) {
 	? 1 : 0;
 }
 
-=item C-E<gt>is_rfc1918()>
+=item C<-E<gt>is_rfc1918()>
 
 Returns true when C<$me> is an RFC 1918 address.
 
