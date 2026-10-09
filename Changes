@@ -2,6 +2,84 @@ Revision history for Perl extension NetAddr::IP
 
 {{$NEXT}}
 
+    Narrow what canon() claims to follow, and document what it does with
+    an IPv4 address in the low 32 bits (GH#98). The POD said ipV6 output
+    is "as per RFC5952", which overclaims. Sections 4.1 to 4.3 hold:
+    leading zeros dropped, the longest run of zero groups shortened to
+    ::, the first of two equal runs shortened, lowercase, and canon is
+    the lower case of short() on every address tried. Section 5, the
+    mixed form for an embedded IPv4 address, is not applied:
+
+      canon ->new('::ffff:192.0.2.1')   ::ffff:c000:201
+      canon ->new6FFFF('192.0.2.1')     ::ffff:c000:201
+      canon ->new6('1.2.3.4')           ::102:304
+
+    Deferred to a future decision, GH#98, and this entry takes neither
+    path. Mixed notation for the mapped prefix alone is the narrowest
+    reading of section 5, the one prefix that is both well known and
+    current, and is what Python does; the test is isNewIPv4, which is
+    what distinguishes the mapped prefix from the compatible one, since
+    isIPv4 is also true of ::1 and its mixed form would be ::0.0.0.1.
+    It would change canon for mapped addresses and nothing else, leave
+    addr, short, full and stringification in hex since none of them
+    claims the RFC, and stop canon and short agreeing for those
+    addresses, which the POD would then have to say. Mixed notation for
+    the compatible prefix as well would agree with glibc, and therefore
+    with ipv6_ntoa where Socket6 binds libc, but it would make canon
+    stop agreeing with the ::102:304 that new6 documents, and RFC 4291
+    deprecates the form. Either way t/114-canon.t gains the mapped cases
+    and keeps ::1 and :: unchanged, and anyone comparing stored canon
+    strings of mapped addresses sees a new value, so this belongs in the
+    series that already changed re, re6 and new(undef).
+
+    A comment at canon() records the section 5 omission where it happens
+    and points at GH#98.
+
+    Document that ipv6_ntoa and inet_ntop render an address with an IPv4
+    address in the low 32 bits differently depending on Socket6
+    (GH#99). inet_ntop is bound to the platform's libc when Socket6 is
+    installed and to the module's own _inet_ntop otherwise, and Socket6
+    is a recommendation rather than a requirement. Two hosts differing
+    only in that one optional module therefore render
+    ::ffff:192.0.2.1 as ::ffff:192.0.2.1 and as ::ffff:c000:201. The
+    POD said these functions "come from the Socket6 library if it is
+    present on this host" without saying what follows from it.
+
+    The table now in the POD is measured, not reasoned. Over 8,040
+    addresses, a structured set plus random ones weighted towards zero
+    groups, every disagreement between libc and the fallback fell in the
+    mapped prefix ::ffff:0:0/96 or the deprecated compatible prefix
+    ::/96, and nowhere else. Zero run compression, which of two equal
+    runs is shortened, single zero groups, leading zeros and case agree
+    throughout, including on 2001:0:0:1:0:0:0:1, where both shorten the
+    second run.
+
+    Also correct "takes and IP address" to "an" in the inet_ntop entry.
+
+    POD only. No method of NetAddr::IP or NetAddr::IP::Lite calls either
+    function; stringification goes through ipv6_n2x and packzeros, which
+    are pure Perl on every host.
+
+    Deferred to a future decision, GH#99. Two ways out, and this entry
+    takes neither. Bind inet_ntop to the module's own implementation
+    always, and teach the fallback the mixed form for the mapped prefix.
+    That makes the text the same on every host, defined by this module
+    rather than by whichever libc is underneath, and stops a libc
+    rendering it differently from breaking the suite, which is what GH#33
+    was. The cost is that on a host with Socket6 today ::192.0.2.1 comes
+    back as ::c000:201, so it moves output for existing callers. Or keep
+    libc and teach the fallback to match, which moves nothing today but
+    leaves the text defined by the host's libc, leaves the GH#33 class of
+    failure in place, and forces the compatible prefix to glibc's
+    rendering. That is the opposite of Path B of GH#98, so canon and
+    ipv6_ntoa would disagree on ::192.0.2.1 unless GH#98 takes the same
+    path. Whichever is chosen, the four tests that pin these functions
+    should gain the mapped and compatible cases with one expected value
+    each, true with and without Socket6.
+
+    A comment at the fallback binding in InetBase.pm now records the
+    divergence where the choice is made, and points at GH#99 and GH#21.
+
     Drop docs/rfc1884.txt (GH#97). The full text of RFC 1884, "IP
     Version 6 Addressing Architecture", December 1995, shipped with
     4.001 in August 2006 and moved to docs/ by 4.004 a fortnight
