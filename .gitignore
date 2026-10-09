@@ -1,5 +1,6 @@
 /blib/
 /.build/
+/NetAddr-IP-*
 _build/
 cover_db/
 inc/
@@ -19,6 +20,7 @@ nytprof.out
 *.bs
 /_eumm/
 PLAN
+PLAN.md
 xs/config.h
 xs/config.log
 xs/config.status

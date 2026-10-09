@@ -1,18 +1,19 @@
-#!/usr/bin/perl
-package NetAddr::IP::UtilPP;
+#!/bin/false
+# ABSTRACT: Pure perl implementations of IPv4 and IPv6 address utilities
+# PODNAME: NetAddr::IP::UtilPP
 
 use strict;
+
+package NetAddr::IP::UtilPP;
 #use diagnostics;
 #use lib qw(blib lib);
 
 use AutoLoader qw(AUTOLOAD);
-use vars qw($VERSION @EXPORT_OK @ISA %EXPORT_TAGS);
+use vars qw(@EXPORT_OK @ISA %EXPORT_TAGS);
 require Exporter;
 
 
 @ISA = qw(Exporter);
-
-$VERSION = do { my @r = (q$Revision: 1.9 $ =~ /\d+/g); sprintf "%d."."%02d" x $#r, @r };
 
 @EXPORT_OK = qw(
 	hasbits
@@ -475,7 +476,6 @@ sub bcd2bin {
   &_bcd2bin;
 }
 
-=pod
 
 =back
 
