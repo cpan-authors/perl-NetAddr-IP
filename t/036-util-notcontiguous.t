@@ -39,9 +39,9 @@ for ( my $i = 0 ; $i < @num ; $i += 3 ) {
     my $xspur = $num[ $i + 2 ];
     my ( $spur, $cidr ) = notcontiguous($bstr);
 
-    is( $cidr, $xcidr, "cidr for $num[$i]" );
-    $spur = 1 if $spur;
-    is( $spur, $xspur, "spur for $num[$i]" );
+    is( $cidr,                       $xcidr, "cidr for $num[$i]" );
+    is( $spur,                       $xspur, "spur for $num[$i]" );
+    is( scalar notcontiguous($bstr), $xspur, "scalar spur for $num[$i]" );
 }
 
 done_testing;
