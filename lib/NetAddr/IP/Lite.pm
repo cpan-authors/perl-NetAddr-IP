@@ -1,9 +1,12 @@
-#!/usr/bin/perl
+#!/bin/false
+# ABSTRACT: Manages IPv4 and IPv6 addresses and subnets (lightweight)
+# PODNAME: NetAddr::IP::Lite
+
+use strict;
 
 package NetAddr::IP::Lite;
 
 use Carp;
-use strict;
 #use diagnostics;
 #use warnings;
 use NetAddr::IP::InetBase qw(
@@ -14,7 +17,7 @@ use NetAddr::IP::InetBase qw(
 	ipv6_aton
 	ipv6_n2x
 	fillIPv4
-);	
+);
 use NetAddr::IP::Util qw(
 	addconst
 	sub128
@@ -30,9 +33,7 @@ use NetAddr::IP::Util qw(
 	havegethostbyname2
 );
 
-use vars qw(@ISA @EXPORT_OK $VERSION $Accept_Binary_IP $Old_nth $NoFQDN $AUTOLOAD *Zero);
-
-$VERSION = do { my @r = (q$Revision: 1.57 $ =~ /\d+/g); sprintf "%d."."%02d" x $#r, @r };
+use vars qw(@ISA @EXPORT_OK $Accept_Binary_IP $Old_nth $NoFQDN $AUTOLOAD *Zero);
 
 require Exporter;
 
@@ -48,7 +49,6 @@ $Accept_Binary_IP = 0;
 $Old_nth = 0;
 *Zero = \&Zeros;
 
-=pod
 
 =encoding UTF-8
 
@@ -294,7 +294,6 @@ sub comp_addr_mask {
 #  return hasbits($rv) ? 1 : 0;
 #}
 
-=pod
 
 =over
 
@@ -501,7 +500,6 @@ sub _new ($$$) {
   return bless $self, $class;
 }
 
-=pod
 
 =back
 
@@ -526,8 +524,8 @@ sub _new ($$$) {
 =item C<-E<gt>new_cis6("$addr $mask)>
 
 The first three methods create a new address with the supplied address in
-C<$addr> and an optional netmask C<$mask>, which can be omitted to get 
-a /32 or /128 netmask for IPv4 / IPv6 addresses respectively. 
+C<$addr> and an optional netmask C<$mask>, which can be omitted to get
+a /32 or /128 netmask for IPv4 / IPv6 addresses respectively.
 
 new6FFFF specifically returns an IPv4 address in IPv6 format according to RFC4291
 
@@ -570,7 +568,7 @@ if the format would suggest otherwise.
 C<$addr> can be almost anything that can be resolved to an IP address
 in all the notations I have seen over time. It can optionally contain
 the mask in CIDR notation. If the OPTIONAL perl module Socket6 is
-available in the local library it will autoload and ipV6 host6 
+available in the local library it will autoload and ipV6 host6
 names will be resolved as well as ipV4 hostnames.
 
 B<prefix> notation is understood, with the limitation that the range
@@ -901,7 +899,7 @@ sub _xnew($$;$$) {
 	  $mask = Ones;
 	} else {
 	  $mask = bcd2bin($mask);
-	  $mask |= $_v4mask;			# v4 always 
+	  $mask |= $_v4mask;			# v4 always
 	}
       } else {					# also V4
 	$mask = bcd2bin($mask);
@@ -1493,9 +1491,9 @@ addresses in the network.
   NetAddr::IP->new('10/30')->nth(1) == 10.0.0.2/30
   NetAddr::IP->new('10/30')->nth(2) == undef
 
-Note that a /32 net always has 1 usable address while a /31 has exactly 
+Note that a /32 net always has 1 usable address while a /31 has exactly
 two usable addresses for point-to-point addressing. The first
-index (0) returns the address immediately following the network address 
+index (0) returns the address immediately following the network address
 except for a /31 or /127 when it return the network address.
 
 =cut
@@ -1525,11 +1523,11 @@ a /31 and /127 with return a net B<num> value of 2 instead of 0 (zero)
 for point-to-point networks.
 
 Version 4.00 of NetAddr::IP and version 1.00 of NetAddr::IP::Lite
-return the number of usable IP addresses within the subnet, 
+return the number of usable IP addresses within the subnet,
 not counting the broadcast or network address.
 
-Previous versions worked only for ipV4 addresses, returned a    
-maximum span of 2**32 and returned the number of IP addresses 
+Previous versions worked only for ipV4 addresses, returned a
+maximum span of 2**32 and returned the number of IP addresses
 not counting the broadcast address.
 	(one greater than the new behavior)
 
@@ -1539,16 +1537,16 @@ To use the old behavior for C<-E<gt>nth($index)> and C<-E<gt>num()>:
 
 WARNING:
 
-NetAddr::IP will calculate and return a numeric string for network 
+NetAddr::IP will calculate and return a numeric string for network
 ranges as large as 2**128. These values are TEXT strings and perl
 can treat them as integers for numeric calculations.
 
-Perl on 32 bit platforms only handles integer numbers up to 2**32 
+Perl on 32 bit platforms only handles integer numbers up to 2**32
 and on 64 bit platforms to 2**64.
 
 If you wish to manipulate numeric strings returned by NetAddr::IP
-that are larger than 2**32 or 2**64, respectively,  you must load 
-additional modules such as Math::BigInt, bignum or some similar 
+that are larger than 2**32 or 2**64, respectively,  you must load
+additional modules such as Math::BigInt, bignum or some similar
 package to do the integer math.
 
 =cut
@@ -1585,7 +1583,6 @@ sub num ($) {
 #  return $net[3];
 #}
 
-=pod
 
 =back
 
@@ -1629,52 +1626,6 @@ sub import {
 	:upper
 	:lower
 	:nofqdn
-
-=head1 AUTHORS
-
-Luis E. Muñoz E<lt>luismunoz@cpan.orgE<gt>,
-Michael Robinton E<lt>michael@bizsystems.comE<gt>
-
-=head1 WARRANTY
-
-This software comes with the  same warranty as perl itself (ie, none),
-so by using it you accept any and all the liability.
-
-=head1 COPYRIGHT
-
- This software is (c) Luis E. Muñoz, 1999 - 2005
- and (c) Michael Robinton, 2006 - 2014.
-
-All rights reserved.
-
-This program is free software; you can redistribute it and/or modify
-it under the terms of either:
-
-  a) the GNU General Public License as published by the Free
-  Software Foundation; either version 2, or (at your option) any
-  later version, or
-
-  b) the "Artistic License" which comes with this distribution.
-
-This program is distributed in the hope that it will be useful,
-but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See either
-the GNU General Public License or the Artistic License for more details.
-
-You should have received a copy of the Artistic License with this
-distribution, in the file named "Artistic".  If not, I'll be glad to provide
-one.
-
-You should also have received a copy of the GNU General Public License
-along with this program in the file named "Copying". If not, write to the
-
-        Free Software Foundation, Inc.,
-        51 Franklin Street, Fifth Floor
-        Boston, MA 02110-1301 USA
-
-or visit their web page on the internet at:
-
-        http://www.gnu.org/copyleft/gpl.html.
 
 =head1 SEE ALSO
 

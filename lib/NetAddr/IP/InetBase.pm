@@ -1,17 +1,19 @@
-#!/usr/bin/perl
-package NetAddr::IP::InetBase;
+#!/bin/false
+# ABSTRACT: IPv4 and IPv6 address parsing and formatting utilities
+# PODNAME: NetAddr::IP::InetBase
 
 use strict;
+
+package NetAddr::IP::InetBase;
+
 #use diagnostics;
 #use lib qw(blib lib);
 
-use vars qw($VERSION @EXPORT_OK @ISA %EXPORT_TAGS $Mode);
+use vars qw(@EXPORT_OK @ISA %EXPORT_TAGS $Mode);
 use AutoLoader qw(AUTOLOAD);
 require Exporter;
 
 @ISA = qw(Exporter);
-
-$VERSION = do { my @r = (q$Revision: 0.08 $ =~ /\d+/g); sprintf "%d."."%02d" x $#r, @r };
 
 @EXPORT_OK = qw(
 	inet_aton
@@ -178,17 +180,17 @@ sub fillIPv4 {
 #      return pack('C4',$1,$2,$3,$4);
 #      $host = ($1 << 24) + ($2 << 16) + ($3 << 8) + $4;
     } elsif (defined $3) {
-      return undef unless  
+      return undef unless
         $1 >= 0 && $1 < 256 &&
         $2 >= 0 && $2 < 256 &&
-        $3 >= 0 && $3 < 256;  
+        $3 >= 0 && $3 < 256;
       $host = $1.'.'.$2.'.0.'.$3
 #      return pack('C4',$1,$2,0,$3);
 #      $host = ($1 << 24) + ($2 << 16) + $3;
     } elsif (defined $2) {
-      return undef unless  
+      return undef unless
         $1 >= 0 && $1 < 256 &&
-        $2 >= 0 && $2 < 256;  
+        $2 >= 0 && $2 < 256;
       $host = $1.'.0.0.'.$2;
 #      return pack('C4',$1,0,0,$2);
 #      $host = ($1 << 24) + $2;
@@ -200,7 +202,7 @@ sub fillIPv4 {
 #    return pack('N',$host);
   }
   $host;
-} 	
+}
 
 sub inet_aton {
   my $host = fillIPv4($_[0]);
@@ -220,16 +222,16 @@ sub inet_aton {
 #      return pack('C4',$1,$2,$3,$4);
 ##      $host = ($1 << 24) + ($2 << 16) + ($3 << 8) + $4;
 #    } elsif (defined $3) {
-#      return undef unless  
+#      return undef unless
 #        $1 >= 0 && $1 < 256 &&
 #        $2 >= 0 && $2 < 256 &&
-#        $3 >= 0 && $3 < 256;  
+#        $3 >= 0 && $3 < 256;
 #      return pack('C4',$1,$2,0,$3);
 ##      $host = ($1 << 24) + ($2 << 16) + $3;
 #    } elsif (defined $2) {
-#      return undef unless  
+#      return undef unless
 #        $1 >= 0 && $1 < 256 &&
-#        $2 >= 0 && $2 < 256;  
+#        $2 >= 0 && $2 < 256;
 #      return pack('C4',$1,0,0,$2);
 ##      $host = ($1 << 24) + $2;
 #    } else {
@@ -239,7 +241,7 @@ sub inet_aton {
 ##    return pack('N',$host);
 #  }
 #  scalar gethostbyname($host);
-#} 	
+#}
 
 my $_zero = pack('L4',0,0,0,0);
 my $_ipv4mask = pack('L4',0xffffffff,0xffffffff,0xffffffff,0);
@@ -352,7 +354,7 @@ Un-tar the distribution in an appropriate directory and type:
 
 =head1 DESCRIPTION
 
-B<NetAddr::IP::InetBase> provides a suite network of conversion functions 
+B<NetAddr::IP::InetBase> provides a suite network of conversion functions
 written in pure Perl for converting both IPv4 and IPv6 addresses to
 and from network address format and text format.
 
@@ -562,7 +564,7 @@ sub _inet_pton {
 =item * $text_addr = inet_ntop($AF_family,$netaddr);
 
 This function takes and IP address in binary format and converts it into
-text format. The type of IP address conversion is controlled by the FAMILY 
+text format. The type of IP address conversion is controlled by the FAMILY
 argument.
 
 NOTE: inet_ntop ALWAYS returns lowercase characters.
@@ -654,7 +656,7 @@ portion of the 128 bit string and false otherwise.
   i.e.	the address must be of the form - ::d.d.d.d
 
 Note: this is an old and deprecated ipV4 compatible ipV6 address
-	
+
 =item * $rv = isNewIPv4($bits128);
 
 This function return true if the IPv6 128 bit string is of the form
@@ -682,11 +684,11 @@ the TAG :upper. i.e.
 
 =item * $constant = AF_INET;
 
-This function returns the system value for AF_INET. 
+This function returns the system value for AF_INET.
 
 =item * $constant = AF_INET6;
 
-AF_INET6 is sometimes present in the Socket library and always present in the Socket6 library. When the Socket 
+AF_INET6 is sometimes present in the Socket library and always present in the Socket6 library. When the Socket
 library does not contain AF_INET6 and when Socket6 is not present, a place holder value is C<guessed> based on
 the underlying host operating system. See B<fake_AF_INET6> below.
 
@@ -701,7 +703,7 @@ value based on name of the host operating system.
 =item * $ip_filled = fillIPv4($shortIP);
 
 This function converts IPv4 addresses of the form 127.1 to the long form
-127.0.0.1 
+127.0.0.1
 
 If the function is passed an argument that does not match the form of an IP
 address, the original argument is returned. i.e. pass it a hostname or a
