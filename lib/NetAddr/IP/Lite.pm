@@ -1703,8 +1703,8 @@ replacement for the packed sixteen byte case.
 Accept the Cisco address and mask notation, with a space separator in
 place of a slash. C<->new()> and C<->new6()> do the same.
 
-  ->new('1.2.3.0 24')      in place of   ->new_cis('1.2.3.0 24')
-  ->new6('::1.2.3.0 120')  in place of   ->new_cis6('::1.2.3.0 120')
+  ->new('192.0.2.0 24')      in place of   ->new_cis('192.0.2.0 24')
+  ->new6('::192.0.2.0 120')  in place of   ->new_cis6('::192.0.2.0 120')
 
 =back
 

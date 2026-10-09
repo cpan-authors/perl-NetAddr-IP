@@ -121,8 +121,15 @@ else {
     else {
         $emulateAF_INET6 = 0;            # clear, have it from elsewhere
     }
-    *inet_pton = \&_inet_pton;
-    *inet_ntop = \&_inet_ntop;
+      # Without Socket6 the module's own parsers and formatters are used.
+      # They agree with libc except for an address with an IPv4 address in
+      # the low 32 bits, where libc renders mixed notation and these render
+      # hex: ::ffff:192.0.2.1 against ::ffff:c000:201. Socket6 is only
+      # recommended, so the output then depends on what is installed, and
+      # which side should win is an open question: see GH#99. _inet_pton
+      # also accepts three forms libc rejects, see GH#21.
+      *inet_pton = \&_inet_pton;
+      *inet_ntop = \&_inet_ntop;
 }
 
 } # end no warnings 'once'
@@ -399,6 +406,14 @@ text representation.
   input:    128 bit RDATA string
   returns:  ipv6 text
 
+This is inet_ntop(AF_INET6,$ipv6naddr), so for an address with an IPv4
+address embedded in the low 32 bits the text depends on whether Socket6
+is installed. See the notes on inet_ntop below.
+
+No method of NetAddr::IP or NetAddr::IP::Lite calls this function.
+Stringification goes through ipv6_n2x and packzeros, which are pure Perl
+on every host, so the difference only reaches callers of this function.
+
 =cut
 
 sub ipv6_ntoa {
@@ -520,7 +535,7 @@ sub _inet_pton {
 
 =item $text_addr = inet_ntop($AF_family,$netaddr);
 
-This function takes and IP address in binary format and converts it into
+This function takes an IP address in binary format and converts it into
 text format. The type of IP address conversion is controlled by the FAMILY
 argument.
 
@@ -528,6 +543,21 @@ NOTE: inet_ntop ALWAYS returns lowercase characters.
 
 NOTE: inet_pton, inet_ntop and AF_INET6 come from the Socket6 library if it
 is present on this host.
+
+The two sources disagree on the text for an address with an IPv4 address
+embedded in the low 32 bits, so for those addresses the output depends on
+whether Socket6 is installed:
+
+  address           with Socket6      without Socket6
+  ::ffff:192.0.2.1  ::ffff:192.0.2.1 ::ffff:c000:201
+  ::ffff:0:0        ::ffff:0.0.0.0   ::ffff:0:0
+  ::192.0.2.1       ::192.0.2.1      ::c000:201
+
+The difference is confined to the mapped prefix ::ffff:0:0/96 and the
+deprecated compatible prefix ::/96. Everything else agrees, including zero
+run compression, which of two equal runs is shortened, a single zero group,
+leading zeros and case. Socket6 is a recommendation, not a requirement, so
+the choice is made by what happens to be installed.
 
 =cut
 

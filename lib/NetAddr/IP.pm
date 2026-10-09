@@ -767,12 +767,32 @@ sub short($) {
 
 Returns the address part in canonical notation as a string.  For
 ipV4, this is dotted quad, and is the same as the return value from
-"->addr()".  For ipV6 it is as per RFC5952, and is the same as the LOWER CASE value
-returned by "->short()".
+"->addr()".  For ipV6 it follows RFC 5952 sections 4.1 to 4.3: leading
+zeros dropped, the longest run of zero groups shortened to C<::>, the
+first of two equal runs shortened, and lowercase.  It is the same as
+the LOWER CASE value returned by "->short()".
+
+RFC 5952 section 5, which covers an address with an IPv4 address embedded
+in the low 32 bits, is not applied, so those come back in hex:
+
+  canon ->new('::ffff:192.0.2.1')    ::ffff:c000:201
+  canon ->new6FFFF('192.0.2.1')      ::ffff:c000:201
+  canon ->new6('192.0.2.1')          ::c000:201
+
+glibc gives C<::ffff:192.0.2.1> for the first of those, and so does
+C<ipv6_ntoa> in L<NetAddr::IP::InetBase> on a host where Socket6 binds
+libc.  Which prefix, if any, should get the mixed form is an open
+question: see GH#98.
 
 =cut
 
 sub canon($) {
+    # RFC 5952 sections 4.1 to 4.3 only. Section 5, the mixed form for an
+    # address with an IPv4 address in the low 32 bits, is not applied, so a
+    # mapped address comes back as ::ffff:c000:201 where glibc and Python
+    # both give ::ffff:192.0.2.1. isNewIPv4, not isIPv4, is the test that
+    # would pick the mapped prefix alone, since isIPv4 is also true of ::1.
+    # Which prefix should get the mixed form is open: see GH#98.
     my $addr = $_[0]->addr;
     return $_[0]->{isv6} ? lc _compV6($addr) : $addr;
 }
@@ -1398,7 +1418,7 @@ the given subnet. Always returns an ipV6 regex.
 
 The regex matches the address written in full or with one C<::> run, with
 or without leading zeros in each group. Case is ignored. It does not match
-the dotted quad forms C<::1.2.3.4> or C<::ffff:1.2.3.4>. Anchor the regex
+the dotted quad forms C<::192.0.2.1> or C<::ffff:192.0.2.1>. Anchor the regex
 when matching a whole string:
 
   my $re = NetAddr::IP->new('2001:db8::/32')->re6;
@@ -1568,8 +1588,8 @@ C<first>, C<last>, C<nth> and C<num>. Importing it warns.
 Accept the Cisco address and mask notation, with a space separator in
 place of a slash. C<->new()> and C<->new6()> do the same.
 
-  ->new('1.2.3.0 24')      in place of   ->new_cis('1.2.3.0 24')
-  ->new6('::1.2.3.0 120')  in place of   ->new_cis6('::1.2.3.0 120')
+  ->new('192.0.2.0 24')      in place of   ->new_cis('192.0.2.0 24')
+  ->new6('::192.0.2.0 120')  in place of   ->new_cis6('::192.0.2.0 120')
 
 =back
 
