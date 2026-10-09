@@ -23,7 +23,6 @@ use NetAddr::IP::Util qw(
   isIPv4
   mask4to6
   maskanyto6
-  mode
   notcontiguous
   shiftleft
   simple_pack
@@ -476,9 +475,6 @@ for my $name ( sort keys %packed_call ) {
     my @fetches = map { tied($_)->{fetches} } $first,
       ( @args > 1 ? $second : () );
 
-    # the pure Perl functions read a packed argument two or three times
-    my $todo =
-      mode() eq 'Pure Perl' ? todo('pure Perl fetches more than once') : undef;
     is(
         \@fetches,
         [ (1) x @args ],
