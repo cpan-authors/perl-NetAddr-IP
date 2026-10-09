@@ -34,8 +34,8 @@ Revision history for Perl extension NetAddr::IP
     wrap; the only fault in the original test was $ip-copy(), which is not
     Perl. No code outside the examples changes.
 
-    Fix GH#111: Build pure Perl on every platform, including Linux, and stop
-    compiling the checkout Makefile.PL at all. Three edits in 4f61b57 combined
+    Fix GH#111: Build the XS by default where a compiler works, as 4.079
+    did, and drop the checkout Makefile.PL. Three edits in 4f61b57 combined
     to disable the compiler test: $useXS was initialised to 0 rather than left
     undefined, which also made the new "!defined $useXS" test in the Windows
     rule permanently false; the probe condition became "if ($useXS)" rather
@@ -85,31 +85,21 @@ Revision history for Perl extension NetAddr::IP
 
     Fix GH#114: The XS build had not compiled since 6d38292, so CI never
     noticed: its Linux XS job builds pure Perl, see GH#111. The file carried
-    two definitions of _num_arg and two of have128 with no body, was missing
-    _isipv4 and _128x10plusbcd that bcdn2bin still called, and used k and nv
-    in three functions that declared neither. Restored GH#106 as filed,
-    tests included: the duplicate is gone, have128 keeps its GH#102 unaligned
-    access fix, the missing helpers are back, the packed argument is read
-    with SvPVbyte while the digit text in bcd2bin and simple_pack stays SvPV,
-    and a count or constant is read before a pointer into the address is
-    taken. A fifth defect in the same area: a packed address reached through
-    get magic looked undefined, and an upgraded string was read at its
-    expanded length. _packed_ok runs the magic once and reports whether the
-    value is then defined, _packed_bytes reads the bytes without running the
-    magic again and through a downgraded copy when the argument is upgraded.
+    two definitions of _num_arg and two of have128 with no body. It was
+    missing _128x10plusbcd, which _bcdn2bin still called, and the unused
+    _isipv4. It used k and nv in comp128 and bcd2bin without declaring them,
+    and read the packed argument with SvPV rather than SvPVbyte in seven
+    functions. Restored GH#106 as filed, tests included: the duplicate is
+    gone, have128 keeps its GH#102 unaligned access fix, the missing helpers
+    are back, the packed argument is read with SvPVbyte while the digit text
+    in bcd2bin and simple_pack stays SvPV, and a count or constant is read
+    before a pointer into the address is taken. A fifth defect in the same
+    area: a packed address reached through get magic looked undefined.
+    _packed_ok runs the magic once and reports whether the value is then
+    defined, _packed_bytes reads the bytes without running the magic again
+    and through a downgraded copy when the argument is upgraded.
     SvPVbyte_nomg would do this in one call but needs perl 5.31.4, so this
     uses only calls available from 5.9.2.
-
-    Fix GH#104: Mangle the caller's packed address when reading it as 32-bit
-    words through a cast, which faults on strict-alignment hardware when the
-    string was chopped in place. Four helpers in xs/Util.xs read the caller's
-    packed address as 32-bit words through a cast. That is undefined behaviour
-    in C whenever the buffer is not 4-byte aligned, and Perl hands the XSUBs
-    unaligned buffers in ordinary use. On x86 and arm64 the loads still give
-    the right answer, which is why nothing has failed; on hardware that traps
-    misaligned loads, SPARC above all, the process dies with SIGBUS. The fix
-    copies the bytes into local words with memcpy, which compiles to the same
-    instructions where unaligned loads are cheap.
 
     Fix GH#101: Remove the autoconf/configure step. The XS build ran one of
     two autoconf scripts to write xs/config.h, and the C code takes exactly
@@ -125,32 +115,17 @@ Revision history for Perl extension NetAddr::IP
     the XSUBs unaligned buffers in ordinary use. A string whose leading bytes
     were removed in place keeps its allocation and moves its start. On x86 and
     arm64 the loads still give the right answer, which is why nothing has
-    failed; on hardware that traps misaligned loads the process dies with
-    SIGBUS. The fix copies the bytes into local words with memcpy, which
-    compiles to the same instructions where unaligned loads are cheap.
+    failed; on hardware that traps misaligned loads, SPARC above all, the
+    process dies with SIGBUS. The fix copies the bytes into local words with
+    memcpy, which compiles to the same instructions where unaligned loads
+    are cheap.
 
     Fix GH#7: Document that uppercase is the effective default, not lowercase.
-    The POD said "lowercase is the default" and "on the perls where that
-    warning is fatal the build could not start at all". No perl makes these
-    warnings fatal. The generated Makefile.PL turns them on with a plain
-    "use warnings;", so they print and the build carries on. Checked by
-    building the distribution at d88588f, the commit that still has
-    $main::begin: both warnings print, then Writing Makefile, then Result:
-    PASS. 58 test jobs in that run passed, 5.14 through 5.42. The four
-    Windows jobs failed earlier, while installing dependencies, and never ran
-    perl Makefile.PL.
-
-    Fix GH#96: make realclean left six generated files behind and the next XS
-    build skipped configure because xs/config.h already existed. Fixed by
-    restoring the clean and realclean lists that header.pl and the checkout
-    Makefile.PL had in 4.079, then GH#93 added the missing entries back.
-
-    Fix GH#95: The check for libnsl and libsocket was written to config.h by
-    configure, and the Makefile.PL copied that to LIBS. The generated
-    Makefile.PL then wrote LIBS = [-lnsl -lsocket], but the library is not
-    present on this host. MakeMaker's extliblist filtered it out, so the
-    Makefile saw LIBS = -lnsl and the build succeeded, hiding the fact that
-    libsocket was missing. Verified on a host where libsocket is present.
+    InetBase said "This module defaults to lowercase", which holds only when
+    it is loaded on its own. NetAddr::IP::Util loads it with :upper, so every
+    program that uses NetAddr::IP prints uppercase. The case setting is
+    process wide and the last import or call wins, so a lower() anywhere
+    changes what every object prints. InetBase, IP.pm and Lite.pm now say so.
 
     Fix GH#12: The :aton packed input is corrupted by lc for bytes 0x41 to
     0x5A. The _xnew() function in Lite.pm ran $ip = lc $ip; before checking
