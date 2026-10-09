@@ -1,14 +1,23 @@
 Revision history for Perl extension NetAddr::IP
 
+{{$NEXT}}
+
+    Fix coalesce to return results in deterministic address order GH#41
+    Consolidate sub-distributions into conventional Perl layout
+	Fix POD spelling mistakes
+	Swap shebang to /bin/false
+	Convert to Dist::Zilla
+	Convert unit tests to Test2
+
 4.079 Fri Mar 25 16:18:26 PDT 2016
-        correct non-suppression of leading zeros in certain instances of
-        new_no use. Thanks to "Mike Bartman (mbartman)" <mbartman@cisco.com>
-        for spotting the bug.
+    correct non-suppression of leading zeros in certain instances of
+    new_no use. Thanks to "Mike Bartman (mbartman)" <mbartman@cisco.com>
+    for spotting the bug.
 
 	put in missing code to propagate NetAddr::IP::Lite :nofqdn to IP.pm
 
-4.078 Mon Aug 17 15:35:28 PDT 2015      
-        fix typo in Util.pm 1.53 MakefilePL that cause compiler to not be
+4.078 Mon Aug 17 15:35:28 PDT 2015
+    fix typo in Util.pm 1.53 MakefilePL that cause compiler to not be
 	found at all
 
 4.077 Fri Aug 14 01:17:23 PDT 2015
@@ -18,12 +27,12 @@ Revision history for Perl extension NetAddr::IP
 	added method is_local() to Lite.pm
 	inspired by Xan Charbonne
 
-        fix Util Makefile.PL to accomodate bug in Android's sh
+    fix Util Makefile.PL to accomodate bug in Android's sh
 
 	add method full6m()
 	inspired by abraxxa@cpan.org
 
-        fix Util/Makefile.PL issue with clang compiler, bug 86831
+    fix Util/Makefile.PL issue with clang compiler, bug 86831
 
 4.075 Wed Jun 11 11:41:17 PDT 2014
 	make CPAN happy with new rev number
@@ -62,7 +71,7 @@ Revision history for Perl extension NetAddr::IP
 	update Makefile.PL in Util.pm v 1.49 to better detect 'winduhs'
 
 4.067 Sat Mar 30 12:57:20 PDT 2013
-	Improved diagnostic message for "die" with bad mask for 
+	Improved diagnostic message for "die" with bad mask for
 	hostenum, hostenumref, split, splitref, rsplit, rsplitref
 	Thanks to GENSYM@cpan.org for pointing out the need.
 
@@ -87,7 +96,7 @@ Revision history for Perl extension NetAddr::IP
 	Thank you Ben.
 
 4.061 Tue May  8 16:24:03 PDT 2012
-	fixed bug in Lite v1.44 that returned 
+	fixed bug in Lite v1.44 that returned
 	$ip->num() = 2^128 for 0.0.0.0/0
 	Thanks to Sebastian <debug@test1.org> for spotting it.
 
@@ -110,12 +119,12 @@ Revision history for Perl extension NetAddr::IP
 	Lite.pm v1.40
 	add call to InetBase::fillIPv4 to all uses of gethostbyname
 
-	break out the code in InetBase v0.05 that expands short IPv4 
-	addresses into dotquad format to account for broken BSD 
-	implementations of inet_aton and gethostbyname that do 
+	break out the code in InetBase v0.05 that expands short IPv4
+	addresses into dotquad format to account for broken BSD
+	implementations of inet_aton and gethostbyname that do
 	not recognize the short format. EXPORT this as sub 'fillIPv4'
 
-	in Util.pm v1.45, add 'fillIPv4' to calls to gethostbyname to 
+	in Util.pm v1.45, add 'fillIPv4' to calls to gethostbyname to
 	work around broken inet_aton and gethostbyname implementations
 	in certain BSD implementations
 
@@ -140,8 +149,8 @@ Revision history for Perl extension NetAddr::IP
 	not 127.0.0.0/n
 
 4.052 Tue Oct 25 16:18:38 PDT 2011
-	add test in Lite.pm v1.35 for api-version of Math::BigInt to 
-	support versions earlier than 1.70, circa Dec 2003. 
+	add test in Lite.pm v1.35 for api-version of Math::BigInt to
+	support versions earlier than 1.70, circa Dec 2003.
 	Thanks to Paul Howarth <paul@city-fan.org> for spotting that bug.
 
 4.051 Mon Oct 24 14:44:53 PDT 2011
@@ -156,7 +165,7 @@ Revision history for Perl extension NetAddr::IP
 
 4.050 Sat Oct 22 01:58:57 PDT 2011
 	In Lite/Util/lib/NetAddr/IP/Lite/Util/InetBase.pm v0.02
-	Socket6 prior to version 0.23 does not have AF_INET6 in the  
+	Socket6 prior to version 0.23 does not have AF_INET6 in the
 	EXPORT_OK array, modify InetBase.pm v0.2 to work around this.
 
 	Add support for Math::BigInt to NetAddr::IP::Lite v1.33
@@ -168,7 +177,7 @@ Revision history for Perl extension NetAddr::IP
 	bug68723, add capability to parse input of the form
 	->new6(12345,1). This should have been there but was
 	missing. Thanks to Andrei Benea for spotting this.
-	
+
 	In Util v1.41
 	add inet_pton, inet_ntop, AF_INET, AF_INET6
 
@@ -221,11 +230,11 @@ Revision history for Perl extension NetAddr::IP
 	and providing both a patch and test code
 
 4.043 Wed Apr  6 11:31:19 PDT 2011
-	Update documentation on the use of "adding constants 
+	Update documentation on the use of "adding constants
 	to an IP address".
 
 4.042 Tue Mar 22 15:26:02 PDT 2011
-	Update Lite.pm v1.27 to encompass treatment of /31 and /127 
+	Update Lite.pm v1.27 to encompass treatment of /31 and /127
 	point-to-point networks as described in RFC 3021
 
 	NOTE: for /31's and /127's
@@ -241,12 +250,12 @@ Revision history for Perl extension NetAddr::IP
 	Thanks to Todd Caine todd.caine@gmail.com for pointing this out.
 
 4.041 Tue Mar  8 15:18:16 PST 2011
-	Updated Lite.pm v1.26, "sub num" to support usable IP ranges 
+	Updated Lite.pm v1.26, "sub num" to support usable IP ranges
 	greater than 2**32
 
 	Thanks to Jan Ploski jan@plosquare.com for finding this bug
 
-4.040 Sat Feb 19 10:04:00 PST 2011     
+4.040 Sat Feb 19 10:04:00 PST 2011
 	correction to use of Util.pm package lexicals
 
 	thanks to mishikal@yahoo.com for spotting the bug and to
@@ -270,13 +279,13 @@ Revision history for Perl extension NetAddr::IP
 	add test for :lower in Lite.pm v1.23
 
 4.036 Tue Nov 16 16:28:37 PST 2010
-	In Util.pm v1.35, naip_gethostbyname modified to return undef 
+	In Util.pm v1.35, naip_gethostbyname modified to return undef
 	instead of 0 (zero) on failure
 
 	thanks to Terry Cassidy enaudishaylee@tc17.com for the bug report
 
-	In Util.pm v1.35, move sub's ipv6_n2d and ipv6_n2x to non-autosplit 
-	portion of module to eliminate warnings during autosplit of "our" 
+	In Util.pm v1.35, move sub's ipv6_n2d and ipv6_n2x to non-autosplit
+	portion of module to eliminate warnings during autosplit of "our"
 	variables
 
 	thanks to Nicholas Bamber <nicholas@periapt.co.uk>
@@ -284,11 +293,11 @@ Revision history for Perl extension NetAddr::IP
 
 	In Lite.pm v1.22, update new6 to properly classify short ipv4 notation
 	i.e. 127/8 with test for ":" rather than match for \d.\d.\d.\d
-	
-	thanks to Steve Huff (SHUFF) * shuff@cpan.org for 
+
+	thanks to Steve Huff (SHUFF) * shuff@cpan.org for
 	spotting that bug.
 
-	In Lite.pm v1.22, update t/v4-new.t for deprecated array syntax in 
+	In Lite.pm v1.22, update t/v4-new.t for deprecated array syntax in
 	perl 5.13
 	was:    qw(...stuff...)
 	is:     (qw(...stuff...))
@@ -296,7 +305,7 @@ Revision history for Perl extension NetAddr::IP
 	thanks to Todd Rinaldo <toddr@cpan.org> for reporting this
 
 4.035 Thu Oct 28 14:26:19 PDT 2010
-	fix bug in Lite v1.21 where new6 improperly assigns the mask value 
+	fix bug in Lite v1.21 where new6 improperly assigns the mask value
 	for and ipv4 address in 32 bit space instead of 128 bit space
 
 	Thanks to Mark Martinec and Steve Huff (SHUFF) * shuff@cpan.org
@@ -326,7 +335,7 @@ Revision history for Perl extension NetAddr::IP
 	NetAddr::IP::Util.pm 1.33 in its own namespace
 
 4.030  Tue Jul 20 15:32:23 PDT 2010
-	Resolve named hosts in Lite.pm using gethostbyname, followed by 
+	Resolve named hosts in Lite.pm using gethostbyname, followed by
 	gethostbyname6 to determine whether to set ipV6 flag
 
 	Thanks to Dusty Mabe <Dusty.Mabe@tekelec.com> for spotting this bug
@@ -336,12 +345,12 @@ Revision history for Perl extension NetAddr::IP
 	added support for the sub "new" to resolve host6 names
 	if the OPTIONAL perl Socket6 module is available
 
-	Thanks to "Mabe, Dusty" <Dusty.Mabe@tekelec.com> for spotting 
+	Thanks to "Mabe, Dusty" <Dusty.Mabe@tekelec.com> for spotting
 	this and suggesting a fix.
 
 4.028  Wed May 12 14:18:20 PDT 2010
 	In /Lite/Util/Util.xs v1.32,
-	changed netswap() to postincrement 
+	changed netswap() to postincrement
 	*a++ = to *a and added increment after save to mollify some
 	picky compilers that return possible undefined behavior.
 
@@ -368,7 +377,7 @@ Revision history for Perl extension NetAddr::IP
 
 4.023  Fri Jan 16 14:30:40 PST 2009
 	added the capability to set the CASE of ipV6 text return
-	values to either upper or lower. Thanks to 
+	values to either upper or lower. Thanks to
 	Rob Riepel <riepel@networking.Stanford.EDU> for developing
 	this improvement and providing a comprehensive patch
 
@@ -377,11 +386,11 @@ Revision history for Perl extension NetAddr::IP
 	set uninitialized "carry" in XS bin2bcd to zero
 
 	This insidious bug only showed up on 64 bit hosts running perl 5.6.2
-	Thanks to Oliver Paukstadt <pstadt@sourcentral.org> for taking the 
+	Thanks to Oliver Paukstadt <pstadt@sourcentral.org> for taking the
 	time to do the testing for me on his s390 system.
 
 4.021  Wed Dec 10 11:09:36 PST 2008
-	Removed test code that produces a warning about all perl versions, 
+	Removed test code that produces a warning about all perl versions,
 	OOPS!! instead of just the buggy 5.8.0 - 5.8.5 versions.
 	Thanks to paul@city-fan.org for reporting this.
 
@@ -393,7 +402,7 @@ Revision history for Perl extension NetAddr::IP
 	revised UtilPP v1.7 to work around perl 5.8.4
 	failures with certain @_ operations of goto &sub...
 	see perl bug [ 23429]. Unfortunately, perl-5.8.4 is
-	the distribution of choice for many solaris boxes  
+	the distribution of choice for many solaris boxes
 
 4.019  Sat Nov 29 15:15:30 PST 2008
 	in Lite/Util, add pure perl testing to XS build
