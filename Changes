@@ -2,6 +2,8 @@ Revision history for Perl extension NetAddr::IP
 
 {{$NEXT}}
 
+4.080_04  2026-10-09 19:50:39+11:00 Australia/Sydney (TRIAL RELEASE)
+
     Fix GH#109: The wrap check in the Util EXAMPLES compared addresses as
     strings, so text order stood in for address order. Two snippets stepped an
     address with the overloaded ++ and decided whether the host part had wrapped
