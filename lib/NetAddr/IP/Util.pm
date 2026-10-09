@@ -301,13 +301,39 @@ sub naip_gethostbyname {
 =head1 SYNOPSIS
 
   use NetAddr::IP::Util qw(
-    inet_aton inet_ntoa ipv6_aton ipv6_ntoa ipv6_n2x ipv6_n2d
-    inet_any2n inet_n2dx inet_n2ad inet_pton inet_ntop inet_4map6
-    packzeros ipv4to6 mask4to6 ipanyto6 maskanyto6 ipv6to4
-    hasbits isIPv4 isNewIPv4 isAnyIPv4
-    shiftleft addconst add128 sub128 notcontiguous
-    bin2bcd bcd2bin mode
-    AF_INET AF_INET6 naip_gethostbyname
+    inet_aton
+    inet_ntoa
+    ipv6_aton
+    ipv6_ntoa
+    ipv6_n2x
+    ipv6_n2d
+    inet_any2n
+    inet_n2dx
+    inet_n2ad
+    inet_pton
+    inet_ntop
+    inet_4map6
+    packzeros
+    ipv4to6
+    mask4to6
+    ipanyto6
+    maskanyto6
+    ipv6to4
+    hasbits
+    isIPv4
+    isNewIPv4
+    isAnyIPv4
+    shiftleft
+    addconst
+    add128
+    sub128
+    notcontiguous
+    bin2bcd
+    bcd2bin
+    mode
+    AF_INET
+    AF_INET6
+    naip_gethostbyname
   );
 
   # text to packed, and back
@@ -372,7 +398,7 @@ family tests below and C<netbroad> in L</EXAMPLES> do.
 The functions come in two implementations, XS and pure Perl, and
 C<mode()> reports which one is loaded:
 
-  print mode();      # 'CC XS' or 'Pure Perl'
+  print mode();   # 'CC XS' or 'Pure Perl'
 
 Text that is not an address is not an error.  Four functions,
 C<inet_aton>, C<ipv6_aton>, C<inet_any2n> and C<inet_pton>, return undef
@@ -537,12 +563,12 @@ equally long the first is shortened, s4.2.3, and a run of one zero group
 is never shortened at all, s4.2.2.  The result is always lowercase,
 RFC 5952 s4.3, whatever the case setting.
 
-  print packzeros('0:0:0:0:0:ffff:c000:201');  # ::ffff:c000:201
-  print packzeros('2001:db8:0:1:1:1:1:1');     # 2001:db8:0:1:1:1:1:1
-  print packzeros('2001:db8:0:0:1:0:0:1');     # 2001:db8::1:0:0:1
-  print packzeros('2001:db8:0:1:1:0:0:1');     # 2001:db8:0:1:1::1
-  print packzeros('2001:0DB8:0:1:2:3:4:5');    # 2001:db8:0:1:2:3:4:5
-  print packzeros('2001:0:0:1:0:0:0:1');       # 2001:0:0:1::1
+  print packzeros('0:0:0:0:0:ffff:c000:201');   # ::ffff:c000:201
+  print packzeros('2001:db8:0:1:1:1:1:1');      # 2001:db8:0:1:1:1:1:1
+  print packzeros('2001:db8:0:0:1:0:0:1');      # 2001:db8::1:0:0:1
+  print packzeros('2001:db8:0:1:1:0:0:1');      # 2001:db8:0:1:1::1
+  print packzeros('2001:0DB8:0:1:2:3:4:5');     # 2001:db8:0:1:2:3:4:5
+  print packzeros('2001:0:0:1:0:0:0:1');        # 2001:0:0:1::1
 
 =back
 
@@ -923,8 +949,8 @@ name, which was C<$broadcast> in the original and never declared:
   }
 
   my $nip = NetAddr::IP->new('192.0.2.9/24');
-  print ipv6_n2d((netbroad($nip))[0]), "\n";    # 0:0:0:0:0:0:192.0.2.0
-  print ipv6_n2d((netbroad($nip))[1]), "\n";    # 0:0:0:0:0:0:192.0.2.255
+  print ipv6_n2d((netbroad($nip))[0]), "\n";   # 0:0:0:0:0:0:192.0.2.0
+  print ipv6_n2d((netbroad($nip))[1]), "\n";   # 0:0:0:0:0:0:192.0.2.255
 
 Whether one address falls inside a net, using C<sub128>, whose carry is
 C<NOT borrow>:
@@ -939,8 +965,8 @@ C<NOT borrow>:
   }
 
   my $other = NetAddr::IP->new('198.51.100.1/24');
-  print within($nip, $nip), "\n";            # 1
-  print within($other, $nip), "\n";          # 0
+  print within($nip, $nip), "\n";     # 1
+  print within($other, $nip), "\n";   # 0
 
 C<addconst> stores the carry in scalar context and C<($carry, $result)>
 in list context, so wrapping a net at a boundary means taking the second
@@ -950,15 +976,15 @@ element:
   use NetAddr::IP ();
 
   my $ip = NetAddr::IP->new('192.0.2.127/26');
-  my $nextnet = 64;                           # one /26 step
+  my $nextnet = 64;         # one /26 step
 
-  my $before = $ip->copy;                     # a new object, same address
+  my $before = $ip->copy;   # a new object, same address
   $ip++;
-  if ($ip < $before) {                        # host part wrapped
+  if ($ip < $before) {      # host part wrapped
       (undef, $ip->{addr}) = addconst($ip->{addr}, $nextnet);
   }
 
-  print "$ip\n";                              # 192.0.2.128/26
+  print "$ip\n";            # 192.0.2.128/26
 
 The test hands both objects to the overloaded C<< < >>, which compares
 the addresses as 128 bit numbers.  Comparing their string forms instead

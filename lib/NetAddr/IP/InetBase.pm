@@ -255,7 +255,7 @@ sub import {
   print inet_n2dx(inet_any2n('192.0.2.1')), "\n";   # 192.0.2.1
   print fillIPv4('192.0.2'), "\n";                  # 192.0.0.2
 
-  NetAddr::IP::InetBase::lower();            # case, see IMPORT TAGS
+  NetAddr::IP::InetBase::lower();                   # case, see IMPORT TAGS
   NetAddr::IP::InetBase::upper();
 
 =head1 DESCRIPTION
@@ -845,8 +845,8 @@ When Socket6 is not installed, C<AF_INET6> is a value guessed from the
 name of the operating system, and C<fake_AF_INET6()> returns that same
 value, which is true:
 
-  print AF_INET6();          # a platform constant, or 10 here
-  print fake_AF_INET6();     # true when emulated
+  print AF_INET6();        # a platform constant, or 10 here
+  print fake_AF_INET6();   # true when emulated
 
 =head1 ADDITIONAL LICENSE
 

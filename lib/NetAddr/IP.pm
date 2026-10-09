@@ -37,11 +37,11 @@ our $_netlimit;
 
   my $ip = NetAddr::IP->new('192.0.2.1/24');
 
-  print $ip->addr, "\n";         # 192.0.2.1
-  print $ip->mask, "\n";         # 255.255.255.0
-  print $ip->network, "\n";      # 192.0.2.0/24
-  print $ip->broadcast, "\n";    # 192.0.2.255/24
-  print "$ip\n";                 # 192.0.2.1/24
+  print $ip->addr, "\n";        # 192.0.2.1
+  print $ip->mask, "\n";        # 255.255.255.0
+  print $ip->network, "\n";     # 192.0.2.0/24
+  print $ip->broadcast, "\n";   # 192.0.2.255/24
+  print "$ip\n";                # 192.0.2.1/24
 
   if ($ip->within(NetAddr::IP->new('192.0.2.0', 24))) {
       print "within the /24\n";                  # within the /24
@@ -134,11 +134,11 @@ Returns the new limit, C<2**$n>, or undef if the request was ignored.
 Anything below the default of 16 or above the maximum of 24 is ignored,
 as is a non-numeric argument:
 
-  netlimit(20);        # 1048576
-  netlimit(16);        # 65536, the default
-  netlimit(24);        # 16777216, the maximum
-  netlimit(10);        # undef, below the default
-  netlimit(25);        # undef, above the maximum
+  netlimit(20);   # 1048576
+  netlimit(16);   # 65536, the default
+  netlimit(24);   # 16777216, the maximum
+  netlimit(10);   # undef, below the default
+  netlimit(25);   # undef, above the maximum
 
 C<hostenum()> and C<hostenumref()> die with C<netlimit exceeded> past
 this limit, rather than returning a partial list.
@@ -1449,11 +1449,11 @@ Returns the number of usable addresses in the subnet: the host count,
 excluding the network and broadcast addresses.  A /31 or /127 counts as 2
 usable addresses per RFC 3021, and a /32 or /128 counts as 1:
 
-  print NetAddr::IP->new('192.0.2.0/31')->num();    # 2
-  print NetAddr::IP->new('2001:db8::/127')->num();  # 2
-  print NetAddr::IP->new('192.0.2.0/30')->num();    # 2
-  print NetAddr::IP->new('192.0.2.0/28')->num();    # 14
-  print NetAddr::IP->new('192.0.2.1/32')->num();    # 1
+  print NetAddr::IP->new('192.0.2.0/31')->num();     # 2
+  print NetAddr::IP->new('2001:db8::/127')->num();   # 2
+  print NetAddr::IP->new('192.0.2.0/30')->num();     # 2
+  print NetAddr::IP->new('192.0.2.0/28')->num();     # 14
+  print NetAddr::IP->new('192.0.2.1/32')->num();     # 1
 
 
 To use the old behavior for C<-E<gt>nth($index)> and C<-E<gt>num()>:
@@ -1826,15 +1826,15 @@ zero usable hosts in a /31 or /127 unless this tag was imported;
 C<hostenum> and C<hostenumref> now always report two, the same as
 C<first>, C<last>, C<nth> and C<num>. Importing it warns.
 
-  use NetAddr::IP qw(:rfc3021);    # no longer needed
+  use NetAddr::IP qw(:rfc3021);   # no longer needed
 
 =item C<new_cis> and C<new_cis6>
 
 Accept the Cisco address and mask notation, with a space separator in
 place of a slash. C<-E<gt>new()> and C<-E<gt>new6()> do the same.
 
-  ->new('192.0.2.0 24')      in place of   ->new_cis('192.0.2.0 24')
-  ->new6('::192.0.2.0 120')  in place of   ->new_cis6('::192.0.2.0 120')
+  ->new('192.0.2.0 24')       in place of   ->new_cis('192.0.2.0 24')
+  ->new6('::192.0.2.0 120')   in place of   ->new_cis6('::192.0.2.0 120')
 
 =back
 

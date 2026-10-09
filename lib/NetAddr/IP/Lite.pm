@@ -1176,27 +1176,27 @@ Short dotted forms change meaning when a mask argument is given, which
 is the one trap here worth writing out. On its own the short form is a
 host address; with a mask it is the network of that size:
 
-  NetAddr::IP::Lite->new('10.1');          # 10.0.0.1/32
-  NetAddr::IP::Lite->new('10.1', 8);       # 10.1.0.0/8
-  NetAddr::IP::Lite->new('10.1.2');        # 10.1.0.2/32
-  NetAddr::IP::Lite->new('10.1.2', 24);    # 10.1.2.0/24
+  NetAddr::IP::Lite->new('10.1');         # 10.0.0.1/32
+  NetAddr::IP::Lite->new('10.1', 8);      # 10.1.0.0/8
+  NetAddr::IP::Lite->new('10.1.2');       # 10.1.0.2/32
+  NetAddr::IP::Lite->new('10.1.2', 24);   # 10.1.2.0/24
 
 RFC 3986 brackets around an IPv6 literal, which is how a URI carries one:
 
-  NetAddr::IP::Lite->new('[2001:db8::1]/64');   # 2001:DB8:0:0:0:0:0:1/64
-  NetAddr::IP::Lite->new('[2001:db8::1]');      # 2001:DB8:0:0:0:0:0:1/128
+  NetAddr::IP::Lite->new('[2001:db8::1]/64');  # 2001:DB8:0:0:0:0:0:1/64
+  NetAddr::IP::Lite->new('[2001:db8::1]');     # 2001:DB8:0:0:0:0:0:1/128
 
 Brackets around an IPv4 literal are not accepted and return undef.
 
 Keywords. The set is not the same for both constructors, which is worth
 knowing before reaching for one:
 
-  NetAddr::IP::Lite->new('broadcast');      # 255.255.255.255/32
-  NetAddr::IP::Lite->new('unspecified');    # 0:0:0:0:0:0:0:0/128
-  NetAddr::IP::Lite->new('any');            # 0.0.0.0/0
-  NetAddr::IP::Lite->new('default');        # 0.0.0.0/0
-  NetAddr::IP::Lite->new('loopback');       # 127.0.0.1/8
-  NetAddr::IP::Lite->new('localhost');      # 127.0.0.1/32, via the resolver
+  NetAddr::IP::Lite->new('broadcast');     # 255.255.255.255/32
+  NetAddr::IP::Lite->new('unspecified');   # 0:0:0:0:0:0:0:0/128
+  NetAddr::IP::Lite->new('any');           # 0.0.0.0/0
+  NetAddr::IP::Lite->new('default');       # 0.0.0.0/0
+  NetAddr::IP::Lite->new('loopback');      # 127.0.0.1/8
+  NetAddr::IP::Lite->new('localhost');     # 127.0.0.1/32, via the resolver
 
 The C<broadcast> keyword is IPv4 only: C<new6('broadcast')> returns
 undef, while C<new6('unspecified')> gives an IPv6 unspecified address.
@@ -1595,10 +1595,10 @@ sub is_rfc1918 ($) {
 
 Returns true when C<$me> is a local network address.
 
-  i.e.    ipV4    127.0.0.0 - 127.255.255.255
-  or      ipV6    === ::1
-  or      ipV6    ::127.0.0.0 - ::127.255.255.255
-  or      ipV6    ::ffff:127.0.0.0 - ::ffff:127.255.255.255
+  i.e.   ipV4   127.0.0.0 - 127.255.255.255
+  or     ipV6   === ::1
+  or     ipV6   ::127.0.0.0 - ::127.255.255.255
+  or     ipV6   ::ffff:127.0.0.0 - ::ffff:127.255.255.255
 
 An IPv4 loopback address held in an IPv6 object, whether from C<new6> or
 as a mapped address, is local, the same as its IPv4 form.
@@ -1635,11 +1635,11 @@ Returns the number of usable addresses in the subnet: the host count,
 excluding the network and broadcast addresses.  A /31 or /127 counts as 2
 usable addresses per RFC 3021, and a /32 or /128 counts as 1:
 
-  print NetAddr::IP::Lite->new('192.0.2.0/31')->num();    # 2
-  print NetAddr::IP::Lite->new('2001:db8::/127')->num();  # 2
-  print NetAddr::IP::Lite->new('192.0.2.0/30')->num();    # 2
-  print NetAddr::IP::Lite->new('192.0.2.0/28')->num();    # 14
-  print NetAddr::IP::Lite->new('192.0.2.1/32')->num();    # 1
+  print NetAddr::IP::Lite->new('192.0.2.0/31')->num();     # 2
+  print NetAddr::IP::Lite->new('2001:db8::/127')->num();   # 2
+  print NetAddr::IP::Lite->new('192.0.2.0/30')->num();     # 2
+  print NetAddr::IP::Lite->new('192.0.2.0/28')->num();     # 14
+  print NetAddr::IP::Lite->new('192.0.2.1/32')->num();     # 1
 
 
 To use the old behavior for C<-E<gt>nth($index)> and C<-E<gt>num()>:
@@ -1913,8 +1913,8 @@ the packed sixteen byte case.
 Accept the Cisco address and mask notation, with a space separator in
 place of a slash. C<-E<gt>new()> and C<-E<gt>new6()> do the same.
 
-  ->new('192.0.2.0 24')      in place of   ->new_cis('192.0.2.0 24')
-  ->new6('::192.0.2.0 120')  in place of   ->new_cis6('::192.0.2.0 120')
+  ->new('192.0.2.0 24')       in place of   ->new_cis('192.0.2.0 24')
+  ->new6('::192.0.2.0 120')   in place of   ->new_cis6('::192.0.2.0 120')
 
 =back
 
