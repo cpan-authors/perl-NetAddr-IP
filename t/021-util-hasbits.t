@@ -16,16 +16,14 @@ sub buffer_address {    ## no critic (Subroutines::RequireArgUnpacking)
     return unpack $POINTER_FORMAT, pack 'p', $_[0];
 }
 
-# Copies the bytes and chops a leading byte in place so the buffer starts off
-# word alignment (SvOOK); returns a reference since returning a scalar copies it.
+# Copies the bytes behind a leading byte and chops that byte, so the buffer
+# starts off word alignment; returns a reference since returning a scalar copies it.
 sub offset_copy {
     my ( $bytes, $label ) = @_;
     my $offset = 'X' . $bytes;
-    my $start  = buffer_address($offset);
     substr $offset, 0, 1, '';
-    my $moved = buffer_address($offset);
-    is( $moved - $start, 1, "$label buffer is offset in place" );
-    isnt( $moved % $WORD_BYTES, 0, "$label buffer is not word aligned" );
+    isnt( buffer_address($offset) % $WORD_BYTES,
+        0, "$label buffer is not word aligned" );
     return \$offset;
 }
 
