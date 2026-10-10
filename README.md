@@ -227,10 +227,8 @@ setting: `packzeros`, which follows RFC 5952 s4.3, and `ipv6_ntoa` and
 ## Authors
 
 Dean Hamstead <dean@fragfest.com.au>, Luis E. Muñoz <luismunoz@cpan.org>,
-Michael Robinton <miker@cpan.org>
+Michael Robinton <michael@bizsystems.com>
 
 ## License
 
-Dual licensed under the GNU GPL v2 and the Artistic License.
-The GPL v2 text is in the LICENSE file of each release tarball, and
-[Artistic](Artistic) holds the Artistic License.
+Licensed under the MIT License. See [LICENSE](LICENSE) for details.
