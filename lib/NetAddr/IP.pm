@@ -1846,12 +1846,6 @@ is made in F<inc/MakeMaker/header.pl>.  The build steps are in README.md,
 and C<mode()> reports which mode is running.
 
 
-=head1 ADDITIONAL LICENSE
-
-This file is also available to redistribute it and/or modify it under
-the terms of the "Artistic License" which comes with this distribution,
-in the file named "Artistic".
-
 =cut
 
 1;

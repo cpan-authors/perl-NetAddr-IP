@@ -1922,12 +1922,6 @@ place of a slash. C<-E<gt>new()> and C<-E<gt>new6()> do the same.
 
 L<NetAddr::IP>, L<NetAddr::IP::Util>, L<NetAddr::IP::InetBase>
 
-=head1 ADDITIONAL LICENSE
-
-This file is also available to redistribute it and/or modify it under
-the terms of the "Artistic License" which comes with this distribution,
-in the file named "Artistic".
-
 =cut
 
 1;

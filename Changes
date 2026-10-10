@@ -2,6 +2,10 @@ Revision history for Perl extension NetAddr::IP
 
 {{$NEXT}}
 
+    Relicense to MIT, agreed by all three copyright holders. The distribution was
+    dual-licensed under GPL v2 and the Artistic License. Prior releases remain under
+    prior licenses.
+
 4.080_04  2026-10-09 19:50:39+11:00 Australia/Sydney (TRIAL RELEASE)
 
     Fix GH#109: The wrap check in the Util EXAMPLES compared addresses as

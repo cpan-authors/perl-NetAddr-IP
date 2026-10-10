@@ -1104,12 +1104,6 @@ order they are in.
 
 =back
 
-=head1 ADDITIONAL LICENSE
-
-This file is also available to redistribute it and/or modify it under
-the terms of the "Artistic License" which comes with this distribution,
-in the file named "Artistic".
-
 =head1 SEE ALSO
 
 L<NetAddr::IP>, L<NetAddr::IP::Lite>, L<NetAddr::IP::InetBase>

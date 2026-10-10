@@ -821,12 +821,6 @@ to 128 bits.  The last helper, C<comp128>, is published only for testing,
 because Perl's C<~> is faster than calling into the XS routine for a
 one's complement.
 
-=head1 ADDITIONAL LICENSE
-
-This file is also available to redistribute it and/or modify it under
-the terms of the "Artistic License" which comes with this distribution,
-in the file named "Artistic".
-
 =head1 SEE ALSO
 
 L<NetAddr::IP::Util>, L<NetAddr::IP>, L<NetAddr::IP::Lite>

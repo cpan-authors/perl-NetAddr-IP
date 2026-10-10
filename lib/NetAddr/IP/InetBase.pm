@@ -848,12 +848,6 @@ value, which is true:
   print AF_INET6();        # a platform constant, or 10 here
   print fake_AF_INET6();   # true when emulated
 
-=head1 ADDITIONAL LICENSE
-
-This file is also available to redistribute it and/or modify it under
-the terms of the "Artistic License" which comes with this distribution,
-in the file named "Artistic".
-
 =head1 SEE ALSO
 
 L<NetAddr::IP>, L<NetAddr::IP::Lite>, L<NetAddr::IP::Util>
