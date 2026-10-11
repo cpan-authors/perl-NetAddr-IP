@@ -385,6 +385,11 @@ set of functions take either family.
   print length($v4), "\n";      # 16, not 4
   print ipv6_n2x($v4), "\n";    # 0:0:0:0:0:0:C000:201
 
+This is what the entries below call B<packed>: a packed address is
+binary, not text, and comes from C<inet_aton>, C<ipv6_aton> or
+C<inet_any2n>.  An IPv4 one is 4 bytes, which C<$V4_PACKED_BYTES>
+records; the 16 byte form above is C<$V6_PACKED_BYTES>.
+
 The strings behave like C<vec> strings under the bit operators:
 
   and   &
