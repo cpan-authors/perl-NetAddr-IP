@@ -2,6 +2,8 @@ Revision history for Perl extension NetAddr::IP
 
 {{$NEXT}}
 
+    RT #114495: Document that network() keeps the netmask; addr() gives the address alone.
+
     Relicense to MIT, agreed by all three copyright holders. The distribution was
     dual-licensed under GPL v2 and the Artistic License. Prior releases remain under
     prior licenses.
