@@ -1317,6 +1317,10 @@ Returns a new object referring to the network address of a given
 subnet. A network address has all zero bits where the bits of the
 netmask are zero. Normally this is used to refer to a subnet.
 
+The netmask is carried over from the object it was called on, so a
+C</24> gives a C</24> and a C</32> gives a C</32>. Use C<addr()> for the
+network address on its own, and C<cidr()> for it in slash notation.
+
 =cut
 
 sub network ($) {
