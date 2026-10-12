@@ -832,6 +832,10 @@ everyone:
   package main;
   print NetAddr::IP->new('2001:db8::1')->addr, "\n";   # 2001:db8:0:0:0:0:0:1
 
+Under ithreads each thread has its own copy of the setting.  A thread
+starts with the case in force when it was created, and C<upper()> or
+C<lower()> in one thread does not change another.
+
 Whether uppercase or lowercase should be the default, and whether the
 setting should be process-wide at all, is an open question: see GH#7.
 
