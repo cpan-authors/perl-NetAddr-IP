@@ -16,9 +16,6 @@ GetOptions(
     },
 );
 
-# runtime minimum from dist.ini; the generated Makefile.PL otherwise declares 5.010
-my $min_perl_version = '5.014';
-
 print STDERR "building for $^O\n";
 
 # pure Perl by default on Windows, Cygwin, macOS and DOS, unless --xs is given
@@ -116,7 +113,7 @@ close F;
 #
 # Set up extra WriteMakefile args, and the XS ones for an XS build
 #
-our @mm_args = (MIN_PERL_VERSION => $min_perl_version);
+our @mm_args;
 if ($useXS) {
     push @mm_args, (
         NAME   => 'NetAddr::IP::Util',
