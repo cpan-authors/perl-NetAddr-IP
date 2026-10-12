@@ -1801,7 +1801,8 @@ them respectively.  Another name for C<Zeros> is C<Zero>.
 
 Five tags are accepted by this module. All of them are process-wide: they
 change behaviour for the whole program, not for one object, so an import
-in an unrelated package changes the output for everyone.
+in an unrelated package changes the output for everyone.  Under ithreads
+each thread has its own copy; see L</THREADS>.
 
 =over 4
 
@@ -1845,6 +1846,18 @@ Accept a raw packed address in C<new()>. Deprecated; see L</DEPRECATED>.
 
 C<NetAddr::IP> accepts two more, C<:old_storable> and C<:rfc3021>, and
 rejects nothing that this module accepts.
+
+=head1 THREADS
+
+The library keeps no state that threads share.  Its functions hold nothing
+between calls, so several threads can call them at the same time.
+
+The settings that change behaviour are package state: the C<:lower> and
+C<:upper> tags, and C<:nofqdn>, C<:old_nth> and C<:aton>.  Under ithreads
+each thread has its own copy.  A thread starts with the settings in force
+when it was created, and a change made afterwards stays in the thread that
+made it.  Within one thread they are still process-wide, as described under
+L</IMPORT TAGS>.
 
 =head1 DEPRECATED
 
