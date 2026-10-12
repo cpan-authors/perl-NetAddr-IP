@@ -296,3 +296,71 @@ jobs:
         # tests do not guard on AUTHOR_TESTING, they run either way, and
         # they need the develop phase: kwalitee, pause-permissions,
         # unused-vars and test-legal all live there. They pass on Windows.
+
+  # Experimental. The other Windows job is pure Perl by design, which leaves
+  # XS under threads untested anywhere in CI: Windows is the only platform
+  # whose perls always have ithreads, since setup-perl ignores multi-thread
+  # there. This asks whether the XS build works on Windows at all before
+  # anyone relies on it.
+  #
+  # --xs overrides the pure Perl default for win32 in inc/MakeMaker/header.pl,
+  # so the flag and the mode assertion are all that separate this job from
+  # test_windows_pureperl. xs/localconf.h needs no configure step and the XS
+  # calls only memcpy and memset, and Strawberry Perl ships a MinGW compiler,
+  # so nothing here is expected to be platform specific.
+  test_windows_xs:
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: ["windows-latest"]
+        # Two versions, not four: if this needs iterating, it should be
+        # cheap to iterate on.
+        perl-version: ["5.30", "5.40"]
+    name: "Perl ${{ matrix.perl-version }} on ${{ matrix.os }} (XS)"
+    needs: build
+    steps:
+      - uses: actions/checkout@v6
+      - name: Set Up Perl
+        uses: shogo82148/actions-setup-perl@v1
+        with:
+          perl-version: ${{ matrix.perl-version }}
+          distribution: strawberry
+      - uses: actions/download-artifact@v8
+        with:
+          name: build_dir
+          path: .
+      # Same route and same reason as test_windows_pureperl: no shell, and
+      # cpm through the setup action rather than as its own step, because a
+      # separate cpanm run silently skipped three author-test prerequisites.
+      - name: install deps
+        uses: shogo82148/actions-setup-perl@v1
+        with:
+          perl-version: ${{ matrix.perl-version }}
+          distribution: strawberry
+          install-modules-with: cpm
+          install-modules-args: --with-develop --with-recommends --with-suggests
+      - name: which perl is in use
+        run: |
+          (Get-Command perl).Source
+          perl -V:version -V:archname -V:osname
+          perl -MExtUtils::MakeMaker -e 'print "EUMM $ExtUtils::MakeMaker::VERSION\n"'
+      - name: Build and test the distribution with XS
+        # pwsh fails the step on the last command only, so each checks its own.
+        run: |
+          perl Makefile.PL --xs MAKE=gmake
+          if ($LASTEXITCODE) { exit $LASTEXITCODE }
+          gmake
+          if ($LASTEXITCODE) { exit $LASTEXITCODE }
+          # Windows defaults to pure Perl, so assert the flag took, or this
+          # job could pass as a duplicate of test_windows_pureperl.
+          perl -Mblib -MNetAddr::IP::Util -e 'my $mode = NetAddr::IP::Util::mode(); $mode eq q{CC XS} or die "built $mode, expected CC XS\n"'
+          if ($LASTEXITCODE) { exit $LASTEXITCODE }
+          # Same threads guard as elsewhere: on Windows this is the only
+          # place the XS build gets exercised with ithreads present.
+          perl -Mthreads -MConfig -e 'exit $Config{useithreads} ? 0 : die "built $^V without ithreads\n"'
+          if ($LASTEXITCODE) { exit $LASTEXITCODE }
+          gmake test
+        # No AUTHOR_TESTING, for the reason given in test_windows_pureperl:
+        # Test::EOF fails on this platform. --with-develop is still needed for
+        # the release-*.t tests, which do not guard on it.
