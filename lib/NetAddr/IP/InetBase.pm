@@ -277,6 +277,12 @@ from it rather than reimplementing them, except that C<inet_pton>,
 C<inet_ntop> and C<AF_INET6> come from Socket6 when it is installed.
 See L</"Socket6 substitution">.
 
+A binary address here is called B<packed> below, as opposed to text.
+It comes in two sizes.  The IPv4 form, C<$V4_PACKED_BYTES> bytes, is
+what C<inet_aton> returns.  The 16 byte form, C<$V6_PACKED_BYTES>, is
+what C<ipv6_aton> returns, and C<inet_any2n> returns it for both
+families, with an IPv4 address in the low 32 bits.
+
 The IPv6 functions accept every text form in RFC 4291 s2.2:
 
   x:x:x:x:x:x:x:x
