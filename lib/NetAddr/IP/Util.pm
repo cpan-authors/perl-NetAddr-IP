@@ -594,6 +594,11 @@ Sets uppercase, the default once NetAddr::IP::Util is loaded.
 
 =back
 
+Both set the case for every module in the process, not for one object.
+Under ithreads each thread has its own copy: a thread starts with the case
+in force when it was created, and a call in one thread does not change
+another.
+
 =head2 Family tests
 
 =over 4

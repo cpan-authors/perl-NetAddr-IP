@@ -24,6 +24,9 @@
  * SOFTWARE.
  */
 
+/*	the interpreter is passed to the helpers below, not looked up per call	*/
+#define PERL_NO_GET_CONTEXT
+
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -47,13 +50,20 @@ typedef union
   unsigned char c[16];
 } n128;
 
-static const char * is_ipv6to4 = "ipv6to4", * is_shiftleft = "shiftleft", * is_comp128 = "comp128";
-static const char * is_sub128 = "sub128", * is_add128 = "add128";
-static const char * is_hasbits = "hasbits";
-/* , * is_isIPv4 = "isIPv4"; */
-static const char * is_bcd2bin = "bcd2bin", * is_simple_pack = "simple_pack", * is_bcdn2bin = "bcdn2bin";
-static const char * is_mask4to6 = "mask4to6", * is_ipv4to6 = "ipv4to6";
-static const char * is_maskanyto6 = "maskanyto6", * is_ipanyto6 = "ipanyto6";
+/*	function names for the croak messages, read-only so no thread can change them	*/
+static const char is_add128[] = "add128";
+static const char is_bcd2bin[] = "bcd2bin";
+static const char is_bcdn2bin[] = "bcdn2bin";
+static const char is_comp128[] = "comp128";
+static const char is_hasbits[] = "hasbits";
+static const char is_ipanyto6[] = "ipanyto6";
+static const char is_ipv4to6[] = "ipv4to6";
+static const char is_ipv6to4[] = "ipv6to4";
+static const char is_mask4to6[] = "mask4to6";
+static const char is_maskanyto6[] = "maskanyto6";
+static const char is_shiftleft[] = "shiftleft";
+static const char is_simple_pack[] = "simple_pack";
+static const char is_sub128[] = "sub128";
 
 typedef struct bcdstuff
 {		/*	character array of 40 bytes			*/
@@ -141,7 +151,7 @@ addercon(void * aa, U32 * bb, n128 * ap128, I32 con)
 }
 
 static int
-_num_arg(SV * sv, NV * nvp)
+_num_arg(pTHX_ SV * sv, NV * nvp)
 {
   SvGETMAGIC(sv);
   if (!SvOK(sv) || (SvPOKp(sv) && SvCUR(sv) == 0))
@@ -453,7 +463,7 @@ _bcd2txt(unsigned char * bcd2p, BCD * n)
 
 /*	runs a packed argument's get magic once: false if it is then undefined	*/
 static int
-_packed_ok(SV * sv)
+_packed_ok(pTHX_ SV * sv)
 {
   SvGETMAGIC(sv);
   return SvOK(sv);
@@ -462,7 +472,7 @@ _packed_ok(SV * sv)
 /*	the bytes of a packed argument after _packed_ok, without running its magic
 	again; an upgraded string is read through a downgraded copy	*/
 static unsigned char *
-_packed_bytes(SV * sv, STRLEN * lenp)
+_packed_bytes(pTHX_ SV * sv, STRLEN * lenp)
 {
   if (SvUTF8(sv)) {
     SV * copy = sv_newmortal();
@@ -501,11 +511,11 @@ PPCODE:
 	  subname = is_comp128;
 	/* the count is read before ap, which its magic or overloading could free */
 	sv_2mortal(SvREFCNT_inc_simple_NN(s));	/* and could free s itself */
-	k = (ix == 1 && items >= 2) ? _num_arg(ST(1), &nv) : 0;
-	if (!_packed_ok(s))
+	k = (ix == 1 && items >= 2) ? _num_arg(aTHX_ ST(1), &nv) : 0;
+	if (!_packed_ok(aTHX_ s))
 	  croak("Bad arg length for %s%s, length is undefined, should be 128",
 		"NetAddr::IP::Util::",subname);
-	ap = _packed_bytes(s,&len);
+	ap = _packed_bytes(aTHX_ s,&len);
 	if (len != 16) {
 	  croak("Bad arg length for %s%s, length is %" UVuf ", should be %d",
 		"NetAddr::IP::Util::",subname,(UV)(len *8),128);
@@ -560,17 +570,17 @@ PPCODE:
 	  subname = is_sub128;
 	else
 	  subname = is_add128;
-	if (!_packed_ok(as) || !_packed_ok(bs))
+	if (!_packed_ok(aTHX_ as) || !_packed_ok(aTHX_ bs))
 	  croak("Bad arg length for %s%s, length is undefined, should be 128",
 		"NetAddr::IP::Util::",subname);
-	ap = _packed_bytes(as,&len);
+	ap = _packed_bytes(aTHX_ as,&len);
 	if (len != 16) {
     Bail:
 	  croak("Bad arg length for %s%s, length is %" UVuf ", should be %d",
 		"NetAddr::IP::Util::",subname,(UV)(len *8),128);
 	}
 
-	bp = _packed_bytes(bs,&len);
+	bp = _packed_bytes(aTHX_ bs,&len);
 	if (len != 16) {
 	  goto Bail;
 	}
@@ -605,11 +615,11 @@ PREINIT:
 PPCODE:
 	/* the constant is read before ap, which its magic or overloading could free */
 	sv_2mortal(SvREFCNT_inc_simple_NN(s));	/* and could free s itself */
-	k = _num_arg(c, &nv);
-	if (!_packed_ok(s))
+	k = _num_arg(aTHX_ c, &nv);
+	if (!_packed_ok(aTHX_ s))
 	  croak("Bad arg length for %s, length is undefined, should be 128",
 		"NetAddr::IP::Util::addconst");
-	ap = _packed_bytes(s,&len);
+	ap = _packed_bytes(aTHX_ s,&len);
 	if (len != 16) {
 	  croak("Bad arg length for %s, length is %" UVuf ", should be %d",
 		"NetAddr::IP::Util::addconst",(UV)(len *8),128);
@@ -640,10 +650,10 @@ PREINIT:
 	STRLEN len;
 CODE:
 	subname = is_hasbits;
-	if (!_packed_ok(s))
+	if (!_packed_ok(aTHX_ s))
 	  croak("Bad arg length for %s%s, length is undefined, should be 128",
 		"NetAddr::IP::Util::",subname);
-	bp = _packed_bytes(s,&len);
+	bp = _packed_bytes(aTHX_ s,&len);
 	if (len != 16) {
 	  croak("Bad arg length for %s%s, length is %" UVuf ", should be %d",
 		"NetAddr::IP::Util::",subname,(UV)(len *8),128);
@@ -663,13 +673,13 @@ PREINIT:
 	unsigned char * cp;
 	STRLEN	len;
 PPCODE:
-	if (!_packed_ok(s))
+	if (!_packed_ok(aTHX_ s))
 	  croak("Bad arg length for %s, length is undefined, should be %s",
 		(ix == 2) ? "NetAddr::IP::Util::bcdn2txt"
 		          : (ix == 1) ? "NetAddr::IP::Util::bin2bcdn"
 		                      : "NetAddr::IP::Util::bin2bcd",
 		(ix == 2) ? "40 digits" : "128");
-	cp = _packed_bytes(s,&len);
+	cp = _packed_bytes(aTHX_ s,&len);
 	if (ix == 0) {
 	  if (len != 16) {
 	    croak("Bad arg length for %s, length is %" UVuf ", should be %d",
@@ -721,14 +731,14 @@ PPCODE:
 	  subname = is_simple_pack;
 	else
 	  subname = is_bcdn2bin;
-	if (!_packed_ok(s))
+	if (!_packed_ok(aTHX_ s))
 	  croak("Bad arg length for %s%s, length is undefined, should be 1 to 40 digits",
 		"NetAddr::IP::Util::",subname);
 	/* the digit count is read before cp, which its magic or overloading could free */
 	sv_2mortal(SvREFCNT_inc_simple_NN(s));	/* and could free s itself */
-	k = (ix == 2 && items >= 2) ? _num_arg(ST(1), &nv) : 0;
+	k = (ix == 2 && items >= 2) ? _num_arg(aTHX_ ST(1), &nv) : 0;
 	/* packed bcd is binary; the digit text is checked byte by byte, so stays as is */
-	cp = (ix == 2) ? _packed_bytes(s,&len) : (unsigned char *) SvPV_nomg(s,len);
+	cp = (ix == 2) ? _packed_bytes(aTHX_ s,&len) : (unsigned char *) SvPV_nomg(s,len);
 	/* bcdn2bin takes packed bcd, two digits per byte; the others take one digit per byte */
 	if (ix == 2)
 	  len <<= 1;
@@ -780,10 +790,10 @@ PREINIT:
 	U32 wa[4];
 	STRLEN len;
 PPCODE:
-	if (!_packed_ok(s))
+	if (!_packed_ok(aTHX_ s))
 	  croak("Bad arg length for %s, length is undefined, should be %d",
 		"NetAddr::IP::Util::notcontiguous",128);
-	ap = _packed_bytes(s,&len);
+	ap = _packed_bytes(aTHX_ s,&len);
 	if (len != 16) {
 	  croak("Bad arg length for %s, length is %" UVuf ", should be %d",
 		"NetAddr::IP::Util::notcontiguous",(UV)(len *8),128);
@@ -812,10 +822,10 @@ PPCODE:
 	  subname = is_mask4to6;
 	else
 	  subname = is_ipv4to6;
-	if (!_packed_ok(s))
+	if (!_packed_ok(aTHX_ s))
 	  croak("Bad arg length for %s%s, length is undefined, should be 32",
 		"NetAddr::IP::Util::",subname);
-	ip = _packed_bytes(s,&len);
+	ip = _packed_bytes(aTHX_ s,&len);
 	if (len != 4) {
 	  croak("Bad arg length for %s%s, length is %" UVuf ", should be 32",
 		"NetAddr::IP::Util::",subname,(UV)(len *8));
@@ -842,10 +852,10 @@ PPCODE:
 	  subname = is_maskanyto6;
 	else
 	  subname = is_ipanyto6;
-	if (!_packed_ok(s))
+	if (!_packed_ok(aTHX_ s))
 	  croak("Bad arg length for %s%s, length is undefined, should be 32 or 128",
 		"NetAddr::IP::Util::",subname);
-	ip = _packed_bytes(s,&len);
+	ip = _packed_bytes(aTHX_ s,&len);
 	if (len == 16)		/* if already 128 bits, return input	*/
 	  XPUSHs(sv_2mortal(newSVpvn((char *)ip,16)));
 	else if (len == 4) {

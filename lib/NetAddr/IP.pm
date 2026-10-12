@@ -68,7 +68,8 @@ The other entry points are Zeros, Ones, V4mask and V4net, which return
 =head1 IMPORT TAGS
 
 Every tag here is process-wide: it changes behaviour for the whole
-program, not for one object, and each is shown where it applies.
+program, not for one object, and each is shown where it applies.  Under
+ithreads each thread has its own copy; see L</THREADS>.
 
 =over 4
 
@@ -117,6 +118,30 @@ broadcast address and had a undef zeroth index:
 =back
 
 C<:aton> and C<:rfc3021> are listed under L</DEPRECATED>.
+
+=head1 THREADS
+
+The library keeps no state that threads share.  Its functions hold nothing
+between calls, so several threads can call them at the same time.
+
+The settings that change behaviour are package state: the C<:lower> and
+C<:upper> tags with C<upper()> and C<lower()>, and C<:nofqdn>, C<:old_nth>,
+C<:old_storable>, C<:aton> and C<netlimit()>.  Under ithreads each thread
+has its own copy.  A thread starts with the settings in force when it was
+created, and a change made afterwards stays in the thread that made it.
+Within one thread they are still process-wide, as described under
+L</IMPORT TAGS>.
+
+  use threads;
+  use NetAddr::IP;
+
+  NetAddr::IP::Util::lower();
+  my $child = threads->create(
+      sub { return "" . NetAddr::IP->new('2001:db8::ab') }
+  );
+  NetAddr::IP::Util::upper();
+  print $child->join, "\n";                       # 2001:db8:0:0:0:0:0:ab/128
+  print NetAddr::IP->new('2001:db8::ab'), "\n";   # 2001:DB8:0:0:0:0:0:AB/128
 
 =head1 FUNCTIONS
 
