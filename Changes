@@ -2,6 +2,12 @@ Revision history for Perl extension NetAddr::IP
 
 {{$NEXT}}
 
+    Declare perl 5.014 for the configure phase as well as runtime and test. The
+    configure prereqs carried 5.010, the version [MinimumPerl] found in lib/ and
+    copied there, and the shipped Makefile.PL opened with use 5.010. It now opens
+    with use 5.014, passes MIN_PERL_VERSION 5.014 without a header override, and
+    asks for ExtUtils::MakeMaker 6.5702, which perl 5.14 ships as 6.57_05.
+
     RT #114495: Document that network() keeps the netmask; addr() gives the address alone.
 
     Relicense to MIT, agreed by all three copyright holders. The distribution was
