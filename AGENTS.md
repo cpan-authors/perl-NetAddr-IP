@@ -1,0 +1,104 @@
+# AGENTS.md
+
+Notes for agents working on NetAddr-IP. Short on purpose: only the things that
+are not obvious from the code, or that have already cost time.
+
+## Build and test
+
+```sh
+build=$(mktemp -d)
+dzil build --in "$build"
+cd "$build"
+perl Makefile.PL --xs && make && prove -b -j4 t/
+make realclean
+perl Makefile.PL -noxs && make && prove -b -j4 t/
+```
+
+- This is a Dist::Zilla distribution. The checkout has no `Makefile.PL`; `dzil
+  build` writes one. Only tracked files ship, so `git add` a new file before
+  building.
+- Build into a fresh directory every time, as above. A fixed path lets a stale
+  build masquerade as this one, and lets two runs share a tree.
+- **Run `dzil build` again after every edit.** The build directory holds
+  its own copy of each file, so `make` there tests the old code. That once
+  made a compile failure look like a pass.
+- Both builds must pass and must agree, down to the error text.
+- `NetAddr::IP::Util::mode()` returns `CC XS` or `Pure Perl`. Check it after a
+  build, because a fallback can otherwise pass as the other build.
+- `make clean` deletes `lib/NetAddr/IP/Util_IS.pm`, which `Makefile.PL`
+  writes, so run `perl Makefile.PL` again after it.
+- Author tests need `AUTHOR_TESTING=1`, release tests `RELEASE_TESTING=1`.
+  CI sets the first; `dzil release` sets the second.
+
+## Changes
+
+New entries go under `{{$NEXT}}`, one entry per change:
+
+```text
+    - What changed, in one line.
+      Continuation lines are indented six spaces, and the entry wraps at
+      78 columns.
+```
+
+- A code block or table goes inside the entry it belongs to, with no blank
+  line before it, or the parser reads each line as a new change. Sub-list
+  items, marked `- ` and indented ten spaces, go last in the entry.
+- Wrap example output that starts with `#` in backticks. A bare `#` is read
+  as a bullet marker and dropped.
+- Dates are W3CDTF with an offset, `2008-10-06T13:10:00-07:00`.
+- Check with `tidy_changelog --check Changes`. The release test
+  `t/release-cpan-changes.t` runs the same parser.
+
+## Tests
+
+- Start with `use Test2::V1 -ipP;` and `use Test2::Plugin::NoWarnings;`. Name
+  subtests and assertions, and compare exact values with `is`.
+- New files are `t/NNN-name.t` with the next free number, formatted with
+  `perltidy -b -bext=/`.
+- A test for a fix must fail without the fix. Check that before calling the
+  work done.
+
+## Code
+
+- ASCII only. Four spaces, no tabs, LF, a final newline, no trailing
+  whitespace.
+- **Use documentation addresses only.** RFC 5737 for IPv4, so 192.0.2.0/24,
+  198.51.100.0/24 or 203.0.113.0/24, and RFC 3849 for IPv6, so 2001:db8::/32.
+  Loopback is fine where the example is about loopback. This holds in tests,
+  in POD and in Changes, because an address written in an example becomes
+  documentation, and never in an example that calls a real host.
+- Write `[0-9]` rather than `\d`, so non-ASCII digits are rejected.
+- Uncuddle `else` and `elsif`: the closing brace ends the line, and `else` or
+  `elsif` starts the next at the same indentation. POD verbatim examples and
+  commented-out code are left as they are.
+- **Check regexes after any mechanical formatting pass.** A comma-spacing pass
+  once turned `{1,3}` into `{1, 3}`, which is literal text, and two parsers
+  broke silently.
+- In `xs/Util.xs`, `PERL_NO_GET_CONTEXT` is defined, so a helper calling the
+  Perl API takes `pTHX_` and is called with `aTHX_`. Keep no mutable state at
+  file scope, or the XS is not thread safe.
+- The perl floor is 5.014 in every phase. CI fails if a phase or the shipped
+  `Makefile.PL` drifts from the runtime floor.
+
+## Commits
+
+- Subject starts `Fix GH#NNN:` when the commit fixes an issue.
+- No commit hashes in a message, and no `cherry-pick -x`. Rewrites make them
+  stale.
+- Put a fix in the commit it belongs to by amending, not on top.
+- `Fixes #NNN` in a pull request body. Propose a fix as an issue with the
+  patch and the commands that verify it.
+- ASCII, no em dashes, and no `--` standing in for one. Do not start a
+  sentence with a code identifier.
+
+## Licence
+
+MIT. Add only code you wrote or have permission to add, and keep contributor
+credits in `Changes`.
+
+## Open questions
+
+- #140: how `inc/MakeMaker/header.pl` picks the default build, and the CI that
+  covers it.
+- 4.079 is the last stable release and the compatibility baseline. Developer
+  releases, with an underscore in the version, are not indexed by CPAN.
