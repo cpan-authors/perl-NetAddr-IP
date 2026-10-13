@@ -296,3 +296,70 @@ jobs:
         # tests do not guard on AUTHOR_TESTING, they run either way, and
         # they need the develop phase: kwalitee, pause-permissions,
         # unused-vars and test-legal all live there. They pass on Windows.
+
+  # The other Windows job is pure Perl by design, which leaves the XS build
+  # untested under threads anywhere in CI: Windows is the only platform whose
+  # perls always have ithreads, since setup-perl ignores multi-thread there.
+  # This covers that without compiling perl, which the Linux jobs cannot do
+  # cheaply.
+  test_windows_xs:
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: ["windows-latest"]
+        # 5.30 only. 5.40 cannot install the recommends set: Socket6 0.29
+        # fails to compile on Strawberry Perl 5.40.4, and that takes the
+        # install step down before this job builds anything. It is Socket6's
+        # bug, not ours, reported upstream as rt #181874 and cross
+        # referenced to rt #140028, which is the same inet_ntop conflict from
+        # a different angle and has been open four years. Widen this once
+        # upstream is fixed, or once this job stops installing recommends.
+        perl-version: ["5.30"]
+    name: "Perl ${{ matrix.perl-version }} on ${{ matrix.os }} (XS)"
+    needs: build
+    steps:
+      - uses: actions/checkout@v6
+      - name: Set Up Perl
+        uses: shogo82148/actions-setup-perl@v1
+        with:
+          perl-version: ${{ matrix.perl-version }}
+          distribution: strawberry
+      - uses: actions/download-artifact@v8
+        with:
+          name: build_dir
+          path: .
+      # No shell, and cpm through the setup action, for the reasons given in
+      # test_windows_pureperl: Git Bash puts a Cygwin perl ahead on PATH, and
+      # a standalone cpanm silently skipped three author-test prerequisites.
+      - name: install deps
+        uses: shogo82148/actions-setup-perl@v1
+        with:
+          perl-version: ${{ matrix.perl-version }}
+          distribution: strawberry
+          install-modules-with: cpm
+          install-modules-args: --with-develop --with-recommends --with-suggests
+      - name: which perl is in use
+        run: |
+          (Get-Command perl).Source
+          perl -V:version -V:archname -V:osname
+          perl -MExtUtils::MakeMaker -e 'print "EUMM $ExtUtils::MakeMaker::VERSION\n"'
+      - name: Build and test the distribution with XS
+        # pwsh fails the step on the last command only, so each checks its own.
+        run: |
+          perl Makefile.PL --xs MAKE=gmake
+          if ($LASTEXITCODE) { exit $LASTEXITCODE }
+          gmake
+          if ($LASTEXITCODE) { exit $LASTEXITCODE }
+          # Windows defaults to pure Perl, so assert the flag took, or this
+          # job could pass as a duplicate of test_windows_pureperl.
+          perl -Mblib -MNetAddr::IP::Util -e 'my $mode = NetAddr::IP::Util::mode(); $mode eq q{CC XS} or die "built $mode, expected CC XS\n"'
+          if ($LASTEXITCODE) { exit $LASTEXITCODE }
+          # The point of this job: assert ithreads are there, so a green run
+          # cannot come from t/153-threads.t taking its skip path.
+          perl -Mthreads -MConfig -e 'exit $Config{useithreads} ? 0 : die "built $^V without ithreads\n"'
+          if ($LASTEXITCODE) { exit $LASTEXITCODE }
+          gmake test
+        # No AUTHOR_TESTING, for the reason given in test_windows_pureperl:
+        # Test::EOF fails on this platform. --with-develop is still needed for
+        # the release-*.t tests, which do not guard on it.
