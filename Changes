@@ -2,6 +2,17 @@ Revision history for Perl extension NetAddr::IP
 
 {{$NEXT}}
 
+    - Fix GH#140: Build the XS by default on macOS when a C compiler works,
+      as on Linux and the BSDs. The platform rule matched /win/i anywhere in
+      the OS name, which took in darwin and cygwin along with MSWin32.
+      Darwin was named on purpose in 4.069, when the autoconf step that
+      GH#101 removed failed on Macs without a working compiler; the compiler
+      probe now falls back to pure Perl there instead. The rule now names
+      cygwin, dos and MSWin32 exactly, and those still build pure Perl
+      unless --xs is given. The macOS CI jobs assert the XS build, and the
+      Windows pure Perl jobs run a plain perl Makefile.PL, so both sides of
+      the rule are checked.
+
     - Declare perl 5.014 for the configure phase as well as runtime and test.
       The configure prereqs carried 5.010, the version [MinimumPerl] found in
       lib/ and copied there, and the shipped Makefile.PL opened with use

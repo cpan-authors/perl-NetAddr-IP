@@ -98,7 +98,5 @@ credits in `Changes`.
 
 ## Open questions
 
-- #140: how `inc/MakeMaker/header.pl` picks the default build, and the CI that
-  covers it.
 - 4.079 is the last stable release and the compatibility baseline. Developer
   releases, with an underscore in the version, are not indexed by CPAN.

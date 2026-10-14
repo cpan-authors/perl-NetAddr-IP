@@ -7,6 +7,9 @@ my @xs_outputs = qw(lib/NetAddr/IP/Util.c lib/NetAddr/IP/Util.c.xsc lib/NetAddr/
 # and puts its shared object here, which a pure Perl build would install
 my $xs_blib_dir = 'blib/arch/auto/NetAddr/IP/Util';
 
+# where a plain perl Makefile.PL builds pure Perl, matched exactly against $^O
+my %pure_perl_os = map { $_ => 1 } qw(cygwin dos MSWin32);
+
 my $useXS;
 GetOptions(
     'xs!' => \$useXS,
@@ -18,8 +21,8 @@ GetOptions(
 
 print STDERR "building for $^O\n";
 
-# pure Perl by default on Windows, Cygwin, macOS and DOS, unless --xs is given
-if (!defined $useXS && ($Config{osname} =~ /win/i || $Config{osname} eq 'dos')) {
+# pure Perl by default on Windows, Cygwin and DOS, unless --xs is given
+if (!defined $useXS && $pure_perl_os{$^O}) {
     $useXS = 0;
 }
 

@@ -74,10 +74,10 @@ tarball, or generate one:
 
 With `-noxs`, `mode()` returns `Pure Perl` instead of `CC XS`. With neither `-noxs`
 nor `--xs` given, the build tests for a C compiler and builds the XS when
-one works; that is what `cpan` and `cpanm` run. Windows, Cygwin, macOS and
-DOS are the exceptions: there the default is pure Perl and the compiler test
-does not run. Pass `--xs` on any platform to skip the compiler test and build
-the XS regardless.
+one works; that is what `cpan` and `cpanm` run. Windows, Cygwin and DOS are
+the exceptions: there the default is pure Perl and the compiler test does not
+run. Pass `--xs` on any platform to skip the compiler test and build the XS
+regardless.
 
 ## Methods
 
