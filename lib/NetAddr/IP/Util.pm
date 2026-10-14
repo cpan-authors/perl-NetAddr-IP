@@ -480,7 +480,7 @@ argument.
 Returns undef for text that is not an address of that family, and croaks
 on a family other than C<AF_INET> and C<AF_INET6>.
 
-NOTE: inet_pton, inet_ntop and AF_INET6 come from the Socket6 library if it
+NOTE: inet_pton and inet_ntop come from the Socket6 library if it
 is present on this host.  The two sources differ on IPv4 text: without
 Socket6, C<inet_pton(AF_INET, ...)> is C<inet_aton> and also takes short
 forms such as C<127.1> and host names, which Socket6 rejects.
@@ -880,9 +880,10 @@ Returns the system value for AF_INET, taken from Socket.
 
 =item $constant = AF_INET6;
 
-Returns the value for AF_INET6.  It comes from Socket6 when Socket6 is
-installed.  Without Socket6 it is a value guessed from the name of the
-operating system, which is 10 on Linux.
+Returns the value for AF_INET6.  It comes from Socket when the Socket module
+provides one, and from Socket6 only when Socket does not.  Without either,
+it is a value guessed from the name of the operating system, which is 10 on
+Linux.
 
   use NetAddr::IP::Util qw(AF_INET AF_INET6);
   print AF_INET(), ' ', AF_INET6(), "\n";   # 2 10 on Linux

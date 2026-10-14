@@ -2,6 +2,9 @@ Revision history for Perl extension NetAddr::IP
 
 {{$NEXT}}
 
+    - Fix GH#142: Use Socket's own AF_INET6 where the Socket module has one,
+      rather than guess it from the operating system name
+
     - Fix GH#140: Build the XS by default on macOS when a C compiler works;
       Windows, Cygwin and DOS still default to pure Perl
 
