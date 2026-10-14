@@ -82,7 +82,8 @@ require Socket;
 
 *AF_INET = \&Socket::AF_INET;
 
-if (eval { local $SIG{__DIE__}; AF_INET6() } ) {
+# core Socket croaks where the platform headers do not define AF_INET6
+if (defined eval { local $SIG{__DIE__}; Socket::AF_INET6() }) {
     *AF_INET6 = \&Socket::AF_INET6;
     $emulateAF_INET6 = -1;            # have it, remind below
 }
@@ -97,7 +98,7 @@ if (eval{ local $SIG{__DIE__}; require Socket6 } ) {
     $emulateAF_INET6 = 0;                # clear, have it from elsewhere or here
 }
 else {
-    unless ($emulateAF_INET6) {    # unlikely at this point
+    unless ($emulateAF_INET6) {    # only a perl whose Socket lacks AF_INET6
         if ($^O =~ /(?:free|dragon.+)bsd/i) {    # FreeBSD, DragonFlyBSD
             $emulateAF_INET6 = 28;
         }
@@ -273,8 +274,8 @@ sub import {
 B<NetAddr::IP::InetBase> is the pure Perl layer that converts IPv4 and
 IPv6 addresses between binary and text.  Everything here is pure Perl on
 every host.  B<NetAddr::IP::Util> and the XS build take these functions
-from it rather than reimplementing them, except that C<inet_pton>,
-C<inet_ntop> and C<AF_INET6> come from Socket6 when it is installed.
+from it rather than reimplementing them, except that C<inet_pton> and
+C<inet_ntop> come from Socket6 when it is installed.
 See L</"Socket6 substitution">.
 
 A binary address here is called B<packed> below, as opposed to text.
@@ -390,7 +391,7 @@ argument.
 Returns undef for text that is not an address of that family, and croaks
 on a family other than C<AF_INET> and C<AF_INET6>.
 
-NOTE: inet_pton, inet_ntop and AF_INET6 come from the Socket6 library if it
+NOTE: inet_pton and inet_ntop come from the Socket6 library if it
 is present on this host.  The two sources differ on IPv4 text: without
 Socket6, C<inet_pton(AF_INET, ...)> is C<inet_aton> and also takes short
 forms such as C<127.1> and host names, which Socket6 rejects.
@@ -545,7 +546,7 @@ argument.
 
 NOTE: inet_ntop ALWAYS returns lowercase characters.
 
-NOTE: inet_pton, inet_ntop and AF_INET6 come from the Socket6 library if it
+NOTE: inet_pton and inet_ntop come from the Socket6 library if it
 is present on this host.
 
 The two sources disagree on the text for an address with an IPv4 address
@@ -692,21 +693,22 @@ Returns the system value for AF_INET, taken from Socket.
 
 =item $constant = AF_INET6;
 
-Returns the value for AF_INET6.  It comes from Socket6 when Socket6 is
-installed.  Without Socket6 it is a value guessed from the name of the
-operating system, which is 10 on Linux.
+Returns the value for AF_INET6.  It comes from Socket when the Socket module
+provides one, and from Socket6 only when Socket does not.  Without either,
+it is a value guessed from the name of the operating system, which is 10 on
+Linux.
 
   use NetAddr::IP::InetBase qw(AF_INET AF_INET6);
   print AF_INET(), ' ', AF_INET6(), "\n";   # 2 10 on Linux
 
-NOTE: inet_pton, inet_ntop and AF_INET6 come from the Socket6 library if it
-is present on this host.
+NOTE: inet_pton and inet_ntop come from the Socket6 library if it is present
+on this host.
 
 =item $trueif = fake_AF_INET6;
 
-Returns false when Socket6 is installed.  Without Socket6 it returns the
-guessed value that C<AF_INET6> also returns, 10 on Linux, even where the
-Socket module has its own AF_INET6.
+Returns false when C<AF_INET6> came from Socket or Socket6.  It returns the
+guessed value that C<AF_INET6> also returns, 10 on Linux, on a perl whose
+Socket module has no AF_INET6 of its own.
 
 =back
 
@@ -847,10 +849,10 @@ those two you get depends on Socket6: see below.
 
 =head1 Socket6 substitution
 
-C<inet_pton>, C<inet_ntop> and C<AF_INET6> are bound to Socket6 when it is
-installed, and to this module's own implementations when it is not.  The
-choice is made at load time, so two hosts differing only in that one
-optional module can behave differently.
+When Socket6 is installed, C<inet_pton> and C<inet_ntop> are bound to it,
+and to this module's own implementations when it is not.  The choice is
+made at load time, so two hosts differing only in that one optional
+module can behave differently.
 
 Socket6 is a runtime recommendation, not a requirement.  Where the
 substitution matters for output it is noted on the entry: for C<inet_ntop>
@@ -860,12 +862,14 @@ side agrees on IPv6 text and differs on IPv4 text: without Socket6,
 C<inet_pton(AF_INET, ...)> is C<inet_aton>, so it takes short forms such
 as C<127.1> and host names, which Socket6 rejects.
 
-When Socket6 is not installed, C<AF_INET6> is a value guessed from the
-name of the operating system, and C<fake_AF_INET6()> returns that same
-value, which is true:
+The value of C<AF_INET6> is not part of the substitution: it comes from
+Socket whether or not Socket6 is installed.  Only where Socket has no
+AF_INET6 does it come from Socket6, and only where neither has it is it
+guessed from the name of the operating system, the one case in which
+C<fake_AF_INET6()> is true:
 
-  print AF_INET6();        # a platform constant, or 10 here
-  print fake_AF_INET6();   # true when emulated
+  print AF_INET6();        # the platform constant, 10 on Linux
+  print fake_AF_INET6();   # 0 unless guessed
 
 =head1 SEE ALSO
 
