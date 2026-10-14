@@ -2,6 +2,9 @@ Revision history for Perl extension NetAddr::IP
 
 {{$NEXT}}
 
+    - Fix GH#140: Build the XS by default on macOS when a C compiler works;
+      Windows, Cygwin and DOS still default to pure Perl
+
     - Declare perl 5.014 for the configure phase as well as runtime and test.
       The configure prereqs carried 5.010, the version [MinimumPerl] found in
       lib/ and copied there, and the shipped Makefile.PL opened with use

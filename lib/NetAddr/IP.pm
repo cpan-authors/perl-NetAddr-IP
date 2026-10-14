@@ -1858,8 +1858,9 @@ place of a slash. C<-E<gt>new()> and C<-E<gt>new6()> do the same.
 
 =head1 NOTES / BUGS ... FEATURES
 
-On Windows, Cygwin and macOS a plain C<perl Makefile.PL> builds pure
-Perl, with no C toolchain, and C<--xs> asks for the XS build.  The choice
+On Windows and Cygwin a plain C<perl Makefile.PL> builds pure Perl,
+with no C toolchain, and C<--xs> asks for the XS build.  Elsewhere,
+macOS included, it builds the XS when a C compiler works.  The choice
 is made in F<inc/MakeMaker/header.pl>.  The build steps are in README.md,
 and C<mode()> reports which mode is running.
 
