@@ -2,6 +2,8 @@ Revision history for Perl extension NetAddr::IP
 
 {{$NEXT}}
 
+4.080_05  2026-10-15 13:40:32+11:00 Australia/Sydney (TRIAL RELEASE)
+
     - Fix GH#142: Use Socket's own AF_INET6 where the Socket module has one,
       rather than guess it from the operating system name
 
