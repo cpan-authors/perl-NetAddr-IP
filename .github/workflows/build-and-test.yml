@@ -369,7 +369,7 @@ jobs:
           perl -Mblib -MNetAddr::IP::Util -e 'my $mode = NetAddr::IP::Util::mode(); $mode eq q{CC XS} or die "built $mode, expected CC XS\n"'
           if ($LASTEXITCODE) { exit $LASTEXITCODE }
           # The point of this job: assert ithreads are there, so a green run
-          # cannot come from t/153-threads.t taking its skip path.
+          # cannot come from t/260-threads.t taking its skip path.
           perl -Mthreads -MConfig -e 'exit $Config{useithreads} ? 0 : die "built $^V without ithreads\n"'
           if ($LASTEXITCODE) { exit $LASTEXITCODE }
           gmake test

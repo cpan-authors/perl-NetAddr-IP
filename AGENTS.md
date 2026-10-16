@@ -51,10 +51,31 @@ New entries go under `{{$NEXT}}`, one entry per change:
 
 ## Tests
 
+The `t/` files are numbered in blocks, one per package layer, in the order
+those layers depend on each other. Within a block the numbering runs primitives
+before dependents, each function's error cases next to it, IPv4 before IPv6
+before mixed, then alphabetically. A new test takes the next free number in
+its block, not the next free number in the directory.
+
+| block | holds |
+|---|---|
+| 001-019 | the distribution and the build: nothing that calls a NetAddr function |
+| 020-029 | `NetAddr::IP::Constants` |
+| 030-049 | `NetAddr::IP::InetBase`, the text layer everything else is built on |
+| 050-109 | `NetAddr::IP::Util`, arithmetic and address conversion, XS and pure Perl |
+| 110-199 | `NetAddr::IP::Lite` |
+| 200-259 | `NetAddr::IP`, the full object API |
+| 260-269 | threads and anything that crosses layers |
+
+`dist.ini` adds `t/00-compile.t` and `t/00-report-prereqs.t`, and `[RunExtraTests]`
+adds the `author-` and `release-` files, so the numbers stay clear of them.
+
 - Start with `use Test2::V1 -ipP;` and `use Test2::Plugin::NoWarnings;`. Name
   subtests and assertions, and compare exact values with `is`.
-- New files are `t/NNN-name.t` with the next free number, formatted with
-  `perltidy -b -bext=/`.
+- New files are `t/NNN-name.t` with the next free number in the block for that
+  package, formatted with `perltidy -b -bext=/`. The blocks are below, and a
+  filename keeps its package prefix, so `t/134-inetbase-inet_pton.t` belongs to
+  the InetBase block.
 - A test for a fix must fail without the fix. Check that before calling the
   work done.
 
