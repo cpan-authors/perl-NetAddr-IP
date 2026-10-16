@@ -112,6 +112,23 @@ adds the `author-` and `release-` files, so the numbers stay clear of them.
 - ASCII, no em dashes, and no `--` standing in for one. Do not start a
   sentence with a code identifier.
 
+## Release
+
+- A breaking change goes to the packagers. This is the list to work from: the
+  repology project page, which carries every repository shipping NetAddr-IP
+  and a maintainer address for each.
+
+  <https://repology.org/project/perl%3Anetaddr-ip/versions>
+
+- On release, remind the user to notify them. Give the addresses that read as a
+  person, and skip the rest: mailing lists, `packaging@`-style role accounts,
+  distribution aliases such as `perl@gentoo.org` or
+  `ubuntu-devel-discuss@lists.ubuntu.com`, and `fallback-*@repology`. Say how
+  many were skipped, so nothing goes missing without comment.
+- An address with no dot in its domain is still one to use. `djzort@cpan` and
+  `miker@cpan` are PAUSE ids, and they are the two a CPAN breaking change
+  reaches first.
+
 ## Licence
 
 MIT. Add only code you wrote or have permission to add, and keep contributor
