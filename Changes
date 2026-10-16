@@ -5,6 +5,12 @@ Revision history for Perl extension NetAddr::IP
     - Fix GH#148: README.md carries a repology packaging status badge, linking
       to the list of packaged versions.
 
+    - Read the file list in t/001-no-pod-outside-lib.t from MANIFEST rather
+      than walking the working tree. On Windows the dependencies are installed
+      into local/lib/perl5 inside the checkout, so the walk read cpanel_json_xs
+      in local/bin, found POD there, and failed all five Windows jobs. MANIFEST
+      is the list of what ships, so nothing outside it can be read at all.
+
     - Fix GH#146: Indent the text that Makefile.PL writes to Util_IS.pm, so
       MetaCPAN no longer lists Makefile.PL as the documentation for
       NetAddr::IP::Util_IS. The generated module is unchanged.
