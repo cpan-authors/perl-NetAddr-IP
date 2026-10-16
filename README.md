@@ -2,6 +2,8 @@
 
 Manages IPv4 and IPv6 addresses and subnets.
 
+[![Packaging status](https://repology.org/badge/tiny-repos/perl%3Anetaddr-ip.svg)](https://repology.org/project/perl%3Anetaddr-ip/versions)
+
 ## Synopsis
 
     use NetAddr::IP qw(Compact Coalesce);
