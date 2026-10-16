@@ -2,6 +2,10 @@ Revision history for Perl extension NetAddr::IP
 
 {{$NEXT}}
 
+    - Fix GH#146: Indent the text that Makefile.PL writes to Util_IS.pm, so
+      MetaCPAN no longer lists Makefile.PL as the documentation for
+      NetAddr::IP::Util_IS. The generated module is unchanged.
+
 4.080_05  2026-10-15 13:40:32+11:00 Australia/Sydney (TRIAL RELEASE)
 
     - Fix GH#142: Use Socket's own AF_INET6 where the Socket module has one,

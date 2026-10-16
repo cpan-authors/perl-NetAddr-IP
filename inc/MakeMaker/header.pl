@@ -59,58 +59,62 @@ unless ($useXS) {
 #
 my $util_is_path = 'lib/NetAddr/IP/Util_IS.pm';
 open(F, '>', $util_is_path) or die "Cannot write $util_is_path: $!\n";
-print F q|#!/usr/bin/perl
-#
-# DO NOT ALTER THIS FILE
-# IT IS WRITTEN BY Makefile.PL
-# EDIT THAT INSTEAD
-#
-package NetAddr::IP::Util_IS;
-our $VERSION;
-$VERSION = 1.00;
+
+# indented, so no line of Makefile.PL starts a POD command; the indent comes off below
+my $util_is = q|#!/usr/bin/perl
+    #
+    # DO NOT ALTER THIS FILE
+    # IT IS WRITTEN BY Makefile.PL
+    # EDIT THAT INSTEAD
+    #
+    package NetAddr::IP::Util_IS;
+    our $VERSION;
+    $VERSION = 1.00;
 
 
-sub pure {
-    return |, (($useXS) ? 0 : 1), q|;
-}
-sub not_pure {
-    return |, (($useXS) ? 1 : 0), q|;
-}
-1;
-__END__
+    sub pure {
+        return | . (($useXS) ? 0 : 1) . q|;
+    }
+    sub not_pure {
+        return | . (($useXS) ? 1 : 0) . q|;
+    }
+    1;
+    __END__
 
-=head1 NAME
+    =head1 NAME
 
-NetAddr::IP::Util_IS - Tell about Pure Perl
+    NetAddr::IP::Util_IS - Tell about Pure Perl
 
-=head1 SYNOPSIS
+    =head1 SYNOPSIS
 
-  use NetAddr::IP::Util_IS;
+      use NetAddr::IP::Util_IS;
 
-  my $is_pure = NetAddr::IP::Util_IS->pure();
-  my $is_xs   = NetAddr::IP::Util_IS->not_pure();
+      my $is_pure = NetAddr::IP::Util_IS->pure();
+      my $is_xs   = NetAddr::IP::Util_IS->not_pure();
 
-=head1 DESCRIPTION
+    =head1 DESCRIPTION
 
-Util_IS indicates whether or not B<NetAddr::IP::Util> was compiled in Pure
-Perl mode.
+    Util_IS indicates whether or not B<NetAddr::IP::Util> was compiled in Pure
+    Perl mode.
 
-=over 4
+    =over 4
 
-=item C<pure()>
+    =item C<pure()>
 
-Returns true if PurePerl mode, else false.
+    Returns true if PurePerl mode, else false.
 
-=item C<not_pure()>
+    =item C<not_pure()>
 
-Returns true if NOT PurePerl mode, else false
+    Returns true if NOT PurePerl mode, else false
 
-=back
+    =back
 
-=cut
+    =cut
 
-1;
+    1;
 |;
+$util_is =~ s/^ {4}//mg;
+print F $util_is;
 close F;
 
 #
