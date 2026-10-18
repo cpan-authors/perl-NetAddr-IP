@@ -66,6 +66,7 @@ its block, not the next free number in the directory.
 | 110-199 | `NetAddr::IP::Lite` |
 | 200-259 | `NetAddr::IP`, the full object API |
 | 260-269 | threads and anything that crosses layers |
+| 270-279 | `NetAddr::IP::Count`, counting addresses into groups of NetAddr::IP subnets |
 
 `dist.ini` adds `t/00-compile.t` and `t/00-report-prereqs.t`, and `[RunExtraTests]`
 adds the `author-` and `release-` files, so the numbers stay clear of them.
