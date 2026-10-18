@@ -2,6 +2,16 @@ Revision history for Perl extension NetAddr::IP
 
 {{$NEXT}}
 
+    - Fix GH#147: Add NetAddr::IP::Count, a new implementation of the
+      interface of NetAddr-IP-Count 2.01 by Luis E. Munoz, whose valcount
+      method was contributed by Alvaro Carvajal. An address now counts once
+      in every group with a subnet that contains it, where 2.01 counted it in
+      one of them, chosen by hash order and the order of the addresses.
+      Anything but a NetAddr::IP object where an address or subnet belongs,
+      or anything but a number where a value belongs, croaks before any
+      total changes. The cache size is still accepted and reported, but no
+      longer affects counting.
+
     - Fix GH#165: inet_ntop and AF_INET6 come from core Socket.
       IPv6 names go through getaddrinfo. Socket6 is no longer
       recommended. fake_AF_INET6 is deprecated, returns 0, and will

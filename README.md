@@ -22,7 +22,7 @@ ranges, so they are safe to paste anywhere.
 
 ## Modules
 
-Six modules ship in the distribution, each adding a layer:
+Seven modules ship in the distribution, each adding a layer:
 
 - **NetAddr::IP::Constants** — named constants for the magic numbers used
   elsewhere: widths, octet counts, the netlimit exponents, the packed BCD
@@ -47,6 +47,10 @@ Six modules ship in the distribution, each adding a layer:
 - **NetAddr::IP** — the advanced operations on subnets: `split`, `rsplit`,
   `hostenum`, `compact`, `coalesce`, `re`, `re6`, `wildcard`, `short`,
   `full`, `full6`.
+
+- **NetAddr::IP::Count** — counts how many addresses fall in each named
+  group of subnets, with the interface of the NetAddr-IP-Count
+  distribution it replaces: `new`, `add`, `count`, `valcount`, `result`.
 
 `NetAddr::IP` subclasses `NetAddr::IP::Lite`, so anything the base class can
 do it can do too. `NetAddr::IP::Util_IS` is generated at build time and
