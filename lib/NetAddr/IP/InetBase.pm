@@ -234,6 +234,8 @@ sub isIPv4 {
 my $_newV4compat = pack('N4', 0, 0, 0xffff, 0);
 
 sub isNewIPv4 {
+    # croaks unless 16 bytes, naming isNewIPv4, as isIPv4 and isAnyIPv4 do
+    isIPv4($_[0]);
     my $naddr = $_[0] ^ $_newV4compat;
     return isIPv4($naddr);
 }
@@ -666,10 +668,8 @@ address, of the form
 
   ::ffff:d.d.d.d
 
-which is the RFC 4291 s2.5.5.2 prefix C<::ffff:0:0/96>.
-
-Returns false for an argument shorter than 16 bytes and croaks for a
-longer one.
+which is the RFC 4291 s2.5.5.2 prefix C<::ffff:0:0/96>.  Croaks if the
+argument is not 16 bytes.
 
 =item $rv = isAnyIPv4($bits128);
 

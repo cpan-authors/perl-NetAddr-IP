@@ -140,4 +140,27 @@ subtest 'isNewIPv4 with compatible high bits' => sub {
     }
 };
 
+# arguments that are not 16 bytes, with their length in bits
+my %wrong_length = (
+    'an empty string'                       => [ '',                     0 ],
+    'four bytes'                            => [ "\xc0\0\2\1",           32 ],
+    'fifteen bytes'                         => [ "\0" x 15,              120 ],
+    'seventeen bytes'                       => [ "\0" x 17,              136 ],
+    'twelve bytes ending in the ffff group' => [ "\0" x 10 . "\xff\xff", 96 ],
+);
+
+subtest 'all three croak on an argument that is not 16 bytes' => sub {
+    for my $case ( sort keys %wrong_length ) {
+        my ( $bits128, $bits ) = @{ $wrong_length{$case} };
+        for my $name (qw( isAnyIPv4 isIPv4 isNewIPv4 )) {
+            my $predicate = NetAddr::IP::InetBase->can($name);
+            like(
+                dies { $predicate->($bits128) },
+qr/\ABad arg length for NetAddr::IP::InetBase::$name, length is $bits, should be 128 at /,
+                "$name of $case croaks, naming $name"
+            );
+        }
+    }
+};
+
 done_testing;

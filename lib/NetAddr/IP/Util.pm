@@ -623,7 +623,8 @@ address, of the form
 
   ::ffff:d.d.d.d
 
-which is the RFC 4291 s2.5.5.2 prefix C<::ffff:0:0/96>.
+which is the RFC 4291 s2.5.5.2 prefix C<::ffff:0:0/96>.  Croaks if the
+argument is not 16 bytes.
 
 =item $rv = isAnyIPv4($bits128);
 
