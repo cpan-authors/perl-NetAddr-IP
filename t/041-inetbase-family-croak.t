@@ -3,6 +3,7 @@
 use Test2::V1 -ipP;
 use Test2::Plugin::NoWarnings;
 use Test2::Tools::Exception qw( dies );
+use Test2::Tools::Warnings  qw( no_warnings );
 
 # load with Socket6 hidden, so inet_ntop and inet_pton are this module's own
 BEGIN {
@@ -30,6 +31,32 @@ my $accepted = sprintf 'should be AF_INET (%d) or AF_INET6 (%d)', $AF_INET,
   $AF_INET6;
 my $v4_packed = pack 'H*', 'c0000201';
 my $v6_packed = pack 'H*', '20010db8000000000000000000000001';
+
+# both functions die naming the family, and neither warns on the way
+sub refused_without_warning {
+    my ($af) = @_;
+    my ( $ntop_error, $pton_error );
+    ok(
+        no_warnings {
+            $ntop_error =
+              dies { NetAddr::IP::InetBase::inet_ntop( $af, $v4_packed ) };
+            $pton_error =
+              dies { NetAddr::IP::InetBase::inet_pton( $af, $V4_TEXT ) };
+        },
+        "family '$af' does not warn"
+    );
+    like(
+        $ntop_error,
+        qr/\A\Q$NTOP_DIES $af, $accepted\E at /,
+        "inet_ntop of family '$af' dies naming it"
+    );
+    like(
+        $pton_error,
+        qr/\A\Q$PTON_DIES $af, $accepted\E at /,
+        "inet_pton of family '$af' dies naming it"
+    );
+    return;
+}
 
 ok(
     \&NetAddr::IP::InetBase::inet_ntop == \&NetAddr::IP::InetBase::_inet_ntop
@@ -63,6 +90,33 @@ subtest 'an undefined family is named as undefined, without a warning' => sub {
         qr/\A\Q$PTON_DIES undefined, $accepted\E at /,
         'inet_pton of an undefined family says undefined'
     );
+};
+
+subtest 'a family that is not a number is named, without a warning' => sub {
+    refused_without_warning($_) for '', '0x2', 'AF_INET', 'AF_INET6';
+};
+
+subtest 'a family that is a number followed by text is refused' => sub {
+    refused_without_warning($_) for "${AF_INET6}abc", "${AF_INET}abc";
+};
+
+subtest 'a padded, signed or exponent family still converts' => sub {
+    my @written = (
+        [ 'a decimal point',    "$AF_INET.0",    $v4_packed, $V4_TEXT ],
+        [ 'a leading space',    " $AF_INET",     $v4_packed, $V4_TEXT ],
+        [ 'a leading zero',     "0$AF_INET",     $v4_packed, $V4_TEXT ],
+        [ 'a plus sign',        "+$AF_INET",     $v4_packed, $V4_TEXT ],
+        [ 'a trailing newline', "$AF_INET\n",    $v4_packed, $V4_TEXT ],
+        [ 'a trailing space',   "$AF_INET ",     $v4_packed, $V4_TEXT ],
+        [ 'an exponent',        "${AF_INET6}e0", $v6_packed, $V6_TEXT ],
+    );
+    for my $case (@written) {
+        my ( $form, $af, $packed, $text ) = @{$case};
+        is( eval { NetAddr::IP::InetBase::inet_ntop( $af, $packed ) } // $@,
+            $text, "inet_ntop of a family with $form" );
+        is( eval { NetAddr::IP::InetBase::inet_pton( $af, $text ) } // $@,
+            $packed, "inet_pton of a family with $form" );
+    }
 };
 
 subtest 'AF_INET and AF_INET6 still convert' => sub {

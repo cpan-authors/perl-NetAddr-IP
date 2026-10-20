@@ -16,6 +16,7 @@ use NetAddr::IP::Constants qw(
         $V4_PACKED_BYTES
         $V6_PACKED_BYTES
 );
+use Scalar::Util qw( looks_like_number );
 
 our @EXPORT_OK = qw(
         inet_aton
@@ -412,7 +413,8 @@ sub _inet_pton {
     my ($af, $ip) = @_;
     die sprintf('Bad address family for %s::inet_pton, got %s, %s',
         __PACKAGE__, defined $af ? $af : 'undefined', $FAMILY_SHOULD_BE)
-        unless defined $af && ( $af == AF_INET6() || $af == AF_INET() );
+        unless defined $af && looks_like_number($af)
+        && ( $af == AF_INET6() || $af == AF_INET() );
     if ($af == AF_INET()) {
         inet_aton($ip);
     }
@@ -581,7 +583,8 @@ sub _inet_ntop {
     my ($af, $naddr) = @_;
     die sprintf('Unsupported address family for %s::inet_ntop, af is %s, %s',
         __PACKAGE__, defined $af ? $af : 'undefined', $FAMILY_SHOULD_BE)
-        unless defined $af && ( $af == AF_INET6() || $af == AF_INET() );
+        unless defined $af && looks_like_number($af)
+        && ( $af == AF_INET6() || $af == AF_INET() );
     if ($af == AF_INET()) {
         inet_ntoa($naddr);
     }

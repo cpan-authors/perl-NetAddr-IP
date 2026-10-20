@@ -2,6 +2,16 @@ Revision history for Perl extension NetAddr::IP
 
 {{$NEXT}}
 
+    - Refuse a family that is not a number in inet_ntop and inet_pton without
+      Socket6, before the comparison can warn. The string 'AF_INET' died
+      with the right message, but only after perl's "isn't numeric" warning,
+      raised inside InetBase.pm where the caller's no warnings cannot reach
+      it. It now dies with the same message and no warning. A number
+      followed by text, such as '2abc', was read as its leading digits and
+      accepted, and is now refused, the rule GH#89 set for addition and
+      subtraction. Padded, signed, decimal and exponent forms such as ' 2',
+      '+2', '2.0' and '2e0' are unaffected.
+
     - Fix GH#148: README.md carries a repology packaging status badge, linking
       to the list of packaged versions.
 
