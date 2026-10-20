@@ -76,13 +76,13 @@ my @via_range = (
 subtest 'an undefined argument is named as undefined, not measured' => sub {
     like(
         dies { inet_ntoa(undef) },
-        qr/^Bad arg length for \S+inet_ntoa, length is undefined should be 4/,
+qr/^Bad arg length for \S+inet_ntoa, length is undefined should be 4 bytes/,
         'inet_ntoa says the length is undefined'
     );
 
     like(
         dies { ipv6_ntoa(undef) },
-        qr/^Bad arg length for \S+ipv6_ntoa, length is undefined should be 16/,
+qr/^Bad arg length for \S+ipv6_ntoa, length is undefined should be 16 bytes/,
 'ipv6_ntoa says the length is undefined, rather than passing undef to inet_ntop'
     );
 
@@ -150,13 +150,13 @@ qr/^Bad arg length for \S+simple_pack, length is undefined, should be 1 to 40 di
 subtest 'a defined argument of the wrong length is still measured' => sub {
     like(
         dies { inet_ntoa('') },
-        qr/^Bad arg length for \S+inet_ntoa, length is 0 should be 4/,
+        qr/^Bad arg length for \S+inet_ntoa, length is 0 should be 4 bytes/,
         'an empty string measures 0'
     );
 
     like(
         dies { inet_ntoa('ab') },
-        qr/^Bad arg length for \S+inet_ntoa, length is 2 should be 4/,
+        qr/^Bad arg length for \S+inet_ntoa, length is 2 should be 4 bytes/,
         'a two byte string measures 2'
     );
 
