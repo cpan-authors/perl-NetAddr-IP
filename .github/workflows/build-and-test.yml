@@ -169,7 +169,8 @@ jobs:
           - "5.40"
           - "5.42"
     name: Perl ${{ matrix.perl-version }} on ${{ matrix.os }}
-    needs: build
+    # Phase 2: starts once every Linux leg, XS and pure Perl, has passed.
+    needs: [test_linux, test_linux_pureperl]
     steps:
       - uses: actions/checkout@v6
       - name: Set Up Perl
@@ -224,7 +225,7 @@ jobs:
         os: ["windows-latest"]
         perl-version: ["5.24", "5.26", "5.28", "5.30"]
     name: "Perl ${{ matrix.perl-version }} on ${{ matrix.os }} (pure Perl)"
-    needs: build
+    needs: [test_linux, test_linux_pureperl]
     steps:
       - uses: actions/checkout@v6
       - name: Set Up Perl
@@ -330,7 +331,7 @@ jobs:
         # upstream is fixed, or once this job stops installing recommends.
         perl-version: ["5.30"]
     name: "Perl ${{ matrix.perl-version }} on ${{ matrix.os }} (XS)"
-    needs: build
+    needs: [test_linux, test_linux_pureperl]
     steps:
       - uses: actions/checkout@v6
       - name: Set Up Perl
@@ -376,3 +377,95 @@ jobs:
         # No AUTHOR_TESTING, for the reason given in test_windows_pureperl:
         # Test::EOF fails on this platform. --with-develop is still needed for
         # the release-*.t tests, which do not guard on it.
+
+  # Phase 3: the BSDs, each in a QEMU VM on an Ubuntu runner through
+  # vmactions, once Linux, macOS and Windows have passed. Every VM builds and
+  # tests both builds from fresh copies of build_dir. The perl is the one the
+  # OS packages; Linux covers the perl versions. Author tests check file
+  # contents, which Linux already does, so AUTHOR_TESTING is off here and the
+  # develop phase is not installed. The recommends installed are this
+  # distribution's own: cpanm's --with-recommends follows every dependency's,
+  # down to Alien::cmake3, whose build from source fails on the BSDs.
+  test_bsd:
+    runs-on: ubuntu-latest
+    name: ${{ matrix.os }} ${{ matrix.release }}
+    needs: [test_macos, test_windows_pureperl, test_windows_xs]
+    timeout-minutes: 60
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - { os: freebsd, release: "15.1" }
+          - { os: freebsd, release: "14.5" }
+          # NetBSD 11.0 is off until its t/260-threads.t failure is understood:
+          # worker threads lose addresses in compactref on its perl 5.44.0
+          # - { os: netbsd, release: "11.0" }
+          - { os: openbsd, release: "7.9" }
+    steps:
+      - uses: actions/download-artifact@v8
+        with:
+          name: build_dir
+          path: build_dir
+      - name: Write the script the VM runs
+        # Outside build_dir, so the distribution under test gains no file.
+        run: |
+          cat > test-both-builds.sh <<'EOF'
+          #!/bin/sh
+          # Builds and tests XS and pure Perl, each from a fresh copy of build_dir
+          set -eu
+          uname -a
+          perl -V:version -V:archname -V:cc -V:byteorder
+          for build in xs pp; do
+              dir="/tmp/naip-$build"
+              rm -rf "$dir"
+              cp -R build_dir "$dir"
+              cd "$dir"
+              if [ "$build" = xs ]; then
+                  perl Makefile.PL
+                  expected='CC XS'
+              else
+                  perl Makefile.PL -noxs
+                  expected='Pure Perl'
+              fi
+              make
+              EXPECTED="$expected" perl -Mblib -MNetAddr::IP::Util -e 'my $mode = NetAddr::IP::Util::mode(); $mode eq $ENV{EXPECTED} or die "built $mode, expected $ENV{EXPECTED}\n"'
+              make test
+              cd "$GITHUB_WORKSPACE"
+          done
+          EOF
+      - name: Test on FreeBSD
+        if: matrix.os == 'freebsd'
+        uses: vmactions/freebsd-vm@v1
+        with:
+          release: ${{ matrix.release }}
+          cache-after-prepare: true
+          cache-after-prepare-key-suffix: deps-${{ hashFiles('build_dir/cpanfile') }}
+          prepare: |
+            pkg install -y perl5 p5-App-cpanminus
+            cd build_dir && cpanm -n --installdeps . && cpanm -n 'Math::BigInt~1.99' Socket6
+          run: sh test-both-builds.sh
+      - name: Test on NetBSD
+        if: matrix.os == 'netbsd'
+        uses: vmactions/netbsd-vm@v1
+        with:
+          release: ${{ matrix.release }}
+          cache-after-prepare: true
+          cache-after-prepare-key-suffix: deps-${{ hashFiles('build_dir/cpanfile') }}
+          prepare: |
+            /usr/sbin/pkg_add -u perl p5-App-cpanminus
+            cd build_dir && /usr/pkg/bin/cpanm -n --installdeps . && /usr/pkg/bin/cpanm -n 'Math::BigInt~1.99' Socket6
+          run: PATH="/usr/pkg/bin:$PATH" sh test-both-builds.sh
+      - name: Test on OpenBSD
+        if: matrix.os == 'openbsd'
+        uses: vmactions/openbsd-vm@v1
+        with:
+          release: ${{ matrix.release }}
+          cache-after-prepare: true
+          # The prepare text is in the cache key, so it carries the cpanfile hash.
+          # OpenBSD packages no cpanminus, so its base ftp fetches it.
+          prepare: |
+            # cpanfile ${{ hashFiles('build_dir/cpanfile') }}
+            ftp -o /usr/local/bin/cpanm https://cpanmin.us
+            chmod +x /usr/local/bin/cpanm
+            cd build_dir && cpanm -n --installdeps . && cpanm -n 'Math::BigInt~1.99' Socket6
+          run: sh test-both-builds.sh
