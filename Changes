@@ -2,6 +2,11 @@ Revision history for Perl extension NetAddr::IP
 
 {{$NEXT}}
 
+    - Name the caller's line in errors from NetAddr::IP::InetBase, as the XS
+      and pure Perl NetAddr::IP::Util errors already do, rather than a line
+      inside InetBase.pm. The functions croak where they used to die, and
+      the message before " at" is unchanged.
+
     - Fix GH#156: isNewIPv4 croaks on an argument that is not 16 bytes, as
       isIPv4 and isAnyIPv4 do, naming itself. It used to xor a short
       argument against the mapped prefix, which pads it out to 16 bytes, so an

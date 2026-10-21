@@ -9,6 +9,7 @@ package NetAddr::IP::InetBase;
 # VERSION
 
 use parent 'Exporter';
+use Carp qw( croak );
 use NetAddr::IP::Constants qw(
         $IPV6_BITS
         $MAX_OCTET
@@ -166,14 +167,14 @@ sub _case_tags {
 }
 
 sub ipv6_n2x {
-    die sprintf($N2_LENGTH_DIES, 'ipv6_n2x',
+    croak sprintf($N2_LENGTH_DIES, 'ipv6_n2x',
         defined $_[0] ? length($_[0]) : 'undefined', $V6_PACKED_BYTES)
         unless defined $_[0] && length($_[0]) == $V6_PACKED_BYTES;
     return sprintf($Upper ? $n2x_upper : $n2x_format, unpack("n8", $_[0]));
 }
 
 sub ipv6_n2d {
-    die sprintf($N2_LENGTH_DIES, 'ipv6_n2d',
+    croak sprintf($N2_LENGTH_DIES, 'ipv6_n2d',
         defined $_[0] ? length($_[0]) : 'undefined', $V6_PACKED_BYTES)
         unless defined $_[0] && length($_[0]) == $V6_PACKED_BYTES;
     my @hex = (unpack("n8", $_[0]));
@@ -236,7 +237,7 @@ sub isIPv4 {
             ? $caller
             : (caller(0))[3];
         my $bits = defined $_[0] ? length($_[0]) * $OCTET_BITS : 'undefined';
-        die "Bad arg length for $sub, length is $bits, should be $IPV6_BITS";
+        croak "Bad arg length for $sub, length is $bits, should be $IPV6_BITS";
     }
     return ($_[0] & $_ipv4mask) eq $_zero
         ? 1 : 0;
@@ -413,7 +414,7 @@ forms such as C<127.1> and host names, which Socket6 rejects.
 
 sub _inet_pton {
     my ($af, $ip) = @_;
-    die sprintf('Bad address family for %s::inet_pton, got %s, %s',
+    croak sprintf('Bad address family for %s::inet_pton, got %s, %s',
         __PACKAGE__, defined $af ? $af : 'undefined', $FAMILY_SHOULD_BE)
         unless defined $af && looks_like_number($af)
         && ( $af == AF_INET6() || $af == AF_INET() );
@@ -444,7 +445,7 @@ Croaks if the argument is not 4 bytes.
 
 sub inet_ntoa {
     my $packed = $_[0];
-    die 'Bad arg length for '. __PACKAGE__ ."::inet_ntoa, length is ".
+    croak 'Bad arg length for '. __PACKAGE__ ."::inet_ntoa, length is ".
         (defined $packed ? length($packed) : 'undefined') .
         " should be $V4_PACKED_BYTES bytes"
                 unless defined $packed && length($packed) == $V4_PACKED_BYTES;
@@ -475,7 +476,7 @@ so the difference only reaches callers of this function.
 =cut
 
 sub ipv6_ntoa {
-    die 'Bad arg length for '. __PACKAGE__ ."::ipv6_ntoa, length is undefined should be $V6_PACKED_BYTES bytes"
+    croak 'Bad arg length for '. __PACKAGE__ ."::ipv6_ntoa, length is undefined should be $V6_PACKED_BYTES bytes"
                 unless defined $_[0];
     return inet_ntop(AF_INET6(), $_[0]);
 }
@@ -583,7 +584,7 @@ the choice is made by what happens to be installed.
 
 sub _inet_ntop {
     my ($af, $naddr) = @_;
-    die sprintf('Unsupported address family for %s::inet_ntop, af is %s, %s',
+    croak sprintf('Unsupported address family for %s::inet_ntop, af is %s, %s',
         __PACKAGE__, defined $af ? $af : 'undefined', $FAMILY_SHOULD_BE)
         unless defined $af && looks_like_number($af)
         && ( $af == AF_INET6() || $af == AF_INET() );
