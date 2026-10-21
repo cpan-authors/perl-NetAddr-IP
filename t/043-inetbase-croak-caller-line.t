@@ -58,7 +58,7 @@ my $pton_says =
   sprintf 'Bad address family for NetAddr::IP::InetBase::inet_pton, got %s, %s',
   $BAD_FAMILY, $accepted;
 my $v6ntoa_says =
-'Bad arg length for NetAddr::IP::InetBase::ipv6_ntoa, length is undefined should be 16 bytes';
+'Bad arg length for NetAddr::IP::InetBase::ipv6_ntoa, length is %s should be 16 bytes';
 
 # the message, then this file and the line of the call, with or without the
 # full stop that Carp 1.20 on perl 5.14 leaves off
@@ -113,6 +113,13 @@ subtest 'an error from the function called names the line that called it' =>
         'ipv6_n2x of 3 bytes names the line of its call'
     );
 
+    ( $line, $err ) = ( __LINE__, dies { ipv6_ntoa($SHORT) } );
+    like(
+        $err,
+        said_at( sprintf( $v6ntoa_says, 3 ), $line ),
+        'ipv6_ntoa of 3 bytes names the line of its call'
+    );
+
     ( $line, $err ) = ( __LINE__, dies { isIPv4($SHORT) } );
     like(
         $err,
@@ -152,13 +159,6 @@ subtest
         $err,
         said_at( sprintf( $n2x_says, 3 ), $line ),
 'inet_ntop AF_INET6 of 3 bytes, failing in ipv6_n2x, names the line of its call'
-    );
-
-    ( $line, $err ) = ( __LINE__, dies { ipv6_ntoa($SHORT) } );
-    like(
-        $err,
-        said_at( sprintf( $n2x_says, 3 ), $line ),
-        'ipv6_ntoa of 3 bytes, failing in ipv6_n2x, names the line of its call'
     );
 
     ( $line, $err ) = ( __LINE__, dies { isAnyIPv4($SHORT) } );
@@ -210,7 +210,7 @@ subtest 'an undefined argument names the line of the call' => sub {
     ( $line, $err ) = ( __LINE__, dies { ipv6_ntoa(undef) } );
     like(
         $err,
-        said_at( $v6ntoa_says, $line ),
+        said_at( sprintf( $v6ntoa_says, 'undefined' ), $line ),
         'ipv6_ntoa of undef names the line of its call'
     );
 

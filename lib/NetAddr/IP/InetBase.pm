@@ -465,6 +465,8 @@ text representation.
   input:    128 bit RDATA string
   returns:  ipv6 text
 
+Croaks if the argument is not 16 bytes.
+
 This is inet_ntop(AF_INET6,$ipv6naddr), so for an address with an IPv4
 address embedded in the low 32 bits the text depends on whether Socket6
 is installed. See the notes on inet_ntop below.
@@ -476,9 +478,13 @@ so the difference only reaches callers of this function.
 =cut
 
 sub ipv6_ntoa {
-    croak 'Bad arg length for '. __PACKAGE__ ."::ipv6_ntoa, length is undefined should be $V6_PACKED_BYTES bytes"
-                unless defined $_[0];
-    return inet_ntop(AF_INET6(), $_[0]);
+    my $packed = $_[0];
+    # measured here, so the error names ipv6_ntoa whichever inet_ntop is bound
+    croak 'Bad arg length for '. __PACKAGE__ ."::ipv6_ntoa, length is ".
+        (defined $packed ? length($packed) : 'undefined') .
+        " should be $V6_PACKED_BYTES bytes"
+                unless defined $packed && length($packed) == $V6_PACKED_BYTES;
+    return inet_ntop(AF_INET6(), $packed);
 }
 
 =item $hex_text = ipv6_n2x($bits128);

@@ -2,6 +2,14 @@ Revision history for Perl extension NetAddr::IP
 
 {{$NEXT}}
 
+    - Measure the argument of ipv6_ntoa in ipv6_ntoa itself, so a length
+      other than 16 bytes is reported by ipv6_ntoa, at the caller's line, on
+      every host. The argument went straight to inet_ntop, whose error named
+      Socket6::inet_ntop and a line inside InetBase.pm where Socket6 is
+      installed, and 'ipv6_n2x' where it is not. Every such length was
+      already refused, including a 4 byte IPv4 address, so nothing that
+      converted before is refused now.
+
     - Name the caller's line in errors from NetAddr::IP::InetBase, as the XS
       and pure Perl NetAddr::IP::Util errors already do, rather than a line
       inside InetBase.pm. The functions croak where they used to die, and
