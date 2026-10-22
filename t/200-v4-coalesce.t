@@ -244,6 +244,38 @@ subtest 'coalesce IPv6' => sub {
         'the shorter v6 net is the only result' );
 };
 
+subtest 'coalesce with mixed families' => sub {
+    my @v4 = map { NetAddr::IP->new("10.0.0.$_/32") } 1 .. 3;
+    my @v6 = map { NetAddr::IP->new6( sprintf '2001:db8::%x/128', $_ ) } 1 .. 3;
+
+    my $r = Coalesce( 24, 2, @v4, @v6 );
+    is( scalar @$r, 2,             'a mixed list gives one result per family' );
+    is( "$r->[0]",  '10.0.0.0/24', 'the IPv4 result comes first' );
+    is( "$r->[1]",  '2001:D00:0:0:0:0:0:0/24', 'the IPv6 result comes second' );
+    ok( !$r->[0]->{isv6}, 'the first result is an IPv4 object' );
+    ok( $r->[1]->{isv6},  'the second result is an IPv6 object' );
+
+    is(
+        join( ',', map { "$_" } @{ Coalesce( 24, 2, @v6, @v4 ) } ),
+        join( ',', map { "$_" } @$r ),
+        'the result does not depend on the order of the arguments'
+    );
+
+    $r = Coalesce(
+        24, 1,
+        NetAddr::IP->new('10.0.0.1/32'),
+        NetAddr::IP->new6('::10.0.0.1/128')
+    );
+    is( scalar @$r, 2,
+        'a v4 address and a v6 address with the same low bits stay separate' );
+
+    like(
+        dies { Coalesce( 64, 2, @v4, @v6 ) },
+        qr/exceeds the 32 bits/,
+        'a masklen the IPv4 family cannot hold croaks'
+    );
+};
+
 subtest 'coalesce on a subclass' => sub {
     my $base = NetAddr::IP->new('198.51.100.5/32');
     my $sub  = bless {%$base}, 'My::Sub';

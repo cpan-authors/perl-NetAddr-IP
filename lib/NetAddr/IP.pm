@@ -1388,9 +1388,11 @@ size of the subnet, so a /25 counts 128 and a /32 counts 1.
 
 Called as a method, the array will include C<$me>.
 
-The returned list is in address order.
-
-WARNING: the list of subnet must be the same type. i.e ipV4 or ipV6
+The returned list is in address order within each address family. A list
+holding both IPv4 and IPv6 subnets is coalesced separately for each family,
+with the same C<$masklen> applied to each, and the IPv4 results come before
+the IPv6 results. C<$masklen> must fit the address width of every argument,
+so a C<$masklen> above 32 with any IPv4 argument is an error.
 
 =cut
 
@@ -1415,14 +1417,24 @@ sub coalesce
     if grep { ! UNIVERSAL::isa($_, __PACKAGE__) } @_;
     croak("coalesce: masklen $masklen exceeds the $IPV4_BITS bits of the IPv4 arguments")
     if $masklen > $IPV4_BITS && grep { ! $_->{isv6} } @_;
-    my %ret = ();
-    my $type = $_[0]->{isv6};
-    return [] unless defined $type;
+    my (@v4, @v6);
+    foreach my $ip (@_) {
+        if ($ip->{isv6}) { push @v6, $ip } else { push @v4, $ip }
+    }
 
-    for my $ip (@_)
+    return [
+        ( @v4 ? @{_coalesce_family($masklen, $number, \@v4)} : () ),
+        ( @v6 ? @{_coalesce_family($masklen, $number, \@v6)} : () ),
+    ];
+}
+
+sub _coalesce_family
+{
+    my ($masklen, $number, $list) = @_;
+    my $type = $list->[0]->{isv6};
+    my %ret = ();
+    for my $ip (@$list)
     {
-    return [] unless $ip->{isv6} == $type;
-    $type = $ip->{isv6};
     my $n = NetAddr::IP->new($ip->addr . '/' . $masklen)->network;
     if ($ip->masklen > $masklen)
     {
@@ -1436,7 +1448,7 @@ sub coalesce
 
     # Add to @ret any arguments with netmasks longer than our argument
     for my $c (sort { $a->masklen <=> $b->masklen }
-        grep { $_->masklen <= $masklen } @_)
+        grep { $_->masklen <= $masklen } @$list)
     {
     next if grep { $_->contains($c) } @ret;
     push @ret, $c->network;

@@ -2,6 +2,11 @@ Revision history for Perl extension NetAddr::IP
 
 {{$NEXT}}
 
+    - Fix GH#39: Coalesce no longer returns an empty list for a list holding
+      both IPv4 and IPv6 subnets. The families are now coalesced separately,
+      with the same mask length applied to each, and the IPv4 results come
+      before the IPv6 results. A list of one family is unchanged.
+
     - Measure the argument of ipv6_ntoa in ipv6_ntoa itself, so a length
       other than 16 bytes is reported by ipv6_ntoa, at the caller's line, on
       every host. The argument went straight to inet_ntop, whose error named
