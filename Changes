@@ -2,6 +2,20 @@ Revision history for Perl extension NetAddr::IP
 
 {{$NEXT}}
 
+    - Fix GH#160: Refuse a packed argument holding a character above 0xFF in
+      the NetAddr::IP::InetBase functions that measure one, as the XS
+      functions of NetAddr::IP::Util already do. The length checks counted
+      characters, so 16 such characters passed the 16 byte check. Then
+      ipv6_n2x, ipv6_n2d and inet_ntoa returned a wrong answer, as did
+      ipv6_ntoa without Socket6, and from perl 5.28 isIPv4, isAnyIPv4 and
+      isNewIPv4 died inside InetBase.pm. Each now croaks with
+      "Wide character in" and the full name of the function that measures
+      the argument, at the caller's line. A string upgraded to UTF-8 is read
+      as its bytes, so ipv6_ntoa with Socket6 converts one rather than dying
+      in Socket6::inet_ntop.
+
+++ b/lib/NetAddr/IP/InetBase.pm
+
     - Take no leading zero in any part of an IPv4 address, and read the
       whole string as the address in the InetBase and Util text functions.
       A part such as the 010 in 192.0.2.010 is octal 8 to the C library's

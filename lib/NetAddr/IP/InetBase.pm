@@ -139,6 +139,10 @@ my $FAMILY_SHOULD_BE = sprintf 'should be AF_INET (%d) or AF_INET6 (%d)',
 # the length error from ipv6_n2x and ipv6_n2d, which name themselves quoted
 my $N2_LENGTH_DIES = q{Bad arg length for '%s', length is %s should be %d bytes};
 
+# the error for a packed argument with a character above 0xFF, worded as perl's
+# own from the XS, with the function named in place of "subroutine entry"
+my $WIDE_DIES = 'Wide character in %s';
+
 sub fake_AF_INET6 {
     return $emulateAF_INET6;
 }
@@ -167,17 +171,24 @@ sub _case_tags {
 }
 
 sub ipv6_n2x {
+    my $packed = $_[0];
+    # measure bytes, as the XS does: a character above 0xFF fails to downgrade
+    croak sprintf($WIDE_DIES, __PACKAGE__ . '::ipv6_n2x')
+        unless utf8::downgrade($packed, 1);
     croak sprintf($N2_LENGTH_DIES, 'ipv6_n2x',
-        defined $_[0] ? length($_[0]) : 'undefined', $V6_PACKED_BYTES)
-        unless defined $_[0] && length($_[0]) == $V6_PACKED_BYTES;
-    return sprintf($Upper ? $n2x_upper : $n2x_format, unpack("n8", $_[0]));
+        defined $packed ? length($packed) : 'undefined', $V6_PACKED_BYTES)
+        unless defined $packed && length($packed) == $V6_PACKED_BYTES;
+    return sprintf($Upper ? $n2x_upper : $n2x_format, unpack("n8", $packed));
 }
 
 sub ipv6_n2d {
+    my $packed = $_[0];
+    croak sprintf($WIDE_DIES, __PACKAGE__ . '::ipv6_n2d')
+        unless utf8::downgrade($packed, 1);
     croak sprintf($N2_LENGTH_DIES, 'ipv6_n2d',
-        defined $_[0] ? length($_[0]) : 'undefined', $V6_PACKED_BYTES)
-        unless defined $_[0] && length($_[0]) == $V6_PACKED_BYTES;
-    my @hex = (unpack("n8", $_[0]));
+        defined $packed ? length($packed) : 'undefined', $V6_PACKED_BYTES)
+        unless defined $packed && length($packed) == $V6_PACKED_BYTES;
+    my @hex = (unpack("n8", $packed));
     $hex[9] = $hex[7] & $MAX_OCTET;
     $hex[8] = $hex[7] >> $OCTET_BITS;
     $hex[7] = $hex[6] & $MAX_OCTET;
@@ -236,16 +247,19 @@ my $_zero = pack('L4', 0, 0, 0, 0);
 my $_ipv4mask = pack('L4', 0xffffffff, 0xffffffff, 0xffffffff, 0);
 
 sub isIPv4 {
-    if (!defined $_[0] || length($_[0]) != $V6_PACKED_BYTES) {
+    my $naddr = $_[0];
+    my $bytes = utf8::downgrade($naddr, 1);
+    if (!$bytes || !defined $naddr || length($naddr) != $V6_PACKED_BYTES) {
         # name the InetBase function the caller entered, else isIPv4 itself
         my $caller = (caller(1))[3];
         my $sub = defined $caller && index($caller, __PACKAGE__ . '::') == 0
             ? $caller
             : (caller(0))[3];
-        my $bits = defined $_[0] ? length($_[0]) * $OCTET_BITS : 'undefined';
+        croak sprintf($WIDE_DIES, $sub) unless $bytes;
+        my $bits = defined $naddr ? length($naddr) * $OCTET_BITS : 'undefined';
         croak "Bad arg length for $sub, length is $bits, should be $IPV6_BITS";
     }
-    return ($_[0] & $_ipv4mask) eq $_zero
+    return ($naddr & $_ipv4mask) eq $_zero
         ? 1 : 0;
 }
 
@@ -328,6 +342,13 @@ Text that is not an address is not an error.  Four functions,
 C<inet_aton>, C<ipv6_aton>, C<inet_any2n> and C<inet_pton>, return undef
 for it.  A binary argument of the wrong length is an error, and each
 entry below says which functions croak on one.
+
+A binary argument is measured in bytes, as the XS functions of
+B<NetAddr::IP::Util> measure one.  A string upgraded to UTF-8 is read as
+the bytes it holds.  A string with a character above 0xFF cannot be read
+as bytes, and every function that croaks on a wrong length croaks on it,
+with C<Wide character in> and the full name of the function that
+measures the argument.
 
 =head1 FUNCTIONS
 
@@ -468,6 +489,8 @@ Croaks if the argument is not 4 bytes.
 
 sub inet_ntoa {
     my $packed = $_[0];
+    croak sprintf($WIDE_DIES, __PACKAGE__ . '::inet_ntoa')
+        unless utf8::downgrade($packed, 1);
     croak 'Bad arg length for '. __PACKAGE__ ."::inet_ntoa, length is ".
         (defined $packed ? length($packed) : 'undefined') .
         " should be $V4_PACKED_BYTES bytes"
@@ -502,7 +525,10 @@ so the difference only reaches callers of this function.
 
 sub ipv6_ntoa {
     my $packed = $_[0];
-    # measured here, so the error names ipv6_ntoa whichever inet_ntop is bound
+    # measured here, so the error names ipv6_ntoa whichever inet_ntop is bound,
+    # and downgraded, so Socket6 reads the same 16 bytes
+    croak sprintf($WIDE_DIES, __PACKAGE__ . '::ipv6_ntoa')
+        unless utf8::downgrade($packed, 1);
     croak 'Bad arg length for '. __PACKAGE__ ."::ipv6_ntoa, length is ".
         (defined $packed ? length($packed) : 'undefined') .
         " should be $V6_PACKED_BYTES bytes"
