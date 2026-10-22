@@ -290,6 +290,7 @@ else {
 package NetAddr::IP::Util;
 
 sub naip_gethostbyname {
+    return if defined $_[0] && $_[0] =~ /[\t\n\x0B\f\r ]/;    # no host name holds whitespace
     my @rv = &$mygethostbyname($_[0]);
     return wantarray
         ? @rv
@@ -408,6 +409,12 @@ C<mode()> reports which one is loaded:
 
   print mode();   # 'CC XS' or 'Pure Perl'
 
+The whole string has to be the address.  Surrounding whitespace, a
+trailing newline included, makes it text that is not one, and
+C<inet_aton> returns undef for it without asking C<gethostbyname>.
+The constructor, C<NetAddr::IP-E<gt>new>, strips surrounding whitespace
+before it reads an address.
+
 Text that is not an address is not an error.  Four functions,
 C<inet_aton>, C<ipv6_aton>, C<inet_any2n> and C<inet_pton>, return undef
 for it, and C<inet_4map6> returns undef for an argument it cannot map.
@@ -432,6 +439,12 @@ on the process-wide setting described under L<NetAddr::IP::InetBase>,
 except for C<ipv6_ntoa>, C<inet_ntop> and C<packzeros>, which are always
 lowercase.
 
+Each C<d> is decimal, 0 to 255, without a leading zero.  No part of
+an IPv4 address takes one, in a tail or on its own, so
+C<::ffff:192.0.2.010>, C<192.0.2.010> and C<010.1> are not addresses:
+the C library's C<inet_aton> reads C<010> as octal 8, and a person
+reads it as decimal 10.
+
 =head1 FUNCTIONS
 
 =head2 Text to binary
@@ -446,9 +459,11 @@ Convert a dot-quad IP address into an IPv4 packed network address.
   returns:  packed network address, or undef
 
 Short forms follow the BSD C<inet_aton> convention, not RFC 791:
-C<127.1> is 127.0.0.1 and C<192.0.2> is 192.0.0.2.  Other text goes to
-C<gethostbyname>, so a host name is resolved.  Returns undef for an
-octet above 255 and for text that does not resolve.
+C<127.1> is 127.0.0.1 and C<192.0.2> is 192.0.0.2.  Its octal reading
+of a leading zero does not: C<192.0.2.010> returns undef.  Other text
+goes to C<gethostbyname>, so a host name is resolved.  Returns undef
+for an octet above 255, for text with whitespace, and for text that
+does not resolve.
 
 =item $bits128 = ipv6_aton($ipv6_text);
 
@@ -862,6 +877,10 @@ This is NOT the expected result from Perl's gethostbyname2. It is instead equiva
   and if that fails, the IPv4 conversion above.
 
 For a gethostbyname2 emulator that behave like Socket6, see: L<Net::DNS::Dig>
+
+A NAME with whitespace, or a dotted number with a leading zero in any
+part, gives an empty list, or undef in scalar context, without asking
+the resolver.
 
 =item $trueif = havegethostbyname2();
 

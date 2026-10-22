@@ -191,7 +191,9 @@ sub ipv6_n2d {
 sub fillIPv4 {
     my $host = $_[0];
     return undef unless defined $host;
-    if ($host =~ /^([0-9]+)(?:|\.([0-9]+)(?:|\.([0-9]+)(?:|\.([0-9]+))))$/) {
+    if ($host =~ /^([0-9]+)(?:|\.([0-9]+)(?:|\.([0-9]+)(?:|\.([0-9]+))))\z/) {
+        # a leading zero reads as octal to inet_aton and as decimal to people, so it is refused
+        return undef if $host =~ /(?:\A|[.])0[0-9]/;
         if (defined $4) {
             return undef unless
                 $1 >= 0 && $1 < 256 &&
@@ -221,7 +223,11 @@ sub fillIPv4 {
     $host;
 }
 
+# whitespace, which no address or host name holds, is refused before the resolver sees it
+my $WHITESPACE = qr/[\t\n\x0B\f\r ]/;
+
 sub inet_aton {
+    return undef if defined $_[0] && $_[0] =~ $WHITESPACE;
     my $host = fillIPv4($_[0]);
     return $host ? scalar gethostbyname($host) : undef;
 }
@@ -306,6 +312,18 @@ The IPv6 functions accept every text form in RFC 4291 s2.2:
   ::x:d.d.d.d
   ::ffff:d.d.d.d
 
+Each C<d> is decimal, 0 to 255, without a leading zero.  No part of
+an IPv4 address takes one, in a tail or on its own, so
+C<::ffff:192.0.2.010>, C<192.0.2.010> and C<010.1> are not addresses:
+the C library's C<inet_aton> reads C<010> as octal 8, and a person
+reads it as decimal 10.
+
+The whole string has to be the address.  Surrounding whitespace, a
+trailing newline included, makes it text that is not one, and
+C<inet_aton> returns undef for it without asking C<gethostbyname>.
+The constructor, C<NetAddr::IP-E<gt>new>, strips surrounding whitespace
+before it reads an address.
+
 Text that is not an address is not an error.  Four functions,
 C<inet_aton>, C<ipv6_aton>, C<inet_any2n> and C<inet_pton>, return undef
 for it.  A binary argument of the wrong length is an error, and each
@@ -325,9 +343,11 @@ Convert a dot-quad IP address into an IPv4 packed network address.
   returns:  packed network address, or undef
 
 Short forms follow the BSD C<inet_aton> convention, not RFC 791:
-C<127.1> is 127.0.0.1 and C<192.0.2> is 192.0.0.2.  Other text goes to
-C<gethostbyname>, so a host name is resolved.  Returns undef for an
-octet above 255 and for text that does not resolve.
+C<127.1> is 127.0.0.1 and C<192.0.2> is 192.0.0.2.  Its octal reading
+of a leading zero does not: C<192.0.2.010> returns undef.  Other text
+goes to C<gethostbyname>, so a host name is resolved.  Returns undef
+for an octet above 255, for text with whitespace, and for text that
+does not resolve.
 
 =item $bits128 = ipv6_aton($ipv6_text);
 
@@ -340,10 +360,13 @@ address.
 
 =cut
 
+# one octet of a dotted quad tail: decimal, without the leading zero inet_aton reads as octal
+my $TAIL_OCTET = qr/0|[1-9][0-9]{0,2}/;
+
 sub ipv6_aton {
     my ($ipv6) = @_;
     return undef unless $ipv6;
-    if (my ($hex, @quad) = $ipv6 =~ /^(.*:)([0-9]{1,3})\.([0-9]{1,3})\.([0-9]{1,3})\.([0-9]{1,3})$/) {    # mixed hex, dot-quad
+    if (my ($hex, @quad) = $ipv6 =~ /^(.*:)($TAIL_OCTET)\.($TAIL_OCTET)\.($TAIL_OCTET)\.($TAIL_OCTET)\z/) {    # mixed hex, dot-quad
         return undef if grep { $_ > $MAX_OCTET } @quad;
         $ipv6 = sprintf("%s%X%02X:%X%02X", $hex, @quad);            # convert to pure hex
     }

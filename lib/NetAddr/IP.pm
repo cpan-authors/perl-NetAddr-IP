@@ -572,10 +572,12 @@ address, RFC 4291 s2.5.5.2:
 
   NetAddr::IP->new6FFFF('192.0.2.1');   # 0:0:0:0:0:FFFF:C000:201/128
 
-C<new_no> is exclusively for IPv4 addresses and filters improperly
-formatted dot quad strings for leading 0's that would normally be
-interpreted as octal format by NetAddr per the specifications for
-inet_aton.
+An IPv4 address with a leading zero in any part, such as C<192.0.2.010>
+or C<010>, is not an address to C<new>: the C library's C<inet_aton>
+reads C<010> as octal 8, and a person reads it as decimal 10.  Only
+C<new_no> takes such parts, reading them as decimal, so
+C<new_no('192.0.2.010')> is 192.0.2.10; it is exclusively for IPv4
+addresses.
 
 B<new_from_aton> takes a packed IPv4 address and assumes a /32 mask. This
 function replaces the :aton functionality, which reads a packed string
@@ -660,6 +662,17 @@ address, embodied in that order. This previously undocumented feature
 may be disabled with:
 
   use NetAddr::IP qw(:nofqdn);
+
+Surrounding whitespace is ignored on the address and on a separate mask,
+so a line read from a file needs no C<chomp>:
+
+  NetAddr::IP->new("192.0.2.0/24\n");        # 192.0.2.0/24
+  NetAddr::IP->new("2001:db8::1\r\n");       # 2001:DB8:0:0:0:0:0:1/128
+  NetAddr::IP->new('192.0.2.0', " 24\n");    # 192.0.2.0/24
+
+The text functions of L<NetAddr::IP::InetBase> and L<NetAddr::IP::Util>
+do not strip it, so there the string has to be the address and nothing
+else.
 
 Called with no arguments, 'default' is assumed. An explicit undef
 argument returns undef, and an empty string returns undef.
@@ -1801,8 +1814,9 @@ Everything listed here is deprecated and will be removed in version 5.
 =item C<:aton>
 
 Enables C<-E<gt>new()> to accept a raw packed address of four or sixteen
-bytes, and stops it stripping surrounding whitespace, which a packed
-address may begin or end with. Plain C<inet_aton> notation is accepted
+bytes, and stops it stripping surrounding whitespace from a string of
+four or sixteen bytes, which may be a packed address that begins or ends
+with a whitespace byte. Plain C<inet_aton> notation is accepted
 without this tag.
 
 The length of the string does not mark it as packed. Every text form

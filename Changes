@@ -2,6 +2,33 @@ Revision history for Perl extension NetAddr::IP
 
 {{$NEXT}}
 
+    - Take no leading zero in any part of an IPv4 address, and read the
+      whole string as the address in the InetBase and Util text functions.
+      A part such as the 010 in 192.0.2.010 is octal 8 to the C library's
+      inet_aton and decimal 10 to a person. Through gethostbyname, inet_aton
+      and new() read it as octal, while ipv6_aton and inet_any2n read it as
+      decimal, so the same text named two addresses. Such text is now not an
+      address anywhere except new_no(), which reads it as decimal as before.
+      The patterns of fillIPv4 and of the dotted quad tail in ipv6_aton
+      ended in $, which matches before a final newline, so one trailing
+      newline was ignored on some forms and not others. They now end in \z,
+      and inet_aton and naip_gethostbyname return undef for text with
+      whitespace without asking the resolver. The constructors keep
+      stripping surrounding whitespace from the address, as they have since
+      4.080_01 (GH#5), now strip it from a separate mask as well, and under
+      :aton keep the ends only of a string of four or sixteen bytes. A
+      prefix length keeps its leading zeros, so 192.0.2.0/024 is still
+      192.0.2.0/24. Against 4.079 these change:
+      call                              4.079              now
+      inet_aton("192.0.2.1\n")          192.0.2.1          undef
+      inet_aton("192.0.2.010")          192.0.2.8          undef
+      ipv6_aton("::ffff:192.0.2.1\n")   ::ffff:192.0.2.1   undef
+      inet_any2n("192.0.2.010")         ::192.0.2.10       undef
+      new("010")                        0.0.0.10/32        undef
+      new("192.0.2.010")                192.0.2.8/32       undef
+      new("::ffff:192.0.2.010")         ::ffff:192.0.2.10  undef
+      new("192.0.2.0", "24\n")          undef              192.0.2.0/24
+
     - Fix GH#39: Coalesce no longer returns an empty list for a list holding
       both IPv4 and IPv6 subnets. The families are now coalesced separately,
       with the same mask length applied to each, and the IPv4 results come
