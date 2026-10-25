@@ -46,11 +46,22 @@ our %EXPORT_TAGS = (
     all    => [@EXPORT_OK],
 );
 
+# the error for a packed argument with a character above 0xFF, worded as perl's own
+# from the XS, with the function named in place of "subroutine entry"
+my $WIDE_DIES = 'Wide character in %s';
+
 sub DESTROY {};
 
 sub _callersub {
     (my $sub = (caller(2))[3]) =~ s/UtilPP::/Util::/;    # callers use NetAddr::IP::Util
     return $sub;
+}
+
+# a downgraded copy of a packed argument, so it is measured in bytes as the XS measures it
+sub _bytes {
+    my ($packed) = @_;
+    croak sprintf($WIDE_DIES, _callersub()) unless utf8::downgrade($packed, 1);
+    return $packed;
 }
 
 1;
@@ -170,7 +181,7 @@ sub _deadlen {
 }
 
 sub hasbits {
-    my ($bits128) = @_;
+    my $bits128 = _bytes(shift);
     _deadlen(length($bits128))
         if !defined($bits128) || length($bits128) != $V6_PACKED_BYTES;
     return 1 if vec($bits128, 0, $IPV4_BITS);
@@ -242,7 +253,7 @@ sub _plain_number {
 }
 
 sub shiftleft {
-    my $bits = $_[0];
+    my $bits = _bytes($_[0]);
     _deadlen(length($bits))
         if !defined($bits) || length($bits) != $V6_PACKED_BYTES;
     my $given = $_[1];
@@ -324,7 +335,7 @@ Croaks if C<$ipv6naddr> is not 16 bytes.
 =cut
 
 sub addconst {
-    my ($a128, $given) = @_;
+    my ($a128, $given) = (_bytes($_[0]), $_[1]);
     my $const = _plain_number($given);
     _deadlen(length($a128))
         if !defined($a128) || length($a128) != $V6_PACKED_BYTES;
@@ -358,8 +369,10 @@ Croaks if either argument is not 16 bytes.
 
 sub add128 {
     my ($a128, $b128) = @_;
+    $a128 = _bytes($a128);
     _deadlen(length($a128))
         if !defined($a128) || length($a128) != $V6_PACKED_BYTES;
+    $b128 = _bytes($b128);
     _deadlen(length($b128))
         if !defined($b128) || length($b128) != $V6_PACKED_BYTES;
     @_ = ($a128, $b128, 0);
@@ -386,8 +399,10 @@ Croaks if either argument is not 16 bytes.
 
 sub sub128 {
     my ($a128, $b128) = @_;
+    $a128 = _bytes($a128);
     _deadlen(length($a128))
         if !defined($a128) || length($a128) != $V6_PACKED_BYTES;
+    $b128 = _bytes($b128);
     _deadlen(length($b128))
         if !defined($b128) || length($b128) != $V6_PACKED_BYTES;
     @_ = ($a128, ~$b128, 1);
@@ -408,7 +423,7 @@ Croaks if the argument is not 16 bytes.
 =cut
 
 sub notcontiguous {
-    my ($mask128) = @_;
+    my $mask128 = _bytes(shift);
     _deadlen(length($mask128))
         if !defined($mask128) || length($mask128) != $V6_PACKED_BYTES;
     my @ua = unpack('N4', ~$mask128);
@@ -448,7 +463,7 @@ Croaks if the argument is not 4 bytes.
 =cut
 
 sub ipv4to6 {
-    my ($netaddr) = @_;
+    my $netaddr = _bytes(shift);
     _deadlen(length($netaddr), $IPV4_BITS)
         if !defined($netaddr) || length($netaddr) != $V4_PACKED_BYTES;
     return pack('L3a4', 0, 0, 0, $netaddr);
@@ -468,7 +483,7 @@ Croaks if the argument is not 4 bytes.
 =cut
 
 sub mask4to6 {
-    my ($netaddr) = @_;
+    my $netaddr = _bytes(shift);
     _deadlen(length($netaddr), $IPV4_BITS)
         if !defined($netaddr) || length($netaddr) != $V4_PACKED_BYTES;
     return pack('L3a4', 0xffffffff, 0xffffffff, 0xffffffff, $netaddr);
@@ -486,7 +501,7 @@ Croaks if the argument is neither 4 nor 16 bytes.
 =cut
 
 sub ipanyto6 {
-    my $naddr = shift;
+    my $naddr = _bytes(shift);
     return _deadlen(undef, "$IPV4_BITS or $IPV6_BITS")
         unless defined $naddr;
     my $len   = length($naddr);
@@ -509,7 +524,7 @@ Croaks if the argument is neither 4 nor 16 bytes.
 =cut
 
 sub maskanyto6 {
-    my $naddr = shift;
+    my $naddr = _bytes(shift);
     return _deadlen(undef, "$IPV4_BITS or $IPV6_BITS")
         unless defined $naddr;
     my $len   = length($naddr);
@@ -533,7 +548,7 @@ Croaks if the argument is not 16 bytes.
 =cut
 
 sub ipv6to4 {
-    my $naddr = shift;
+    my $naddr = _bytes(shift);
     _deadlen(length($naddr))
         if !defined($naddr) || length($naddr) != $V6_PACKED_BYTES;
     @_ = unpack('L3H8', $naddr);
@@ -558,7 +573,7 @@ Croaks if the argument is not 16 bytes.
 =cut
 
 sub bin2bcd {
-    my ($bits128) = @_;
+    my $bits128 = _bytes(shift);
     _deadlen(length($bits128))
         if !defined($bits128) || length($bits128) != $V6_PACKED_BYTES;
     unpack("H$MAX_BCD_DIGITS", _bin2bcdn($bits128)) =~ /^0*(.+)/;
@@ -599,7 +614,7 @@ sub bcd2bin {
 #=cut
 
 sub comp128 {
-    my ($bits128) = @_;
+    my $bits128 = _bytes(shift);
     _deadlen(length($bits128))
         if !defined($bits128) || length($bits128) != $V6_PACKED_BYTES;
     return ~$bits128;
@@ -618,7 +633,7 @@ sub comp128 {
 #=cut
 
 sub bin2bcdn {
-    my ($bits128) = @_;
+    my $bits128 = _bytes(shift);
     _deadlen(length($bits128))
         if !defined($bits128) || length($bits128) != $V6_PACKED_BYTES;
     return _bin2bcdn($bits128);
@@ -680,7 +695,7 @@ sub _bin2bcdn {
 #=cut
 
 sub bcdn2txt {
-    my ($bcdn) = @_;
+    my $bcdn = _bytes(shift);
     if (!defined($bcdn) || length($bcdn) != $PACKED_BCD_BYTES) {
         my $digits = defined $bcdn
             ? 2 * length($bcdn)
@@ -715,7 +730,7 @@ Convert a packed bcd string into a 128 bit string variable
 sub bcdn2bin {
     croak q|Bad usage, should have NetAddr::IP::Util::bcdn2bin('packedbcd','length')|
         if @_ < 2;
-    my ($bcd, $given) = @_;
+    my ($bcd, $given) = (_bytes($_[0]), $_[1]);
     my $dc = _plain_number($given);
     $dc = 0 unless defined $dc && $dc ne '';
     my $digits = defined $bcd
