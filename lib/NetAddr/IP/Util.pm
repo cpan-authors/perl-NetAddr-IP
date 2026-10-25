@@ -257,7 +257,7 @@ sub _end_gethostbyname {
     return @rv;
 }
 
-unless ( eval { local $SIG{__DIE__}; require Socket6 }) {
+unless ( eval { local $SIG{__DIE__}; Socket::getaddrinfo( Socket::AF_INET6(), '127.0.0.1', Socket::IPPROTO_TCP, 0 ) } ) {
     $mygethostbyname = sub {
         # SEE NOTE above about broken BSD
         my $host = NetAddr::IP::InetBase::fillIPv4($_[0]);
@@ -266,19 +266,21 @@ unless ( eval { local $SIG{__DIE__}; require Socket6 }) {
     };
 }
 else {
-    import Socket6 qw( gethostbyname2 getipnodebyname );
-    my $try = eval { local $SIG{__DIE__}; my @try = gethostbyname2('127.0.0.1',NetAddr::IP::Util::AF_INET()); $try[4] };
-    if (! $@ && $try && $try eq INADDR_LOOPBACK()) {
-        *_ghbn2 = \&Socket6::gethostbyname2;
-        $havegethostbyname2 = 1;
-    }
-    else {
-        *_ghbn2 = sub { return () };    # use failure branch below
-    }
-
+    my $mygetaddrinfo6 = sub {
+        my ($name) = @_;
+        return undef unless defined $name;
+        my @res = Socket::getaddrinfo( Socket::AF_INET6(), $name, Socket::IPPROTO_TCP, 0 );
+        return undef unless @res;
+        my $addr = Socket::unpack_sockaddr_in6( $res[0] );
+        return defined $addr ? $addr : undef;
+    };
     $mygethostbyname = sub {
         my @tip;
-        unless ($_Sock6ok && (@tip = _ghbn2($_[0],NetAddr::IP::Util::AF_INET6())) && @tip > 1) {
+        my $addr6 = $mygetaddrinfo6->($_[0]);
+        if (defined $addr6) {
+            @tip = ( $_[0], '', 0, 16, $addr6 );
+        }
+        else {
             # SEE NOTE above about broken BSD
             my $host = NetAddr::IP::InetBase::fillIPv4($_[0]);
             @tip = defined $host ? gethostbyname($host) : ();

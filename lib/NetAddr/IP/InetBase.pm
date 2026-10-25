@@ -89,13 +89,13 @@ if (defined eval { local $SIG{__DIE__}; Socket::AF_INET6() }) {
     *AF_INET6 = \&Socket::AF_INET6;
     $emulateAF_INET6 = -1;            # have it, remind below
 }
-if (eval{ local $SIG{__DIE__}; require Socket6 } ) {
-    import Socket6 qw(
+if (eval{ local $SIG{__DIE__}; Socket::inet_pton() && Socket::inet_ntop() }) {
+    import Socket qw(
         inet_pton
         inet_ntop
     );
     unless ($emulateAF_INET6) {
-        *AF_INET6 = \&Socket6::AF_INET6;
+        *AF_INET6 = \&Socket::AF_INET6;
     }
     $emulateAF_INET6 = 0;                # clear, have it from elsewhere or here
 }
