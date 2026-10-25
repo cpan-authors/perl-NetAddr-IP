@@ -48,6 +48,7 @@ New entries go under `{{$NEXT}}`, one entry per change:
 - Dates are W3CDTF with an offset, `2008-10-06T13:10:00-07:00`.
 - Check with `tidy_changelog --check Changes`. The release test
   `t/release-cpan-changes.t` runs the same parser.
+- Be succinct and write as if the reader is 5 years old
 
 ## Tests
 
@@ -93,13 +94,17 @@ adds the `author-` and `release-` files, so the numbers stay clear of them.
 ## Code
 
 - ASCII only. Four spaces, no tabs, LF, a final newline, no trailing
-  whitespace.
+  whitespace. Follow .editorconfig.
 - **Use documentation addresses only.** RFC 5737 for IPv4, so 192.0.2.0/24,
   198.51.100.0/24 or 203.0.113.0/24, and RFC 3849 for IPv6, so 2001:db8::/32.
   Loopback is fine where the example is about loopback. This holds in tests,
   in POD and in Changes, because an address written in an example becomes
   documentation, and never in an example that calls a real host.
 - Write `[0-9]` rather than `\d`, so non-ASCII digits are rejected.
+- Comments must state what the code does, not it's history or narrative.
+- Comments must provide some insight that is not obvious from the code itself.
+- Comments must not reference issue or ticket numbers, git blame is serves
+  that purpose.
 - Uncuddle `else` and `elsif`: the closing brace ends the line, and `else` or
   `elsif` starts the next at the same indentation. POD verbatim examples and
   commented-out code are left as they are.
@@ -122,6 +127,17 @@ adds the `author-` and `release-` files, so the numbers stay clear of them.
   patch and the commands that verify it.
 - ASCII, no em dashes, and no `--` standing in for one. Do not start a
   sentence with a code identifier.
+
+### Message style
+
+These rules apply to commit messages only.
+
+- **PRIORITY** Lead with the decision or outcome and the behavior change or problem solved, not the process. Use active voice.
+- **PRIORITY** Never start a sentence with a code identifier or symbol.
+- Prefer bullet points over paragraphs; use center-embedding exceedingly rarely.
+- Introduce any concept the reader may not know before discussing it, since AI tends to reference code or internal terms without saying what they are.
+- Avoid stock AI phrasing, filler, inflated claims, vague qualifiers (e.g., "various", "several", "quite"), or hedging unless uncertainty is essential to the change.
+- For code changes, strongly encourage providing a table with columns `input`, `output before`, `output now` showing input/output examples when appropriate.
 
 ## Release
 
