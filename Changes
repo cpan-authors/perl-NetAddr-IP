@@ -2,6 +2,13 @@ Revision history for Perl extension NetAddr::IP
 
 {{$NEXT}}
 
+    - Fix GH#163: Pure Perl now measures packed arguments in bytes, not
+      characters. Before, a string of wide characters (above 0xFF) that had
+      the "right" count would pass the length checks. Those calls then gave
+      wrong answers or died inside UtilPP. Now they croak "Wide character in
+      NetAddr::IP::Util::func" at the caller's line. A UTF-8 string that
+      holds only bytes still works. Tests in t/076 were updated.
+
 4.080_06  2026-10-22 23:19:25+11:00 Australia/Sydney (TRIAL RELEASE)
 
     - Fix GH#160: Refuse a packed argument holding a character above 0xFF in

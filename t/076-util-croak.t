@@ -405,6 +405,127 @@ is(
 is( ipv4to6($four_up), ipv4to6($four),
     'ipv4to6 reads an upgraded packed IPv4 address' );
 
+## wide character above 0xFF in packed arguments
+
+require NetAddr::IP::UtilPP;
+
+my $THIS_FILE = __FILE__;
+
+my $w_packed   = ipv6_aton('2001:db8::ffff:c000:201');
+my $w_four     = pack( 'C4', 192, 0, 2, 1 );
+my $w_mask     = ipv6_aton('ffff:ffff:ffff:ffff:ffff:ffff:ffff:ff00');
+my $w_high_bcd = pack( 'H*', '987650' );
+
+# [desc, func_name, call_wrapper, byte_len, plain_arg]
+my @wide_cases = (
+    [
+        'add128 first argument',             'add128',
+        sub { $_[0]->( $_[1], $w_packed ) }, 16,
+        $w_packed
+    ],
+    [
+        'add128 second argument',            'add128',
+        sub { $_[0]->( $w_packed, $_[1] ) }, 16,
+        $w_packed
+    ],
+    [ 'addconst', 'addconst', sub { $_[0]->( $_[1], 1 ) }, 16, $w_packed ],
+    [ 'bcdn2bin', 'bcdn2bin', sub { $_[0]->( $_[1], 5 ) }, 3,  $w_high_bcd ],
+    [
+        'bcdn2txt',               'bcdn2txt',
+        sub { $_[0]->( $_[1] ) }, 20,
+        bin2bcdn($w_packed)
+    ],
+    [ 'bin2bcd',  'bin2bcd',  sub { $_[0]->( $_[1] ) }, 16, $w_packed ],
+    [ 'bin2bcdn', 'bin2bcdn', sub { $_[0]->( $_[1] ) }, 16, $w_packed ],
+    [ 'comp128',  'comp128',  sub { $_[0]->( $_[1] ) }, 16, $w_packed ],
+    [ 'hasbits',  'hasbits',  sub { $_[0]->( $_[1] ) }, 16, $w_packed ],
+    [
+        'ipanyto6 of four bytes', 'ipanyto6',
+        sub { $_[0]->( $_[1] ) }, 4,
+        $w_four
+    ],
+    [
+        'ipanyto6 of sixteen bytes', 'ipanyto6',
+        sub { $_[0]->( $_[1] ) },    16,
+        $w_packed
+    ],
+    [ 'ipv4to6',  'ipv4to6',  sub { $_[0]->( $_[1] ) }, 4,  $w_four ],
+    [ 'ipv6to4',  'ipv6to4',  sub { $_[0]->( $_[1] ) }, 16, $w_packed ],
+    [ 'mask4to6', 'mask4to6', sub { $_[0]->( $_[1] ) }, 4,  $w_four ],
+    [
+        'maskanyto6 of four bytes', 'maskanyto6',
+        sub { $_[0]->( $_[1] ) },   4,
+        $w_four
+    ],
+    [
+        'maskanyto6 of sixteen bytes', 'maskanyto6',
+        sub { $_[0]->( $_[1] ) },      16,
+        $w_mask
+    ],
+    [ 'notcontiguous', 'notcontiguous', sub { $_[0]->( $_[1] ) }, 16, $w_mask ],
+    [ 'shiftleft', 'shiftleft', sub { $_[0]->( $_[1], 1 ) }, 16, $w_packed ],
+    [
+        'sub128 first argument',             'sub128',
+        sub { $_[0]->( $_[1], $w_packed ) }, 16,
+        $w_packed
+    ],
+    [
+        'sub128 second argument',            'sub128',
+        sub { $_[0]->( $w_packed, $_[1] ) }, 16,
+        $w_packed
+    ],
+);
+
+subtest 'wide string of the expected length croaks "Wide character in ..."' =>
+  sub {
+    for my $c (@wide_cases) {
+        my ( $desc, $func, $call, $n, $plain ) = @$c;
+        my $wide = "\x{100}" x $n;
+
+        like(
+            dies { $call->( NetAddr::IP::Util->can($func), $wide ) },
+            qr/^Wide character in /,
+            "$desc via Util"
+        );
+
+        like(
+            dies { $call->( NetAddr::IP::UtilPP->can($func), $wide ) },
+qr/^Wide character in NetAddr::IP::Util::\Q$func\E at \Q$THIS_FILE\E line [0-9]+/,
+            "$desc direct via UtilPP names public Util::$func"
+        );
+    }
+  };
+
+subtest
+  'wrong-length wide string still croaks as wide char, not length error' =>
+  sub {
+    for my $c (@wide_cases) {
+        my ( $desc, $func, $call, $n, $plain ) = @$c;
+        my $wide = "\x{100}" x 2;
+
+        like(
+            dies { $call->( NetAddr::IP::Util->can($func), $wide ) },
+            qr/^Wide character in /,
+            "$desc (2 wide chars) via Util"
+        );
+    }
+  };
+
+subtest 'upgraded string that only contains bytes is still read correctly' =>
+  sub {
+    for my $c (@wide_cases) {
+        my ( $desc, $func, $call, $n, $plain ) = @$c;
+        my $up = $plain;
+        utf8::upgrade($up);
+
+        is(
+            $call->( NetAddr::IP::UtilPP->can($func), $up ),
+            $call->( NetAddr::IP::UtilPP->can($func), $plain ),
+            "$desc via UtilPP (upgraded bytes)"
+        );
+    }
+  };
+
 ## packed arguments held in $1, substr or a tied value are read through their get magic
 
 my $mask        = ipv6_aton('ffff:ffff:ffff:ffff:ffff:ffff:ffff:ff00');
