@@ -125,7 +125,7 @@ else {
         $emulateAF_INET6 = 0;            # clear, have it from elsewhere
     }
       # Without Socket6 these give hex for IPv4-embedded addresses where libc
-      # gives mixed notation (GH#99), and accept IPv4 short forms and names.
+      # gives mixed notation (GH#99).
       *inet_pton = \&_inet_pton;
       *inet_ntop = \&_inet_ntop;
 }
@@ -450,9 +450,11 @@ Returns undef for text that is not an address of that family, and croaks
 on a family other than C<AF_INET> and C<AF_INET6>.
 
 NOTE: inet_pton and inet_ntop come from the Socket6 library if it
-is present on this host.  The two sources differ on IPv4 text: without
-Socket6, C<inet_pton(AF_INET, ...)> is C<inet_aton> and also takes short
-forms such as C<127.1> and host names, which Socket6 rejects.
+is present on this host, and from this module if not.  Either way
+C<inet_pton(AF_INET, ...)> takes only four decimal parts from 0 to 255,
+each without a leading zero, as C<inet_pton> in core Socket does.  It
+returns undef for a short form such as C<127.1> and for a host name,
+both of which C<inet_aton> accepts.
 
 =cut
 
@@ -463,7 +465,12 @@ sub _inet_pton {
         unless defined $af && looks_like_number($af)
         && ( $af == AF_INET6() || $af == AF_INET() );
     if ($af == AF_INET()) {
-        inet_aton($ip);
+        # four decimal parts and nothing else, as Socket6 and core Socket read IPv4 text
+        my @octets = defined $ip
+            ? $ip =~ /\A($TAIL_OCTET)\.($TAIL_OCTET)\.($TAIL_OCTET)\.($TAIL_OCTET)\z/
+            : ();
+        return undef if !@octets || grep { $_ > $MAX_OCTET } @octets;
+        return pack 'C4', @octets;
     }
     else {
         ipv6_aton($ip);
@@ -929,9 +936,8 @@ Socket6 is a runtime recommendation, not a requirement.  Where the
 substitution matters for output it is noted on the entry: for C<inet_ntop>
 and C<ipv6_ntoa>, an address with an IPv4 address in the low 32 bits is
 rendered in mixed notation with Socket6 and in hex without it.  The parse
-side agrees on IPv6 text and differs on IPv4 text: without Socket6,
-C<inet_pton(AF_INET, ...)> is C<inet_aton>, so it takes short forms such
-as C<127.1> and host names, which Socket6 rejects.
+side agrees: C<inet_pton> reads IPv4 and IPv6 text alike with or without
+Socket6.
 
 The value of C<AF_INET6> is not part of the substitution: it comes from
 Socket whether or not Socket6 is installed.  Only where Socket has no
