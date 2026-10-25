@@ -68,7 +68,7 @@ our $AUTOLOAD;
   my $ip = NetAddr::IP::Lite->new('192.0.2.1');
   # from a packed IPv4 address
   my $a = NetAddr::IP::Lite->new_from_aton(inet_aton('192.0.2.1'));   # 192.0.2.1/32
-  # from an octal filtered one
+  # leading zeros read as decimal
   my $b = NetAddr::IP::Lite->new_no('198.051.100.001');               # 198.51.100.1/32
 
   print 'The address is ', $ip->addr, ' with mask ', $ip->mask, "\n" ;
@@ -579,10 +579,30 @@ address, RFC 4291 s2.5.5.2:
 
 An IPv4 address with a leading zero in any part, such as C<192.0.2.010>
 or C<010>, is not an address to C<new>: the C library's C<inet_aton>
-reads C<010> as octal 8, and a person reads it as decimal 10.  Only
-C<new_no> takes such parts, reading them as decimal, so
-C<new_no('192.0.2.010')> is 192.0.2.10; it is exclusively for IPv4
-addresses.
+reads C<010> as octal 8, and a person reads it as decimal 10.
+C<new_no> is the constructor for that less strict reading.  A part
+that is not an address once the zeros are removed is still refused.
+The result, or C<undef> when the text is not an address:
+
+  input           new                new_no
+  192.0.2.1       192.0.2.1/32       192.0.2.1/32
+  192.0.2.010     undef              192.0.2.10/32
+  192.0.2.07      undef              192.0.2.7/32
+  192.0.2.107     192.0.2.107/32     192.0.2.107/32
+  192.0.2.0107    undef              192.0.2.107/32
+  010             undef              0.0.0.10/32
+  192.0.2.0256    undef              undef
+
+C<192.0.2.07> is 192.0.2.7, so a typo for 192.0.2.107 succeeds.
+C<192.0.2.0107> is 192.0.2.107, so an extra zero in front of that
+address succeeds too.  C<010> is 0.0.0.10, the same address as C<new('10')>.
+
+IPv6 text is left alone, so C<2001:db8::1> is the same address from
+both constructors, and C<::ffff:192.0.2.010> is C<undef> from both.
+A prefix length is decimal either way, so C<192.0.2.0/024> is
+192.0.2.0/24 from both.  A dotted mask is stripped the same way as
+an address: C<new_no('192.0.2.0', '255.255.255.000')> is 192.0.2.0/24
+and C<new> returns C<undef>.
 
 B<new_from_aton> takes a packed IPv4 address and assumes a /32 mask. This
 function replaces the :aton functionality, which reads a packed string
