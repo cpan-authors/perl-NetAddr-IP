@@ -35,7 +35,7 @@ perl Makefile.PL -noxs && make && prove -b -j4 t/
 New entries go under `{{$NEXT}}`, one entry per change:
 
 ```text
-    - What changed, in one line.
+    - What changed, in one line. Issue reference.
       Continuation lines are indented six spaces, and the entry wraps at
       78 columns.
 ```
@@ -114,6 +114,7 @@ adds the `author-` and `release-` files, so the numbers stay clear of them.
 - In `xs/Util.xs`, `PERL_NO_GET_CONTEXT` is defined, so a helper calling the
   Perl API takes `pTHX_` and is called with `aTHX_`. Keep no mutable state at
   file scope, or the XS is not thread safe.
+- For long numbers, add an underscore after every third digit. i.e. 10_000
 - The perl floor is 5.014 in every phase. CI fails if a phase or the shipped
   `Makefile.PL` drifts from the runtime floor.
 
