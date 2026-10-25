@@ -1616,10 +1616,8 @@ Returns true when C<$me> is an RFC 1918 address.
 
 =cut
 
-# built from packed bytes, with each network carrying its own mask, so that
-# loading never needs the resolver: InetBase::inet_aton is a gethostbyname
-# call, which fails at load time wherever the resolver cannot answer a
-# dotted quad
+# each network carries its own mask. inet_any2n packs the literal, so
+# loading does not ask the resolver
 my $ip_10n  = inet_any2n('10.0.0.0');
 my $ip_10b  = $ip_10n | ~ mask4to6(pack('C4', 255, 0, 0, 0));
 

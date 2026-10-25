@@ -397,9 +397,7 @@ jobs:
         include:
           - { os: freebsd, release: "15.1" }
           - { os: freebsd, release: "14.5" }
-          # NetBSD 11.0 is off until its t/260-threads.t failure is understood:
-          # worker threads lose addresses in compactref on its perl 5.44.0
-          # - { os: netbsd, release: "11.0" }
+          - { os: netbsd, release: "11.0" }
           - { os: openbsd, release: "7.9" }
     steps:
       - uses: actions/download-artifact@v8

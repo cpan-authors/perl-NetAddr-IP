@@ -2,6 +2,9 @@ Revision history for Perl extension NetAddr::IP
 
 {{$NEXT}}
 
+    - Fix GH#159: Threads parsing literal IPv4 addresses at once no
+      longer swap answers. A host name still goes to gethostbyname.
+
     - Fix GH#174: In the XS build, add128() and sub128() take a list
       prototype, so their two addresses can come from an array, as in the
       pure Perl build.
