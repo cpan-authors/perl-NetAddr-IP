@@ -69,4 +69,25 @@ subtest 'short plans' => sub {
     is( scalar @{ $r || [] }, 33, 'that split is 33 nets' );
 };
 
+subtest 'local scopes the exponent' => sub {
+    is( $NetAddr::IP::netlimit, 16, 'the default exponent is 16' );
+    {
+        local $NetAddr::IP::netlimit;
+        is( NetAddr::IP::netlimit(20), 1_048_576, 'netlimit(20) returns 2**20' );
+        is( $NetAddr::IP::netlimit, 20, 'netlimit(20) stores the exponent' );
+    }
+    is( $NetAddr::IP::netlimit, 16, 'the exponent is 16 again after netlimit(20)' );
+
+    my $ip = NetAddr::IP->new('192.0.2.0/24');
+    {
+        local $NetAddr::IP::netlimit = 2;
+        like(
+            dies { $ip->split(27) },
+            qr/^netlimit exceeded/,
+            'exponent 2 rejects a plan of 8 nets'
+        );
+    }
+    is( $NetAddr::IP::netlimit, 16, 'the exponent is 16 again after the block' );
+};
+
 done_testing;

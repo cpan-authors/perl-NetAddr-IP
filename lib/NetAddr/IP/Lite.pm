@@ -1866,20 +1866,22 @@ both C<:lower> and C<:upper> are given, whichever order they are in:
   print NetAddr::IP::Lite->new('2001:db8::1')->addr, "\n";
   # 2001:DB8:0:0:0:0:0:1
 
-Note that :lower and :upper set one process-wide variable shared by
-NetAddr::IP, NetAddr::IP::Lite, NetAddr::IP::Util and NetAddr::IP::InetBase.
-Importing either tag in one module changes the output of every other module
-in the same program. The last import wins.
+Note that :lower and :upper set C<$NetAddr::IP::InetBase::Upper>, true
+for uppercase, shared by NetAddr::IP, NetAddr::IP::Lite, NetAddr::IP::Util
+and NetAddr::IP::InetBase. Importing either tag in one module changes the
+output of every other module in the same program. The last import wins.
 
 =item C<:nofqdn>
 
 Do not resolve a fully qualified domain name in the constructor, which is
-otherwise done for you.
+otherwise done for you. The switch is C<$NetAddr::IP::Lite::NoFQDN>. See
+L</THREADS>.
 
 =item C<:old_nth>
 
-Restore the pre-4.00 C<nth()> and C<num()> behaviour. Deprecated; see
-L</DEPRECATED>.
+Restore the pre-4.00 C<nth()> and C<num()> behaviour. The switch is
+C<$NetAddr::IP::Lite::Old_nth>. Deprecated; see L</DEPRECATED> and
+L</THREADS>.
 
 =item C<:aton>
 
@@ -1900,7 +1902,13 @@ C<:upper> tags, and C<:nofqdn>, C<:old_nth> and C<:aton>.  Under ithreads
 each thread has its own copy.  A thread starts with the settings in force
 when it was created, and a change made afterwards stays in the thread that
 made it.  Within one thread they are still process-wide, as described under
-L</IMPORT TAGS>.
+L</IMPORT TAGS>. C<local> scopes one of these variables to a block, and
+the previous value returns at the end of the block, including after
+C<die>:
+
+  local $NetAddr::IP::InetBase::Upper = 0;   # lowercase IPv6 text
+  local $NetAddr::IP::Lite::NoFQDN    = 1;   # do not resolve a name
+  local $NetAddr::IP::Lite::Old_nth   = 1;   # pre-4.00 nth() and num()
 
 =head1 DEPRECATED
 
