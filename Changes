@@ -2,6 +2,13 @@ Revision history for Perl extension NetAddr::IP
 
 {{$NEXT}}
 
+    - Fix GH#138: $NetAddr::IP::netlimit holds the netlimit() exponent,
+      so local scopes it. The function still returns 2**n.
+
+    - Fix GH#138: Name the package variables local can scope: the IPv6
+      case, name lookup, and the old nth() behaviour. :old_storable has
+      no variable and stays process-wide.
+
     - Document new_no() as the constructor for IPv4 text with a leading
       zero, read as decimal.
 
