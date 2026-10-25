@@ -2,6 +2,9 @@ Revision history for Perl extension NetAddr::IP
 
 {{$NEXT}}
 
+    - Document new_no() as the constructor for IPv4 text with a leading
+      zero, read as decimal.
+
     - Fix GH#162: Without Socket6, inet_pton(AF_INET) now accepts only four
       decimal parts 0-255 with dots. Before, it used inet_aton and also
       took short forms like "10.1", single numbers like "0", and host names.
