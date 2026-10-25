@@ -82,7 +82,7 @@ subtest 'splitplan that just fits' => sub {
 };
 
 subtest 'splitplan with netlimit' => sub {
-    local $NetAddr::IP::_netlimit = 4;
+    local $NetAddr::IP::netlimit = 2;
     my ( $plan, $masks );
 
     ( $plan, $masks ) = $ip->_splitplan(50);

@@ -25,8 +25,7 @@ use NetAddr::IP::Lite qw( Ones V4mask V4net Zero Zeros );
 use NetAddr::IP::Util qw( hasbits isIPv4 notcontiguous shiftleft sub128 );
 
 our @EXPORT_OK = qw(Compact Coalesce Zero Zeros Ones V4mask V4net netlimit);
-our @EXPORT_FAIL = qw($_netlimit);
-our $_netlimit;
+our $netlimit = $DEFAULT_NETLIMIT_EXP;
 
 =encoding UTF-8
 
@@ -89,15 +88,16 @@ C<:upper> wins if both are given, whichever order they are in:
   use NetAddr::IP qw(:upper :lower);
   print NetAddr::IP->new('2001:db8::1')->addr, "\n";   # 2001:DB8:0:0:0:0:0:1
 
-Note that :lower and :upper set one process-wide variable shared by
-NetAddr::IP, NetAddr::IP::Lite, NetAddr::IP::Util and NetAddr::IP::InetBase.
-Importing either tag in one module changes the output of every other module
-in the same program. The last import wins.
+Note that :lower and :upper set C<$NetAddr::IP::InetBase::Upper>, true
+for uppercase, shared by NetAddr::IP, NetAddr::IP::Lite, NetAddr::IP::Util
+and NetAddr::IP::InetBase. Importing either tag in one module changes the
+output of every other module in the same program. The last import wins.
 
 =item C<:nofqdn>
 
 Turn off resolving a fully qualified domain name in the constructor,
-which is otherwise done for you:
+which is otherwise done for you. The switch is
+C<$NetAddr::IP::Lite::NoFQDN>. See L</THREADS>.
 
   use NetAddr::IP qw(:nofqdn);
 
@@ -108,10 +108,14 @@ this module had its own serialisation hooks:
 
   use NetAddr::IP qw(:old_storable);
 
+This deletes the Storable hooks and has no variable, so it cannot be
+scoped with C<local>.
+
 =item C<:old_nth>
 
 Restore the pre-4.00 C<nth()> and C<num()> behaviour, which counted the
-broadcast address and had a undef zeroth index:
+broadcast address and had a undef zeroth index. The switch is
+C<$NetAddr::IP::Lite::Old_nth>. See L</THREADS>.
 
   use NetAddr::IP qw(:old_nth);
 
@@ -130,7 +134,17 @@ C<:old_storable>, C<:aton> and C<netlimit()>.  Under ithreads each thread
 has its own copy.  A thread starts with the settings in force when it was
 created, and a change made afterwards stays in the thread that made it.
 Within one thread they are still process-wide, as described under
-L</IMPORT TAGS>.
+L</IMPORT TAGS>. C<local> scopes one of these variables to a block, and
+the previous value returns at the end of the block, including after
+C<die>:
+
+  local $NetAddr::IP::InetBase::Upper = 0;   # lowercase IPv6 text
+  local $NetAddr::IP::Lite::NoFQDN    = 1;   # do not resolve a name
+  local $NetAddr::IP::Lite::Old_nth   = 1;   # pre-4.00 nth() and num()
+  local $NetAddr::IP::netlimit        = 20;  # see L</netlimit>
+
+C<:old_storable> deletes the Storable hooks and has no variable, so it
+cannot be scoped.
 
   use threads;
   use NetAddr::IP;
@@ -168,17 +182,26 @@ as is a non-numeric argument:
 C<hostenum()> and C<hostenumref()> die with C<netlimit exceeded> past
 this limit, rather than returning a partial list.
 
-=cut
+The exponent is kept in C<$NetAddr::IP::netlimit>. C<local> scopes a
+change to one block, and the previous value returns at the end of the
+block, including after C<die>:
 
-$_netlimit = 2 ** $DEFAULT_NETLIMIT_EXP;    # default
+  my $ip = NetAddr::IP->new('192.0.2.0/24');
+  {
+      local $NetAddr::IP::netlimit = 20;
+      $ip->split(32);
+  }
+
+=cut
 
 sub netlimit($) {
     return undef unless $_[0];
     return undef if $_[0] =~ /[^0-9]/;
     return undef if $_[0] < $DEFAULT_NETLIMIT_EXP;
     return undef if $_[0] > $MAX_NETLIMIT_EXP;
-    $_netlimit = 2 ** $_[0];
-};
+    $netlimit = $_[0];
+    return 2 ** $netlimit;
+}
 
 =head2 Zeros, Zero, Ones, V4mask and V4net
 
@@ -1226,12 +1249,13 @@ sub _splitplan {
     my @plan;
     my $idx = 0;
     $denom = 2 ** $denom;
+    my $limit = 2 ** $netlimit;
     PLAN:
     while ($denom > 0) {                # make a net plan
         my $nexmask = ($idx < $#bits) ? $bits[$idx] : $bits[$#bits];
         ++$idx;
         unless (($denom -= $nets{$nexmask}) < 0) {
-            croak('netlimit exceeded') if (push @plan, $nexmask) > $_netlimit;
+            croak('netlimit exceeded') if (push @plan, $nexmask) > $limit;
             next;
         }
         # a fractional net is needed that is not in the mask list or the replicant
@@ -1241,7 +1265,7 @@ sub _splitplan {
             next TRY if $nexmask > $try_mask;
             do {
                 next TRY if $denom - $nets{$try_mask} < 0;
-                croak('netlimit exceeded') if (push @plan, $try_mask) > $_netlimit;
+                croak('netlimit exceeded') if (push @plan, $try_mask) > $limit;
                 $denom -= $nets{$try_mask};
             } while $denom;
         }
