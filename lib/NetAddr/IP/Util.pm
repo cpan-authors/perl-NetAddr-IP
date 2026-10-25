@@ -460,10 +460,11 @@ Convert a dot-quad IP address into an IPv4 packed network address.
 
 Short forms follow the BSD C<inet_aton> convention, not RFC 791:
 C<127.1> is 127.0.0.1 and C<192.0.2> is 192.0.0.2.  Its octal reading
-of a leading zero does not: C<192.0.2.010> returns undef.  Other text
-goes to C<gethostbyname>, so a host name is resolved.  Returns undef
-for an octet above 255, for text with whitespace, and for text that
-does not resolve.
+of a leading zero does not: C<192.0.2.010> returns undef.  A literal
+is packed in this module.  Other text goes to C<gethostbyname>, which
+keeps one static buffer, so two threads resolving names at once can
+swap answers.  Returns undef for an octet above 255, for text with
+whitespace, and for text that does not resolve.
 
 =item $bits128 = ipv6_aton($ipv6_text);
 

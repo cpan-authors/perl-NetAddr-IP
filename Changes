@@ -2,6 +2,10 @@ Revision history for Perl extension NetAddr::IP
 
 {{$NEXT}}
 
+    - Fix GH#159: Pack a literal IPv4 address in inet_aton() instead of
+      calling gethostbyname. That function keeps one static buffer, so
+      threads parsing addresses at once could swap them.
+
     - Fix GH#138: $NetAddr::IP::netlimit holds the netlimit() exponent,
       so local scopes it. The function still returns 2**n.
 

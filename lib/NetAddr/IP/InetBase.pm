@@ -240,7 +240,13 @@ my $WHITESPACE = qr/[\t\n\x0B\f\r ]/;
 sub inet_aton {
     return undef if defined $_[0] && $_[0] =~ $WHITESPACE;
     my $host = fillIPv4($_[0]);
-    return $host ? scalar gethostbyname($host) : undef;
+    return undef unless defined $host && $host ne '';
+    # gethostbyname keeps the answer in one static buffer. Two threads
+    # looking up at once can swap answers, so a literal is packed here.
+    if ( $host =~ /\A([0-9]+)[.]([0-9]+)[.]([0-9]+)[.]([0-9]+)\z/ ) {
+        return pack( 'C4', $1, $2, $3, $4 );
+    }
+    return scalar gethostbyname($host);
 }
 
 my $_zero = pack('L4', 0, 0, 0, 0);
@@ -365,10 +371,11 @@ Convert a dot-quad IP address into an IPv4 packed network address.
 
 Short forms follow the BSD C<inet_aton> convention, not RFC 791:
 C<127.1> is 127.0.0.1 and C<192.0.2> is 192.0.0.2.  Its octal reading
-of a leading zero does not: C<192.0.2.010> returns undef.  Other text
-goes to C<gethostbyname>, so a host name is resolved.  Returns undef
-for an octet above 255, for text with whitespace, and for text that
-does not resolve.
+of a leading zero does not: C<192.0.2.010> returns undef.  A literal
+is packed in this module.  Other text goes to C<gethostbyname>, which
+keeps one static buffer, so two threads resolving names at once can
+swap answers.  Returns undef for an octet above 255, for text with
+whitespace, and for text that does not resolve.
 
 =item $bits128 = ipv6_aton($ipv6_text);
 
