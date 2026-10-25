@@ -496,9 +496,11 @@ Returns undef for text that is not an address of that family, and croaks
 on a family other than C<AF_INET> and C<AF_INET6>.
 
 NOTE: inet_pton and inet_ntop come from the Socket6 library if it
-is present on this host.  The two sources differ on IPv4 text: without
-Socket6, C<inet_pton(AF_INET, ...)> is C<inet_aton> and also takes short
-forms such as C<127.1> and host names, which Socket6 rejects.
+is present on this host, and from this module if not.  Either way
+C<inet_pton(AF_INET, ...)> takes only four decimal parts from 0 to 255,
+each without a leading zero, as C<inet_pton> in core Socket does.  It
+returns undef for a short form such as C<127.1> and for a host name,
+both of which C<inet_aton> accepts.
 
 =back
 
