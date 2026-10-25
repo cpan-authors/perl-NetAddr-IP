@@ -25,6 +25,11 @@ Revision history for Perl extension NetAddr::IP
       NetAddr::IP::Util::func" at the caller's line. A UTF-8 string that
       holds only bytes still works. Tests in t/076 were updated.
 
+    - Fix GH#165: Drop Socket6 and use core Socket for address text and name lookup.
+      inet_pton and inet_ntop bind to core Socket. IPv6 name lookup uses
+      Socket::getaddrinfo instead of Socket6::gethostbyname2. Socket6 is dropped
+      from RuntimeRecommends.
+
 4.080_06  2026-10-22 23:19:25+11:00 Australia/Sydney (TRIAL RELEASE)
 
     - Fix GH#160: Refuse a packed argument holding a character above 0xFF in
