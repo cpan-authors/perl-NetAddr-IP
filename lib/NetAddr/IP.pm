@@ -943,7 +943,7 @@ first of two equal runs shortened, and lowercase.  It is the same as
 the LOWER CASE value returned by "->short()".
 
 RFC 5952 section 5, which covers an address with an IPv4 address embedded
-in the low 32 bits, is not applied, so those come back in hex:
+in the low 32 bits, is not applied (deprecated; see L</DEPRECATED>), so those come back in hex:
 
   canon ->new('::ffff:192.0.2.1')    ::ffff:c000:201
   canon ->new6FFFF('192.0.2.1')      ::ffff:c000:201
@@ -951,8 +951,8 @@ in the low 32 bits, is not applied, so those come back in hex:
 
 glibc gives C<::ffff:192.0.2.1> for the first of those, and so does
 C<ipv6_ntoa> in L<NetAddr::IP::InetBase> on a host where Socket6 binds
-libc.  Which prefix, if any, should get the mixed form is an open
-question: see GH#98.
+libc. This behavior is deprecated and will be replaced with full RFC 5952
+section 5 compliance in version 5: see GH#98.
 
 =cut
 
@@ -1854,6 +1854,13 @@ sub mod_version {
 Everything listed here is deprecated and will be removed in version 5.
 
 =over 4
+
+=item C<canon() IPv6 mixed form>
+
+Currently, C<-E<gt>canon()> does not apply RFC 5952 section 5 (IPv4-embedded
+mixed dotted-quad notation, such as C<::ffff:192.0.2.1>). This behavior
+is deprecated and will be replaced in version 5 so that C<canon()> fully
+complies with RFC 5952 section 5 for IPv4-embedded/mapped addresses (GH#98).
 
 =item C<:aton>
 
