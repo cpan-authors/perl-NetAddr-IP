@@ -19,7 +19,7 @@ BEGIN {
     };
 }
 
-# one A lookup per name, whether or not Socket6 is installed
+# one A lookup per name. :noSock6 stays on gethostbyname.
 use NetAddr::IP::Util qw(:noSock6);
 use NetAddr::IP::Lite ();
 

@@ -18,6 +18,7 @@ use NetAddr::IP::Constants qw(
         $V6_PACKED_BYTES
 );
 use Scalar::Util qw( looks_like_number );
+use Socket qw( AF_INET AF_INET6 );
 
 our @EXPORT_OK = qw(
         inet_aton
@@ -69,68 +70,6 @@ sub ipv6_ntoa;
 sub inet_any2n($);
 sub inet_n2dx($);
 sub inet_n2ad($);
-sub _inet_ntop;
-sub _inet_pton;
-
-my $emulateAF_INET6 = 0;
-
-{ no warnings 'once';
-
-*packzeros = \&_packzeros;
-
-## dynamic configuraton for IPv6
-
-require Socket;
-
-*AF_INET = \&Socket::AF_INET;
-
-# core Socket croaks where the platform headers do not define AF_INET6
-if (defined eval { local $SIG{__DIE__}; Socket::AF_INET6() }) {
-    *AF_INET6 = \&Socket::AF_INET6;
-    $emulateAF_INET6 = -1;            # have it, remind below
-}
-if (eval{ local $SIG{__DIE__}; require Socket6 } ) {
-    import Socket6 qw(
-        inet_pton
-        inet_ntop
-    );
-    unless ($emulateAF_INET6) {
-        *AF_INET6 = \&Socket6::AF_INET6;
-    }
-    $emulateAF_INET6 = 0;                # clear, have it from elsewhere or here
-}
-else {
-    unless ($emulateAF_INET6) {    # only a perl whose Socket lacks AF_INET6
-        if ($^O =~ /(?:free|dragon.+)bsd/i) {    # FreeBSD, DragonFlyBSD
-            $emulateAF_INET6 = 28;
-        }
-        elsif ($^O =~ /bsd/i) {        # other BSD flavors like NetBDS, OpenBSD, BSD
-            $emulateAF_INET6 = 24;
-        }
-        elsif ($^O =~ /(?:darwin|mac)/i) {    # Mac OS X
-            $emulateAF_INET6 = 30;
-        }
-        elsif ($^O =~ /win/i) {        # Windows
-            $emulateAF_INET6 = 23;
-        }
-        elsif ($^O =~ /(?:solaris|sun)/i) {        # Sun box
-            $emulateAF_INET6 = 26;
-        }
-        else {                    # use linux default
-            $emulateAF_INET6 = 10;
-        }
-        *AF_INET6 = sub { $emulateAF_INET6; };
-    }
-    else {
-        $emulateAF_INET6 = 0;            # clear, have it from elsewhere
-    }
-      # Without Socket6 these give hex for IPv4-embedded addresses where libc
-      # gives mixed notation (GH#99).
-      *inet_pton = \&_inet_pton;
-      *inet_ntop = \&_inet_ntop;
-}
-
-} # end no warnings 'once'
 
 # the two families inet_ntop and inet_pton accept, named in their errors
 my $FAMILY_SHOULD_BE = sprintf 'should be AF_INET (%d) or AF_INET6 (%d)',
@@ -143,8 +82,11 @@ my $N2_LENGTH_DIES = q{Bad arg length for '%s', length is %s should be %d bytes}
 # own from the XS, with the function named in place of "subroutine entry"
 my $WIDE_DIES = 'Wide character in %s';
 
+# deprecated: AF_INET6 always comes from Socket, so there is no guess to report
 sub fake_AF_INET6 {
-    return $emulateAF_INET6;
+    warnings::warnif('deprecated',
+        'fake_AF_INET6 is deprecated and will be removed in version 5; AF_INET6 always comes from Socket');
+    return 0;
 }
 
 our ($n2x_format, $n2d_format, $Upper);
@@ -316,9 +258,9 @@ sub import {
 B<NetAddr::IP::InetBase> is the pure Perl layer that converts IPv4 and
 IPv6 addresses between binary and text.  Everything here is pure Perl on
 every host.  B<NetAddr::IP::Util> and the XS build take these functions
-from it rather than reimplementing them, except that C<inet_pton> and
-C<inet_ntop> come from Socket6 when it is installed.
-See L</"Socket6 substitution">.
+from it rather than reimplementing them.  C<inet_ntop> calls core Socket,
+which calls the platform C library.
+See L</"Core Socket">.
 
 A binary address here is called B<packed> below, as opposed to text.
 It comes in two sizes.  The IPv4 form, C<$V4_PACKED_BYTES> bytes, is
@@ -462,32 +404,34 @@ argument.
 Returns undef for text that is not an address of that family, and croaks
 on a family other than C<AF_INET> and C<AF_INET6>.
 
-NOTE: inet_pton and inet_ntop come from the Socket6 library if it
-is present on this host, and from this module if not.  Either way
-C<inet_pton(AF_INET, ...)> takes only four decimal parts from 0 to 255,
-each without a leading zero, as C<inet_pton> in core Socket does.  It
-returns undef for a short form such as C<127.1> and for a host name,
-both of which C<inet_aton> accepts.
+NOTE: C<inet_pton> reads the text itself rather than calling the platform
+C<inet_pton>, so every host reads it alike.  C<inet_pton(AF_INET, ...)>
+takes only four decimal parts from 0 to 255, each without a leading zero,
+and nothing after them.  It returns undef for a short form such as
+C<127.1>, for a host name, and for an undefined address.  C<inet_aton>
+accepts the short form and the host name.
 
 =cut
 
-sub _inet_pton {
-    my ($af, $ip) = @_;
+sub inet_pton {
+    my ($af, $text) = @_;
+    # A numeric compare, or Socket's int typemap, warns on undef and on
+    # text that is not a number. Those families croak here, with no warning.
     croak sprintf('Bad address family for %s::inet_pton, got %s, %s',
         __PACKAGE__, defined $af ? $af : 'undefined', $FAMILY_SHOULD_BE)
-        unless defined $af && looks_like_number($af)
-        && ( $af == AF_INET6() || $af == AF_INET() );
+        unless defined $af && looks_like_number($af);
+    # any other number gets Socket's error
+    goto &Socket::inet_pton unless $af == AF_INET() || $af == AF_INET6();
+    # the text is read here, not by the platform inet_pton, so every host
+    # reads it alike
     if ($af == AF_INET()) {
-        # four decimal parts and nothing else, as Socket6 and core Socket read IPv4 text
-        my @octets = defined $ip
-            ? $ip =~ /\A($TAIL_OCTET)\.($TAIL_OCTET)\.($TAIL_OCTET)\.($TAIL_OCTET)\z/
+        my @octets = defined $text
+            ? $text =~ /\A($TAIL_OCTET)\.($TAIL_OCTET)\.($TAIL_OCTET)\.($TAIL_OCTET)\z/
             : ();
         return undef if !@octets || grep { $_ > $MAX_OCTET } @octets;
         return pack 'C4', @octets;
     }
-    else {
-        ipv6_aton($ip);
-    }
+    return ipv6_aton($text);
 }
 
 =back
@@ -533,20 +477,20 @@ text representation.
 
 Croaks if the argument is not 16 bytes.
 
-This is inet_ntop(AF_INET6,$ipv6naddr), so for an address with an IPv4
-address embedded in the low 32 bits the text depends on whether Socket6
-is installed. See the notes on inet_ntop below.
+This is inet_ntop(AF_INET6,$ipv6naddr).  An address with an IPv4 address
+in the low 32 bits is printed by the platform C<inet_ntop>.  On glibc that
+is mixed notation, C<::ffff:192.0.2.1>.  A different C library can print a
+different form.  See the notes on inet_ntop below.
 
 No method of NetAddr::IP or NetAddr::IP::Lite calls this function.
-Stringification goes through ipv6_n2x, which is pure Perl on every host,
-so the difference only reaches callers of this function.
+Stringification goes through ipv6_n2x, which is pure Perl on every host.
 
 =cut
 
 sub ipv6_ntoa {
     my $packed = $_[0];
-    # measured here, so the error names ipv6_ntoa whichever inet_ntop is bound,
-    # and downgraded, so Socket6 reads the same 16 bytes
+    # measured here, so the error names ipv6_ntoa, and the string is
+    # downgraded before Socket reads it
     croak sprintf($WIDE_DIES, __PACKAGE__ . '::ipv6_ntoa')
         unless utf8::downgrade($packed, 1);
     croak 'Bad arg length for '. __PACKAGE__ ."::ipv6_ntoa, length is ".
@@ -637,38 +581,45 @@ argument.
 
 NOTE: inet_ntop ALWAYS returns lowercase characters.
 
-NOTE: inet_pton and inet_ntop come from the Socket6 library if it
-is present on this host.
+C<inet_ntop(AF_INET, ...)> is C<inet_ntoa>.  C<inet_ntop(AF_INET6, ...)> is
+the platform C<inet_ntop>.  An address with an IPv4 address in the low 32
+bits is printed in that library's form.  On glibc:
 
-The two sources disagree on the text for an address with an IPv4 address
-embedded in the low 32 bits, so for those addresses the output depends on
-whether Socket6 is installed:
+  address           text
+  ::ffff:192.0.2.1  ::ffff:192.0.2.1
+  ::ffff:0:0        ::ffff:0.0.0.0
+  ::192.0.2.1       ::192.0.2.1
 
-  address           with Socket6      without Socket6
-  ::ffff:192.0.2.1  ::ffff:192.0.2.1 ::ffff:c000:201
-  ::ffff:0:0        ::ffff:0.0.0.0   ::ffff:0:0
-  ::192.0.2.1       ::192.0.2.1      ::c000:201
-
-The difference is confined to the mapped prefix ::ffff:0:0/96 and the
-deprecated compatible prefix ::/96. Everything else agrees, including zero
-run compression, which of two equal runs is shortened, a single zero group,
-leading zeros and case. Socket6 is a recommendation, not a requirement, so
-the choice is made by what happens to be installed.
+A different C library can print a different form.  The difference is
+confined to the mapped prefix ::ffff:0:0/96 and the deprecated compatible
+prefix ::/96.  Everything else agrees, including zero run compression,
+which of two equal runs is shortened, a single zero group, leading zeros
+and case.
 
 =cut
 
-sub _inet_ntop {
-    my ($af, $naddr) = @_;
+sub inet_ntop {
+    my ($af, $packed) = @_;
+    # Same gate as inet_pton: undef and a non-number must not reach Socket.
     croak sprintf('Unsupported address family for %s::inet_ntop, af is %s, %s',
         __PACKAGE__, defined $af ? $af : 'undefined', $FAMILY_SHOULD_BE)
-        unless defined $af && looks_like_number($af)
-        && ( $af == AF_INET6() || $af == AF_INET() );
+        unless defined $af && looks_like_number($af);
     if ($af == AF_INET()) {
-        inet_ntoa($naddr);
+        # inet_ntoa reads $_[0]. The family must not go with it.
+        @_ = ($packed);
+        goto &inet_ntoa;
     }
-    else {
-        return _packzeros(ipv6_n2x($naddr));
+    if ($af == AF_INET6()) {
+        # Socket 1.94 copies 16 bytes and does not check the length, so a
+        # shorter string would be read past its end.
+        croak sprintf($WIDE_DIES, __PACKAGE__ . '::inet_ntop')
+            unless utf8::downgrade($packed, 1);
+        croak 'Bad arg length for '. __PACKAGE__ ."::inet_ntop, length is ".
+            (defined $packed ? length($packed) : 'undefined') .
+            " should be $V6_PACKED_BYTES bytes"
+            unless defined $packed && length($packed) == $V6_PACKED_BYTES;
     }
+    goto &Socket::inet_ntop;
 }
 
 =item $hex_text = packzeros($hex_text);
@@ -687,7 +638,7 @@ RFC 5952 s4.3, whatever the case setting.
 
 =cut
 
-sub _packzeros {
+sub packzeros {
     my $x6 = shift;
     if ($x6 =~ /\:\:/) {                # already contains ::
         # then re-optimize
@@ -784,22 +735,16 @@ Returns the system value for AF_INET, taken from Socket.
 
 =item $constant = AF_INET6;
 
-Returns the value for AF_INET6.  It comes from Socket when the Socket module
-provides one, and from Socket6 only when Socket does not.  Without either,
-it is a value guessed from the name of the operating system, which is 10 on
-Linux.
+Returns the value for AF_INET6, taken from Socket.
 
   use NetAddr::IP::InetBase qw(AF_INET AF_INET6);
-  print AF_INET(), ' ', AF_INET6(), "\n";   # 2 10 on Linux
+  print AF_INET(), ' ', AF_INET6(), "\n";   # 2, then the platform value
 
-NOTE: inet_pton and inet_ntop come from the Socket6 library if it is present
-on this host.
+=item $false = fake_AF_INET6;
 
-=item $trueif = fake_AF_INET6;
-
-Returns false when C<AF_INET6> came from Socket or Socket6.  It returns the
-guessed value that C<AF_INET6> also returns, 10 on Linux, on a perl whose
-Socket module has no AF_INET6 of its own.
+Deprecated.  Returns 0 on every host, because C<AF_INET6> always comes
+from Socket, and warns in the C<deprecated> category.  See
+L</DEPRECATED>.
 
 =back
 
@@ -897,6 +842,21 @@ The case tag.  See below.
 
 =back
 
+=head1 DEPRECATED
+
+Everything listed here is deprecated and will be removed in version 5.
+
+=over 4
+
+=item C<fake_AF_INET6>
+
+Returned the C<AF_INET6> value this module guessed from the operating
+system's name on a perl whose Socket had none.  Every supported perl's
+Socket has C<AF_INET6>, so nothing is guessed and it returns 0.  Call
+C<AF_INET6> for the value.
+
+=back
+
 =head1 THE CASE POLICY
 
 The case of IPv6 text output is one package global, not a setting per
@@ -935,31 +895,18 @@ setting should be process-wide at all, is an open question: see GH#7.
 
 Three functions ignore the setting entirely and are always lowercase:
 C<packzeros>, which follows RFC 5952 s4.3, and C<ipv6_ntoa> and
-C<inet_ntop>, which mirror the platform's C<inet_ntop>.  Which version of
-those two you get depends on Socket6: see below.
+C<inet_ntop>, which follow the platform C<inet_ntop>.
 
-=head1 Socket6 substitution
+=head1 Core Socket
 
-When Socket6 is installed, C<inet_pton> and C<inet_ntop> are bound to it,
-and to this module's own implementations when it is not.  The choice is
-made at load time, so two hosts differing only in that one optional
-module can behave differently.
+C<AF_INET>, C<AF_INET6> and C<inet_ntop> come from core Socket.  Socket6
+is not used.  C<inet_pton> reads the text itself, because C libraries
+differ in the IPv4 text they accept.
 
-Socket6 is a runtime recommendation, not a requirement.  Where the
-substitution matters for output it is noted on the entry: for C<inet_ntop>
-and C<ipv6_ntoa>, an address with an IPv4 address in the low 32 bits is
-rendered in mixed notation with Socket6 and in hex without it.  The parse
-side agrees: C<inet_pton> reads IPv4 and IPv6 text alike with or without
-Socket6.
-
-The value of C<AF_INET6> is not part of the substitution: it comes from
-Socket whether or not Socket6 is installed.  Only where Socket has no
-AF_INET6 does it come from Socket6, and only where neither has it is it
-guessed from the name of the operating system, the one case in which
-C<fake_AF_INET6()> is true:
-
-  print AF_INET6();        # the platform constant, 10 on Linux
-  print fake_AF_INET6();   # 0 unless guessed
+C<inet_ntop> of an IPv4 address is C<inet_ntoa>.  C<inet_ntop> of an IPv6
+address is the platform function, so an address with an IPv4 address in
+the low 32 bits follows that C library.  On glibc the mapped form is
+C<::ffff:192.0.2.1>.
 
 =head1 SEE ALSO
 

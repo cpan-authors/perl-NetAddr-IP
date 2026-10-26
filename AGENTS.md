@@ -81,11 +81,9 @@ adds the `author-` and `release-` files, so the numbers stay clear of them.
   work done.
 - Bail out with `bail_out`, since Test2::V1 does not define `BAIL_OUT`. That
   spelling dies on an undefined sub, and only once the guard fires (GH#145).
-- To test this module's own `inet_ntop` and `inet_pton` on a host with
-  Socket6, hide Socket6 with an `@INC` hook in a `BEGIN` block before loading
-  InetBase, as `t/040` does. Never redefine one of Socket's constants with
-  Test2::Mock instead: on perl 5.14 the redefinition warns, and NoWarnings
-  fails the test.
+- Never redefine one of Socket's constants with Test2::Mock: on perl 5.14
+  the redefinition warns, and NoWarnings fails the test. The module does
+  not load Socket6.
 - A hook loaded through `PERL5OPT` comes too late for a module named with
   `-M` on the command line, which perl loads first. Put the `use` in a script.
 - Under perl 5.14, Carp 1.20 ends a croak message at "line N" with no full

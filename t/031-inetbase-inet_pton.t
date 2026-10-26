@@ -2,6 +2,7 @@
 
 use Test2::V1 -ipP;
 use Test2::Plugin::NoWarnings;
+use Test2::Mock             ();
 use Test2::Tools::Exception qw( dies );
 
 use NetAddr::IP::InetBase qw( AF_INET AF_INET6 inet_ntop inet_pton );
@@ -38,8 +39,7 @@ subtest 'inet_pton and inet_ntop IPv4' => sub {
     }
 };
 
-subtest 'IPv4 text without Socket6 is four decimal parts and nothing else' =>
-  sub {
+subtest 'IPv4 text is four decimal parts and nothing else' => sub {
     my %packed = (
         '0.0.0.0'         => '00000000',
         '192.0.2.1'       => 'c0000201',
@@ -47,23 +47,25 @@ subtest 'IPv4 text without Socket6 is four decimal parts and nothing else' =>
         '255.255.255.255' => 'ffffffff',
     );
     for my $text ( sort keys %packed ) {
-        is( packed_hex( NetAddr::IP::InetBase::_inet_pton( AF_INET, $text ) ),
-            $packed{$text}, "_inet_pton(AF_INET, '$text')" );
+        is( packed_hex( inet_pton( AF_INET, $text ) ),
+            $packed{$text}, "inet_pton(AF_INET, '$text')" );
     }
     for my $text (
-        '',            ' 192.0.2.1',  '0',          '0300.0.2.1',
-        '0xc0.0.2.1',  '1.2.3.4.5',   '10.1',       '192.0.2',
-        '192.0.2.010', "192.0.2.1\n", '192.0.2.1.', '192.0.2.1/24',
-        '256.0.0.1',   'localhost',   "\x{0661}.0.0.1",
+        '',                ' 192.0.2.1',
+        '0',               '0300.0.2.1',
+        '0xc0.0.2.1',      '1.2.3.4.5',
+        '10.1',            '192.0.2',
+        '192.0.2.010',     "192.0.2.1\n",
+        '192.0.2.1.',      '192.0.2.1/24',
+        '256.0.0.1',       'localhost',
+        "192.0.2.1\0junk", "\x{0661}.0.0.1",
       )
     {
         my $name = shown($text);
-        is( NetAddr::IP::InetBase::_inet_pton( AF_INET, $text ),
-            undef, "_inet_pton(AF_INET, '$name')" );
+        is( inet_pton( AF_INET, $text ), undef, "inet_pton(AF_INET, '$name')" );
     }
-    is( NetAddr::IP::InetBase::_inet_pton( AF_INET, undef ),
-        undef, '_inet_pton(AF_INET, undef)' );
-  };
+    is( inet_pton( AF_INET, undef ), undef, 'inet_pton(AF_INET, undef)' );
+};
 
 subtest 'inet_pton and inet_ntop IPv6' => sub {
     my %num = (
@@ -87,6 +89,37 @@ subtest 'inet_pton and inet_ntop IPv6' => sub {
         is( $ipv6x, $num{$input}, "inet_ntop(inet_pton($input))" );
     }
 };
+
+subtest 'IPv6 text is the whole string and nothing else' => sub {
+    for my $text (
+        "2001:db8::1\0junk",  "2001:db8::1\n",
+        '::ffff:192.0.2.010', "\x{0661}::1",
+      )
+    {
+        my $name = shown($text);
+        is( inet_pton( AF_INET6, $text ),
+            undef, "inet_pton(AF_INET6, '$name')" );
+    }
+    is( inet_pton( AF_INET6, undef ), undef, 'inet_pton(AF_INET6, undef)' );
+};
+
+subtest 'inet_pton reads the text itself, whatever the C library accepts' =>
+  sub {
+    # a C library that takes any text, as some take short forms and octal
+    my $lenient = Test2::Mock->new(
+        class    => 'Socket',
+        override => [
+            inet_pton => sub {
+                return $_[0] == AF_INET ? pack( 'C4', 10, 0, 0, 1 ) : "\0" x 16;
+            },
+        ],
+    );
+    for my $text ( '10.1', '192.0.2.010', '0xc0.0.2.1' ) {
+        is( inet_pton( AF_INET, $text ), undef, "inet_pton(AF_INET, '$text')" );
+    }
+    is( inet_pton( AF_INET6, '::ffff:192.0.2.010' ),
+        undef, "inet_pton(AF_INET6, '::ffff:192.0.2.010')" );
+  };
 
 like( dies { inet_ntop( AF_INET6, '1234' ) },
     qr/Bad arg/, 'bad argument length test for inet_ntop' );

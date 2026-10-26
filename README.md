@@ -37,9 +37,8 @@ Six modules ship in the distribution, each adding a layer:
 
 - **NetAddr::IP::Util** — that same arithmetic, XS with the pure Perl
   fallback: `shiftleft`, `add128`, `sub128`, `addconst`, `notcontiguous`,
-  `bin2bcd`, `bcd2bin`, `ipv4to6`, `ipv6to4`, `naip_gethostbyname`. It
-  takes `inet_pton` and `inet_ntop` from Socket6 when that is installed,
-  which is a recommendation rather than a requirement.
+  `bin2bcd`, `bcd2bin`, `ipv4to6`, `ipv6to4`, `naip_gethostbyname`.
+  `inet_ntop` comes from core Socket.
 
 - **NetAddr::IP::Lite** — core IP objects with overloaded operators, basic
   arithmetic and subnet queries: `new`, `addr`, `mask`, `broadcast`,
