@@ -4,8 +4,7 @@ use Test2::V1 -ipP;
 use Test2::Plugin::NoWarnings;
 use Test2::Tools::Exception qw( dies );
 
-# load with Socket6 as installed: every check is InetBase's own on any host,
-# and an upgraded ipv6_ntoa argument reaches Socket6's inet_ntop where it is
+# an upgraded argument is downgraded before Socket's inet_ntop reads it
 use NetAddr::IP::InetBase qw(
   :lower
   inet_n2ad
@@ -50,11 +49,6 @@ sub said_at {
     my ( $says, $line ) = @_;
     return qr/\A\Q$says\E at \Q$THIS_FILE\E line $line\b/;
 }
-
-note 'inet_ntop is bound to ',
-  \&NetAddr::IP::InetBase::inet_ntop == \&NetAddr::IP::InetBase::_inet_ntop
-  ? 'NetAddr::IP::InetBase'
-  : 'Socket6';
 
 subtest 'a wide string as many characters long as the bytes expected croaks' =>
   sub {

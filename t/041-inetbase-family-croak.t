@@ -5,18 +5,8 @@ use Test2::Plugin::NoWarnings;
 use Test2::Tools::Exception qw( dies );
 use Test2::Tools::Warnings  qw( no_warnings );
 
-# load with Socket6 hidden, so inet_ntop and inet_pton are this module's own
-BEGIN {
-    local @INC = (
-        sub {
-            my ( undef, $file ) = @_;
-            die "Socket6 hidden\n" if $file eq 'Socket6.pm';
-            return;
-        },
-        @INC
-    );
-    require NetAddr::IP::InetBase;
-}
+use NetAddr::IP::InetBase ();
+use Socket               ();
 
 my $BAD_FAMILY = 4_278_190_080;    # 0xFF000000, which is no address family
 my $NTOP_DIES =
@@ -58,24 +48,31 @@ sub refused_without_warning {
     return;
 }
 
-ok(
-    \&NetAddr::IP::InetBase::inet_ntop == \&NetAddr::IP::InetBase::_inet_ntop
-      && \&NetAddr::IP::InetBase::inet_pton ==
-      \&NetAddr::IP::InetBase::_inet_pton,
-    'inet_ntop and inet_pton are bound to InetBase with Socket6 hidden'
-) or bail_out('Socket6 was not hidden, so the errors below are not ours');
+# Socket's wording moves between releases, and the number it prints is the
+# C int, which is not this Perl value on a 64-bit build. A 16-byte buffer
+# keeps the probe off the short-buffer read in old Socket.
+sub socket_message {
+    my ($err) = @_;
+    $err =~ s/ at .*//s;
+    return $err;
+}
 
-subtest 'a family that is neither AF_INET nor AF_INET6 is named with both' =>
+my $ntop_socket = socket_message(
+    dies { Socket::inet_ntop( $BAD_FAMILY, $v6_packed ) } );
+my $pton_socket =
+  socket_message( dies { Socket::inet_pton( $BAD_FAMILY, $V4_TEXT ) } );
+
+subtest 'a numeric family that is neither AF_INET nor AF_INET6 is Socket' =>
   sub {
     like(
         dies { NetAddr::IP::InetBase::inet_ntop( $BAD_FAMILY, $v4_packed ) },
-        qr/\A\Q$NTOP_DIES 4278190080, $accepted\E at /,
-        'inet_ntop of family 0xFF000000 names the family and the two accepted'
+        qr/\A\Q$ntop_socket\E at /,
+        'inet_ntop of family 0xFF000000 matches Socket'
     );
     like(
         dies { NetAddr::IP::InetBase::inet_pton( $BAD_FAMILY, $V4_TEXT ) },
-        qr/\A\Q$PTON_DIES 4278190080, $accepted\E at /,
-        'inet_pton of family 0xFF000000 names the family and the two accepted'
+        qr/\A\Q$pton_socket\E at /,
+        'inet_pton of family 0xFF000000 matches Socket'
     );
   };
 

@@ -4,19 +4,7 @@ use Test2::V1 -ipP;
 use Test2::Plugin::NoWarnings;
 use Test2::Tools::Exception qw( dies );
 
-# load with Socket6 hidden, so inet_ntop and inet_pton are this module's own
-BEGIN {
-    local @INC = (
-        sub {
-            my ( undef, $file ) = @_;
-            die "Socket6 hidden\n" if $file eq 'Socket6.pm';
-            return;
-        },
-        @INC
-    );
-    require NetAddr::IP::InetBase;
-}
-
+use Socket ();
 use NetAddr::IP::InetBase qw(
   inet_n2ad
   inet_n2dx
@@ -40,8 +28,6 @@ my $V4_TEXT    = '192.0.2.1';
 my $AF_INET   = NetAddr::IP::InetBase::AF_INET();
 my $AF_INET6  = NetAddr::IP::InetBase::AF_INET6();
 my $THIS_FILE = __FILE__;
-my $accepted  = sprintf 'should be AF_INET (%d) or AF_INET6 (%d)', $AF_INET,
-  $AF_INET6;
 
 my $bits_says =
   'Bad arg length for NetAddr::IP::InetBase::%s, length is %s, should be 128';
@@ -51,12 +37,19 @@ my $n2x_says =
   q{Bad arg length for 'ipv6_n2x', length is %s should be 16 bytes};
 my $ntoa_says =
 'Bad arg length for NetAddr::IP::InetBase::inet_ntoa, length is %d should be 4 bytes';
-my $ntop_says = sprintf
-'Unsupported address family for NetAddr::IP::InetBase::inet_ntop, af is %s, %s',
-  $BAD_FAMILY, $accepted;
+# Socket's own sentence, taken from a call in this process. The probe buffer
+# is 16 bytes, so an old Socket does not read past it. The location is
+# stripped; the calls below must report this file and their own line.
+sub socket_message {
+    my ($err) = @_;
+    $err =~ s/ at .*//s;
+    return $err;
+}
+
+my $ntop_says =
+  socket_message( dies { Socket::inet_ntop( $BAD_FAMILY, 'x' x 16 ) } );
 my $pton_says =
-  sprintf 'Bad address family for NetAddr::IP::InetBase::inet_pton, got %s, %s',
-  $BAD_FAMILY, $accepted;
+  socket_message( dies { Socket::inet_pton( $BAD_FAMILY, $V4_TEXT ) } );
 my $v6ntoa_says =
 'Bad arg length for NetAddr::IP::InetBase::ipv6_ntoa, length is %s should be 16 bytes';
 
@@ -66,13 +59,6 @@ sub said_at {
     my ( $says, $line ) = @_;
     return qr/\A\Q$says\E at \Q$THIS_FILE\E line $line\b/;
 }
-
-ok(
-    \&NetAddr::IP::InetBase::inet_ntop == \&NetAddr::IP::InetBase::_inet_ntop
-      && \&NetAddr::IP::InetBase::inet_pton ==
-      \&NetAddr::IP::InetBase::_inet_pton,
-    'inet_ntop and inet_pton are bound to InetBase with Socket6 hidden'
-) or bail_out('Socket6 was not hidden, so the errors below are not ours');
 
 subtest 'an error from the function called names the line that called it' =>
   sub {
@@ -97,6 +83,16 @@ subtest 'an error from the function called names the line that called it' =>
         $err,
         said_at( $pton_says, $line ),
         'inet_pton of family 0xFF000000 names the line of its call'
+    );
+
+    ( $line, $err ) = ( __LINE__, dies { inet_ntop( $AF_INET6, $SHORT ) } );
+    like(
+        $err,
+        said_at(
+'Bad arg length for NetAddr::IP::InetBase::inet_ntop, length is 3 should be 16 bytes',
+            $line
+        ),
+        'inet_ntop AF_INET6 of 3 bytes names the line of its call'
     );
 
     ( $line, $err ) = ( __LINE__, dies { ipv6_n2d($SHORT) } );
@@ -152,13 +148,6 @@ subtest
         $err,
         said_at( sprintf( $ntoa_says, 3 ), $line ),
 'inet_ntop AF_INET of 3 bytes, failing in inet_ntoa, names the line of its call'
-    );
-
-    ( $line, $err ) = ( __LINE__, dies { inet_ntop( $AF_INET6, $SHORT ) } );
-    like(
-        $err,
-        said_at( sprintf( $n2x_says, 3 ), $line ),
-'inet_ntop AF_INET6 of 3 bytes, failing in ipv6_n2x, names the line of its call'
     );
 
     ( $line, $err ) = ( __LINE__, dies { isAnyIPv4($SHORT) } );

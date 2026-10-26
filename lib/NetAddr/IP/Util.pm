@@ -188,11 +188,11 @@ sub inet_4map6 {
 
 sub DESTROY {};
 
-my $havegethostbyname2 = 0;
+# True on every supported perl. :noSock6 clears $_Sock6ok, and
+# havegethostbyname2 then returns false.
+my $havegethostbyname2 = 1;
 
-my $mygethostbyname;
-
-my $_Sock6ok = 1;        # for testing gethostbyname
+my $_Sock6ok = 1;
 
 sub havegethostbyname2 {
     return $_Sock6ok
@@ -208,90 +208,114 @@ sub import {
     NetAddr::IP::Util->export_to_level(1, @_);
 }
 
-package NetAddr::IP::UtilPolluted;
+# Socket's default export includes inet_aton and inet_ntoa, which this
+# module defines itself. The lookup names stay in this package. The block
+# ends back in NetAddr::IP::Util.
+package NetAddr::IP::UtilPolluted {
 
-# Socket pollutes the name space with all of its symbols. Since
-# we don't want them all, confine them to this name space.
+    use strict;
+    use Socket qw(
+            AF_INET
+            AF_INET6
+            SOCK_STREAM
+            getaddrinfo
+            unpack_sockaddr_in
+            unpack_sockaddr_in6
+    );
 
-use strict;
-use Socket qw(
-        AF_INET
-        AF_INET6
-        INADDR_LOOPBACK
-        inet_aton
-        inet_ntoa
-        inet_ntop
-        inet_pton
-);
+    my $_v4zero = pack('L', 0);
+    my $_zero = pack('L4', 0, 0, 0, 0);
 
-my $_v4zero = pack('L', 0);
-my $_zero = pack('L4', 0, 0, 0, 0);
-
-# invoke replacement subroutine for Perl's "gethostbyname"
-# if Socket6 is available.
-#
-# NOTE: in certain BSD implementations, Perl's gethostbyname is broken
-# we will use our own InetBase::inet_aton instead
-
-sub _end_gethostbyname {
-    #  my ($name, $aliases, $addrtype, $length, @addrs) = @_;
-    my @rv = @_;
-    # first ip address = rv[4]
-    my $tip = $rv[4];
-    unless ($tip && $tip ne $_v4zero && $tip ne $_zero) {
-        @rv = ();
-    }
-    # length = rv[3]
-    elsif ($rv[3] && $rv[3] == $NetAddr::IP::Util::V4_PACKED_BYTES) {
-        foreach (4..$#rv) {
-            $rv[$_] = NetAddr::IP::Util::inet_4map6(NetAddr::IP::Util::ipv4to6($rv[$_]));
+    # getaddrinfo can hand back the same address more than once. The first
+    # copy is the one kept, in the order the results arrived.
+    sub _addrs_once {
+        my ($unpack, @res) = @_;
+        my (@addrs, %seen);
+        for my $res (@res) {
+            my (undef, $addr) = $unpack->($res->{addr});
+            next unless defined $addr;
+            next if $seen{$addr}++;
+            push @addrs, $addr;
         }
-        $rv[3] = $NetAddr::IP::Util::V6_PACKED_BYTES;    # unconditionally set length to 16
-    }
-    elsif ($rv[3] == $NetAddr::IP::Util::V6_PACKED_BYTES) {
-        ;    # is ok
-    }
-    else {
-        @rv = ();
-    }
-    return @rv;
-}
-
-unless ( eval { local $SIG{__DIE__}; require Socket6 }) {
-    $mygethostbyname = sub {
-        # SEE NOTE above about broken BSD
-        my $host = NetAddr::IP::InetBase::fillIPv4($_[0]);
-        my @tip = defined $host ? gethostbyname($host) : ();
-        return &_end_gethostbyname(@tip);
-    };
-}
-else {
-    import Socket6 qw( gethostbyname2 getipnodebyname );
-    my $try = eval { local $SIG{__DIE__}; my @try = gethostbyname2('127.0.0.1',NetAddr::IP::Util::AF_INET()); $try[4] };
-    if (! $@ && $try && $try eq INADDR_LOOPBACK()) {
-        *_ghbn2 = \&Socket6::gethostbyname2;
-        $havegethostbyname2 = 1;
-    }
-    else {
-        *_ghbn2 = sub { return () };    # use failure branch below
+        return @addrs;
     }
 
-    $mygethostbyname = sub {
-        my @tip;
-        unless ($_Sock6ok && (@tip = _ghbn2($_[0],NetAddr::IP::Util::AF_INET6())) && @tip > 1) {
-            # SEE NOTE above about broken BSD
-            my $host = NetAddr::IP::InetBase::fillIPv4($_[0]);
-            @tip = defined $host ? gethostbyname($host) : ();
+    sub _end_gethostbyname {
+        #  my ($name, $aliases, $addrtype, $length, @addrs) = @_;
+        my @rv = @_;
+        # first ip address = rv[4]
+        my $tip = $rv[4];
+        unless ($tip && $tip ne $_v4zero && $tip ne $_zero) {
+            @rv = ();
         }
-        return &_end_gethostbyname(@tip);
-    };
-}
+        # length = rv[3]
+        elsif ($rv[3] && $rv[3] == $NetAddr::IP::Util::V4_PACKED_BYTES) {
+            foreach (4..$#rv) {
+                $rv[$_] = NetAddr::IP::Util::inet_4map6(NetAddr::IP::Util::ipv4to6($rv[$_]));
+            }
+            $rv[3] = $NetAddr::IP::Util::V6_PACKED_BYTES;    # unconditionally set length to 16
+        }
+        elsif ($rv[3] == $NetAddr::IP::Util::V6_PACKED_BYTES) {
+            ;    # is ok
+        }
+        else {
+            @rv = ();
+        }
+        return @rv;
+    }
 
-package NetAddr::IP::Util;
+    # Text that ends in a label of digits or 0x hex, and is not the decimal dotted quad
+    # fillIPv4 accepts, is a number to the resolver, read the inet_aton way with octal parts.
+    sub _numeric_text {
+        my ($host) = @_;
+        return 0 if index($host, ':') >= 0 || $host =~ /\A[0-9]+(?:[.][0-9]+){3}\z/;
+        return $host =~ /(?:\A|[.])(?:[0-9]+|0[xX][0-9a-fA-F]*)[.]?\z/;
+    }
+
+    sub _gethostbyname {
+        my ($name) = @_;
+        # A leading zero or an octet past 255 is not an address. fillIPv4
+        # returns undef for those. getaddrinfo would read the zero as octal.
+        my $host = NetAddr::IP::InetBase::fillIPv4($name);
+        return unless defined $host;
+        return if _numeric_text($host);
+        # :noSock6 does not call getaddrinfo. The name goes to gethostbyname.
+        unless ($_Sock6ok) {
+            my @tip = gethostbyname($host);
+            return &_end_gethostbyname(@tip);
+        }
+        # No family, so one call returns AAAA and A. SOCK_STREAM asks for each
+        # address once; Windows rejects SOCK_RAW here unless a protocol is set.
+        # An empty service is a NULL service pointer.
+        my ($err, @res) = getaddrinfo($name, "", { socktype => SOCK_STREAM });
+        if (!$err) {
+            my @v6 = grep { $_->{family} == AF_INET6() } @res;
+            # A name with both an AAAA and an A answer returns only the IPv6
+            # addresses.
+            if (@v6) {
+                my @addrs = _addrs_once(\&unpack_sockaddr_in6, @v6);
+                return &_end_gethostbyname(
+                    $name, '', AF_INET6(), $NetAddr::IP::Util::V6_PACKED_BYTES, @addrs);
+            }
+            my @v4 = grep { $_->{family} == AF_INET() } @res;
+            my @addrs = _addrs_once(\&unpack_sockaddr_in, @v4);
+            return &_end_gethostbyname(
+                $name, '', AF_INET(), $NetAddr::IP::Util::V4_PACKED_BYTES, @addrs);
+        }
+        # 127.1 is not an address getaddrinfo accepts. Only a rewritten name
+        # is looked up again.
+        if ($host ne $name) {
+            my @tip = gethostbyname($host);
+            return &_end_gethostbyname(@tip);
+        }
+        return;
+    }
+
+}
 
 sub naip_gethostbyname {
     return if defined $_[0] && $_[0] =~ /[\0\t\n\x0B\f\r ]/;    # no host name holds whitespace or a NUL byte
-    my @rv = &$mygethostbyname($_[0]);
+    my @rv = NetAddr::IP::UtilPolluted::_gethostbyname($_[0]);
     return wantarray
         ? @rv
         : $rv[4];
@@ -496,12 +520,12 @@ argument.
 Returns undef for text that is not an address of that family, and croaks
 on a family other than C<AF_INET> and C<AF_INET6>.
 
-NOTE: inet_pton and inet_ntop come from the Socket6 library if it
-is present on this host, and from this module if not.  Either way
-C<inet_pton(AF_INET, ...)> takes only four decimal parts from 0 to 255,
-each without a leading zero, as C<inet_pton> in core Socket does.  It
-returns undef for a short form such as C<127.1> and for a host name,
-both of which C<inet_aton> accepts.
+NOTE: C<inet_pton> reads the text itself rather than calling the platform
+C<inet_pton>, so every host reads it alike.  C<inet_pton(AF_INET, ...)>
+takes only four decimal parts from 0 to 255, each without a leading zero,
+and nothing after them.  It returns undef for a short form such as
+C<127.1>, for a host name, and for an undefined address.  C<inet_aton>
+accepts the short form and the host name.
 
 =back
 
@@ -528,8 +552,8 @@ text representation, which is lowercase whatever the case setting.
 
 Croaks if the argument is not 16 bytes.
 
-NOTE: for an address with an IPv4 address in the low 32 bits the output
-depends on whether Socket6 is installed.  See the entry for C<inet_ntop>.
+NOTE: an address with an IPv4 address in the low 32 bits is printed by
+the platform C<inet_ntop>.  See the entry for C<inet_ntop>.
 
 =item $hex_text = ipv6_n2x($bits128);
 
@@ -580,6 +604,11 @@ text format. The type of IP address conversion is controlled by the FAMILY
 argument.
 
 NOTE: inet_ntop ALWAYS returns lowercase characters.
+
+C<inet_ntop(AF_INET, ...)> is C<inet_ntoa>.  C<inet_ntop(AF_INET6, ...)> is
+the platform C<inet_ntop>.  On glibc an address with an IPv4 address in
+the low 32 bits is mixed notation, C<::ffff:192.0.2.1>.  A different C
+library can print a different form.  See L<NetAddr::IP::InetBase>.
 
 =item $hex_text = packzeros($hex_text);
 
@@ -855,41 +884,44 @@ character other than 0 to 9, or is a number too large for 128 bits.
 
 =item ($name,$aliases,$addrtype,$length,@addrs)=naip_gethostbyname(NAME);
 
-Replacement for Perl's gethostbyname if Socket6 is available
+Looks up a host name and returns packed IPv6 addresses.
 
-In ARRAY context, returns a list of five elements, the hostname or NAME,
-a space separated list of C_NAMES, AF family, length of the address
-structure, and an array of one or more netaddr's
+In list context, returns the hostname, an empty alias string, the address
+family, the length, and one or more packed addresses.  In scalar context,
+returns the first address.
 
-In SCALAR context, returns the first netaddr.
-
-This function ALWAYS returns an IPv6 address, even on IPv4 only systems.
-IPv4 answers are mapped into IPv6 space in the RFC 4291 s2.5.5.2 form:
+The lookup is one C<getaddrinfo> call with an empty service and socktype
+C<SOCK_STREAM>, and with no family and no flags.  C<getaddrinfo> does not
+return aliases, and it orders addresses by the platform rules (RFC 6724
+on current glibc).  When any result is IPv6, only those addresses are
+returned, duplicates removed.  The family is C<AF_INET6> and the length is
+16.  When every result is IPv4, the family stays C<AF_INET>, the length
+becomes 16, and each address is mapped into the RFC 4291 s2.5.5.2 form:
 
   ::FFFF:d.d.d.d
 
-so an answer for 127.0.0.1 is C<0:0:0:0:0:FFFF:7F00:1>.
+so an answer for 127.0.0.1 is C<0:0:0:0:0:FFFF:7F00:1>.  A first address
+of 0.0.0.0 or C<::> is an empty list.
 
-This is NOT the expected result from Perl's gethostbyname2. It is instead equivalent to:
+A short IPv4 text that C<getaddrinfo> rejects, such as C<127.1>, is
+expanded by C<fillIPv4> and resolved with C<gethostbyname>.  That answer
+keeps the aliases C<gethostbyname> returned.  A name that does not resolve,
+and that C<fillIPv4> does not rewrite, is an empty list.
 
-  On an IPv4 only system:
-    $ipv6naddr = inet_4map6 scalar ( gethostbyname( name ));
-
-  On a system with Socket6 and a working gethostbyname2:
-    $ipv6naddr = gethostbyname2( name, AF_INET6 );
-  and if that fails, the IPv4 conversion above.
-
-For a gethostbyname2 emulator that behave like Socket6, see: L<Net::DNS::Dig>
+Importing C<:noSock6> skips C<getaddrinfo> and uses C<fillIPv4> and
+C<gethostbyname> for every name.  C<gethostbyname> is not thread-safe.
+C<getaddrinfo> is.
 
 A NAME with whitespace, or a dotted number with a leading zero in any
 part, gives an empty list, or undef in scalar context, without asking
-the resolver.
+the resolver.  So does text whose last label is a number or C<0x> hex,
+such as C<0xc0.0.2.010>, other than a decimal dotted quad: the resolver
+would read it as a number, with C<010> in octal.
 
 =item $trueif = havegethostbyname2();
 
-This function returns TRUE if Socket6 has a functioning B<gethostbyname2>,
-otherwise it returns FALSE. See the comments above about the behavior of
-B<naip_gethostbyname>.
+Returns true unless C<:noSock6> was imported, in which case
+C<naip_gethostbyname> uses C<gethostbyname> and this returns false.
 
 =back
 
@@ -903,13 +935,10 @@ Returns the system value for AF_INET, taken from Socket.
 
 =item $constant = AF_INET6;
 
-Returns the value for AF_INET6.  It comes from Socket when the Socket module
-provides one, and from Socket6 only when Socket does not.  Without either,
-it is a value guessed from the name of the operating system, which is 10 on
-Linux.
+Returns the value for AF_INET6, taken from Socket.
 
   use NetAddr::IP::Util qw(AF_INET AF_INET6);
-  print AF_INET(), ' ', AF_INET6(), "\n";   # 2 10 on Linux
+  print AF_INET(), ' ', AF_INET6(), "\n";   # 2, then the platform value
 
 =back
 
@@ -1128,9 +1157,8 @@ Two tags change what the module does rather than which names it exports.
 
 =item C<:noSock6>
 
-Forces C<naip_gethostbyname> to report that Socket6 is unavailable, so
-the resolver fallback can be tested on a host that has it.  Test hook,
-not API.
+Forces C<naip_gethostbyname> onto C<fillIPv4> and C<gethostbyname>, and
+makes C<havegethostbyname2> return false.  Test hook, not API.
 
 =item C<:upper> and C<:lower>
 

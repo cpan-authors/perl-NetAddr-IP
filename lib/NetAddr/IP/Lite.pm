@@ -632,9 +632,8 @@ prints as IPv4:
 The C<addr()> value is what stringifies as the first part.
 
 C<$addr> can be almost anything that can be resolved to an IP address.
-It can optionally contain the mask in CIDR notation. If the optional
-module Socket6 is installed, ipV6 host names are resolved as well as
-ipV4 ones; without it, only the ipV4 path runs.
+It can optionally contain the mask in CIDR notation. A host name is
+resolved, and an IPv6 name resolves as well as an IPv4 one.
 
 B<prefix> notation is understood, with the limitation that the range
 specified by the prefix must match with a valid subnet.
@@ -1975,9 +1974,8 @@ sixteen bytes.
 A string made only of ASCII letters, digits, dots, hyphens and
 underscores is looked up as a host name before it is read as packed.
 A packed address such as 109.97.105.108, the bytes "mail", makes the
-call wait for the resolver: one lookup, or three when Socket6 is
-installed. If the name resolves, the answer is returned in place of the
-packed address.
+call wait for the resolver. If the name resolves, the answer is returned
+in place of the packed address.
 
 The order also affects text. A four or sixteen character string that
 is not valid text and does not resolve, a mistyped host name for

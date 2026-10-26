@@ -4,8 +4,7 @@ use Test2::V1 -ipP;
 use Test2::Plugin::NoWarnings;
 use Test2::Tools::Exception qw( dies );
 
-# load with Socket6 as installed, so ipv6_ntoa is checked whichever
-# inet_ntop is bound
+# ipv6_ntoa measures the argument itself, then calls inet_ntop
 use NetAddr::IP::InetBase qw( ipv6_ntoa );
 
 my $NTOA_DIES =
@@ -15,11 +14,6 @@ my $V6_TEXT   = '2001:db8::1';
 
 my $v4_packed = pack 'H*', 'c0000201';                            # 192.0.2.1
 my $v6_packed = pack 'H*', '20010db8000000000000000000000001';    # 2001:db8::1
-
-note 'inet_ntop is bound to ',
-  \&NetAddr::IP::InetBase::inet_ntop == \&NetAddr::IP::InetBase::_inet_ntop
-  ? 'NetAddr::IP::InetBase'
-  : 'Socket6';
 
 subtest 'a defined argument that is not 16 bytes is measured by ipv6_ntoa' =>
   sub {
