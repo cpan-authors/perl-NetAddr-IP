@@ -632,7 +632,7 @@ sub comp128 {
 #
 #=cut
 
-sub bin2bcdn {
+sub bin2bcdn($) {
     my $bits128 = _bytes(shift);
     _deadlen(length($bits128))
         if !defined($bits128) || length($bits128) != $V6_PACKED_BYTES;
