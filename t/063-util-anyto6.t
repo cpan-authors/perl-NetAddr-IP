@@ -14,6 +14,25 @@ my $nipv6 = ipanyto6($nip);
 my $ipv6  = ipv6_n2d($nipv6);
 is( $ipv6, $exp, 'ipanyto6 converts 1.2.3.4 correctly' );
 
+subtest 'ipanyto6 reads one argument alike in both builds' => sub {
+    is( prototype('NetAddr::IP::Util::ipanyto6'),
+        '$', 'ipanyto6 has the prototype $' );
+
+    my $arg = NetAddr::IP::Util::inet_aton('192.0.2.1');
+
+    # compiled here, so the prototype decides how the line parses
+    is( eval q{ ipanyto6 $arg ? 'yes' : 'no' },
+        'yes', 'a call without brackets binds before ?:' );
+    is( $@, '', 'that call does not croak' );
+
+    # in list context this returns a name and the argument, as a lookup does
+    my $answer = sub { return wantarray ? ( 'host.example', $arg ) : $arg };
+    is( eval { ipanyto6( $answer->() ) },
+        ipanyto6($arg),
+        'an argument that returns a list is read in scalar context' );
+    is( $@, '', 'that call does not croak' );
+};
+
 ## check mask4->6 extension
 $exp   = 'FFFF:FFFF:FFFF:FFFF:FFFF:FFFF:1.2.3.4';
 $nipv6 = maskanyto6($nip);

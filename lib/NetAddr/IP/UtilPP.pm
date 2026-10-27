@@ -500,7 +500,7 @@ input and always returns a 128 bit IPv6 network address.
 Croaks if the argument is neither 4 nor 16 bytes.
 =cut
 
-sub ipanyto6 {
+sub ipanyto6($) {
     my $naddr = _bytes(shift);
     return _deadlen(undef, "$IPV4_BITS or $IPV6_BITS")
         unless defined $naddr;
