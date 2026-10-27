@@ -12,6 +12,19 @@ Revision history for Perl extension NetAddr::IP
       total changes. The cache size is still accepted and reported, but no
       longer affects counting.
 
+    - Fix GH#170: A host name passed to the constructors is resolved
+      with one getaddrinfo call. The IPv4 constructor uses an IPv4
+      answer when there is one. The IPv6 constructor uses an IPv6
+      answer when there is one, unless that answer is an IPv4-mapped
+      or IPv4-compatible address and an IPv4 answer exists. A short
+      IPv4 text such as 127.1 is packed by naip_gethostbyname() without
+      a lookup, as the constructors already did. Under :noSock6, names
+      still go to gethostbyname. A name whose only answer is an IPv6
+      address in ::/96, such as ip6-localhost at ::1, now gives that
+      address from both constructors, where glibc's gethostbyname gave
+      127.0.0.1. Text ending in a number or a 0x hex label, such as
+      host.123, is refused without a lookup.
+
     - Fix GH#165: inet_ntop and AF_INET6 come from core Socket.
       IPv6 names go through getaddrinfo. Socket6 is no longer
       recommended. fake_AF_INET6 is deprecated, returns 0, and will

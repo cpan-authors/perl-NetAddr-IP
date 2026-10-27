@@ -651,7 +651,12 @@ The C<addr()> value is what stringifies as the first part.
 
 C<$addr> can be almost anything that can be resolved to an IP address.
 It can optionally contain the mask in CIDR notation. A host name is
-resolved, and an IPv6 name resolves as well as an IPv4 one.
+resolved with one C<getaddrinfo> call, so an IPv6 name resolves as
+well as an IPv4 one. The IPv4 constructor uses an IPv4 answer when
+there is one. The IPv6 constructor uses an IPv6 answer when there
+is one, unless that answer is an IPv4-mapped or IPv4-compatible
+address and an IPv4 answer exists, as for a name with both C<::1>
+and C<127.0.0.1>.
 
 B<prefix> notation is understood, with the limitation that the range
 specified by the prefix must match with a valid subnet.
