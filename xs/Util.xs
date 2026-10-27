@@ -579,12 +579,13 @@ PPCODE:
 	  croak("Bad arg length for %s%s, length is %" UVuf ", should be %d",
 		"NetAddr::IP::Util::",subname,(UV)(len *8),128);
 	}
+	/* the second argument's overload can free the first argument's bytes */
+	netswap_copy(wa,ap,4);
 
 	bp = _packed_bytes(aTHX_ bs,&len);
 	if (len != 16) {
 	  goto Bail;
 	}
-	netswap_copy(wa,ap,4);
 	netswap_copy(wb,bp,4);
 	if (ix == 1) {
 	  fastcomp128(wb);

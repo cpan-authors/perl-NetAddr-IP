@@ -2,6 +2,10 @@ Revision history for Perl extension NetAddr::IP
 
 {{$NEXT}}
 
+    - Fix GH#169: In the XS build, add128 and sub128 copy the first
+      address before reading the second. A second argument that
+      reassigns the first no longer makes them read freed memory.
+
     - Fix GH#189: In the pure Perl build, simple_pack() takes the prototype
       $;@, as it does in the XS build.
 
