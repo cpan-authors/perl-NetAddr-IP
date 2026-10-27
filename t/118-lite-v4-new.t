@@ -140,6 +140,34 @@ is( NetAddr::IP::Lite->new( "0b12", 8 ),
     undef, 'invalid binary 0b12 with mask rejected' );
 is( NetAddr::IP::Lite->new("0xzz"), undef, 'invalid hex 0xzz rejected' );
 
+subtest 'a literal wider than 32 bits is not an IPv4 address' => sub {
+    for my $text (
+        '0x100000000',    '0x100000001',
+        '0x1ffffffff',    '-0x100000001',
+        '0b1' . '0' x 32, '0x100000001/24',
+      )
+    {
+        is( NetAddr::IP::Lite->new($text), undef, "new('$text')" );
+    }
+    is( NetAddr::IP::Lite->new( '0x100000001', 24 ),
+        undef, "new('0x100000001', 24)" );
+    is(
+        NetAddr::IP::Lite->new('0xffffffff') . '',
+        '255.255.255.255/32',
+        "new('0xffffffff') still converts"
+    );
+    is(
+        NetAddr::IP::Lite->new('0x00000000ffffffff') . '',
+        '255.255.255.255/32',
+        'leading zero digits do not count'
+    );
+    is(
+        NetAddr::IP::Lite->new( '0b' . '1' x 32 ) . '',
+        '255.255.255.255/32',
+        'thirty-two binary ones still convert'
+    );
+};
+
 ## negative integers
 
 is( NetAddr::IP::Lite->new("-1"),
