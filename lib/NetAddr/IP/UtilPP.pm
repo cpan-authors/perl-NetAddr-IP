@@ -523,7 +523,7 @@ netmask and always returns a 128 bit IPv6 netmask.
 Croaks if the argument is neither 4 nor 16 bytes.
 =cut
 
-sub maskanyto6 {
+sub maskanyto6($) {
     my $naddr = _bytes(shift);
     return _deadlen(undef, "$IPV4_BITS or $IPV6_BITS")
         unless defined $naddr;
