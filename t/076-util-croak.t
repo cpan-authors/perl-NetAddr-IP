@@ -367,6 +367,29 @@ is(
     'shiftleft keeps the address alive while the count deletes it'
 );
 
+## the first address is copied before the second runs its overloading
+
+our $first;
+my $one = pack( 'N4', 0, 0, 0, 1 );
+{
+
+    package Local::Reassigns;
+    use overload
+      q{""}    => sub { $main::first = 'x' x 4096; return $one },
+      fallback => 1;
+}
+for my $case (
+    [ add128 => \&add128, '2001:DB8:0:0:0:0:0:6' ],
+    [ sub128 => \&sub128, '2001:DB8:0:0:0:0:0:4' ],
+  )
+{
+    my ( $name, $function, $want ) = @{$case};
+    $first = ipv6_aton('2001:db8::5');
+    my ( undef, $result ) = $function->( $first, bless {}, 'Local::Reassigns' );
+    is( ipv6_n2x($result), $want,
+        "$name reads the first address before the second reallocates it" );
+}
+
 ## fractional digit counts and argument order
 
 like(
