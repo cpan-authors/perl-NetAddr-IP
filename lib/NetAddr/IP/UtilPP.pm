@@ -462,7 +462,7 @@ Convert an ipv4 network address into an ipv6 network address.
 Croaks if the argument is not 4 bytes.
 =cut
 
-sub ipv4to6 {
+sub ipv4to6($) {
     my $netaddr = _bytes(shift);
     _deadlen(length($netaddr), $IPV4_BITS)
         if !defined($netaddr) || length($netaddr) != $V4_PACKED_BYTES;
