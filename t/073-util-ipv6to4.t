@@ -26,4 +26,18 @@ like(
     'ipv6to4 rejects bad argument length'
 );
 
+subtest 'ipv6to4 reads its first argument alike in both builds' => sub {
+    is( prototype('NetAddr::IP::Util::ipv6to4'),
+        '$;@', 'ipv6to4 has the prototype $;@' );
+
+    my $arg = NetAddr::IP::Util::ipv6_aton('::c000:201');
+
+    # in list context this returns a name and the argument, as a lookup does
+    my $answer = sub { return wantarray ? ( 'host.example', $arg ) : $arg };
+    is( eval { ipv6to4( $answer->() ) },
+        ipv6to4($arg),
+        'a first argument that returns a list is read in scalar context' );
+    is( $@, '', 'that call does not croak' );
+};
+
 done_testing;

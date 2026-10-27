@@ -547,7 +547,7 @@ Croaks if the argument is not 16 bytes.
 
 =cut
 
-sub ipv6to4 {
+sub ipv6to4($;@) {
     my $naddr = _bytes(shift);
     _deadlen(length($naddr))
         if !defined($naddr) || length($naddr) != $V6_PACKED_BYTES;
