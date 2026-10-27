@@ -2,6 +2,9 @@ Revision history for Perl extension NetAddr::IP
 
 {{$NEXT}}
 
+    - Fix GH#186: In the pure Perl build, shiftleft() takes the prototype $;@,
+      as it does in the XS build.
+
     - Fix GH#185: In the pure Perl build, ipv6to4() takes the prototype $;@,
       as it does in the XS build.
 

@@ -252,7 +252,7 @@ sub _plain_number {
     return looks_like_number($n) ? sprintf('%.17g', $n) : "$n";
 }
 
-sub shiftleft {
+sub shiftleft($;@) {
     my $bits = _bytes($_[0]);
     _deadlen(length($bits))
         if !defined($bits) || length($bits) != $V6_PACKED_BYTES;

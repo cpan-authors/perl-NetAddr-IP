@@ -31,4 +31,20 @@ for my $entry (@num) {
     is( $got, $expected, "shiftleft($input, $shift)" );
 }
 
+subtest 'shiftleft reads its first argument alike in both builds' => sub {
+    is( prototype('NetAddr::IP::Util::shiftleft'),
+        '$;@', 'shiftleft has the prototype $;@' );
+
+    my $arg = NetAddr::IP::Util::ipv6_aton('2001:db8::1');
+
+    # in list context this returns a name and the argument, as a lookup does
+    my $answer = sub { return wantarray ? ( 'host.example', $arg ) : $arg };
+    is(
+        eval { shiftleft( $answer->(), 1 ) },
+        shiftleft( $arg, 1 ),
+        'a first argument that returns a list is read in scalar context'
+    );
+    is( $@, '', 'that call does not croak' );
+};
+
 done_testing;
