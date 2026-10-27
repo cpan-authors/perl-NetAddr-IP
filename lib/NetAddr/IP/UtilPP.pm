@@ -727,7 +727,7 @@ Convert a packed bcd string into a 128 bit string variable
 
 =cut
 
-sub bcdn2bin {
+sub bcdn2bin($;@) {
     croak q|Bad usage, should have NetAddr::IP::Util::bcdn2bin('packedbcd','length')|
         if @_ < 2;
     my ($bcd, $given) = (_bytes($_[0]), $_[1]);

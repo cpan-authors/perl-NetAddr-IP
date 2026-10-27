@@ -41,4 +41,20 @@ for my $input ( sort { $a <=> $b } keys %num ) {
     is( $ip, $num{$input}, "bcdn2bin($input)" );
 }
 
+subtest 'bcdn2bin reads its first argument alike in both builds' => sub {
+    is( prototype('NetAddr::IP::Util::bcdn2bin'),
+        '$;@', 'bcdn2bin has the prototype $;@' );
+
+    my $arg = pack( 'H*', '2147483648' );
+
+    # in list context this returns a name and the argument, as a lookup does
+    my $answer = sub { return wantarray ? ( 'host.example', $arg ) : $arg };
+    is(
+        eval { bcdn2bin( $answer->(), 10 ) },
+        bcdn2bin( $arg, 10 ),
+        'a first argument that returns a list is read in scalar context'
+    );
+    is( $@, '', 'that call does not croak' );
+};
+
 done_testing;
