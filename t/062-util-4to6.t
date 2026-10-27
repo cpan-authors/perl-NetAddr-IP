@@ -54,4 +54,23 @@ like(
     'mask4to6 dies on bad argument length'
 );
 
+subtest 'mask4to6 reads one argument alike in both builds' => sub {
+    is( prototype('NetAddr::IP::Util::mask4to6'),
+        '$', 'mask4to6 has the prototype $' );
+
+    my $arg = pack( 'C4', 255, 255, 255, 0 );
+
+    # compiled here, so the prototype decides how the line parses
+    is( eval q{ mask4to6 $arg ? 'yes' : 'no' },
+        'yes', 'a call without brackets binds before ?:' );
+    is( $@, '', 'that call does not croak' );
+
+    # in list context this returns a name and the argument, as a lookup does
+    my $answer = sub { return wantarray ? ( 'host.example', $arg ) : $arg };
+    is( eval { mask4to6( $answer->() ) },
+        mask4to6($arg),
+        'an argument that returns a list is read in scalar context' );
+    is( $@, '', 'that call does not croak' );
+};
+
 done_testing;
