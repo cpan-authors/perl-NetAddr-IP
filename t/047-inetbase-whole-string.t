@@ -133,4 +133,16 @@ subtest 'text with whitespace does not reach the resolver' => sub {
     }
 };
 
+subtest 'text with a NUL byte is not an address or a name' => sub {
+    for my $text ( "192.0.2.010\0", "192.0.2.1\0junk", "\x{0}192.0.2.1",
+        "localhost\0" )
+    {
+        my $name = $text =~ s/\0/\\0/gr;
+        is( packed_hex( inet_aton($text) ), undef, "inet_aton of '$name'" );
+        is( fillIPv4($text),                undef, "fillIPv4 of '$name'" );
+        is( [ naip_gethostbyname($text) ], [],
+            "naip_gethostbyname of '$name'" );
+    }
+};
+
 done_testing;

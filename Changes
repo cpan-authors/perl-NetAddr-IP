@@ -2,6 +2,10 @@ Revision history for Perl extension NetAddr::IP
 
 {{$NEXT}}
 
+    - Fix GH#194: Text with a NUL byte is refused by fillIPv4(), inet_aton()
+      and naip_gethostbyname(). The C resolver stopped reading at the NUL, so
+      192.0.2.010 followed by a NUL read as 192.0.2.8.
+
     - Fix GH#193: A 0x or 0b literal wider than 32 bits is no longer cut to
       its low 32 bits by new(); it is not an IPv4 address, and new() returns
       undef without a warning.
