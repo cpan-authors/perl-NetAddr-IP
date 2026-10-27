@@ -559,6 +559,7 @@ add128(as,bs)
 	SV * bs
 ALIAS:
 	NetAddr::IP::Util::sub128 = 1
+PROTOTYPE: @
 PREINIT:
 	unsigned char * ap, *bp;
 	const char * subname;

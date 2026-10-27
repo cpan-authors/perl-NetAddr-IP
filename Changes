@@ -2,6 +2,10 @@ Revision history for Perl extension NetAddr::IP
 
 {{$NEXT}}
 
+    - Fix GH#174: In the XS build, add128() and sub128() take a list
+      prototype, so their two addresses can come from an array, as in the
+      pure Perl build.
+
     - Fix GH#169: In the XS build, add128 and sub128 copy the first
       address before reading the second. A second argument that
       reassigns the first no longer makes them read freed memory.
