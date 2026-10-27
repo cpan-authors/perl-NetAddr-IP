@@ -694,7 +694,7 @@ sub _bin2bcdn {
 #
 #=cut
 
-sub bcdn2txt {
+sub bcdn2txt($) {
     my $bcdn = _bytes(shift);
     if (!defined($bcdn) || length($bcdn) != $PACKED_BCD_BYTES) {
         my $digits = defined $bcdn
