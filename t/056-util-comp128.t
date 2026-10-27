@@ -20,4 +20,18 @@ for my $input ( sort keys %tests ) {
     is( $rv, $exp, "comp128($input)" );
 }
 
+subtest 'comp128 reads its first argument alike in both builds' => sub {
+    is( prototype('NetAddr::IP::Util::comp128'),
+        '$;@', 'comp128 has the prototype $;@' );
+
+    my $arg = NetAddr::IP::Util::ipv6_aton('2001:db8::1');
+
+    # in list context this returns a name and the argument, as a lookup does
+    my $answer = sub { return wantarray ? ( 'host.example', $arg ) : $arg };
+    is( eval { comp128( $answer->() ) },
+        comp128($arg),
+        'a first argument that returns a list is read in scalar context' );
+    is( $@, '', 'that call does not croak' );
+};
+
 done_testing;
