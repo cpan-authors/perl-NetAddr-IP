@@ -2,6 +2,10 @@ Revision history for Perl extension NetAddr::IP
 
 {{$NEXT}}
 
+    - Fix GH#175: In the pure Perl build, hasbits() takes the prototype $,
+      as it does in the XS build, so a call without brackets and a call
+      whose argument returns a list read the argument alike in both builds.
+
     - Fix GH#138: $NetAddr::IP::netlimit holds the netlimit() exponent,
       so local scopes it. The function still returns 2**n.
 

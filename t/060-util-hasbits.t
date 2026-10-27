@@ -144,4 +144,25 @@ subtest 'mask4to6 on an offset, misaligned buffer matches a fresh copy' => sub {
     }
 };
 
+subtest 'hasbits reads one argument alike in both builds' => sub {
+    is( prototype('NetAddr::IP::Util::hasbits'),
+        '$', 'hasbits has the prototype $' );
+
+    my $zero = ipv6_aton('::');
+
+    # compiled here, so the prototype decides how the line parses
+    is( eval q{ hasbits $zero ? 'set' : 'clear' },
+        'clear', 'a call without brackets binds before ?:' );
+    is( $@, '', 'that call does not croak' );
+
+    # in list context this returns a name and the address, as a lookup does
+    my $answer = sub {
+        my $address = ipv6_aton('2001:db8::1');
+        return wantarray ? ( 'host.example', $address ) : $address;
+    };
+    is( eval { hasbits( $answer->() ) },
+        1, 'an argument that returns a list is read in scalar context' );
+    is( $@, '', 'that call does not croak' );
+};
+
 done_testing;

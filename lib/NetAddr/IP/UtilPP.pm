@@ -180,7 +180,7 @@ sub _deadlen {
     croak "Bad arg length for $sub, length is $bits, should be $should";
 }
 
-sub hasbits {
+sub hasbits($) {
     my $bits128 = _bytes(shift);
     _deadlen(length($bits128))
         if !defined($bits128) || length($bits128) != $V6_PACKED_BYTES;
