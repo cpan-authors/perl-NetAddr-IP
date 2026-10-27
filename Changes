@@ -2,6 +2,10 @@ Revision history for Perl extension NetAddr::IP
 
 {{$NEXT}}
 
+    - Fix GH#193: A 0x or 0b literal wider than 32 bits is no longer cut to
+      its low 32 bits by new(); it is not an IPv4 address, and new() returns
+      undef without a warning.
+
     - Fix GH#159: Threads parsing literal IPv4 addresses at once no
       longer swap answers. A host name still goes to gethostbyname.
 

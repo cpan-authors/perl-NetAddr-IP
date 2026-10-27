@@ -824,6 +824,13 @@ sub _no_octal {
 # than 128 bits. The constructor returns undef for bad input, so map the
 # croak to undef here.
 #
+# true when a 0b or 0x literal needs more than the 32 bits of an IPv4 address
+sub _wider_than_ipv4 {
+    my ($literal) = @_;
+    my ($base, $digits) = $literal =~ /\A0([bx])0*([0-9a-f]*)\z/;
+    return length($digits) > ($base eq 'x' ? $IPV4_BITS / 4 : $IPV4_BITS);
+}
+
 sub _bcd2bin_or_undef {
     local ($@, $SIG{__DIE__});        # keep the croak out of the caller's error state
     return scalar eval { bcd2bin($_[0]) };
@@ -1065,7 +1072,7 @@ sub _xnew($$;$$) {
         last;
             }
             # binary and hex literals, 0b[01]+ or 0x[0-9a-f]+ ($ip is already lower case)
-            elsif ($ip =~ /^(?:0b[01]+|0x[0-9a-f]+)$/ && $hasmask &&
+            elsif ($ip =~ /^(?:0b[01]+|0x[0-9a-f]+)$/ && $hasmask && !_wider_than_ipv4($ip) &&
                 ($tmp = oct($ip)) < 256) {
                 $ip = sprintf("%d.0.0.0", $tmp);
             }
@@ -1077,6 +1084,8 @@ sub _xnew($$;$$) {
         last;
             }
             elsif ($ip =~ /^(-?)(0b[01]+|0x[0-9a-f]+)$/) {
+        # more than 32 bits is not an IPv4 address, and oct would warn
+        return undef if _wider_than_ipv4($2);
         $ip = oct($2);
         $ip = 2 ** $IPV4_BITS - $ip if $1 && $ip;
         $ip = pack('L3N', 0, 0, 0, $ip);
