@@ -368,11 +368,11 @@ Croaks if either argument is not 16 bytes.
 =cut
 
 sub add128 {
-    my ($a128, $b128) = @_;
-    $a128 = _bytes($a128);
+    # copied before the second argument is read: its get magic can replace it
+    my $a128 = _bytes($_[0]);
     _deadlen(length($a128))
         if !defined($a128) || length($a128) != $V6_PACKED_BYTES;
-    $b128 = _bytes($b128);
+    my $b128 = _bytes($_[1]);
     _deadlen(length($b128))
         if !defined($b128) || length($b128) != $V6_PACKED_BYTES;
     @_ = ($a128, $b128, 0);
@@ -398,11 +398,11 @@ Croaks if either argument is not 16 bytes.
 =cut
 
 sub sub128 {
-    my ($a128, $b128) = @_;
-    $a128 = _bytes($a128);
+    # copied before the second argument is read: its get magic can replace it
+    my $a128 = _bytes($_[0]);
     _deadlen(length($a128))
         if !defined($a128) || length($a128) != $V6_PACKED_BYTES;
-    $b128 = _bytes($b128);
+    my $b128 = _bytes($_[1]);
     _deadlen(length($b128))
         if !defined($b128) || length($b128) != $V6_PACKED_BYTES;
     @_ = ($a128, ~$b128, 1);

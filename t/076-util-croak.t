@@ -390,6 +390,45 @@ for my $case (
         "$name reads the first address before the second reallocates it" );
 }
 
+## the first address is copied before the second argument's get magic
+
+our $held;
+{
+
+    package Local::FetchRewrites;
+    sub TIESCALAR { return bless [], $_[0] }
+
+    sub FETCH {
+        $main::held = main::ipv6_aton('2001:db8::9');
+        return $one;
+    }
+    sub STORE { }
+}
+tie my $rewrites, 'Local::FetchRewrites';
+for my $case (
+    [ add128 => \&add128, '2001:DB8:0:0:0:0:0:6' ],
+    [ sub128 => \&sub128, '2001:DB8:0:0:0:0:0:4' ],
+  )
+{
+    my ( $name, $function, $want ) = @{$case};
+    $held = ipv6_aton('2001:db8::5');
+    my ( undef, $result ) = $function->( $held, $rewrites );
+    is( ipv6_n2x($result), $want,
+        "$name copies the first address before the second argument's get magic"
+    );
+}
+
+## a short first address is reported before an undefined second, on both builds
+
+for my $name (qw(add128 sub128)) {
+    my $function = NetAddr::IP::Util->can($name);
+    like(
+        dies { $function->( 'abc', undef ) },
+qr/^Bad arg length for NetAddr::IP::Util::$name, length is 24, should be 128/,
+        "$name reports a short first address before an undefined second"
+    );
+}
+
 ## fractional digit counts and argument order
 
 like(

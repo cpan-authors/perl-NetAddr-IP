@@ -570,7 +570,7 @@ PPCODE:
 	  subname = is_sub128;
 	else
 	  subname = is_add128;
-	if (!_packed_ok(aTHX_ as) || !_packed_ok(aTHX_ bs))
+	if (!_packed_ok(aTHX_ as))
 	  croak("Bad arg length for %s%s, length is undefined, should be 128",
 		"NetAddr::IP::Util::",subname);
 	ap = _packed_bytes(aTHX_ as,&len);
@@ -579,9 +579,12 @@ PPCODE:
 	  croak("Bad arg length for %s%s, length is %" UVuf ", should be %d",
 		"NetAddr::IP::Util::",subname,(UV)(len *8),128);
 	}
-	/* the second argument's overload can free the first argument's bytes */
+	/* copied before bs is touched: its get magic or overload can free as */
 	netswap_copy(wa,ap,4);
 
+	if (!_packed_ok(aTHX_ bs))
+	  croak("Bad arg length for %s%s, length is undefined, should be 128",
+		"NetAddr::IP::Util::",subname);
 	bp = _packed_bytes(aTHX_ bs,&len);
 	if (len != 16) {
 	  goto Bail;
