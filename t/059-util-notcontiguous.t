@@ -44,4 +44,23 @@ for ( my $i = 0 ; $i < @num ; $i += 3 ) {
     is( scalar notcontiguous($bstr), $xspur, "scalar spur for $num[$i]" );
 }
 
+subtest 'notcontiguous reads one argument alike in both builds' => sub {
+    is( prototype('NetAddr::IP::Util::notcontiguous'),
+        '$', 'notcontiguous has the prototype $' );
+
+    my $arg = NetAddr::IP::Util::ipv6_aton('ffff:ffff:ffff:ffff::');
+
+    # compiled here, so the prototype decides how the line parses
+    is( eval q{ notcontiguous $arg ? 'yes' : 'no' },
+        'no', 'a call without brackets binds before ?:' );
+    is( $@, '', 'that call does not croak' );
+
+    # in list context this returns a name and the argument, as a lookup does
+    my $answer = sub { return wantarray ? ( 'host.example', $arg ) : $arg };
+    is( eval { notcontiguous( $answer->() ) },
+        notcontiguous($arg),
+        'an argument that returns a list is read in scalar context' );
+    is( $@, '', 'that call does not croak' );
+};
+
 done_testing;

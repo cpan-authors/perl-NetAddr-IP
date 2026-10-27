@@ -422,7 +422,7 @@ Croaks if the argument is not 16 bytes.
 
 =cut
 
-sub notcontiguous {
+sub notcontiguous($) {
     my $mask128 = _bytes(shift);
     _deadlen(length($mask128))
         if !defined($mask128) || length($mask128) != $V6_PACKED_BYTES;
