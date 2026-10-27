@@ -2,6 +2,9 @@ Revision history for Perl extension NetAddr::IP
 
 {{$NEXT}}
 
+    - Fix GH#187: In the pure Perl build, bcd2bin() takes the prototype $;@,
+      as it does in the XS build.
+
     - Fix GH#186: In the pure Perl build, shiftleft() takes the prototype $;@,
       as it does in the XS build.
 

@@ -592,7 +592,7 @@ character other than 0 to 9, or is a number too large for 128 bits.
 
 =cut
 
-sub bcd2bin {
+sub bcd2bin($;@) {
     my ($bcd) = @_;
     _bcdcheck($bcd);
     @_ = ($bcd, 'NetAddr::IP::Util::bcd2bin');
