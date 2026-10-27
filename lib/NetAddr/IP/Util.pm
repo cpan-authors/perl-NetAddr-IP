@@ -290,7 +290,7 @@ else {
 package NetAddr::IP::Util;
 
 sub naip_gethostbyname {
-    return if defined $_[0] && $_[0] =~ /[\t\n\x0B\f\r ]/;    # no host name holds whitespace
+    return if defined $_[0] && $_[0] =~ /[\0\t\n\x0B\f\r ]/;    # no host name holds whitespace or a NUL byte
     my @rv = &$mygethostbyname($_[0]);
     return wantarray
         ? @rv

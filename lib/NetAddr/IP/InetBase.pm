@@ -202,6 +202,8 @@ sub ipv6_n2d {
 sub fillIPv4 {
     my $host = $_[0];
     return undef unless defined $host;
+    # the C resolver stops at a NUL byte, so the text after it would go unread
+    return undef if index($host, "\0") >= 0;
     if ($host =~ /^([0-9]+)(?:|\.([0-9]+)(?:|\.([0-9]+)(?:|\.([0-9]+))))\z/) {
         # a leading zero reads as octal to inet_aton and as decimal to people, so it is refused
         return undef if $host =~ /(?:\A|[.])0[0-9]/;
