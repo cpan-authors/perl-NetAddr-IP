@@ -39,7 +39,6 @@ use NetAddr::IP::Util qw(
     ipv6to4
     isAnyIPv4
     mask4to6
-    naip_gethostbyname
     notcontiguous
     shiftleft
     sub128
@@ -633,7 +632,12 @@ The C<addr()> value is what stringifies as the first part.
 
 C<$addr> can be almost anything that can be resolved to an IP address.
 It can optionally contain the mask in CIDR notation. A host name is
-resolved, and an IPv6 name resolves as well as an IPv4 one.
+resolved with one C<getaddrinfo> call, so an IPv6 name resolves as
+well as an IPv4 one. The IPv4 constructor uses an IPv4 answer when
+there is one. The IPv6 constructor uses an IPv6 answer when there
+is one, unless that answer is an IPv4-mapped or IPv4-compatible
+address and an IPv4 answer exists, as for a name with both C<::1>
+and C<127.0.0.1>.
 
 B<prefix> notation is understood, with the limitation that the range
 specified by the prefix must match with a valid subnet.
@@ -843,6 +847,50 @@ sub _wider_than_ipv4 {
 sub _bcd2bin_or_undef {
     local ($@, $SIG{__DIE__});        # keep the croak out of the caller's error state
     return scalar eval { bcd2bin($_[0]) };
+}
+
+# The first address of a family is the one used. All zeros is no answer:
+# a resolver result of 0.0.0.0 or :: is discarded, as naip_gethostbyname
+# discards it.
+sub _first_addr {
+    my ($addrs, $zero) = @_;
+    return unless $addrs && @$addrs;
+    my $addr = $addrs->[0];
+    return if !defined $addr || $addr eq $zero;
+    return $addr;
+}
+
+# One getaddrinfo, with no family. $want_v6 is the new6 constructor: a
+# real AAAA answer wins, and an IPv4 answer is the ::a.b.c.d form. new
+# uses an IPv4 answer when there is one. An AAAA result that is itself
+# an IPv4 address is the mapped form, so new6 keeps the A answer while
+# one exists. A dotted quad is packed and not looked up. :noSock6 stays
+# on gethostbyname. An AAAA answer comes with a true second value. An
+# empty list means this text did not resolve.
+sub _resolve_host {
+    my ($name, $want_v6) = @_;
+    my $host = fillIPv4($name);
+    return unless defined $host;
+    # text ending in a number or 0x hex label is a number to the resolver, as in _gethostbyname
+    return if NetAddr::IP::UtilPolluted::_numeric_text($host);
+    if (my $addr = NetAddr::IP::UtilPolluted::_packed_quad($host)) {
+        return ipv4to6($addr);
+    }
+    unless (havegethostbyname2()) {
+        my $addr = gethostbyname($host);
+        return unless defined $addr && $addr ne $_v4zero && $addr ne $_zero;
+        return ipv4to6($addr);
+    }
+    my ($v4, $v6) = NetAddr::IP::UtilPolluted::_lookup_both($host);
+    return unless $v4;
+    my $aaaa = _first_addr($v6, $_zero);
+    my $a    = _first_addr($v4, $_v4zero);
+    if ($want_v6 && defined $aaaa && !isAnyIPv4($aaaa)) {
+        return ($aaaa, 1);
+    }
+    return ipv4to6($a) if defined $a;
+    return ($aaaa, 1) if defined $aaaa;
+    return;
 }
 
 sub _xnew($$;$$) {
@@ -1156,24 +1204,13 @@ sub _xnew($$;$$) {
         return undef if hasbits($ip & $tmp);
         last;
             }
-            # check for resolvable IPv6 hosts first when an IPv6 object was requested.
-            # naip_gethostbyname falls back to an A lookup and maps the result, so accept
-            # its answer only when it really is an IPv6 address, else let the IPv4 branch
-            # below produce the ::a.b.c.d form that new6 documents
-            elsif ($isV6 && ! $NoFQDN && $ip !~ /[^a-zA-Z0-9\._-]/ && havegethostbyname2()
-                && ($tmp = naip_gethostbyname($ip)) && ! isAnyIPv4($tmp)) {
-        $ip = $tmp;
-        last;
-            }
-            # check for resolvable IPv4 hosts
-            elsif (! $NoFQDN && $ip !~ /[^a-zA-Z0-9\._-]/ && defined($tmp = fillIPv4($ip)) && ($tmp = gethostbyname($tmp)) && $tmp ne $_v4zero && $tmp ne $_zero ) {
-        $ip = ipv4to6($tmp);
-        last;
-            }
-            # check for resolvable IPv6 hosts
-            elsif (! $NoFQDN && $ip !~ /[^a-zA-Z0-9\._-]/ && havegethostbyname2() && ($tmp = naip_gethostbyname($ip))) {
-        $ip = $tmp;
-        $isV6 = 1;
+            # One lookup. A failed name falls through, so :aton can still
+            # read packed bytes that did not resolve.
+            elsif (! $NoFQDN && $ip !~ /[^a-zA-Z0-9\._-]/
+                && (my @answer = _resolve_host($ip, $isV6))) {
+        ($ip, my $from_aaaa) = @answer;
+        # an AAAA answer stays IPv6 even inside ::/96; an A answer keeps the caller's family
+        $isV6 = 1 if $from_aaaa;
         last;
             }
             elsif ($Accept_Binary_IP && ! $hasmask) {

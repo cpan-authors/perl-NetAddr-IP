@@ -96,13 +96,12 @@ subtest 'new_no reads a range bound or a negative number with a leading zero as 
 };
 
 subtest 'text that only looks like a range with a leading zero is still looked up' => sub {
-    # new6 asks naip_gethostbyname before anything else, so nothing reaches the real resolver
+    # new6 asks _resolve_host before anything else, so nothing reaches the real resolver
     my @asked;
     my $mock = Test2::Mock->new(
         class    => 'NetAddr::IP::Lite',
         override => [
-            havegethostbyname2 => sub { 1 },
-            naip_gethostbyname => sub {
+            _resolve_host => sub {
                 push @asked, $_[0];
                 return $_[0] eq '555-0123'
                   ? pack( 'n8', 0x2001, 0x0db8, 0, 0, 0, 0, 0, 0x55 )

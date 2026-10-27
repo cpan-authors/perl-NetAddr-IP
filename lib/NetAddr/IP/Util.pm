@@ -272,6 +272,29 @@ package NetAddr::IP::UtilPolluted {
         return $host =~ /(?:\A|[.])(?:[0-9]+|0[xX][0-9a-fA-F]*)[.]?\z/;
     }
 
+    # fillIPv4 has already rejected a leading zero and an octet past 255.
+    # What remains is a decimal dotted quad, so the resolver is not asked.
+    sub _packed_quad {
+        my ($host) = @_;
+        return unless $host =~ /\A([0-9]+)[.]([0-9]+)[.]([0-9]+)[.]([0-9]+)\z/;
+        return pack('C4', $1, $2, $3, $4);
+    }
+
+    # No family, so one call returns AAAA and A. SOCK_STREAM asks for each
+    # address once; Windows rejects SOCK_RAW here unless a protocol is set.
+    # An empty service is a NULL service pointer. An error is an empty return.
+    # The two lists keep the order the results arrived, with duplicates gone.
+    sub _lookup_both {
+        my ($name) = @_;
+        my ($err, @res) = getaddrinfo($name, '', { socktype => SOCK_STREAM });
+        return if $err;
+        my @v6 = _addrs_once(\&unpack_sockaddr_in6,
+            grep { $_->{family} == AF_INET6() } @res);
+        my @v4 = _addrs_once(\&unpack_sockaddr_in,
+            grep { $_->{family} == AF_INET() } @res);
+        return (\@v4, \@v6);
+    }
+
     sub _gethostbyname {
         my ($name) = @_;
         # A leading zero or an octet past 255 is not an address. fillIPv4
@@ -279,36 +302,27 @@ package NetAddr::IP::UtilPolluted {
         my $host = NetAddr::IP::InetBase::fillIPv4($name);
         return unless defined $host;
         return if _numeric_text($host);
+        # A literal is not a name. gethostbyname keeps one static buffer, so
+        # a short form such as 127.1 is packed after fillIPv4 expands it.
+        if (my $addr = _packed_quad($host)) {
+            return &_end_gethostbyname(
+                $name, '', AF_INET(), $NetAddr::IP::Util::V4_PACKED_BYTES, $addr);
+        }
         # :noSock6 does not call getaddrinfo. The name goes to gethostbyname.
         unless ($_Sock6ok) {
             my @tip = gethostbyname($host);
             return &_end_gethostbyname(@tip);
         }
-        # No family, so one call returns AAAA and A. SOCK_STREAM asks for each
-        # address once; Windows rejects SOCK_RAW here unless a protocol is set.
-        # An empty service is a NULL service pointer.
-        my ($err, @res) = getaddrinfo($name, "", { socktype => SOCK_STREAM });
-        if (!$err) {
-            my @v6 = grep { $_->{family} == AF_INET6() } @res;
-            # A name with both an AAAA and an A answer returns only the IPv6
-            # addresses.
-            if (@v6) {
-                my @addrs = _addrs_once(\&unpack_sockaddr_in6, @v6);
-                return &_end_gethostbyname(
-                    $name, '', AF_INET6(), $NetAddr::IP::Util::V6_PACKED_BYTES, @addrs);
-            }
-            my @v4 = grep { $_->{family} == AF_INET() } @res;
-            my @addrs = _addrs_once(\&unpack_sockaddr_in, @v4);
+        my ($v4, $v6) = _lookup_both($host);
+        return unless $v4;
+        # A name with both an AAAA and an A answer returns only the IPv6
+        # addresses.
+        if (@$v6) {
             return &_end_gethostbyname(
-                $name, '', AF_INET(), $NetAddr::IP::Util::V4_PACKED_BYTES, @addrs);
+                $name, '', AF_INET6(), $NetAddr::IP::Util::V6_PACKED_BYTES, @$v6);
         }
-        # 127.1 is not an address getaddrinfo accepts. Only a rewritten name
-        # is looked up again.
-        if ($host ne $name) {
-            my @tip = gethostbyname($host);
-            return &_end_gethostbyname(@tip);
-        }
-        return;
+        return &_end_gethostbyname(
+            $name, '', AF_INET(), $NetAddr::IP::Util::V4_PACKED_BYTES, @$v4);
     }
 
 }
@@ -903,14 +917,14 @@ becomes 16, and each address is mapped into the RFC 4291 s2.5.5.2 form:
 so an answer for 127.0.0.1 is C<0:0:0:0:0:FFFF:7F00:1>.  A first address
 of 0.0.0.0 or C<::> is an empty list.
 
-A short IPv4 text that C<getaddrinfo> rejects, such as C<127.1>, is
-expanded by C<fillIPv4> and resolved with C<gethostbyname>.  That answer
-keeps the aliases C<gethostbyname> returned.  A name that does not resolve,
-and that C<fillIPv4> does not rewrite, is an empty list.
+A dotted quad, including a short form such as C<127.1> that
+C<fillIPv4> expands, is packed here and not looked up.  The family
+stays C<AF_INET>, the length becomes 16, and the address is the
+mapped form above.  A name that does not resolve is an empty list.
 
-Importing C<:noSock6> skips C<getaddrinfo> and uses C<fillIPv4> and
-C<gethostbyname> for every name.  C<gethostbyname> is not thread-safe.
-C<getaddrinfo> is.
+Importing C<:noSock6> skips C<getaddrinfo>.  A dotted quad is still
+packed.  Any other name uses C<gethostbyname>.  C<gethostbyname> is
+not thread-safe.  C<getaddrinfo> is.
 
 A NAME with whitespace, or a dotted number with a leading zero in any
 part, gives an empty list, or undef in scalar context, without asking
@@ -1157,8 +1171,9 @@ Two tags change what the module does rather than which names it exports.
 
 =item C<:noSock6>
 
-Forces C<naip_gethostbyname> onto C<fillIPv4> and C<gethostbyname>, and
-makes C<havegethostbyname2> return false.  Test hook, not API.
+Skips C<getaddrinfo> inside C<naip_gethostbyname>, so a host name uses
+C<gethostbyname>, and makes C<havegethostbyname2> return false.  A
+dotted quad is still packed.  Test hook, not API.
 
 =item C<:upper> and C<:lower>
 

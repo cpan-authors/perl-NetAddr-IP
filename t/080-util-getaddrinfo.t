@@ -65,6 +65,7 @@ $answers{'v4.example'} = [
     result( AF_INET, $v4,  \&pack_sockaddr_in ),
     result( AF_INET, $v4b, \&pack_sockaddr_in ),
 ];
+$answers{'192.0.2.1'} = [ result( AF_INET, $v4, \&pack_sockaddr_in ) ];
 
 ok( havegethostbyname2(), 'havegethostbyname2 is true' );
 
@@ -118,18 +119,20 @@ subtest 'text ending in a number or 0x hex label is not looked up' => sub {
         is( [ naip_gethostbyname($text) ], [], "$text is an empty list" );
         is( \@calls, [], "getaddrinfo was not asked for $text" );
     }
-    for my $text ( '192.0.2.1', '::ffff:192.0.2.1', 'v4.example' ) {
+    for my $text ( '::ffff:192.0.2.1', 'v4.example' ) {
         local @calls;
         naip_gethostbyname($text);
         is( $calls[0][0], $text, "getaddrinfo is still asked for $text" );
     }
 };
 
-subtest 'a short IPv4 text is expanded and resolved with gethostbyname' => sub {
+subtest 'a dotted quad is packed and not looked up' => sub {
     local @calls;
     is( ipv6_n2x( scalar naip_gethostbyname('127.1') ),
         '0:0:0:0:0:FFFF:7F00:1', '127.1 is the mapped loopback' );
-    is( $calls[0][0], '127.1', 'getaddrinfo was asked first' );
+    is( ipv6_n2x( scalar naip_gethostbyname('192.0.2.1') ),
+        '0:0:0:0:0:FFFF:C000:201', '192.0.2.1 is the mapped address' );
+    is( \@calls, [], 'getaddrinfo was not asked' );
 };
 
 subtest 'an answer is unpacked in list context, as Socket before 2.005 needs' => sub {
