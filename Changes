@@ -2,6 +2,9 @@ Revision history for Perl extension NetAddr::IP
 
 {{$NEXT}}
 
+    - Fix GH#177: In the pure Perl build, bin2bcd() takes the prototype $, as
+      it does in the XS build.
+
     - Fix GH#176: In the pure Perl build, bcdn2txt() takes the prototype $, as
       it does in the XS build.
 
