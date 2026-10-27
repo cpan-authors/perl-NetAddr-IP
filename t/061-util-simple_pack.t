@@ -23,4 +23,18 @@ for my $num (@num2) {
     is( $rv, $num, "simple_pack($num)" );
 }
 
+subtest 'simple_pack reads its first argument alike in both builds' => sub {
+    is( prototype('NetAddr::IP::Util::simple_pack'),
+        '$;@', 'simple_pack has the prototype $;@' );
+
+    my $arg = '12345';
+
+    # in list context this returns a name and the argument, as a lookup does
+    my $answer = sub { return wantarray ? ( 'host.example', $arg ) : $arg };
+    is( eval { simple_pack( $answer->() ) },
+        simple_pack($arg),
+        'a first argument that returns a list is read in scalar context' );
+    is( $@, '', 'that call does not croak' );
+};
+
 done_testing;

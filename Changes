@@ -2,6 +2,9 @@ Revision history for Perl extension NetAddr::IP
 
 {{$NEXT}}
 
+    - Fix GH#189: In the pure Perl build, simple_pack() takes the prototype
+      $;@, as it does in the XS build.
+
     - Fix GH#188: In the pure Perl build, bcdn2bin() takes the prototype $;@,
       as it does in the XS build.
 

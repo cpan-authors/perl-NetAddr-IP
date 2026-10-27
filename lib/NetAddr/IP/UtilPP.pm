@@ -791,7 +791,7 @@ sub _bcdcheck {
         if $bcd =~ /([^0-9])/;
 }
 
-sub simple_pack {
+sub simple_pack($;@) {
     my ($bcd) = @_;
     _bcdcheck($bcd);
     while (length($bcd) < $MAX_BCD_DIGITS) {
