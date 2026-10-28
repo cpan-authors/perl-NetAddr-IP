@@ -965,6 +965,11 @@ sub _xnew($$;$$) {
         }
         # process "ipv6" token and default IP's
         elsif (defined $_[0]) {
+            # brackets come off an IPv6 literal before the mask argument is read, as they do for /mask
+            if ($ip =~ /\A\[([0-9a-f.:]+)\]\z/) {
+                return undef if index($1, ':') < 0;    # RFC 3986 brackets enclose an IPv6 literal only
+                $ip = $1;
+            }
             if ($_[0] =~ /ipv6/i || $isV6) {
         if (grep($ip eq $_,(qw(default any loopback unspecified)))) {
             $isV6    = 1 unless $isV6;    # the ipv6 mask picks the IPv6 address of the keyword

@@ -2,6 +2,10 @@ Revision history for Perl extension NetAddr::IP
 
 {{$NEXT}}
 
+    - Fix GH#203: An IPv6 literal in brackets with the mask as a separate
+      argument, such as new('[2001:db8::1]', 64), gets the same mask as
+      without the brackets. The mask was read as an IPv4 prefix.
+
     - Fix GH#211: The ipv6 mask on default, any, loopback or unspecified
       gives the IPv6 address, such as 0:0:0:0:0:0:0:1/128 from
       new('loopback', 'ipv6'), where it gave an IPv4 object, 0.0.0.1/32.
