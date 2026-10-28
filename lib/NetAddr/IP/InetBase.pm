@@ -436,16 +436,20 @@ dot-quad address (if found) with '::' and passes it to B<ipv6_aton>.
   input:    dot-quad or RFC 4291 s2.2 address
   returns:  128 bit IPv6 string, or undef
 
-Returns undef if the text is not an address.  An empty or undefined
-argument is read as C<::>, the all-zero address.
+Returns undef if the text is not an address, including a bare number
+such as C<10>, which has no colon and is no dotted quad.  An empty or
+undefined argument is read as C<::>, the all-zero address.
 
 =cut
 
 sub inet_any2n($) {
     my ($addr) = @_;
-    $addr = '' unless $addr;
-    $addr = '::' . $addr
-        unless $addr =~ /:/;
+    $addr = '' unless defined $addr;
+    # text without a colon is IPv4, so it has to be a dotted quad; a bare number is no address
+    if ($addr !~ /:/) {
+        return undef unless $addr eq '' || $addr =~ /\A[0-9]+(?:[.][0-9]+){3}\z/;
+        $addr = '::' . $addr;
+    }
     return ipv6_aton($addr);
 }
 
