@@ -156,7 +156,7 @@ These are methods on an object, not functions called on the class name:
     $ip->re6                      # the same for IPv6
     $ip->wildcard                 # wildcard mask notation
     $ip->short                    # compressed address notation
-    $ip->canon                    # RFC 5952 s4.1 to 4.3, lowercase
+    $ip->canon                    # RFC 5952, lowercase
     $ip->full                     # full expanded IPv4
     $ip->full6                    # full expanded IPv6
 
