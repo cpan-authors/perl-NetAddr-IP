@@ -2,6 +2,14 @@ Revision history for Perl extension NetAddr::IP
 
 {{$NEXT}}
 
+    - Fix GH#98: An IPv4-mapped address from canon() comes back in
+      RFC 5952 section 5 mixed form, such as ::ffff:192.0.2.1, not
+      hex. The IPv4-compatible, IPv4-translated and NAT64 prefixes
+      stay hex, as do short(), addr() and stringification, so canon()
+      and short() no longer agree on a mapped address, and re() and
+      re6() do not match its canon() form. This changes canon()
+      strings for mapped addresses.
+
     - Fix GH#215: An IPv6 split(), splitref(), rsplit() or rsplitref()
       with a mask 54 or more bits longer than the subnet's returns the
       right pieces. It could return overlapping pieces or a piece outside
