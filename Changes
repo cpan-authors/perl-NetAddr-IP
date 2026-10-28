@@ -2,6 +2,9 @@ Revision history for Perl extension NetAddr::IP
 
 {{$NEXT}}
 
+    - Fix GH#196: A bare number such as 10 now gets undef from inet_any2n()
+      instead of being read as the IPv6 address ::10.
+
     - Fix GH#195: The constructors, new() and new6() among them, refuse a
       leading zero in the upper bound of a short range, such as 192.0.2.8-011,
       and in a negative number, such as -012, as they do in any other part of

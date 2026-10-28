@@ -20,4 +20,14 @@ for my $input ( sort keys %num ) {
     is( $rv, $exp, "inet_any2n($input)" );
 }
 
+subtest 'text without a colon has to be a dotted quad' => sub {
+    for my $text (qw( 0 10 010 192 ffff 192.0.2 1.2 )) {
+        is( inet_any2n($text), undef, "inet_any2n('$text')" );
+    }
+    is( ipv6_n2x( inet_any2n('192.0.2.1') ),
+        '0:0:0:0:0:0:c000:201', 'a dotted quad still converts' );
+    is( ipv6_n2x( inet_any2n('') ),
+        '0:0:0:0:0:0:0:0', 'an empty string is still the all-zero address' );
+};
+
 done_testing;
