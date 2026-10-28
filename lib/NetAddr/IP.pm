@@ -661,6 +661,15 @@ and C<127.0.0.1>.
 B<prefix> notation is understood, with the limitation that the range
 specified by the prefix must match with a valid subnet.
 
+An IPv6-form mask on an IPv4 address covers all 128 bits, so it needs
+the 96 leading ones above the address.  A mask with 1 to 95 ones
+returns C<undef>; through C<new6> the same mask is an IPv6 prefix:
+
+  NetAddr::IP->new('192.0.2.4', 'ffff::');    # undef
+  NetAddr::IP->new6('192.0.2.4', 'ffff::');   # 0:0:0:0:0:0:C000:204/16
+  NetAddr::IP->new('192.0.2.4',
+      'ffff:ffff:ffff:ffff:ffff:ffff:ffff:ff00');   # 192.0.2.4/24
+
 Addresses in the packed format returned by C<inet_aton> or
 C<gethostbyname> are understood only under the deprecated C<:aton> tag,
 and no mask can be specified for them. Even then a packed string is

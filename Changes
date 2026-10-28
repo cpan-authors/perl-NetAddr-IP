@@ -2,6 +2,10 @@ Revision history for Perl extension NetAddr::IP
 
 {{$NEXT}}
 
+    - Fix GH#201: An IPv6-form mask of 1 to 95 ones on an IPv4 address
+      makes new() return undef, where it gave a negative prefix length
+      such as 192.0.2.4/-80.
+
     - Fix GH#203: An IPv6 literal in brackets with the mask as a separate
       argument, such as new('[2001:db8::1]', 64), gets the same mask as
       without the brackets. The mask was read as an IPv4 prefix.

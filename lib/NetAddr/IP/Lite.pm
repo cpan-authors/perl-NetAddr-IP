@@ -642,6 +642,15 @@ and C<127.0.0.1>.
 B<prefix> notation is understood, with the limitation that the range
 specified by the prefix must match with a valid subnet.
 
+An IPv6-form mask on an IPv4 address covers all 128 bits, so it needs
+the 96 leading ones above the address.  A mask with 1 to 95 ones
+returns C<undef>; through C<new6> the same mask is an IPv6 prefix:
+
+  NetAddr::IP::Lite->new('192.0.2.4', 'ffff::');    # undef
+  NetAddr::IP::Lite->new6('192.0.2.4', 'ffff::');   # 0:0:0:0:0:0:C000:204/16
+  NetAddr::IP::Lite->new('192.0.2.4',
+      'ffff:ffff:ffff:ffff:ffff:ffff:ffff:ff00');   # 192.0.2.4/24
+
 Addresses in the packed format returned by C<inet_aton> or
 C<gethostbyname> are understood only under the deprecated C<:aton> tag,
 and no mask can be specified for them. Even then a packed string is
@@ -1252,7 +1261,11 @@ sub _xnew($$;$$) {
             return undef;
         }
     }
-    return undef if notcontiguous($mask);            # invalid if not contiguous
+    my ($spurious, $ones) = notcontiguous($mask);
+    return undef if $spurious;                # invalid if not contiguous
+    # an IPv4 mask keeps the 96 ones above the address, or its length would
+    # be negative; a mask of no ones reads as /0
+    return undef if !$isV6 && $ones && $ones < $IPV4_OFFSET && isIPv4($ip);
 
     my $self = {
         addr    => $ip,
