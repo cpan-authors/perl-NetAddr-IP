@@ -2,6 +2,10 @@ Revision history for Perl extension NetAddr::IP
 
 {{$NEXT}}
 
+    - Fix GH#202: An index of 2**64 - 1 or more no longer makes nth()
+      croak. An index inside the subnet returns its address, and one past
+      the end returns undef.
+
     - Fix GH#201: An IPv6-form mask of 1 to 95 ones on an IPv4 address
       makes new() return undef, where it gave a negative prefix length
       such as 192.0.2.4/-80.
