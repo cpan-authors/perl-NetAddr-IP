@@ -579,7 +579,9 @@ address, RFC 4291 s2.5.5.2:
 
 An IPv4 address with a leading zero in any part, such as C<192.0.2.010>
 or C<010>, is not an address to C<new>: the C library's C<inet_aton>
-reads C<010> as octal 8, and a person reads it as decimal 10.
+reads C<010> as octal 8, and a person reads it as decimal 10.  So is
+the upper bound of a short range, such as C<192.0.2.8-011>, and a
+negative number, such as C<-012>.
 C<new_no> is the constructor for that less strict reading.  A part
 that is not an address once the zeros are removed is still refused.
 The result, or C<undef> when the text is not an address:
@@ -592,6 +594,8 @@ The result, or C<undef> when the text is not an address:
   192.0.2.0107    undef              192.0.2.107/32
   010             undef              0.0.0.10/32
   192.0.2.0256    undef              undef
+  192.0.2.8-011   undef              192.0.2.8/30
+  -012            undef              255.255.255.244/32
 
 C<192.0.2.07> is 192.0.2.7, so a typo for 192.0.2.107 succeeds.
 C<192.0.2.0107> is 192.0.2.107, so an extra zero in front of that
@@ -813,6 +817,12 @@ sub new_cis6($;$$) {
     }
     @_ = (1, @in);
     goto &_xnew;
+}
+
+# true for a number written with a leading zero, such as a range bound or a negative number:
+# new refuses it, as it does a leading zero in any part of an address, and new_no reads it as decimal
+sub _leading_zero {
+    return $_[0] =~ /\A-?0[0-9]/;
 }
 
 sub _no_octal {
@@ -1077,6 +1087,7 @@ sub _xnew($$;$$) {
                 $ip = sprintf("%d.0.0.0", $tmp);
             }
             elsif ($ip =~ /^-?[0-9]+$/) {
+        return undef if !$noctal && _leading_zero($ip);
         # negative values in -1 .. -(2**32) are accepted as 2's complement
         $ip += 2 ** $IPV4_BITS;
         return undef if $ip < 0;        # would wrap in pack
@@ -1099,10 +1110,12 @@ sub _xnew($$;$$) {
         $mask = $ff000000;
             }
             elsif ($ip =~ m/^([0-9]+)\.([0-9]+)-([0-9]+)\.?$/ && $2 <= $3 && $3 < 256) {
+        return undef if !$noctal && _leading_zero($3);
         $ip = "${1}.${2}.0.0";
         $mask = pack('L3C4', 0xffffffff, 0xffffffff, 0xffffffff, 255, _obits($2, $3), 0, 0);
             }
             elsif ($ip =~ m/^([0-9]+)-([0-9]+)\.?$/ and $1 <= $2 && $2 < 256) {
+        return undef if !$noctal && _leading_zero($2);
         $ip = "${1}.0.0.0";
         $mask = pack('L3C4', 0xffffffff, 0xffffffff, 0xffffffff, _obits($1, $2), 0, 0, 0)
             }
@@ -1111,6 +1124,7 @@ sub _xnew($$;$$) {
         $mask = $ffff0000;
             }
             elsif ($ip =~ m/^([0-9]+)\.([0-9]+)\.([0-9]+)-([0-9]+)\.?$/ && $3 <= $4 && $4 < 256) {
+        return undef if !$noctal && _leading_zero($4);
         $ip = "${1}.${2}.${3}.0";
         $mask = pack('L3C4', 0xffffffff, 0xffffffff, 0xffffffff, 255, 255, _obits($3, $4), 0);
             }
@@ -1119,6 +1133,7 @@ sub _xnew($$;$$) {
         $mask = $ffffff00;
             }
             elsif ($ip =~ m/^([0-9]+)\.([0-9]+)\.([0-9]+)\.([0-9]+)-([0-9]+)$/ && $4 <= $5 && $5 < 256) {
+        return undef if !$noctal && _leading_zero($5);
         $ip = "${1}.${2}.${3}.${4}";
         $mask = pack('L3C4', 0xffffffff, 0xffffffff, 0xffffffff, 255, 255, 255, _obits($4, $5));
             }

@@ -135,4 +135,23 @@ subtest 'under :aton only a string of four or sixteen bytes keeps its ends' =>
     }
   };
 
+subtest 'under :aton packed bytes that spell a range or a negative number stay packed' =>
+  sub {
+    # the bytes have to spell the text, so these addresses cannot come from RFC 5737 or 3849
+    my %packed = (
+        '45.48.49.47, the bytes -01/' =>
+          [ pack( 'C4', 45, 48, 49, 47 ), '45.48.49.47/32' ],
+        '45.48.49.32, the bytes -01 and a space' =>
+          [ pack( 'C4', 45, 48, 49, 32 ), '45.48.49.32/32' ],
+        '312d:3031:2f00::, sixteen bytes that begin 1-01/' => [
+            pack( 'C16', 0x31, 0x2d, 0x30, 0x31, 0x2f, (0) x 11 ),
+            '312D:3031:2F00:0:0:0:0:0/128'
+        ],
+    );
+    for my $addr ( sort keys %packed ) {
+        my ( $bytes, $cidr ) = @{ $packed{$addr} };
+        is( made( 'new', $bytes ), $cidr, "->new(packed $addr)" );
+    }
+  };
+
 done_testing;

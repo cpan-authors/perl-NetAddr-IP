@@ -597,7 +597,9 @@ address, RFC 4291 s2.5.5.2:
 
 An IPv4 address with a leading zero in any part, such as C<192.0.2.010>
 or C<010>, is not an address to C<new>: the C library's C<inet_aton>
-reads C<010> as octal 8, and a person reads it as decimal 10.
+reads C<010> as octal 8, and a person reads it as decimal 10.  So is
+the upper bound of a short range, such as C<192.0.2.8-011>, and a
+negative number, such as C<-012>.
 C<new_no> is the constructor for that less strict reading.  A part
 that is not an address once the zeros are removed is still refused.
 The result, or C<undef> when the text is not an address:
@@ -610,6 +612,8 @@ The result, or C<undef> when the text is not an address:
   192.0.2.0107    undef              192.0.2.107/32
   010             undef              0.0.0.10/32
   192.0.2.0256    undef              undef
+  192.0.2.8-011   undef              192.0.2.8/30
+  -012            undef              255.255.255.244/32
 
 C<192.0.2.07> is 192.0.2.7, so a typo for 192.0.2.107 succeeds.
 C<192.0.2.0107> is 192.0.2.107, so an extra zero in front of that
