@@ -2,6 +2,10 @@ Revision history for Perl extension NetAddr::IP
 
 {{$NEXT}}
 
+    - Fix GH#200: Subtraction takes every constant that addition takes. A
+      constant from 2**63 + 1 to 2**64 - 1 no longer croaks, and a
+      Math::BigInt of magnitude 2**64 or more croaks instead of wrapping.
+
     - Fix GH#194: Text with a NUL byte is refused by fillIPv4(), inet_aton()
       and naip_gethostbyname(). The C resolver stopped reading at the NUL, so
       192.0.2.010 followed by a NUL read as 192.0.2.8.
