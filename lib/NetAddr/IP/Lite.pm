@@ -185,6 +185,7 @@ my $_ones   = ~$_zero;
 my $_v4mask = pack('L4', 0xffffffff, 0xffffffff, 0xffffffff, 0);
 my $_v4net  = ~ $_v4mask;
 my $_ipv4FFFF = pack('N4', 0, 0, 0xffff, 0);
+my $_one128 = pack('N4', 0, 0, 0, 1);    # the number 1 in 128 bits
 
 sub Zeros() {
     return $_zero;
@@ -1865,8 +1866,20 @@ sub nth ($$) {
         return undef if ($count && $count != 1);    # only index 0, 1 allowed for /31
     }
     else {
-        ++$count;
-        return undef if ($count < 1 or $count > $self->num ());
+        # read as a 128 bit number, so an index past 2**53 stays exact; -0 is index 0
+        my ($minus, $digits) = "$count" =~ /\A(-?)0*([0-9]+)/;
+        return undef if $minus && $digits ne '0';
+        my $index = _bcd2bin_or_undef($digits);
+        return undef unless defined $index;
+        # index 0 is one past the network address, the last one before the broadcast
+        my ($carry, $offset) = add128($index, $_one128);
+        # the usable hosts as num() counts them: a /32 or /128 has one
+        (undef, my $hosts) = addconst($self->{mask}, 1);
+        $hosts = hasbits($hosts) ? ~ $hosts : $_one128;
+        $hosts &= $_v4net unless $self->{isv6};
+        return undef if $carry || $offset gt $hosts;
+        return _new($self, ($self->{addr} & $self->{mask}) | ($offset & ~ $self->{mask}),
+            $self->{mask});
     }
     return $self->network + $count;
 }
