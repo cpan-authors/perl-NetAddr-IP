@@ -91,6 +91,55 @@ subtest 'URI bracket notation [addr]/mask' => sub {
     );
 };
 
+subtest 'URI bracket notation with the mask as a separate argument' => sub {
+    for my $case (
+        [ '[2001:db8::1]',      0,      '2001:DB8:0:0:0:0:0:1/0' ],
+        [ '[2001:db8::1]',      16,     '2001:DB8:0:0:0:0:0:1/16' ],
+        [ '[2001:db8::1]',      32,     '2001:DB8:0:0:0:0:0:1/32' ],
+        [ '[2001:db8::1]',      64,     '2001:DB8:0:0:0:0:0:1/64' ],
+        [ '[2001:db8::1]',      128,    '2001:DB8:0:0:0:0:0:1/128' ],
+        [ '[2001:db8::1]',      ' 64 ', '2001:DB8:0:0:0:0:0:1/64' ],
+        [ '[::1]',              120,    '0:0:0:0:0:0:0:1/120' ],
+        [ '[::ffff:192.0.2.1]', 24,     '0:0:0:0:0:FFFF:C000:201/24' ],
+      )
+    {
+        my ( $text, $mask, $want ) = @{$case};
+        for my $ctor (qw(new new6)) {
+            my $ip = NetAddr::IP::Lite->$ctor( $text, $mask );
+            is( defined $ip ? "$ip" : undef, $want, "$ctor('$text', '$mask')" );
+        }
+    }
+
+    # the brackets change nothing: the same literal and mask give the same object without them
+    for my $literal ( '2001:db8::1', '::1', '::ffff:192.0.2.1' ) {
+        for my $mask ( 0, 1, 31, 32, 33, 63, 64, 95, 96, 97, 127, 128 ) {
+            for my $ctor (qw(new new6)) {
+                my $bare      = NetAddr::IP::Lite->$ctor( $literal, $mask );
+                my $bracketed = NetAddr::IP::Lite->$ctor( "[$literal]", $mask );
+                is( defined $bracketed ? "$bracketed" : undef,
+                    "$bare", "$ctor('[$literal]', $mask) equals $ctor('$literal', $mask)" );
+            }
+        }
+    }
+
+    for my $case (
+        [ '[192.0.2.99]',       24 ],
+        [ '[2001:db8::1]:8080', 64 ],
+        [ '[2001:db8::1]',      129 ],
+        [ 'junk[2001:db8::1]',  64 ],
+        [ '[[2001:db8::1]',     64 ],
+        [ '[[2001:db8::1]]',    64 ],
+        [ '[2001:db8::1][::1]', 64 ],
+      )
+    {
+        my ( $text, $mask ) = @{$case};
+        for my $ctor (qw(new new6)) {
+            ok( !defined NetAddr::IP::Lite->$ctor( $text, $mask ),
+                "$ctor('$text', $mask) rejected" );
+        }
+    }
+};
+
 subtest 'URI bracket notation rejects text outside brackets' => sub {
     for my $input (
         '[2001:db8::1]:8080',    '[2001:db8::1]:80/64',
