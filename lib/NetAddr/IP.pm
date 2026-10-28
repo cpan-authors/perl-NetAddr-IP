@@ -22,7 +22,16 @@ use NetAddr::IP::Constants qw(
     $RFC3021_THRESHOLD
 );
 use NetAddr::IP::Lite qw( Ones V4mask V4net Zero Zeros );
-use NetAddr::IP::Util qw( hasbits isIPv4 notcontiguous shiftleft sub128 );
+use NetAddr::IP::Util qw(
+    hasbits
+    ipv6_n2d
+    isIPv4
+    isNewIPv4
+    notcontiguous
+    packzeros
+    shiftleft
+    sub128
+);
 
 our @EXPORT_OK = qw(Compact Coalesce Zero Zeros Ones V4mask V4net netlimit);
 our $netlimit = $DEFAULT_NETLIMIT_EXP;
@@ -965,32 +974,33 @@ ipV4, this is dotted quad, and is the same as the return value from
 "->addr()".  For ipV6 it follows RFC 5952 sections 4.1 to 4.3: leading
 zeros dropped, the longest run of zero groups shortened to C<::>, the
 first of two equal runs shortened, and lowercase.  It is the same as
-the LOWER CASE value returned by "->short()".
+the LOWER CASE value returned by "->short()", except that an IPv4-mapped
+address, in C<::ffff:0:0/96>, comes back in the RFC 5952 section 5 mixed
+form:
 
-RFC 5952 section 5, which covers an address with an IPv4 address embedded
-in the low 32 bits, is not applied (deprecated; see L</DEPRECATED>), so those come back in hex:
+  canon ->new('::ffff:192.0.2.1')    ::ffff:192.0.2.1
+  canon ->new6FFFF('192.0.2.1')      ::ffff:192.0.2.1
 
-  canon ->new('::ffff:192.0.2.1')    ::ffff:c000:201
-  canon ->new6FFFF('192.0.2.1')      ::ffff:c000:201
+The other prefixes with an IPv4 address in the low 32 bits stay in hex,
+as Python's C<ipaddress> prints them: the IPv4-compatible C<::/96> that
+RFC 4291 deprecates, the IPv4-translated C<::ffff:0:0:0/96> of RFC 2765,
+which RFC 6145 obsoletes, and the NAT64 C<64:ff9b::/96> of RFC 6052:
+
   canon ->new6('192.0.2.1')          ::c000:201
+  canon ->new('::ffff:0:192.0.2.1')  ::ffff:0:c000:201
+  canon ->new('64:ff9b::192.0.2.1')  64:ff9b::c000:201
 
-glibc gives C<::ffff:192.0.2.1> for the first of those, and so does
-C<ipv6_ntoa> in L<NetAddr::IP::InetBase>, which uses the platform
-C<inet_ntop>. A different C library can still print a different form.
-This behavior is deprecated and will be replaced with full RFC 5952
-section 5 compliance in version 5: see GH#98.
+Neither C<-E<gt>re()> nor C<-E<gt>re6()> matches the mixed form, so
+neither matches what C<canon> gives for a mapped address.
 
 =cut
 
 sub canon($) {
-    # RFC 5952 sections 4.1 to 4.3 only. Section 5, the mixed form for an
-    # address with an IPv4 address in the low 32 bits, is not applied, so a
-    # mapped address comes back as ::ffff:c000:201 where glibc and Python
-    # both give ::ffff:192.0.2.1. isNewIPv4, not isIPv4, is the test that
-    # would pick the mapped prefix alone, since isIPv4 is also true of ::1.
-    # Which prefix should get the mixed form is open: see GH#98.
-    my $addr = $_[0]->addr;
-    return $_[0]->{isv6} ? lc _compV6($addr) : $addr;
+    my $packed = $_[0]->{addr};
+    return $_[0]->addr unless $_[0]->{isv6};
+    # RFC 5952 s5 mixed form for the mapped prefix only; isIPv4 is true of ::1
+    return packzeros(ipv6_n2d($packed)) if isNewIPv4($packed);
+    return lc _compV6($_[0]->addr);
 }
 
 =item C<-E<gt>full()>
@@ -1912,13 +1922,6 @@ sub mod_version {
 Everything listed here is deprecated and will be removed in version 5.
 
 =over 4
-
-=item C<canon() IPv6 mixed form>
-
-Currently, C<-E<gt>canon()> does not apply RFC 5952 section 5 (IPv4-embedded
-mixed dotted-quad notation, such as C<::ffff:192.0.2.1>). This behavior
-is deprecated and will be replaced in version 5 so that C<canon()> fully
-complies with RFC 5952 section 5 for IPv4-embedded/mapped addresses (GH#98).
 
 =item C<:aton>
 

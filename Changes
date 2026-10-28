@@ -2,6 +2,14 @@ Revision history for Perl extension NetAddr::IP
 
 {{$NEXT}}
 
+    - Fix GH#98: An IPv4-mapped address from canon() comes back in
+      RFC 5952 section 5 mixed form, such as ::ffff:192.0.2.1, not
+      hex. The IPv4-compatible, IPv4-translated and NAT64 prefixes
+      stay hex, as do short(), addr() and stringification, so canon()
+      and short() no longer agree on a mapped address, and re() and
+      re6() do not match its canon() form. This changes canon()
+      strings for mapped addresses.
+
     - Fix GH#222: The IPv6 regex from re6() and re() no longer matches
       an address inside a longer one, so the regex for 2001:db8::1/128
       does not match 2001:db8::10 or 2001:db8:2001:db8::1, as the IPv4
