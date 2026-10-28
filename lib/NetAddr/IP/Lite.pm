@@ -372,19 +372,23 @@ value that large has no unit precision and is rejected.
 =cut
 
 sub plus {
-    my $ip    = shift;
-    my $const    = shift;
+    my ($ip, $const) = @_;
+    return _add_constant($ip, $const, 0);
+}
+
+# adds $const to the host part, or subtracts it when $subtract is true
+sub _add_constant {
+    my ($ip, $const, $subtract) = @_;
 
     return $ip->copy unless $const;
     # a number, integer, unit precision (rejects floats above 2**53),
-    # below 2**64
+    # magnitude below 2**64
     croak 'constant must be an exact integer with magnitude below 2**64'
     unless defined $const
         && looks_like_number($const)
         && $const == int($const)
         && ($const > 0 ? $const - 1 != $const : $const + 1 != $const)
-        && $const <= 18446744073709551615
-        && $const >= -18446744073709551615;
+        && abs($const) <= 18446744073709551615;
 
     my $a = $ip->{addr};
     my $m = $ip->{mask};
@@ -392,15 +396,19 @@ sub plus {
     my $lo = $a & ~$m;
     my $hi = $a & $m;
 
+    # the sign travels apart from the magnitude, which stays exact: negating a
+    # UV above 2**63 would give a float
+    my $down = $const < 0 ? !$subtract : $subtract;
+    my $magnitude = abs($const);
     my $new;
-    if ($const < 2147483648 && $const > -2147483649) {
-    $new = (addconst($lo, $const))[1];
+    if ($magnitude < 2147483648) {
+    $new = (addconst($lo, $down ? -$magnitude : $magnitude))[1];
     }
     else {
-    my $mag = _const2bin(abs($const));
-    $new = ($const > 0)
-        ? (add128($lo, $mag))[1]
-        : (sub128($lo, $mag))[1];
+    my $mag = _const2bin($magnitude);
+    $new = $down
+        ? (sub128($lo, $mag))[1]
+        : (add128($lo, $mag))[1];
     }
     $new = ($new & ~$m) | $hi;
 
@@ -465,8 +473,7 @@ sub minus {
     # than for any reference. blessed first, or the isa call on an
     # unblessed reference dies instead of being answered.
     unless (blessed $arg && $arg->isa(__PACKAGE__)) {
-        # negate numbers only, so plus() sees and rejects anything else
-        return plus($ip, looks_like_number($arg) ? -$arg : $arg);
+        return _add_constant($ip, $arg, 1);
     }
     # subtract the lower address from the higher, then give the difference its sign
     my ($sign, $high, $low) = $ip->{addr} lt $arg->{addr}

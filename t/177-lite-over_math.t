@@ -63,4 +63,59 @@ is( "$ip", '0.0.0.3/24', 'post decrement' );
 --$ip;
 is( "$ip", '0.0.0.2/24', 'pre decrement' );
 
+subtest 'subtraction takes every constant that addition takes' => sub {
+    my $v4 = NetAddr::IP::Lite->new('198.51.100.7/24');
+    my $v6 = NetAddr::IP::Lite->new('2001:db8::/32');
+
+    # from 2**63 + 1 up, an unsigned integer has no negative of the same size
+    for my $case (
+        [ 9223372036854775808,  '2001:DB8:FFFF:FFFF:8000:0:0:0/32', '198.51.100.7/24' ],
+        [ 9223372036854775809,  '2001:DB8:FFFF:FFFF:7FFF:FFFF:FFFF:FFFF/32', '198.51.100.6/24' ],
+        [ 18446744073709551615, '2001:DB8:FFFF:FFFF:0:0:0:1/32', '198.51.100.8/24' ],
+      )
+    {
+        my ( $const, $want_v6, $want_v4 ) = @{$case};
+
+        # eval, so a croak fails its own assertion and the rest still run
+        is( eval { "" . ( $v6 - $const ) }, $want_v6, "2001:db8::/32 - $const" );
+        is( eval { "" . ( $v6 - "$const" ) },
+            $want_v6, "2001:db8::/32 - '$const' as a string" );
+        is( eval { "" . ( $v4 - $const ) }, $want_v4, "198.51.100.7/24 - $const" );
+        is( eval { "" . ( $v6 - $const + $const ) },
+            "$v6", "2001:db8::/32 - $const + $const" );
+        is( eval { "" . ( $v6 + $const - $const ) },
+            "$v6", "2001:db8::/32 + $const - $const" );
+        is( eval { "" . ( $v4 + $const - $const ) },
+            "$v4", "198.51.100.7/24 + $const - $const" );
+    }
+
+    is( $v6 - -9223372036854775808, '2001:DB8:0:0:8000:0:0:0/32',
+        '2001:db8::/32 - -2**63' );
+    is( $v6 - 2147483648, '2001:DB8:FFFF:FFFF:FFFF:FFFF:8000:0/32',
+        '2001:db8::/32 - 2**31' );
+    is( $v6 + -2147483648, '2001:DB8:FFFF:FFFF:FFFF:FFFF:8000:0/32',
+        '2001:db8::/32 + -2**31' );
+    is( $v6 - -2147483648, '2001:DB8:0:0:0:0:8000:0/32',
+        '2001:db8::/32 - -2**31' );
+
+    for my $case (
+        [ 18446744073709551616,  '2**64, a float' ],
+        [ -18446744073709551616, '-2**64, a float' ],
+        [ 1e16,                  '1e16, a float above 2**53' ],
+      )
+    {
+        my ( $const, $name ) = @{$case};
+        like(
+            dies { my $sum = $v6 + $const },
+            qr/constant must be an exact integer/,
+            "addition croaks on $name"
+        );
+        like(
+            dies { my $dif = $v6 - $const },
+            qr/constant must be an exact integer/,
+            "subtraction croaks on $name"
+        );
+    }
+};
+
 done_testing;
