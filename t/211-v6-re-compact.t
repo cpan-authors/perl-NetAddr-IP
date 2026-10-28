@@ -71,8 +71,14 @@ subtest 're6 compiles and matches in/out addresses' => sub {
             my $ip = NetAddr::IP->new($addr);
             like( $ip->addr, $rx,
                 sprintf( 're6(%s) matches full form %s', $n, $ip->addr ) );
-            like( $ip->canon, $rx,
-                sprintf( 're6(%s) matches canon form %s', $n, $ip->canon ) );
+            if ( $ip->canon =~ /\./ ) {
+                unlike( $ip->canon, $rx,
+                    sprintf( 're6(%s) leaves mixed form %s alone', $n, $ip->canon ) );
+            }
+            else {
+                like( $ip->canon, $rx,
+                    sprintf( 're6(%s) matches canon form %s', $n, $ip->canon ) );
+            }
         }
         for my $addr ( @{ $out{$n} } ) {
             unlike( $addr, $rx,
