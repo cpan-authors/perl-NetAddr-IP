@@ -117,4 +117,27 @@ subtest 'plain scalars behave as before' => sub {
     );
 };
 
+subtest 'a Math::BigInt of magnitude 2**64 or more is refused' => sub {
+    for my $text ( '18446744073709551616', '-18446744073709551616',
+        '18446744073709551617' )
+    {
+        my $const = Math::BigInt->new($text);
+        like(
+            dies { my $sum = $v6 + $const },
+            qr/constant must be an exact integer/,
+            "addition croaks on Math::BigInt $text"
+        );
+        like(
+            dies { my $dif = $v6 - $const },
+            qr/constant must be an exact integer/,
+            "subtraction croaks on Math::BigInt $text"
+        );
+    }
+    my $largest = Math::BigInt->new('18446744073709551615');
+    is( "" . ( $v6 - $largest ), '2001:DB8:0:0:0:0:0:1/64',
+        'subtraction of Math::BigInt 2**64 - 1, the largest magnitude' );
+    is( "" . ( $v6 + -$largest ), '2001:DB8:0:0:0:0:0:1/64',
+        'addition of Math::BigInt -(2**64 - 1)' );
+};
+
 done_testing;
