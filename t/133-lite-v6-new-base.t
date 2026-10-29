@@ -55,4 +55,37 @@ $test = NetAddr::IP::Lite->new('f35::1/40');
 isa_ok( $test, 'NetAddr::IP::Lite' );
 ok( $test->network->contains($test), '->contains' );
 
+subtest 'a keyword with the ipv6 mask gives the IPv6 address' => sub {
+    my %ipv6 = (
+        any         => '0:0:0:0:0:0:0:0/0',
+        default     => '0:0:0:0:0:0:0:0/0',
+        loopback    => '0:0:0:0:0:0:0:1/128',
+        unspecified => '0:0:0:0:0:0:0:0/128',
+    );
+    for my $keyword ( sort keys %ipv6 ) {
+        my $ip = NetAddr::IP::Lite->new( $keyword, 'ipv6' );
+        is( $ip->version, 6, "$keyword with the ipv6 mask is an IPv6 object" );
+        is( "$ip", $ipv6{$keyword},
+            "$keyword with the ipv6 mask is $ipv6{$keyword}" );
+        is(
+            "$ip",
+            '' . NetAddr::IP::Lite->new6($keyword),
+            "$keyword with the ipv6 mask matches new6"
+        );
+    }
+
+    my $upper = NetAddr::IP::Lite->new( 'loopback', 'IPv6' );
+    is( "$upper",        '0:0:0:0:0:0:0:1/128', 'the ipv6 mask is case blind' );
+    is( $upper->version, 6, 'loopback with an IPv6 mask is an IPv6 object' );
+
+    my $no_octal = NetAddr::IP::Lite->new_no( 'loopback', 'ipv6' );
+    is( "$no_octal", '0:0:0:0:0:0:0:1/128',
+        'new_no takes the ipv6 mask the same way' );
+
+    is( NetAddr::IP::Lite->new('loopback')->cidr,
+        '127.0.0.1/8', 'loopback with no mask is still IPv4' );
+    is( NetAddr::IP::Lite->new( 'broadcast', 'ipv6' ),
+        undef, 'broadcast has no IPv6 form' );
+};
+
 done_testing;
