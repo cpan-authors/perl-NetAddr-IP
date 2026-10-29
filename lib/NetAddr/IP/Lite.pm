@@ -967,6 +967,7 @@ sub _xnew($$;$$) {
         elsif (defined $_[0]) {
             if ($_[0] =~ /ipv6/i || $isV6) {
         if (grep($ip eq $_,(qw(default any loopback unspecified)))) {
+            $isV6    = 1 unless $isV6;    # the ipv6 mask picks the IPv6 address of the keyword
             $mask    = $fip6m{$ip};
             $ip    = $fip6{$ip};
             last;
@@ -1297,6 +1298,13 @@ knowing before reaching for one:
   NetAddr::IP::Lite->new('default');       # 0.0.0.0/0
   NetAddr::IP::Lite->new('loopback');      # 127.0.0.1/8
   NetAddr::IP::Lite->new('localhost');     # 127.0.0.1/32, via the resolver
+
+A mask argument of C<ipv6> asks for the IPv6 form of a keyword, the same
+address C<new6> gives:
+
+  NetAddr::IP::Lite->new('loopback', 'ipv6');      # 0:0:0:0:0:0:0:1/128
+  NetAddr::IP::Lite->new('unspecified', 'ipv6');   # 0:0:0:0:0:0:0:0/128
+  NetAddr::IP::Lite->new('default', 'ipv6');       # 0:0:0:0:0:0:0:0/0
 
 The C<broadcast> keyword is IPv4 only: C<new6('broadcast')> returns
 undef, while C<new6('unspecified')> gives an IPv6 unspecified address.

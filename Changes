@@ -2,6 +2,10 @@ Revision history for Perl extension NetAddr::IP
 
 {{$NEXT}}
 
+    - Fix GH#211: The ipv6 mask on default, any, loopback or unspecified
+      gives the IPv6 address, such as 0:0:0:0:0:0:0:1/128 from
+      new('loopback', 'ipv6'), where it gave an IPv4 object, 0.0.0.1/32.
+
     - Fix GH#147: Add NetAddr::IP::Count, a new implementation of the
       interface of NetAddr-IP-Count 2.01 by Luis E. Munoz, whose valcount
       method was contributed by Alvaro Carvajal. An address now counts once
