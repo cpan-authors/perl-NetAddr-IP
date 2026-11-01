@@ -717,6 +717,10 @@ Any RFC 4291 s2.2 notation
   123456789012  a 'big' bcd number (bigger than perl likes)
   and Math::BigInt
 
+A Math::BigInt is read as its decimal text, sign included, so
+C<Math::BigInt-E<gt>new(-5)> gives the same result as C<'-5'>. A
+Math::BigInt NaN or infinity gives C<undef>.
+
 A Fully Qualified Domain Name which returns an ipV4 address or an ipV6
 address, embodied in that order. This previously undocumented feature
 may be disabled with:

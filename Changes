@@ -2,6 +2,12 @@ Revision history for Perl extension NetAddr::IP
 
 {{$NEXT}}
 
+    - Fix GH#214: A Math::BigInt address or mask keeps its sign, so
+      Math::BigInt->new(-5) gives 255.255.255.251/32, as the text -5 does,
+      where it gave 0.0.0.5/32. A Math::BigInt NaN or infinity gives undef,
+      where it took the digits of the caller's last regex match as an
+      address and gave /0 as a mask.
+
     - Fix GH#213: The POD no longer says that NetAddr::IP::Util accepts
       the :lower and :upper import tags. Importing either still dies, as
       it always has. The tags stay documented on the modules that
