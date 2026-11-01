@@ -2,6 +2,12 @@ Revision history for Perl extension NetAddr::IP
 
 {{$NEXT}}
 
+    - Fix GH#213: The POD no longer says that NetAddr::IP::Util accepts
+      the :lower and :upper import tags. Importing either still dies, as
+      it always has. The tags stay documented on the modules that
+      accept them: NetAddr::IP::InetBase, NetAddr::IP::Lite, and
+      NetAddr::IP.
+
     - Fix GH#200: Subtraction takes every constant that addition takes. A
       constant from 2**63 + 1 to 2**64 - 1 no longer croaks, and a
       Math::BigInt of magnitude 2**64 or more croaks instead of wrapping.

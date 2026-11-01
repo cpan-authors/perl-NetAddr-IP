@@ -655,6 +655,11 @@ Sets uppercase, the default once NetAddr::IP::Util is loaded.
 
 =back
 
+Both are functions, not import tags. Importing C<:lower> or C<:upper>
+from this module dies. Import the tag from L<NetAddr::IP>,
+L<NetAddr::IP::Lite>, or L<NetAddr::IP::InetBase>, or call the functions
+above.
+
 Both set the case for every module in the process, not for one object.
 Under ithreads each thread has its own copy: a thread starts with the case
 in force when it was created, and a call in one thread does not change
@@ -1165,7 +1170,8 @@ routine for a one's complement, so it is published only for testing.
 
 =head1 IMPORT TAGS THAT CHANGE BEHAVIOUR
 
-Two tags change what the module does rather than which names it exports.
+One tag changes what the module does rather than which names it exports.
+The case tags are not accepted here. See L</Case>.
 
 =over 4
 
@@ -1174,13 +1180,6 @@ Two tags change what the module does rather than which names it exports.
 Skips C<getaddrinfo> inside C<naip_gethostbyname>, so a host name uses
 C<gethostbyname>, and makes C<havegethostbyname2> return false.  A
 dotted quad is still packed.  Test hook, not API.
-
-=item C<:upper> and C<:lower>
-
-These are in L<NetAddr::IP::InetBase>, and see the note there: the case
-setting is one package global, so importing either affects every user of
-the module in the process. C<:upper> wins if both are given, whichever
-order they are in.
 
 =back
 
