@@ -135,4 +135,79 @@ $ptr += 3;
 
 mrun(32);
 
+# bounds of the signed IPv4 range, then 192.0.2.1 as an integer
+my $ipv4_span = 2**32;
+my @signed    = (
+    [ -5,                '255.255.255.251/32' ],
+    [ -$ipv4_span,       '0.0.0.0/32' ],
+    [ -( $ipv4_span + 1 ), undef ],
+    [ 3_221_225_985,     '192.0.2.1/32' ],
+);
+
+subtest 'a signed Math::BigInt gives the same address as its text' => sub {
+    foreach my $case (@signed) {
+        my ( $number, $want ) = @$case;
+        my $bigint = Math::BigInt->new($number);
+        my $text   = "$number";
+
+        is( NetAddr::IP::Lite->new($bigint), $want, "new of $text" );
+        is( NetAddr::IP::Lite->new($bigint), NetAddr::IP::Lite->new($text),
+            "new of $text matches its text" );
+    }
+
+    my $neg_five = Math::BigInt->new(-5);
+
+    is( NetAddr::IP::Lite->new6($neg_five), '0:0:0:0:0:0:FFFF:FFFB/128',
+        'new6 of -5' );
+    is( NetAddr::IP::Lite->new6($neg_five), NetAddr::IP::Lite->new6('-5'),
+        'new6 of -5 matches its text' );
+    is( NetAddr::IP::Lite->new_no($neg_five), '255.255.255.251/32',
+        'new_no of -5' );
+    is(
+        NetAddr::IP::Lite->new_no($neg_five),
+        NetAddr::IP::Lite->new_no('-5'),
+        'new_no of -5 matches its text'
+    );
+    is( NetAddr::IP::Lite->new( Math::BigInt->new('+5') ), '0.0.0.5/32',
+        'new of +5' );
+};
+
+subtest 'a Math::BigInt NaN or infinity is not an address' => sub {
+    my @non_numbers = (
+        [ 'NaN',               sub { Math::BigInt->bnan } ],
+        [ 'infinity',          sub { Math::BigInt->binf } ],
+        [ 'negative infinity', sub { Math::BigInt->binf('-') } ],
+    );
+
+    foreach my $non_number (@non_numbers) {
+        my ( $label, $build ) = @$non_number;
+        my $value = $build->();
+
+        # a failed digit match must not reuse this capture
+        'x 77' =~ /([0-9]+)/;
+        is( NetAddr::IP::Lite->new($value), undef, "new of $label" );
+        'x 77' =~ /([0-9]+)/;
+        is( NetAddr::IP::Lite->new_no($value), undef, "new_no of $label" );
+    }
+};
+
+subtest 'a Math::BigInt mask keeps its sign and refuses NaN and infinity' =>
+  sub {
+    my $address = '192.0.2.1';
+
+    is( NetAddr::IP::Lite->new( $address, Math::BigInt->new(24) ),
+        '192.0.2.1/24', 'prefix 24' );
+    is( NetAddr::IP::Lite->new( $address, Math::BigInt->new(-24) ),
+        undef, 'prefix -24' );
+    is( NetAddr::IP::Lite->new( $address, '-24' ), undef, 'text prefix -24' );
+
+    my $nan      = Math::BigInt->bnan;
+    my $infinity = Math::BigInt->binf;
+
+    'x 77' =~ /([0-9]+)/;
+    is( NetAddr::IP::Lite->new( $address, $nan ), undef, 'NaN mask' );
+    'x 77' =~ /([0-9]+)/;
+    is( NetAddr::IP::Lite->new( $address, $infinity ), undef, 'infinite mask' );
+  };
+
 done_testing;

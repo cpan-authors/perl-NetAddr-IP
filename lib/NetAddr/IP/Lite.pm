@@ -706,6 +706,10 @@ Any RFC 4291 s2.2 notation
   123456789012  a 'big' bcd number (bigger than perl likes)
   and Math::BigInt
 
+A Math::BigInt is read as its decimal text, sign included, so
+C<Math::BigInt-E<gt>new(-5)> gives the same result as C<'-5'>. A
+Math::BigInt NaN or infinity gives C<undef>.
+
 A Fully Qualified Domain Name which returns an ipV4 address or an ipV6
 address, embodied in that order. This previously undocumented feature
 may be disabled with:
@@ -926,6 +930,7 @@ sub _xnew($$;$$) {
     return undef unless defined $ip && $ip ne '';
     $ip = _retMBIstring($ip)        # treat as big bcd string
         if ref $ip && ref $ip eq 'Math::BigInt';    # can /CIDR notation
+    return undef unless defined $ip;    # NaN and infinity are not addresses
     my $hasmask = 1;
     my ($mask, $tmp);
 
@@ -1034,6 +1039,7 @@ sub _xnew($$;$$) {
         # checkfor Math::BigInt mask
         $mask = _retMBIstring($mask)                # treat as big bcd string
                 if ref $mask && ref $mask eq 'Math::BigInt';
+        return undef unless defined $mask;    # NaN and infinity are not masks
 
         # MASK to lower case AFTER ref test for Math::BigInt, 'lc' strips blessing
         $mask = lc $mask;
@@ -1587,12 +1593,11 @@ representation of the netmask.
 my $biloaded;
 my $bi2strng;
 
-# function to stringify various flavors of Math::BigInt objects
-# tests to see if the object is a hash or a signed scalar
-
 sub _bi_stfy {
-    "$_[0]" =~ /([0-9]+)/;        # stringify and remove '+' if present
-    $1;
+    my $text = "$_[0]";
+
+    # signed decimal text, or undef when that text is NaN or infinity
+    return ( $text =~ /\A\+?(-?[0-9]+)\z/ )[0];
 }
 
 sub _loadMBI {                        # load Math::BigInt on demand
