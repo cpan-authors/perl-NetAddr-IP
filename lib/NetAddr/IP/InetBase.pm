@@ -789,20 +789,24 @@ match, so it is returned unchanged too.
 Return IPv6 strings in lowercase.  This is the default only when
 NetAddr::IP::InetBase is loaded on its own. NetAddr::IP::Util loads this
 module with the :upper tag, so a program that loads NetAddr::IP::Util,
-NetAddr::IP::Lite or NetAddr::IP gets uppercase output unless it imports
-:lower.
+NetAddr::IP::Lite or NetAddr::IP gets uppercase output unless it calls
+lower() or imports :lower from NetAddr::IP::Lite, NetAddr::IP, or this
+module.
 
 =item NetAddr::IP::InetBase::upper();
 
 Return IPv6 strings in uppercase.
 
 The case setting is one package-wide variable. Calling lower() or upper(),
-or importing :lower or :upper from any of the modules named above, changes
-the output for every user of these modules in the running program, not
-only the caller. The last call wins.
+or importing :lower or :upper from this module, NetAddr::IP::Lite, or
+NetAddr::IP, changes the output for every user of these modules in the
+running program, not only the caller. The last call wins. Those tags
+are not accepted by NetAddr::IP::Util. Call its lower() or upper().
 
-The default may be set to uppercase when the module is loaded by invoking
-the TAG :upper. i.e.
+The default may be set to uppercase when the module is loaded by importing
+the tag C<:upper>:
+
+  use NetAddr::IP::InetBase qw(:upper);
 
 =back
 
@@ -836,9 +840,10 @@ Every name in L</EXPORT_OK>.
   inet_any2n inet_n2dx inet_n2ad
   inet_pton inet_ntop packzeros
 
-=item C<:upper>
+=item C<:lower> and C<:upper>
 
-The case tag.  See below.
+The case tags. If both are given, C<:upper> wins, whichever order they
+are in. See L</THE CASE POLICY>.
 
 =back
 
@@ -869,13 +874,16 @@ This module defaults to lowercase:
   my $bits128 = ipv6_aton('2001:db8::1');
   print ipv6_n2x($bits128);          # 2001:db8:0:0:0:0:0:1
 
-Importing C<:upper> switches it, either here or on import of
-B<NetAddr::IP::Util>, B<NetAddr::IP::Lite> or B<NetAddr::IP>, since
-B<NetAddr::IP::Util> imports C<:upper> on your behalf:
+Importing C<:upper> from this module switches it:
 
   use NetAddr::IP::InetBase qw(:upper ipv6_aton ipv6_n2x);
   my $bits128 = ipv6_aton('2001:db8::1');
   print ipv6_n2x($bits128);          # 2001:DB8:0:0:0:0:0:1
+
+Loading B<NetAddr::IP::Util> does the same, because that module imports
+C<:upper> from here as it loads. Passing C<:upper> or C<:lower> on a
+C<use NetAddr::IP::Util> line dies. Both B<NetAddr::IP::Lite> and
+B<NetAddr::IP> accept the tags.
 
 And once set, an unrelated package importing C<:lower> changes it back for
 everyone:
