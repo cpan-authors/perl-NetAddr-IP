@@ -255,12 +255,11 @@ sub import {
 
 =head1 DESCRIPTION
 
-B<NetAddr::IP::InetBase> is the pure Perl layer that converts IPv4 and
-IPv6 addresses between binary and text.  Everything here is pure Perl on
-every host.  B<NetAddr::IP::Util> and the XS build take these functions
-from it rather than reimplementing them.  C<inet_ntop> calls core Socket,
-which calls the platform C library.
-See L</"Core Socket">.
+The B<NetAddr::IP::InetBase> module is the pure Perl layer that converts IPv4
+and IPv6 addresses between binary and text.  Everything here is pure Perl on
+every host.  Both B<NetAddr::IP::Util> and the XS build take these functions
+from it rather than reimplementing them.  The function C<inet_ntop> calls core
+Socket, which calls the platform C library. See L</"Core Socket">.
 
 A binary address here is called B<packed> below, as opposed to text.
 It comes in two sizes.  The IPv4 form, C<$V4_PACKED_BYTES> bytes, is
@@ -405,11 +404,11 @@ Returns undef for text that is not an address of that family, and croaks
 on a family other than C<AF_INET> and C<AF_INET6>.
 
 NOTE: C<inet_pton> reads the text itself rather than calling the platform
-C<inet_pton>, so every host reads it alike.  C<inet_pton(AF_INET, ...)>
-takes only four decimal parts from 0 to 255, each without a leading zero,
-and nothing after them.  It returns undef for a short form such as
-C<127.1>, for a host name, and for an undefined address.  C<inet_aton>
-accepts the short form and the host name.
+C<inet_pton>, so every host reads it alike.  For IPv4,
+C<inet_pton(AF_INET, ...)> takes only four decimal parts from 0 to 255, each
+without a leading zero, and nothing after them.  It returns undef for a short
+form such as C<127.1>, for a host name, and for an undefined address.
+By contrast, C<inet_aton> accepts the short form and the host name.
 
 =cut
 
@@ -581,9 +580,9 @@ argument.
 
 NOTE: inet_ntop ALWAYS returns lowercase characters.
 
-C<inet_ntop(AF_INET, ...)> is C<inet_ntoa>.  C<inet_ntop(AF_INET6, ...)> is
-the platform C<inet_ntop>.  An address with an IPv4 address in the low 32
-bits is printed in that library's form.  On glibc:
+For IPv4, C<inet_ntop(AF_INET, ...)> is C<inet_ntoa>. For IPv6,
+C<inet_ntop(AF_INET6, ...)> is the platform C<inet_ntop>.  An address with an
+IPv4 address in the low 32 bits is printed in that library's form.  On glibc:
 
   address           text
   ::ffff:192.0.2.1  ::ffff:192.0.2.1
@@ -787,11 +786,10 @@ match, so it is returned unchanged too.
 =item NetAddr::IP::InetBase::lower();
 
 Return IPv6 strings in lowercase.  This is the default only when
-NetAddr::IP::InetBase is loaded on its own. NetAddr::IP::Util loads this
-module with the :upper tag, so a program that loads NetAddr::IP::Util,
-NetAddr::IP::Lite or NetAddr::IP gets uppercase output unless it calls
-lower() or imports :lower from NetAddr::IP::Lite, NetAddr::IP, or this
-module.
+NetAddr::IP::InetBase is loaded on its own. The module NetAddr::IP::Util loads
+this one with the :upper tag, so a program that loads NetAddr::IP::Util,
+NetAddr::IP::Lite or NetAddr::IP gets uppercase output unless it calls lower()
+or imports :lower from NetAddr::IP::Lite, NetAddr::IP, or this module.
 
 =item NetAddr::IP::InetBase::upper();
 
@@ -907,12 +905,12 @@ C<inet_ntop>, which follow the platform C<inet_ntop>.
 
 =head1 Core Socket
 
-C<AF_INET>, C<AF_INET6> and C<inet_ntop> come from core Socket.  Socket6
-is not used.  C<inet_pton> reads the text itself, because C libraries
-differ in the IPv4 text they accept.
+The constants C<AF_INET> and C<AF_INET6> and the function C<inet_ntop> come
+from core Socket.  Socket6 is not used.  The C<inet_pton> here reads the text
+itself, because C libraries differ in the IPv4 text they accept.
 
-C<inet_ntop> of an IPv4 address is C<inet_ntoa>.  C<inet_ntop> of an IPv6
-address is the platform function, so an address with an IPv4 address in
+For an IPv4 address, C<inet_ntop> is C<inet_ntoa>. For an IPv6 address,
+C<inet_ntop> is the platform function, so an address with an IPv4 address in
 the low 32 bits follows that C library.  On glibc the mapped form is
 C<::ffff:192.0.2.1>.
 

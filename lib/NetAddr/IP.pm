@@ -81,7 +81,7 @@ for lowercase, which RFC 5952 s4.3 recommends:
 
   use NetAddr::IP qw(:upper);   # pin it, whatever the default becomes
 
-C<:upper> wins if both are given, whichever order they are in:
+If both are given, C<:upper> wins, whichever order they are in:
 
   use NetAddr::IP qw(:lower :upper);
   print NetAddr::IP->new('2001:db8::1')->addr, "\n";   # 2001:DB8:0:0:0:0:0:1
@@ -121,7 +121,7 @@ C<$NetAddr::IP::Lite::Old_nth>. See L</THREADS>.
 
 =back
 
-C<:aton> and C<:rfc3021> are listed under L</DEPRECATED>.
+The tags C<:aton> and C<:rfc3021> are listed under L</DEPRECATED>.
 
 =head1 THREADS
 
@@ -134,8 +134,8 @@ C<:old_storable>, C<:aton> and C<netlimit()>.  Under ithreads each thread
 has its own copy.  A thread starts with the settings in force when it was
 created, and a change made afterwards stays in the thread that made it.
 Within one thread they are still process-wide, as described under
-L</IMPORT TAGS>. C<local> scopes one of these variables to a block, and
-the previous value returns at the end of the block, including after
+L</IMPORT TAGS>. With C<local>, a change to one of these variables lasts to
+the end of the block, and the previous value returns there, including after
 C<die>:
 
   local $NetAddr::IP::InetBase::Upper = 0;   # lowercase IPv6 text
@@ -143,7 +143,7 @@ C<die>:
   local $NetAddr::IP::Lite::Old_nth   = 1;   # pre-4.00 nth() and num()
   local $NetAddr::IP::netlimit        = 20;  # see L</netlimit>
 
-C<:old_storable> deletes the Storable hooks and has no variable, so it
+The C<:old_storable> tag deletes the Storable hooks and has no variable, so it
 cannot be scoped.
 
   use threads;
@@ -179,12 +179,12 @@ as is a non-numeric argument:
   netlimit(10);   # undef, below the default
   netlimit(25);   # undef, above the maximum
 
-C<hostenum()> and C<hostenumref()> die with C<netlimit exceeded> past
-this limit, rather than returning a partial list.
+Past this limit, C<hostenum()> and C<hostenumref()> die with
+C<netlimit exceeded> rather than returning a partial list.
 
-The exponent is kept in C<$NetAddr::IP::netlimit>. C<local> scopes a
-change to one block, and the previous value returns at the end of the
-block, including after C<die>:
+The exponent is kept in C<$NetAddr::IP::netlimit>. With C<local>, a change
+lasts to the end of one block, and the previous value returns there, including
+after C<die>:
 
   my $ip = NetAddr::IP->new('192.0.2.0/24');
   {
@@ -258,7 +258,7 @@ The B<assignment (C<=>)> operation is only put in to operation when the
 copied object is further mutated by another overloaded operation. See
 L<overload> B<SPECIAL SYMBOLS FOR "use overload"> for details.
 
-B<C<-E<gt>copy()>> actually creates a new object when called.
+Calling B<C<-E<gt>copy()>> actually creates a new object.
 
 =item B<Stringification>
 
@@ -271,8 +271,8 @@ Will print the string 192.0.2.123/32.
 
 =item B<Equality>
 
-You can test for equality with either C<eq> or C<==>. C<eq> allows
-comparison with arbitrary strings as well as NetAddr::IP objects. The
+You can test for equality with either C<eq> or C<==>. The C<eq> operator
+allows comparison with arbitrary strings as well as NetAddr::IP objects. The
 following example:
 
   if (NetAddr::IP->new('198.51.100.1','255.255.255.224') eq '198.51.100.1/27')
@@ -347,8 +347,8 @@ Returns B<undef> if the difference is out of range.
 
 =item B<Array dereference (C<@{...}>)>
 
-C<@{$ip}> is overloaded and returns the host list, so a NetAddr::IP
-object can be treated as the addresses it contains:
+The array dereference C<@{$ip}> is overloaded and returns the host list, so a
+NetAddr::IP object can be treated as the addresses it contains:
 
   my $ip = NetAddr::IP->new('192.0.2.0/28');
   print scalar @{$ip}, "\n";                # 14
@@ -586,11 +586,11 @@ sub do_prefix ($$$) {
 
 =item C<-E<gt>new_cis6("$addr $mask")>
 
-C<new> and C<new6> create a new address with the supplied address in
-C<$addr> and an optional netmask C<$mask>, which can be omitted to get
-a /32 or /128 netmask for IPv4 / IPv6 addresses respectively.
+The constructors C<new> and C<new6> create a new address with the supplied
+address in C<$addr> and an optional netmask C<$mask>, which can be omitted to
+get a /32 or /128 netmask for IPv4 / IPv6 addresses respectively.
 
-C<new6FFFF> is the third constructor, and is what makes an IPv4-mapped
+The third constructor, C<new6FFFF>, is what makes an IPv4-mapped
 address, RFC 4291 s2.5.5.2:
 
   NetAddr::IP->new6FFFF('192.0.2.1');   # 0:0:0:0:0:FFFF:C000:201/128
@@ -600,7 +600,7 @@ or C<010>, is not an address to C<new>: the C library's C<inet_aton>
 reads C<010> as octal 8, and a person reads it as decimal 10.  So is
 the upper bound of a short range, such as C<192.0.2.8-011>, and a
 negative number, such as C<-012>.
-C<new_no> is the constructor for that less strict reading.  A part
+The constructor for that less strict reading is C<new_no>.  A part
 that is not an address once the zeros are removed is still refused.
 The result, or C<undef> when the text is not an address:
 
@@ -615,9 +615,10 @@ The result, or C<undef> when the text is not an address:
   192.0.2.8-011   undef              192.0.2.8/30
   -012            undef              255.255.255.244/32
 
-C<192.0.2.07> is 192.0.2.7, so a typo for 192.0.2.107 succeeds.
-C<192.0.2.0107> is 192.0.2.107, so an extra zero in front of that
-address succeeds too.  C<010> is 0.0.0.10, the same address as C<new('10')>.
+Under C<new_no>, C<192.0.2.07> is 192.0.2.7, so a typo for 192.0.2.107
+succeeds. Likewise C<192.0.2.0107> is 192.0.2.107, so an extra zero in front
+of that address succeeds too.  And C<010> is 0.0.0.10, the same address as
+C<new('10')>.
 
 IPv6 text is left alone, so C<2001:db8::1> is the same address from
 both constructors, and C<::ffff:192.0.2.010> is C<undef> from both.
@@ -626,17 +627,17 @@ A prefix length is decimal either way, so C<192.0.2.0/024> is
 an address: C<new_no('192.0.2.0', '255.255.255.000')> is 192.0.2.0/24
 and C<new> returns C<undef>.
 
-B<new_from_aton> takes a packed IPv4 address and assumes a /32 mask. This
-function replaces the :aton functionality, which reads a packed string
-as text first and is fundamentally broken. See L</DEPRECATED>.
+The B<new_from_aton> constructor takes a packed IPv4 address and assumes a /32
+mask. This function replaces the :aton functionality, which reads a packed
+string as text first and is fundamentally broken. See L</DEPRECATED>.
 
-B<new_cis> and B<new_cis6> accept the common Cisco address notation for
-address/mask pairs with a B<space> as a separator instead of a slash (/).
-Both are deprecated in favour of B<new> and B<new6>, which do the same.
-See L</DEPRECATED>.
+The constructors B<new_cis> and B<new_cis6> accept the common Cisco address
+notation for address/mask pairs with a B<space> as a separator instead of a
+slash (/). Both are deprecated in favour of B<new> and B<new6>, which do the
+same. See L</DEPRECATED>.
 
-C<-E<gt>new6> and C<-E<gt>new_cis6> mark the address as being in ipV6 address space even
-if the format would suggest otherwise.
+Both C<-E<gt>new6> and C<-E<gt>new_cis6> mark the address as being in ipV6
+address space even if the format would suggest otherwise.
 
   print NetAddr::IP->new6('192.0.2.1'), "\n";    # 0:0:0:0:0:0:C000:201/128
 
@@ -649,8 +650,8 @@ prints as IPv4:
 
 The C<addr()> value is what stringifies as the first part.
 
-C<$addr> can be almost anything that can be resolved to an IP address.
-It can optionally contain the mask in CIDR notation. A host name is
+The C<$addr> argument can be almost anything that can be resolved to an IP
+address. It can optionally contain the mask in CIDR notation. A host name is
 resolved with one C<getaddrinfo> call, so an IPv6 name resolves as
 well as an IPv4 one. The IPv4 constructor uses an IPv4 answer when
 there is one. The IPv6 constructor uses an IPv6 answer when there
@@ -658,7 +659,7 @@ is one, unless that answer is an IPv4-mapped or IPv4-compatible
 address and an IPv4 answer exists, as for a name with both C<::1>
 and C<127.0.0.1>.
 
-B<prefix> notation is understood, with the limitation that the range
+The B<prefix> notation is understood, with the limitation that the range
 specified by the prefix must match with a valid subnet.
 
 An IPv6-form mask on an IPv4 address covers all 128 bits, so it needs
@@ -678,7 +679,7 @@ bytes also spell text comes back as a different address or as
 undef; see C<:aton> under L</DEPRECATED>. Use C<new_from_aton> for a packed
 IPv4 address.
 
-C<$addr> can be any of the following and possibly more...
+The C<$addr> argument can be any of the following and possibly more...
 
   n.n
   n.n/mm
@@ -1172,9 +1173,10 @@ ERROR conditions:
   ->splitref will DIE with the same message if a supplied ipV4,
     ipV6, or NetAddr mask is inappropriately formatted.
 
-B<bits> may be a CIDR mask, a dot quad or ipV6 string or a NetAddr::IP object.
-If C<bits> is missing, the object is split for into all available addresses
-within the ipV4 or ipV6 object ( auto-mask of CIDR 32, 128 respectively ).
+The B<bits> argument may be a CIDR mask, a dot quad or ipV6 string or a
+NetAddr::IP object. If C<bits> is missing, the object is split for into all
+available addresses within the ipV4 or ipV6 object ( auto-mask of CIDR 32, 128
+respectively ).
 
 With optional additional C<bits> list, the original object is split into
 parts sized based on the list. NOTE: a short list will replicate the last
@@ -1326,8 +1328,8 @@ sub _splitref {
 
 =item C<-E<gt>rsplitref($bits,[optional $bits1,$bits2,...])>
 
-C<-E<gt>rsplitref> is the same as C<-E<gt>splitref> above except that the split
-plan is applied to the original object in reverse order.
+The method C<-E<gt>rsplitref> is the same as C<-E<gt>splitref> above except
+that the split plan is applied to the original object in reverse order.
 
   i.e.
 
@@ -1470,8 +1472,8 @@ Called as a method, the array will include C<$me>.
 The returned list is in address order within each address family. A list
 holding both IPv4 and IPv6 subnets is coalesced separately for each family,
 with the same C<$masklen> applied to each, and the IPv4 results come before
-the IPv6 results. C<$masklen> must fit the address width of every argument,
-so a C<$masklen> above 32 with any IPv4 argument is an error.
+the IPv6 results. The mask length C<$masklen> must fit the address width of
+every argument, so a C<$masklen> above 32 with any IPv4 argument is an error.
 
 =cut
 
@@ -1571,7 +1573,7 @@ To use the old behavior for C<-E<gt>nth($index)> and C<-E<gt>num()>:
 
 WARNING:
 
-NetAddr::IP will calculate and return a numeric string for network
+The module will calculate and return a numeric string for network
 ranges as large as 2**128. These values are TEXT strings and perl
 can treat them as integers for numeric calculations.
 
@@ -1947,7 +1949,7 @@ C<first>, C<last>, C<nth> and C<num>. Importing it warns.
 =item C<new_cis> and C<new_cis6>
 
 Accept the Cisco address and mask notation, with a space separator in
-place of a slash. C<-E<gt>new()> and C<-E<gt>new6()> do the same.
+place of a slash. Both C<-E<gt>new()> and C<-E<gt>new6()> do the same.
 
   ->new('192.0.2.0 24')       in place of   ->new_cis('192.0.2.0 24')
   ->new6('::192.0.2.0 120')   in place of   ->new_cis6('::192.0.2.0 120')

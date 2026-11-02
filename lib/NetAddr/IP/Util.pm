@@ -411,8 +411,8 @@ sub naip_gethostbyname {
 
 =head1 DESCRIPTION
 
-B<NetAddr::IP::Util> converts IPv4 and IPv6 addresses to and from 128
-bit binary strings, and does arithmetic on those strings.  A 128 bit
+The B<NetAddr::IP::Util> module converts IPv4 and IPv6 addresses to and from
+128 bit binary strings, and does arithmetic on those strings.  A 128 bit
 string here means 16 bytes, whatever the family: an IPv4 address is
 carried in the low 32 bits with the rest zero.  That is what lets one
 set of functions take either family.
@@ -535,11 +535,11 @@ Returns undef for text that is not an address of that family, and croaks
 on a family other than C<AF_INET> and C<AF_INET6>.
 
 NOTE: C<inet_pton> reads the text itself rather than calling the platform
-C<inet_pton>, so every host reads it alike.  C<inet_pton(AF_INET, ...)>
-takes only four decimal parts from 0 to 255, each without a leading zero,
-and nothing after them.  It returns undef for a short form such as
-C<127.1>, for a host name, and for an undefined address.  C<inet_aton>
-accepts the short form and the host name.
+C<inet_pton>, so every host reads it alike.  For IPv4,
+C<inet_pton(AF_INET, ...)> takes only four decimal parts from 0 to 255, each
+without a leading zero, and nothing after them.  It returns undef for a short
+form such as C<127.1>, for a host name, and for an undefined address.
+By contrast, C<inet_aton> accepts the short form and the host name.
 
 =back
 
@@ -619,10 +619,11 @@ argument.
 
 NOTE: inet_ntop ALWAYS returns lowercase characters.
 
-C<inet_ntop(AF_INET, ...)> is C<inet_ntoa>.  C<inet_ntop(AF_INET6, ...)> is
-the platform C<inet_ntop>.  On glibc an address with an IPv4 address in
-the low 32 bits is mixed notation, C<::ffff:192.0.2.1>.  A different C
-library can print a different form.  See L<NetAddr::IP::InetBase>.
+For IPv4, C<inet_ntop(AF_INET, ...)> is C<inet_ntoa>. For IPv6,
+C<inet_ntop(AF_INET6, ...)> is the platform C<inet_ntop>.  On glibc an address
+with an IPv4 address in the low 32 bits is mixed notation,
+C<::ffff:192.0.2.1>.  A different C library can print a different form.  See
+L<NetAddr::IP::InetBase>.
 
 =item $hex_text = packzeros($hex_text);
 
@@ -822,7 +823,7 @@ both the XS and the pure Perl build:
   print ipv6_n2x(shiftleft($bits128));     # FFFF:...:FFFF unchanged
   print ipv6_n2x(shiftleft($bits128, 8));  # FFFF:...:FF00, top 8 gone
 
-C<$n> above C<$MAX_SHIFTLEFT> of 128 croaks.
+A shift count C<$n> above C<$MAX_SHIFTLEFT> of 128 croaks.
 
 =item addconst($ipv6naddr,$signed_32con);
 
@@ -910,12 +911,12 @@ family, the length, and one or more packed addresses.  In scalar context,
 returns the first address.
 
 The lookup is one C<getaddrinfo> call with an empty service and socktype
-C<SOCK_STREAM>, and with no family and no flags.  C<getaddrinfo> does not
-return aliases, and it orders addresses by the platform rules (RFC 6724
-on current glibc).  When any result is IPv6, only those addresses are
-returned, duplicates removed.  The family is C<AF_INET6> and the length is
-16.  When every result is IPv4, the family stays C<AF_INET>, the length
-becomes 16, and each address is mapped into the RFC 4291 s2.5.5.2 form:
+C<SOCK_STREAM>, and with no family and no flags.  This call does not return
+aliases, and it orders addresses by the platform rules (RFC 6724 on current
+glibc).  When any result is IPv6, only those addresses are returned,
+duplicates removed.  The family is C<AF_INET6> and the length is 16.  When
+every result is IPv4, the family stays C<AF_INET>, the length becomes 16, and
+each address is mapped into the RFC 4291 s2.5.5.2 form:
 
   ::FFFF:d.d.d.d
 
@@ -928,8 +929,8 @@ stays C<AF_INET>, the length becomes 16, and the address is the
 mapped form above.  A name that does not resolve is an empty list.
 
 Importing C<:noSock6> skips C<getaddrinfo>.  A dotted quad is still
-packed.  Any other name uses C<gethostbyname>.  C<gethostbyname> is
-not thread-safe.  C<getaddrinfo> is.
+packed.  Any other name uses C<gethostbyname>, which is not thread-safe,
+unlike C<getaddrinfo>.
 
 A NAME with whitespace, or a dotted number with a leading zero in any
 part, gives an empty list, or undef in scalar context, without asking
@@ -1053,9 +1054,9 @@ C<NOT borrow>:
   print within($nip, $nip), "\n";     # 1
   print within($other, $nip), "\n";   # 0
 
-C<addconst> stores the carry in scalar context and C<($carry, $result)>
-in list context, so wrapping a net at a boundary means taking the second
-element:
+The function C<addconst> stores the carry in scalar context and
+C<($carry, $result)> in list context, so wrapping a net at a boundary means
+taking the second element:
 
   use NetAddr::IP::Util qw(addconst);
   use NetAddr::IP ();
@@ -1162,11 +1163,12 @@ Test helpers, not API:
   bin2bcdn          bcdn2txt           bcdn2bin           simple_pack
   comp128
 
-C<bin2bcd> returns text digits and C<simple_pack> turns text digits into
-a packed string, padding to C<$MAX_BCD_DIGITS> first.  C<bcdn2txt> is the
-inverse of the packing and C<bcdn2bin> turns it back to 128 bits.
-C<comp128> exists because Perl's C<~> is faster than calling into the XS
-routine for a one's complement, so it is published only for testing.
+The function C<bin2bcd> returns text digits and C<simple_pack> turns text
+digits into a packed string, padding to C<$MAX_BCD_DIGITS> first.  The
+function C<bcdn2txt> is the inverse of the packing and C<bcdn2bin> turns it
+back to 128 bits. The function C<comp128> exists because Perl's C<~> is faster
+than calling into the XS routine for a one's complement, so it is published
+only for testing.
 
 =head1 IMPORT TAGS THAT CHANGE BEHAVIOUR
 
