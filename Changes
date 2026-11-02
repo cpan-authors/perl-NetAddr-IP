@@ -2,6 +2,15 @@ Revision history for Perl extension NetAddr::IP
 
 {{$NEXT}}
 
+    - Fix GH#219: A keyword given to new6() uses the caller's mask on
+      the keyword's IPv6 address. That covers a separate mask, a mask
+      written in the string and an undef mask. The calls
+      new6('loopback', 64) and new6('loopback/64') give
+      0:0:0:0:0:0:0:1/64, and new6('loopback', undef) gives
+      0:0:0:0:0:0:0:1/128. A separate mask used to keep the keyword's
+      own prefix, and a mask in the string or an undef mask used the
+      IPv4 keyword. A mask that is not valid gives undef.
+
     - Fix GH#215: An IPv6 split(), splitref(), rsplit() or rsplitref()
       with a mask 54 or more bits longer than the subnet's returns the
       right pieces. It could return overlapping pieces or a piece outside

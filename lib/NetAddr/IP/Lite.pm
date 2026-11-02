@@ -996,9 +996,11 @@ sub _xnew($$;$$) {
             if ($_[0] =~ /ipv6/i || $isV6) {
         if (grep($ip eq $_,(qw(default any loopback unspecified)))) {
             $isV6    = 1 unless $isV6;    # the ipv6 mask picks the IPv6 address of the keyword
-            $mask    = $fip6m{$ip};
-            $ip    = $fip6{$ip};
-            last;
+            if ($_[0] =~ /ipv6/i) {
+                $mask    = $fip6m{$ip};
+                $ip    = $fip6{$ip};
+                last;
+            }
         }
         else {
             return undef unless $isV6;
@@ -1015,6 +1017,10 @@ sub _xnew($$;$$) {
             # an empty mask argument is a caller error, not a /0
             return undef if $mask eq '';
         }
+        # under new6 a keyword is the text of its IPv6 address, so a mask in
+        # the string, a mask argument and an undef mask all apply to it
+        $ip = ipv6_n2x($fip6{$ip})
+            if $isV6 && grep($ip eq $_, qw(default any loopback unspecified));
         ###
         ### process mask
         unless (defined $mask) {

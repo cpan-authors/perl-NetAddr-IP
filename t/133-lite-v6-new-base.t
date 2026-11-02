@@ -88,4 +88,62 @@ subtest 'a keyword with the ipv6 mask gives the IPv6 address' => sub {
         undef, 'broadcast has no IPv6 form' );
 };
 
+subtest 'new6 reads the mask given with a keyword' => sub {
+    my %address = (
+        any         => '::',
+        default     => '::',
+        loopback    => '::1',
+        unspecified => '::',
+    );
+    for my $keyword ( sort keys %address ) {
+        for my $mask ( 24, 64, 128, 'ffff::' ) {
+            is(
+                '' . NetAddr::IP::Lite->new6( $keyword,           $mask ),
+                '' . NetAddr::IP::Lite->new6( $address{$keyword}, $mask ),
+                "new6('$keyword', '$mask') matches its address"
+            );
+        }
+        is( NetAddr::IP::Lite->new6( $keyword, 'junk' ),
+            undef, "new6('$keyword', 'junk') is undef" );
+    }
+    is(
+        '' . NetAddr::IP::Lite->new6( 'loopback', 64 ),
+        '0:0:0:0:0:0:0:1/64',
+        'new6 loopback with a mask of 64'
+    );
+    is(
+        '' . NetAddr::IP::Lite->new6('default'),
+        '0:0:0:0:0:0:0:0/0',
+        'default with no mask is still /0'
+    );
+    is(
+        '' . NetAddr::IP::Lite->new6( 'loopback', 'ipv6' ),
+        '0:0:0:0:0:0:0:1/128',
+        'the ipv6 token still gives the keyword its own mask'
+    );
+};
+
+subtest 'new6 reads a keyword with a mask in its string or as undef' => sub {
+    my %address = (
+        any         => '::',
+        default     => '::',
+        loopback    => '::1',
+        unspecified => '::',
+    );
+    for my $keyword ( sort keys %address ) {
+        for my $form ( "$keyword/64", "$keyword 64" ) {
+            is(
+                '' . NetAddr::IP::Lite->new6($form),
+                '' . NetAddr::IP::Lite->new6( $address{$keyword}, 64 ),
+                "new6('$form') matches its address"
+            );
+        }
+        is(
+            '' . NetAddr::IP::Lite->new6( $keyword,           undef ),
+            '' . NetAddr::IP::Lite->new6( $address{$keyword}, undef ),
+            "new6('$keyword', undef) matches its address"
+        );
+    }
+};
+
 done_testing;
