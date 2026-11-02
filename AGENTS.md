@@ -49,6 +49,17 @@ New entries go under `{{$NEXT}}`, one entry per change:
 - Check with `tidy_changelog --check Changes`. The release test
   `t/release-cpan-changes.t` runs the same parser.
 - Be succinct and write as if the reader is 5 years old
+- A claim about an earlier release, such as "as before" or "since 4.079",
+  is checked against that release's tag with `git show TAG:PATH`. Up to
+  4.079 the paths differ: `IP.pm`, `Lite/Lite.pm`, `Lite/Util/Util.pm`.
+
+## POD
+
+- Do not start a sentence with code: a formatting code such as `C<...>`,
+  `B<...>` or `L<...>`, or a module name. Open on a word and let the code
+  follow: "Importing C<:lower> from this module dies", "Both
+  B<NetAddr::IP::Lite> and B<NetAddr::IP> accept the tags".
+- Run `podchecker` on every module whose POD changed.
 
 ## Tests
 
@@ -130,7 +141,8 @@ adds the `author-` and `release-` files, so the numbers stay clear of them.
 
 ### Message style
 
-These rules apply to commit messages only.
+These rules apply to commit messages only. The rule on sentence openers
+also holds in Changes, POD and comments.
 
 - **PRIORITY** Lead with the decision or outcome and the behavior change or problem solved, not the process. Use active voice.
 - **PRIORITY** Never start a sentence with a code identifier or symbol.
