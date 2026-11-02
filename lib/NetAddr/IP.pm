@@ -27,6 +27,8 @@ use NetAddr::IP::Util qw( hasbits isIPv4 notcontiguous shiftleft sub128 );
 our @EXPORT_OK = qw(Compact Coalesce Zero Zeros Ones V4mask V4net netlimit);
 our $netlimit = $DEFAULT_NETLIMIT_EXP;
 
+my $ONE_128 = pack 'N4', 0, 0, 0, 1;
+
 =encoding UTF-8
 
 =head1 SYNOPSIS
@@ -1213,6 +1215,27 @@ expected.
 
 =cut
 
+# A split plan counts space in units of its smallest piece, up to 2**128 for ::/0 cut into /128s.
+# Each amount is [ $top, $bits128 ]: $top is the 2**128 bit, which no 128-bit string can hold.
+sub _plan_units {
+    my ($exponent) = @_;
+    return [ 1, Zeros ] if $exponent == $IPV6_BITS;
+    return [ 0, shiftleft($ONE_128, $exponent) ];
+}
+
+sub _plan_units_minus {    # undef when $piece is bigger than $space
+    my ($space, $piece) = @_;
+    my ($no_borrow, $bits128) = sub128($space->[1], $piece->[1]);
+    my $top = $space->[0] - $piece->[0] - ($no_borrow ? 0 : 1);
+    return if $top < 0;
+    return [ $top, $bits128 ];
+}
+
+sub _plan_units_left {
+    my ($space) = @_;
+    return $space->[0] || hasbits($space->[1]);
+}
+
 # input:    $naip,
 #        @bits,         list of masks for splits
 #
@@ -1266,34 +1289,34 @@ sub _splitplan {
     my %masks;                    # calculate masks
     my $maskbase = $isV6 ? $IPV6_BITS : $IPV4_BITS;
     foreach( keys %nets ) {
-        $nets{$_} = 2 ** ($denom - $nets{$_});
+        $nets{$_} = _plan_units($denom - $nets{$_});
         $masks{$_} = shiftleft(Ones, $maskbase - $_);
     }
 
     my @plan;
     my $idx = 0;
-    $denom = 2 ** $denom;
+    my $space = _plan_units($denom);
     my $limit = 2 ** $netlimit;
     PLAN:
-    while ($denom > 0) {                # make a net plan
+    while (_plan_units_left($space)) {    # make a net plan
         my $nexmask = ($idx < $#bits) ? $bits[$idx] : $bits[$#bits];
         ++$idx;
-        unless (($denom -= $nets{$nexmask}) < 0) {
+        if (my $left = _plan_units_minus($space, $nets{$nexmask})) {
             croak('netlimit exceeded') if (push @plan, $nexmask) > $limit;
+            $space = $left;
             next;
         }
         # a fractional net is needed that is not in the mask list or the replicant
-        $denom += $nets{$nexmask};            # restore mistake
     TRY:
         for my $try_mask (sort { $a <=> $b } keys %nets) {
             next TRY if $nexmask > $try_mask;
             do {
-                next TRY if $denom - $nets{$try_mask} < 0;
+                my $left = _plan_units_minus($space, $nets{$try_mask}) or next TRY;
                 croak('netlimit exceeded') if (push @plan, $try_mask) > $limit;
-                $denom -= $nets{$try_mask};
-            } while $denom;
+                $space = $left;
+            } while _plan_units_left($space);
         }
-        die 'ERROR: miscalculated weights' if $denom;
+        die 'ERROR: miscalculated weights' if _plan_units_left($space);
     }
     return () if $idx < @bits;            # overrange original subnet request
     return (\@plan,\%masks);

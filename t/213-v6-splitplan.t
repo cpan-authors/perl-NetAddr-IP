@@ -103,4 +103,54 @@ subtest 'splitplan with netlimit' => sub {
     is( scalar @{$plan}, 4, 'that plan has 4 items' );
 };
 
+subtest 'splitplan 54 or more bits below the base mask' => sub {
+    my $ip64 = NetAddr::IP->new('2001:db8::/64');
+    my $all  = NetAddr::IP->new('::/0');
+
+    like(
+        dies { $ip64->_splitplan( 120, 65 ) },
+        qr/^netlimit exceeded/,
+        'netlimit exceeded for one 120 then 65s'
+    );
+    like(
+        dies { $all->_splitplan( 128, 1 ) },
+        qr/^netlimit exceeded/,
+        'netlimit exceeded for one 128 then 1s'
+    );
+    like(
+        dies { $all->_splitplan( 54, 1 ) },
+        qr/^netlimit exceeded/,
+        'netlimit exceeded for one 54 then 1s'
+    );
+
+    my ( $plan, $masks ) = $ip64->_splitplan( 120, reverse 65 .. 120 );
+    is( scalar @{$plan}, 57, 'one 120 then 120 down to 65 is a 57 item plan' );
+    is( $plan->[-1],     65, 'that plan ends with a 65' );
+
+    ( $plan, $masks ) = $all->_splitplan( 1 .. 128, 128 );
+    is( scalar @{$plan},
+        129, '1 to 128 then one more 128 fills ::/0 in 129 items' );
+    is( [ @{$plan}[ -2, -1 ] ], [ 128, 128 ], 'that plan ends with two 128s' );
+};
+
+subtest 'splitplan 54 or more bits deep, last mask does not fit' => sub {
+    my $ip64 = NetAddr::IP->new('2001:db8::/64');
+    my @bits = ( 120, 120, reverse( 67 .. 119 ), 65 );
+
+    my ( $plan, $masks ) = $ip64->_splitplan(@bits);
+    is( scalar @{$plan}, 58, 'a second 65 does not fit, so two 67s follow' );
+    is(
+        [ @{$plan}[ -3 .. -1 ] ],
+        [ 65, 67, 67 ],
+        'that plan ends with a 65 and two 67s'
+    );
+
+    my @nets = $ip64->split(@bits);
+    is(
+        "$nets[-1]",
+        '2001:DB8:0:0:E000:0:0:0/67',
+        'the last piece of that split ends the /64'
+    );
+};
+
 done_testing;
