@@ -83,5 +83,43 @@ subtest 're6() returns a non-capturing group' => sub {
     is( $2, '80',                   'second group captures port' );
 };
 
+subtest 're6() does not match inside a longer address' => sub {
+    my @inside = (
+        [ '2001:db8::1/128', '2001:db8::10' ],
+        [ '2001:db8::1/128', '2001:db8::1:5' ],
+        [ '2001:db8::1/128', '12001:db8::1' ],
+        [ '2001:db8::1/128', '2001:db8:2001:db8::1' ],
+        [ '::1/128',         '2001:db8::1' ],
+        [ '::192/128',       '::192.0.2.1' ],
+        [ '2001:db8::1/128', 'src:2001:db8::1' ],
+        [ '2001:db8::1/128', '2001:db8::1.443' ],
+    );
+    for my $case (@inside) {
+        my ( $net, $text ) = @{$case};
+        my $re = NetAddr::IP->new($net)->re6;
+        unlike( $text, qr/$re/, "the regex for $net does not match in $text" );
+    }
+
+    my @around = (
+        [ '2001:db8::1/128', 'addr=2001:db8::1 port=443' ],
+        [ '2001:db8::1/128', '[2001:db8::1]:443' ],
+        [ '2001:db8::1/128', 'ip:2001:db8::1' ],
+        [ '2001:db8::1/128', 'at 2001:db8::1.' ],
+        [ '2001:db8::1/128', '2001:db8::1/64' ],
+        [ '2001:db8::1/128', '2001:DB8::0001' ],
+        [ '2001:db8::/32',   'from 2001:db8::1 to' ],
+    );
+    for my $case (@around) {
+        my ( $net, $text ) = @{$case};
+        my $re = NetAddr::IP->new($net)->re6;
+        like( $text, qr/$re/, "the regex for $net matches in $text" );
+    }
+
+    my $v6 = NetAddr::IP->new('::1');
+    is( $v6->re, $v6->re6, 're() of an IPv6 object is re6()' );
+    my $mapped = NetAddr::IP->new6('192.0.2.1');
+    is( $mapped->re, $mapped->re6, 're() of an object made by new6 is re6()' );
+};
+
 done_testing;
 

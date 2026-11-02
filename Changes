@@ -2,6 +2,13 @@ Revision history for Perl extension NetAddr::IP
 
 {{$NEXT}}
 
+    - Fix GH#222: The IPv6 regex from re6() and re() no longer matches
+      an address inside a longer one, so the regex for 2001:db8::1/128
+      does not match 2001:db8::10 or 2001:db8:2001:db8::1, as the IPv4
+      regex from re() does not match 192.0.2.10 for 192.0.2.1/32. A
+      label ending in a hex digit, such as src:2001:db8::1, and a port
+      after a dot, such as 2001:db8::1.443, do not match either.
+
     - Fix GH#221: A range with a space or tab on only one side of the
       dash, such as 192.0.2.0 -192.0.2.255, gives the same network as
       with spaces on both sides or none, where it gave undef.
