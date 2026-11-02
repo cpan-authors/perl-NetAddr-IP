@@ -2,6 +2,10 @@ Revision history for Perl extension NetAddr::IP
 
 {{$NEXT}}
 
+    - Fix GH#221: A range with a space or tab on only one side of the
+      dash, such as 192.0.2.0 -192.0.2.255, gives the same network as
+      with spaces on both sides or none, where it gave undef.
+
     - Fix GH#215: An IPv6 split(), splitref(), rsplit() or rsplitref()
       with a mask 54 or more bits longer than the subnet's returns the
       right pieces. It could return overlapping pieces or a piece outside
