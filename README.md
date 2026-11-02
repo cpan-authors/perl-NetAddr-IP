@@ -216,7 +216,7 @@ for one object.
 
     :upper          IPv6 addresses in uppercase (default)
     :lower          IPv6 addresses in lowercase (RFC 5952 s4.3)
-    :old_storable   read legacy Storable files (deprecated)
+    :old_storable   freeze as a plain hash, not a CIDR string (deprecated)
     :old_nth        legacy nth/num behaviour (deprecated)
     :nofqdn         do not resolve FQDNs in the constructor
     :aton           accept packed input (deprecated)

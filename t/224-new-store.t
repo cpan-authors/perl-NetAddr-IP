@@ -53,4 +53,33 @@ subtest 'new format round-trip' => sub {
     ok( length($serialized) < 100, 'New format is compact' );
 };
 
+subtest 'data frozen as a plain hash thaws with the hooks in place' => sub {
+    my $oip = NetAddr::IP->new('192.0.2.1/24');
+
+    my $serialized = do {
+        no warnings 'once';
+
+        # with the freeze hook hidden, Storable writes the plain hash
+        local *NetAddr::IP::STORABLE_freeze;
+        freeze($oip);
+    };
+    unlike( $serialized, qr|/|,
+        'Data frozen as a plain hash holds no CIDR string' );
+    ok(
+        NetAddr::IP->can('STORABLE_freeze'),
+        'STORABLE_freeze is back after the block'
+    );
+
+    ok(
+        NetAddr::IP->can('STORABLE_thaw'),
+        'STORABLE_thaw is in place for the thaw'
+    );
+    my $nip;
+    ok(
+        lives { $nip = thaw($serialized) },
+        'Thawing data frozen as a plain hash'
+    );
+    is( "$nip", '192.0.2.1/24', 'Thawed object eq original object' );
+};
+
 done_testing;

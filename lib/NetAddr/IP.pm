@@ -105,13 +105,20 @@ C<$NetAddr::IP::Lite::NoFQDN>. See L</THREADS>.
 
 =item C<:old_storable>
 
-Read legacy data files holding objects stored with L<Storable> before
-this module had its own serialisation hooks:
+Make L<Storable> freeze objects as a plain hash, as it did before this
+module had its own Storable hooks, instead of as a CIDR string:
 
   use NetAddr::IP qw(:old_storable);
 
-This deletes the Storable hooks and has no variable, so it cannot be
-scoped with C<local>.
+Data frozen as a plain hash thaws the same with or without this tag,
+because L<Storable> calls the thaw hook only for data the freeze hook
+wrote.
+
+This deletes the Storable hooks for the whole program, or for the
+calling thread under ithreads (see L</THREADS>), and has no variable, so
+it cannot be scoped with C<local>. Once the hooks are gone, data frozen
+with them no longer thaws there, and C<thaw> dies with a message that
+starts "No STORABLE_thaw defined for objects of class NetAddr::IP".
 
 =item C<:old_nth>
 
@@ -398,12 +405,14 @@ of auto-incrementing it, as you would expect.
 
 This module defines hooks to collaborate with L<Storable> for
 serializing C<NetAddr::IP> objects, through compact and human readable
-strings. You can revert to the old format by invoking this module as
+strings. Data frozen as a plain hash, without the hooks, thaws the same
+way with them in place, because L<Storable> calls the thaw hook only for
+data the freeze hook wrote. To freeze as a plain hash instead, invoke
+this module as
 
   use NetAddr::IP ':old_storable';
 
-You must do this if you have legacy data files containing NetAddr::IP
-objects stored using the L<Storable> module.
+which removes the hooks, as described under L</IMPORT TAGS>.
 
 =cut
 
