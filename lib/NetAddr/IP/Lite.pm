@@ -681,6 +681,7 @@ The C<$addr> argument can be any of the following and possibly more...
   n.n.n.n mm
   n.n.n.n/m.m.m.m
   n.n.n.n m.m.m.m
+  n.n.n.n-n.n.n.n   range notation, with or without spaces at the dash
   default, any, broadcast, loopback (keywords, see below)
   host, as a mask keyword
   x.x.x.x/host
@@ -963,7 +964,9 @@ sub _xnew($$;$$) {
         $isV6 = 1 unless isIPv4($ip);
         last;
             }
-            elsif ($ip =~ m!^([a-z0-9.:-]+)(?:/|\s+)([a-z0-9.:-]+)$!) {
+            # whitespace beside a dash means range notation, read further down
+            elsif ($ip !~ /\s-|-\s/
+                && $ip =~ m!^([a-z0-9.:-]+)(?:/|\s+)([a-z0-9.:-]+)$!) {
         $ip    = $1;
         $mask    = $2;
             }

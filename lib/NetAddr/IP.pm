@@ -694,6 +694,7 @@ The C<$addr> argument can be any of the following and possibly more...
   n.n.n.n mm
   n.n.n.n/m.m.m.m
   n.n.n.n m.m.m.m
+  n.n.n.n-n.n.n.n   range notation, with or without spaces at the dash
   default, any, broadcast, loopback (keywords, see below)
   host, as a mask keyword
   x.x.x.x/host

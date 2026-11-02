@@ -38,6 +38,27 @@ subtest 'Weird ranges' => sub {
     }
 };
 
+subtest 'a space on one side of the dash is range notation too' => sub {
+    my %text = (
+        'a space after the dash'  => '192.0.2.0- 192.0.2.255',
+        'a space before the dash' => '192.0.2.0 -192.0.2.255',
+        'a tab after the dash'    => "192.0.2.0-\t192.0.2.255",
+        'a tab before the dash'   => "192.0.2.0\t-192.0.2.255",
+        'no space at the dash'    => '192.0.2.0-192.0.2.255',
+        'spaces on both sides'    => '192.0.2.0 - 192.0.2.255',
+    );
+    for my $name ( sort keys %text ) {
+        my $ip = NetAddr::IP::Lite->new( $text{$name} );
+        is( defined $ip ? "$ip" : undef, '192.0.2.0/24', "range with $name" );
+    }
+    is( NetAddr::IP::Lite->new('192.0.2.1 -192.0.2.255'),
+        undef, 'an unaligned range with one space is still refused' );
+    is( NetAddr::IP::Lite->new('192.0.2.255 -192.0.2.0'),
+        undef, 'a reversed range with one space is still refused' );
+    is( NetAddr::IP::Lite->new('192.0.2.0 -24'),
+        undef, 'a negative mask after a space is still refused' );
+};
+
 subtest 'Weird octet offsets' => sub {
     for my $o ( 254, 252, 248, 240, 224, 192, 128 ) {
         my $r1 = NetAddr::IP::Lite->new( '0.0.0.0 - ' . $o . '.0.0.0' );
