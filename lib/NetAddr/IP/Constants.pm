@@ -194,9 +194,9 @@ Width of a packed BCD string, in hex nibbles.  Value: C<40>.
 The width follows from the value range rather than from the digit count
 alone.  The largest 128 bit value needs 39 decimal digits, and BCD holds
 one digit per nibble, but a packed string has to be a whole number of
-bytes, so 39 nibbles round up to 40, which is 20 bytes.  C<bin2bcd()>
-returns 39 digits unpadded, and C<simple_pack()> is what pads to 40
-before C<pack("H40")>.
+bytes, so 39 nibbles round up to 40, which is 20 bytes.  The function
+C<bin2bcd()> returns 39 digits unpadded, and C<simple_pack()> is what pads to
+40 before C<pack("H40")>.
 
 =item B<$PACKED_BCD_BYTES>
 

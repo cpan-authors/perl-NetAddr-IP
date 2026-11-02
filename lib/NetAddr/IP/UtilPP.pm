@@ -117,10 +117,10 @@ sub _bytes {
 
 =head1 DESCRIPTION
 
-B<NetAddr::IP::UtilPP> is the pure Perl implementation of the functions in
-B<NetAddr::IP::Util> that touch 128 bit strings.  In a pure Perl build,
-B<NetAddr::IP::Util> loads it in place of its XS code, and C<mode()> from
-B<NetAddr::IP::Util> then reports C<Pure Perl>:
+The B<NetAddr::IP::UtilPP> module is the pure Perl implementation of the
+functions in B<NetAddr::IP::Util> that touch 128 bit strings.  In a pure Perl
+build, B<NetAddr::IP::Util> loads it in place of its XS code, and C<mode()>
+from B<NetAddr::IP::Util> then reports C<Pure Perl>:
 
   mode()   'CC XS' or 'Pure Perl'
 
