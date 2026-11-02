@@ -2,6 +2,12 @@ Revision history for Perl extension NetAddr::IP
 
 {{$NEXT}}
 
+    - Fix GH#215: An IPv6 split(), splitref(), rsplit() or rsplitref()
+      with a mask 54 or more bits longer than the subnet's returns the
+      right pieces. It could return overlapping pieces or a piece outside
+      the subnet, return pieces where it should croak "netlimit exceeded",
+      or croak "netmask error" in its place.
+
     - Fix GH#214: A Math::BigInt address or mask keeps its sign, so
       Math::BigInt->new(-5) gives 255.255.255.251/32, as the text -5 does,
       where it gave 0.0.0.5/32. A Math::BigInt NaN or infinity gives undef,
