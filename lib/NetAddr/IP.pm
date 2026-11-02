@@ -1688,8 +1688,9 @@ deprecated. See L</DEPRECATED>.
 =item C<-E<gt>re()>
 
 Returns a Perl regular expression that will match an IP address within
-the given subnet. Defaults to ipV4 notation. Will return an ipV6 regex
-if the address in not in ipV4 space.
+the given subnet. Defaults to ipV4 notation. For an IPv6 object,
+including one built from text such as C<::1>, and for an address that
+is not in ipV4 space, it returns the ipV6 regex of C<-E<gt>re6>.
 
 =cut
 
@@ -1754,11 +1755,18 @@ the given subnet. Always returns an ipV6 regex.
 
 The regex matches the address written in full or with one C<::> run, with
 or without leading zeros in each group. Case is ignored. It does not match
-the dotted quad forms C<::192.0.2.1> or C<::ffff:192.0.2.1>. Anchor the regex
-when matching a whole string:
+the dotted quad forms C<::192.0.2.1> or C<::ffff:192.0.2.1>. Like the IPv4
+regex of C<-E<gt>re>, it does not match inside a longer address, so the
+regex for C<2001:db8::1/128> does not match C<2001:db8::10> or
+C<2001:db8:2001:db8::1>. Anchor the regex when matching a whole string:
 
   my $re = NetAddr::IP->new('2001:db8::/32')->re6;
   print "in\n" if '2001:db8::1' =~ /^$re$/;
+
+The regex reads a hex digit and a colon before the address, or a dot and a
+digit after it, as part of a longer address. So it does not match
+C<src:2001:db8::1>, where the label ends in a hex digit, or
+C<2001:db8::1.443>, where a port follows a dot.
 
 Both C<-E<gt>re> and C<-E<gt>re6> return a non-capturing group, so that
 embedding either one in a larger pattern does not change the numbering of
@@ -1870,7 +1878,9 @@ else {
             push @alt, join(':', @grp[0..$i-1]) .'::'. join(':', @grp[$j+1..$#grp]);
         }
     }
-    return '(?:'. join('|', @alt) .')';
+    # look-arounds as in re(): no match inside a longer address
+    return '(?:(?<![0-9a-fA-F])(?<![0-9a-fA-F]:)(?:'. join('|', @alt)
+      .')(?![0-9a-fA-F])(?!:[0-9a-fA-F:])(?!\\.[0-9]))';
 }
 
 sub mod_version {
