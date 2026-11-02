@@ -2,6 +2,12 @@ Revision history for Perl extension NetAddr::IP
 
 {{$NEXT}}
 
+    - Fix GH#212: The documentation of :old_storable says what the tag
+      does. The tag makes Storable freeze objects as a plain hash. Reading
+      data frozen that way does not need it. Importing the tag stops a
+      CIDR-string freeze from thawing in the program, or in the calling
+      thread under ithreads.
+
     - Fix GH#219: A keyword given to new6() uses the caller's mask on
       the keyword's IPv6 address. That covers a separate mask, a mask
       written in the string and an undef mask. The calls
