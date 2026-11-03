@@ -1457,6 +1457,8 @@ IPv4 and IPv6 objects are compacted separately. The returned list holds the
 IPv4 results followed by the IPv6 results. The objects passed in are not
 modified; the results are new objects.
 
+=item C<$me-E<gt>compactref(\@list)>
+
 =item C<$list_ref = Compact(\@list)>
 
 As usual, a faster version of C<-E<gt>compact()> that returns a
@@ -1529,8 +1531,6 @@ sub _merge_sorted {
     return @r;
 }
 
-
-=item C<$me-E<gt>compactref(\@list)>
 
 =item C<$me-E<gt>coalesce($masklen, $number, @list_of_subnets)>
 
