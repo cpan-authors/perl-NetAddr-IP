@@ -93,6 +93,51 @@ subtest 'subclass compactref' => sub {
     );
 };
 
+subtest 'compact on a class name croaks' => sub {
+
+    # the croak for a call on a class name, reported at the caller's line
+    my $on_class = sub {
+        my ( $method, $function, $class ) = @_;
+        my $text =
+          sprintf '%s: call it on an object or as the function %s,'
+          . ' not on the class %s at %s line ', $method, $function, $class,
+          __FILE__;
+        return qr/\A\Q$text\E[0-9]+/;
+    };
+    my @h = map { NetAddr::IP->new("192.0.2.$_") } 0 .. 1;
+
+    like(
+        dies { NetAddr::IP->compact(@h) },
+        $on_class->( 'compact', 'Compact', 'NetAddr::IP' ),
+        'compact on the NetAddr::IP class name croaks at the caller'
+    );
+    like(
+        dies { NetAddr::IP->compactref( [@h] ) },
+        $on_class->( 'compactref', 'Compact', 'NetAddr::IP' ),
+        'compactref on the NetAddr::IP class name croaks at the caller'
+    );
+    like(
+        dies { NetAddr::IP::Lite->compact(@h) },
+        $on_class->( 'compact', 'Compact', 'NetAddr::IP::Lite' ),
+        'compact on the NetAddr::IP::Lite class name croaks at the caller'
+    );
+};
+
+subtest 'compactref on a NetAddr::IP::Lite object' => sub {
+    my $lite = NetAddr::IP::Lite->new('192.0.2.0');
+    my $r    = $lite->compactref( [ NetAddr::IP::Lite->new('192.0.2.1') ] );
+    ref_ok( $r, 'ARRAY',
+        'compactref on a NetAddr::IP::Lite object returns an array ref' );
+    is( [ map { "$_" } @$r ],
+        ['192.0.2.0/31'],
+        'compactref on a NetAddr::IP::Lite object compacts it with the list' );
+    is(
+        [ map { "$_" } $lite->compact( NetAddr::IP::Lite->new('192.0.2.1') ) ],
+        [ map { "$_" } @$r ],
+        'compact and compactref on a NetAddr::IP::Lite object agree'
+    );
+};
+
 subtest 'duplicate IP' => sub {
     my @dup;
     for my $ip (qw(198.51.100.111 198.51.100.111 198.51.100.111 198.51.100.111))

@@ -2,6 +2,13 @@ Revision history for Perl extension NetAddr::IP
 
 {{$NEXT}}
 
+    - Fix GH#229: Calling coalesce, compact or compactref on the class
+      name, as in NetAddr::IP->coalesce(24, 2, @list), croaks with a
+      message that names the right calls, where it died with Perl's own
+      "Can't use string as a HASH ref". Calling coalesce on a
+      NetAddr::IP::Lite object, or with those objects in the list, and
+      calling compactref on one, works, where these croaked or died.
+
     - Fix GH#228: Comparing an address with a string, a number or undef
       no longer dies. The operators <=>, <, >, <= and >= give undef or
       false, as == does, and cmp, lt, gt, le and ge compare the text, as
