@@ -326,6 +326,19 @@ directly:
 
   $ip1->masklen <=> $ip2->masklen
 
+Against an operand that is not a NetAddr::IP or NetAddr::IP::Lite
+object, such as a string, a number or undef, C<E<lt>=E<gt>> returns
+undef, as Perl's own C<E<lt>=E<gt>> does for NaN, and C<E<gt>>,
+C<E<lt>>, C<E<gt>=> and C<E<lt>=> return false, as C<==> does. An
+undef variable used as that operand stays undef. The C<cmp> operator
+compares the CIDR text with the operand instead, as C<eq> does, so
+C<lt>, C<gt>, C<le> and C<ge> agree with C<eq>:
+
+  my $ip = NetAddr::IP->new('192.0.2.1');
+  $ip <=> '192.0.2.1';      # undef
+  $ip <   '192.0.2.1';      # false
+  $ip cmp '192.0.2.1/32';   # 0
+
 =item B<Addition of a constant (C<+>)>
 
 Add a signed integer constant to the address part of a NetAddr object.
