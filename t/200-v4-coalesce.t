@@ -302,6 +302,74 @@ subtest 'coalesce on a subclass' => sub {
         'subclass coalesce with an empty list fires at number 1' );
 };
 
+subtest 'coalesce on a class name croaks' => sub {
+
+    # the croak for a call on a class name, reported at the caller's line
+    my $on_class = sub {
+        my ( $method, $function, $class ) = @_;
+        my $text =
+          sprintf '%s: call it on an object or as the function %s,'
+          . ' not on the class %s at %s line ', $method, $function, $class,
+          __FILE__;
+        return qr/\A\Q$text\E[0-9]+/;
+    };
+    my @h = map { NetAddr::IP->new("192.0.2.$_") } 1 .. 3;
+
+    like(
+        dies { NetAddr::IP->coalesce( 24, 2, @h ) },
+        $on_class->( 'coalesce', 'Coalesce', 'NetAddr::IP' ),
+        'coalesce on the NetAddr::IP class name croaks at the caller'
+    );
+    like(
+        dies { NetAddr::IP->coalesce( 24, 2 ) },
+        $on_class->( 'coalesce', 'Coalesce', 'NetAddr::IP' ),
+        'coalesce on the class name with an empty list croaks'
+    );
+    like(
+        dies { NetAddr::IP::Lite->coalesce( 24, 2, @h ) },
+        $on_class->( 'coalesce', 'Coalesce', 'NetAddr::IP::Lite' ),
+        'coalesce on the NetAddr::IP::Lite class name croaks at the caller'
+    );
+    like(
+        dies { Coalesce( 24, 2, @h, 'NetAddr::IP' ) },
+        qr/\Acoalesce: arguments must be NetAddr::IP objects/,
+        'a class name in the list croaks'
+    );
+};
+
+subtest 'coalesce on a NetAddr::IP::Lite object' => sub {
+    my @h    = map { NetAddr::IP->new("192.0.2.$_") } 1 .. 3;
+    my $lite = NetAddr::IP::Lite->new('192.0.2.1');
+    my $r    = $lite->coalesce( 24, 2, @h[ 1, 2 ] );
+    is( [ map { "$_" } @$r ],
+        ['192.0.2.0/24'],
+        'coalesce on a NetAddr::IP::Lite object counts the invocant' );
+    is( scalar @{ $lite->coalesce( 24, 2 ) },
+        0, 'coalesce on a NetAddr::IP::Lite object counts it once' );
+    is(
+        [ map { "$_" } @{ $lite->coalesce( 24, 2, @h ) } ],
+        [ map { "$_" } @{ $h[0]->coalesce( 24, 2, @h ) } ],
+        'coalesce on a NetAddr::IP::Lite object agrees with NetAddr::IP'
+    );
+
+    my $lite6 = NetAddr::IP::Lite->new('2001:db8::1');
+    is(
+        [
+            map { "$_" }
+              @{ $lite6->coalesce( 120, 2, NetAddr::IP->new('2001:db8::2') ) }
+        ],
+        ['2001:DB8:0:0:0:0:0:0/120'],
+        'coalesce on an IPv6 NetAddr::IP::Lite object counts the invocant'
+    );
+};
+
+subtest 'Coalesce with NetAddr::IP::Lite objects in the list' => sub {
+    my @lites = map { NetAddr::IP::Lite->new("198.51.100.$_") } 1 .. 3;
+    is( [ map { "$_" } @{ Coalesce( 24, 2, @lites ) } ],
+        ['198.51.100.0/24'],
+        'Coalesce takes NetAddr::IP::Lite objects in the list' );
+};
+
 subtest 'coalesce validates masklen and number' => sub {
 
     # RFC 5737 test ranges: 192.0.2.0/24, 198.51.100.0/24, 203.0.113.0/24

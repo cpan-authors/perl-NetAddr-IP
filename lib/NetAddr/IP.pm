@@ -10,6 +10,7 @@ package NetAddr::IP;
 
 use parent qw(Exporter NetAddr::IP::Lite);
 use Carp qw( croak );
+use Scalar::Util qw( blessed );
 
 use NetAddr::IP::Constants qw(
     $DEFAULT_NETLIMIT_EXP
@@ -500,6 +501,7 @@ sub import
 }
 
 sub compact {
+    _croak_on_class('compact', 'Compact', $_[0]);
     # a reference in, a reference out; a list in, a list out
     return compactref($_[0]) if ref $_[0] eq 'ARRAY';
     return @{compactref(\@_)};
@@ -509,6 +511,19 @@ sub compact {
 
 sub Coalesce {
     return &coalesce;
+}
+
+# a NetAddr::IP::Lite object, so a NetAddr::IP and a subclass count too
+sub _is_address {
+    return blessed $_[0] && $_[0]->isa('NetAddr::IP::Lite');
+}
+
+# the class name is not an object: NetAddr::IP->compact(@list) is a mistake
+sub _croak_on_class {
+    my ($method, $function, $arg) = @_;
+    croak("$method: call it on an object or as the function $function, not on the class $arg")
+    if defined $arg && !ref $arg && UNIVERSAL::isa($arg, 'NetAddr::IP::Lite');
+    return;
 }
 
 sub hostenumref($) {
@@ -1416,6 +1431,11 @@ that the split plan is applied to the original object in reverse order.
 
 =head2 Set operations
 
+Call each of these on an object, NetAddr::IP or NetAddr::IP::Lite, which
+joins the list, or call the function C<Compact> or C<Coalesce> on the list
+alone. A call on the class name, such as
+C<NetAddr::IP-E<gt>coalesce(24, 2, @list)>, croaks.
+
 =over 4
 
 =item C<$me-E<gt>compact($addr1, $addr2, ...)>
@@ -1430,7 +1450,8 @@ Note that if fed with the same IP subnets multiple times, a more
 "correct" approach has been adopted and only one address would be
 returned.
 
-Note that C<$me> and all C<$addr>'s must be C<NetAddr::IP> objects.
+Note that C<$me> and all C<$addr>'s must be C<NetAddr::IP> or
+C<NetAddr::IP::Lite> objects.
 
 IPv4 and IPv6 objects are compacted separately. The returned list holds the
 IPv4 results followed by the IPv6 results. The objects passed in are not
@@ -1442,15 +1463,16 @@ As usual, a faster version of C<-E<gt>compact()> that returns a
 reference to a list. Note that this method takes a reference to a list
 instead.
 
-Note that C<$me> must be a C<NetAddr::IP> object.
+Note that C<$me> must be a C<NetAddr::IP> or C<NetAddr::IP::Lite> object.
 
 =cut
 
 sub compactref($) {
     my ($first, $rest) = @_;
+    _croak_on_class('compactref', 'Compact', $first);
 
     # a method call compacts the invocant with the list, a function call the list alone
-    my $unr = UNIVERSAL::isa($first, __PACKAGE__) && ref $rest eq 'ARRAY'
+    my $unr = _is_address($first) && ref $rest eq 'ARRAY'
         ? [$first, @$rest]
         : $first;
     return [] unless @$unr;
@@ -1544,7 +1566,8 @@ every argument, so a C<$masklen> above 32 with any IPv4 argument is an error.
 sub coalesce
 {
     my $masklen    = shift;
-    if (UNIVERSAL::isa($masklen, __PACKAGE__)) {        # if called as a method
+    _croak_on_class('coalesce', 'Coalesce', $masklen);
+    if (_is_address($masklen)) {        # if called as a method
         push @_, $masklen;
         $masklen = shift;
     }
@@ -1559,7 +1582,7 @@ sub coalesce
     croak("coalesce: number must be a non-negative integer")
     unless defined $number && $number =~ m|^[0-9]+$|;
     croak("coalesce: arguments must be NetAddr::IP objects")
-    if grep { ! UNIVERSAL::isa($_, __PACKAGE__) } @_;
+    if grep { ! _is_address($_) } @_;
     croak("coalesce: masklen $masklen exceeds the $IPV4_BITS bits of the IPv4 arguments")
     if $masklen > $IPV4_BITS && grep { ! $_->{isv6} } @_;
     my (@v4, @v6);
