@@ -3,7 +3,39 @@
 use Test2::V1 -ipP;
 use Test2::Plugin::NoWarnings;
 
+use Math::BigInt      ();
+use NetAddr::IP       ();
 use NetAddr::IP::Lite ();
+
+# the order operators on two operands, or the error they die with
+sub order {
+    my ( $left, $right ) = @_;
+    my $got = eval {
+        +{
+            '<'   => $left < $right,
+            '<='  => $left <= $right,
+            '<=>' => $left <=> $right,
+            '>'   => $left > $right,
+            '>='  => $left >= $right,
+        };
+    };
+    return $got // $@;
+}
+
+# cmp and the four operators perl builds from it, or the error they die with
+sub text_order {
+    my ( $left, $right ) = @_;
+    my $got = eval {
+        +{
+            cmp => $left cmp $right,
+            ge  => $left ge $right,
+            gt  => $left gt $right,
+            le  => $left le $right,
+            lt  => $left lt $right,
+        };
+    };
+    return $got // $@;
+}
 
 my %gt = (
     '255.255.255.255/32 vs 0.0.0.0/0' => [ '255.255.255.255/32', '0.0.0.0/0' ],
@@ -73,6 +105,59 @@ subtest 'spaceship and cmp' => sub {
         is( $a_ip <=> $b_ip, $expected, "$a_ip <=> $b_ip is $expected" );
         is( $a_ip cmp $b_ip, $expected, "$a_ip cmp $b_ip is $expected" );
     }
+};
+
+subtest 'an operand that is not an object is unordered' => sub {
+    my $ip         = NetAddr::IP::Lite->new('192.0.2.1');
+    my %not_object = (
+        'a class name'                => 'NetAddr::IP::Lite',
+        'a number'                    => 5,
+        'an empty string'             => '',
+        'text that is not an address' => 'x',
+        'the address as text'         => '192.0.2.1/32',
+        'undef'                       => undef,
+    );
+    my %unordered =
+      ( '<' => 0, '<=' => 0, '<=>' => undef, '>' => 0, '>=' => 0 );
+    for my $name ( sort keys %not_object ) {
+        is( order( $ip, $not_object{$name} ),
+            \%unordered, "the address against $name is unordered" );
+        is( order( $not_object{$name}, $ip ),
+            \%unordered, "$name against the address is unordered" );
+    }
+
+    # Math::BigInt answers for itself when it is the left operand
+    is( order( $ip, Math::BigInt->new(5) ),
+        \%unordered, 'the address against a Math::BigInt is unordered' );
+
+    my $full = NetAddr::IP->new('192.0.2.1');
+    is( $full <=> $ip, 0, 'an IP object and a Lite object compare by address' );
+    is( order( $full, 'x' ),
+        \%unordered, 'an IP object against text is unordered' );
+
+    my $undef_operand;
+    my $lived = eval { my $less = $ip < $undef_operand; 1 };
+    is( $lived,             1,  'ordering against an undef variable lives' );
+    is( ref $undef_operand, '', 'that undef variable stays undef' );
+};
+
+subtest 'cmp against text compares the CIDR text, as eq does' => sub {
+    my $ip    = NetAddr::IP::Lite->new('192.0.2.1');
+    my %equal = ( cmp => 0, ge => 1, gt => '', le => 1, lt => '' );
+    is( text_order( $ip, '192.0.2.1/32' ),
+        \%equal, 'the address against its CIDR text is equal' );
+    is( text_order( '192.0.2.1/32', $ip ),
+        \%equal, 'its CIDR text against the address is equal' );
+    is(
+        text_order( $ip, 'x' ),
+        { cmp => -1, ge => '', gt => '', le => 1, lt => 1 },
+        'the address sorts before x, as 192.0.2.1/32 does'
+    );
+    is(
+        text_order( 'x', $ip ),
+        { cmp => 1, ge => 1, gt => 1, le => '', lt => '' },
+        'x sorts after the address, as it does after 192.0.2.1/32'
+    );
 };
 
 done_testing;

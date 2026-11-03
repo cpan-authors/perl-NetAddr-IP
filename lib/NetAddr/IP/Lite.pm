@@ -250,26 +250,38 @@ use overload
     },
 
     '>'        => sub {
-    return &comp_addr_mask > 0 ? 1 : 0;
+    my $order = &comp_addr_mask;
+    return defined $order && $order > 0 ? 1 : 0;
     },
 
     '<'        => sub {
-    return &comp_addr_mask < 0 ? 1 : 0;
+    my $order = &comp_addr_mask;
+    return defined $order && $order < 0 ? 1 : 0;
     },
 
     '>='    => sub {
-    return &comp_addr_mask < 0 ? 0 : 1;
+    my $order = &comp_addr_mask;
+    return defined $order && $order >= 0 ? 1 : 0;
     },
 
     '<='    => sub {
-    return &comp_addr_mask > 0 ? 0 : 1;
+    my $order = &comp_addr_mask;
+    return defined $order && $order <= 0 ? 1 : 0;
     },
 
     '<=>'    => \&comp_addr_mask,
 
-    'cmp'    => \&comp_addr_mask;
+    'cmp'    => sub {
+    my ($ip, $other, $swapped) = @_;
+    return comp_addr_mask($ip, $other)
+        if blessed $other && $other->isa(__PACKAGE__);
+    # a non-object is the CIDR text, in the written order, as eq does
+    return $swapped ? $other cmp $ip->cidr : $ip->cidr cmp $other;
+    };
 
 sub comp_addr_mask {
+    # no address order against a non-object: undef, as <=> is for NaN
+    return undef unless blessed $_[1] && $_[1]->isa(__PACKAGE__);
     my ($c, $rv) = sub128($_[0]->{addr}, $_[1]->{addr});
     return -1 unless $c;
     return 1 if hasbits($rv);
@@ -347,6 +359,19 @@ mean by "bigger". To rank netblocks by size, compare the mask lengths
 directly:
 
   $ip1->masklen <=> $ip2->masklen
+
+Against an operand that is not a NetAddr::IP::Lite object, such as a
+string, a number or undef, C<E<lt>=E<gt>> returns undef, as Perl's own
+C<E<lt>=E<gt>> does for NaN, and C<E<gt>>, C<E<lt>>, C<E<gt>=> and
+C<E<lt>=> return false, as C<==> does. An undef variable used as that
+operand stays undef. The C<cmp> operator compares the CIDR text with
+the operand instead, as C<eq> does, so C<lt>, C<gt>, C<le> and C<ge>
+agree with C<eq>:
+
+  my $ip = NetAddr::IP::Lite->new('192.0.2.1');
+  $ip <=> '192.0.2.1';      # undef
+  $ip <   '192.0.2.1';      # false
+  $ip cmp '192.0.2.1/32';   # 0
 
 =item B<Addition of a constant (C<+>)>
 

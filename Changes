@@ -2,6 +2,11 @@ Revision history for Perl extension NetAddr::IP
 
 {{$NEXT}}
 
+    - Fix GH#228: Comparing an address with a string, a number or undef
+      no longer dies. The operators <=>, <, >, <= and >= give undef or
+      false, as == does, and cmp, lt, gt, le and ge compare the text, as
+      eq does.
+
     - Fix GH#241: A short range such as 192.0.2.5-6 or 192.1-2. gives
       undef unless it covers exactly one subnet, as the POD says and as
       the full form 192.0.2.5-192.0.2.6 already did. So 192.0.2.5-6
