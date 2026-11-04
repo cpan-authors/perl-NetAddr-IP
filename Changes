@@ -2,6 +2,14 @@ Revision history for Perl extension NetAddr::IP
 
 {{$NEXT}}
 
+    - Fix GH#235: A small number given with a mask written as a whole
+      number, as numeric() returns it, is read as the address value. So
+      new(5, 4294967292) gives 0.0.0.5/30 where it gave 5.0.0.0/30. A
+      numeric mask of 0 is still prefix length 0, so 0.0.0.5/0 comes
+      back as 5.0.0.0/0 and ::1/0 comes back as ::100:0/96. With a
+      prefix length the number is still the first octet: new('10', 8)
+      is 10.0.0.0/8.
+
     - Fix GH#234: The new6FFFF constructor maps only an IPv4 address.
       It wrote ffff into every address, so 2001:db8::1 came back as
       2001:db8::ffff:0:1 and ::1 as ::ffff:0:1. An IPv6 address,

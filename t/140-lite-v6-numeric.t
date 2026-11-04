@@ -109,4 +109,25 @@ subtest 'numeric ordering of scaled IPv6 addresses' => sub {
     }
 };
 
+subtest 'an address inside ::/96 rebuilds from numeric' => sub {
+    my %want = (
+        '::/128'  => '0:0:0:0:0:0:0:0/128',
+        '::1'     => '0:0:0:0:0:0:0:1/128',
+        '::4/126' => '0:0:0:0:0:0:0:4/126',
+        '::5/8'   => '0:0:0:0:0:0:0:5/8',
+        '::ff'    => '0:0:0:0:0:0:0:FF/128',
+    );
+    for my $cidr ( sort keys %want ) {
+        my $ip = NetAddr::IP::Lite->new6($cidr);
+        is( NetAddr::IP::Lite->new6( $ip->numeric ) . '',
+            $want{$cidr}, "numeric round-trip of $cidr" );
+    }
+    is(
+        NetAddr::IP::Lite->new6( NetAddr::IP::Lite->new6('::1/0')->numeric )
+          . '',
+        '0:0:0:0:0:0:100:0/96',
+        'a numeric mask of 0 stays an IPv6 prefix of 0'
+    );
+};
+
 done_testing;

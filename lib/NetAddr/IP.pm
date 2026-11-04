@@ -834,6 +834,15 @@ host address; with a mask it is the network of that size:
   NetAddr::IP->new('10.1.2');        # 10.1.0.2/32
   NetAddr::IP->new('10.1.2', 24);    # 10.1.2.0/24
 
+A whole number follows the same rule. On its own it is the address with
+that value; with a prefix length, a number below 256 is the first octet.
+A mask written as a whole number above 128, as C<numeric> returns it,
+keeps the number as the address value:
+
+  NetAddr::IP->new('10');               # 0.0.0.10/32
+  NetAddr::IP->new('10', 8);            # 10.0.0.0/8
+  NetAddr::IP->new('10', 4294967040);   # 0.0.0.10/24
+
 RFC 3986 brackets around an IPv6 literal, which is how a URI carries one:
 
   NetAddr::IP->new('[2001:db8::1]/64');   # 2001:DB8:0:0:0:0:0:1/64
@@ -955,6 +964,14 @@ netmask.
 
 This method is essential for serializing the representation of a
 subnet.
+
+Passing both values back to C<new> rebuilds an IPv4 object when the
+numeric mask is above 128, including an address below 256. A numeric
+mask of 0 is still prefix length 0, so 0.0.0.5/0 comes back as
+5.0.0.0/0:
+
+  my $ip = NetAddr::IP->new('0.0.0.5/30');
+  print NetAddr::IP->new($ip->numeric), "\n";   # 0.0.0.5/30
 
 The ipV6 value has more digits than a Perl number holds, so C<==>,
 C<E<lt>=E<gt>> and C<sort> on two C<numeric()> results compare them as
