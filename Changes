@@ -2,6 +2,15 @@ Revision history for Perl extension NetAddr::IP
 
 {{$NEXT}}
 
+    - Fix GH#241: A short range such as 192.0.2.5-6 or 192.1-2. gives
+      undef unless it covers exactly one subnet, as the POD says and as
+      the full form 192.0.2.5-192.0.2.6 already did. So 192.0.2.5-6
+      gives undef where it gave 192.0.2.5/30, a network that also holds
+      192.0.2.4 and 192.0.2.7. A call to new6() uses the same reading,
+      so new6('192.0.2.5-6') is undef where it was
+      0:0:0:0:0:0:C000:205/126. An aligned range is unchanged, so
+      new6('192.0.2.4-7') stays 0:0:0:0:0:0:C000:204/126.
+
     - Fix GH#212: The documentation of :old_storable says what the tag
       does. The tag makes Storable freeze objects as a plain hash. Reading
       data frozen that way does not need it. Importing the tag stops a
