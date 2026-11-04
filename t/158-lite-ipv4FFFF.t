@@ -25,10 +25,11 @@ ok( !defined NetAddr::IP::Lite->new6FFFF(''), "new6FFFF('') returns undef" );
 ok( !defined NetAddr::IP::Lite->new6FFFF('10.0.0.a'),
     "new6FFFF('10.0.0.a') returns undef" );
 
+is( new6ffff_text('-1'), undef, "the call new6FFFF('-1') is undef" );
+
 subtest 'an IPv4 address passed to new6FFFF is mapped into ::ffff:0:0/96' =>
   sub {
     my %mapped = (
-        '-1'                      => '0:0:0:0:0:FFFF:FFFF:FFFF/128',
         '192.0.2.'                => '0:0:0:0:0:FFFF:C000:200/120',
         '192.0.2.0 - 192.0.2.255' => '0:0:0:0:0:FFFF:C000:200/120',
         '192.0.2.0/24'            => '0:0:0:0:0:FFFF:C000:200/120',
