@@ -1551,7 +1551,10 @@ never dropped for failing to reach it.
 
 Subnets from C<@list_of_subnets> with a mask longer than C<$masklen>
 have their address count added towards C<$number>. The count is the
-size of the subnet, so a /25 counts 128 and a /32 counts 1.
+size of the subnet, so a /25 counts 128 and a /32 counts 1. An address
+held by more than one of these subnets is counted once: two copies of
+192.0.2.1/32 count 1, and 192.0.2.0/30 with 192.0.2.1/32 inside it
+counts 4.
 
 Called as a method, the array will include C<$me>.
 
@@ -1601,7 +1604,7 @@ sub _coalesce_family
     my ($masklen, $number, $list) = @_;
     my $type = $list->[0]->{isv6};
     my %ret = ();
-    for my $ip (@$list)
+    for my $ip (@{_drop_nested($masklen, $list)})
     {
     my $n = NetAddr::IP->new($ip->addr . '/' . $masklen)->network;
     if ($ip->masklen > $masklen)
@@ -1632,6 +1635,34 @@ sub _coalesce_family
     }
 
     return [ sort @ret ];
+}
+
+# input:    mask length, reference to a list of one address family
+# returns:  the list in its order, less each subnet longer than the mask
+#           length that repeats or lies inside another such subnet
+sub _drop_nested
+{
+    my ($masklen, $list) = @_;
+    my (%nested, @key);
+    my @longer = grep { $list->[$_]->masklen > $masklen } 0 .. $#$list;
+
+    # network, then mask. The raw-address order used by cmp sorts a
+    # subnet with host bits after an address inside it
+    $key[$_] = ($list->[$_]->{addr} & $list->[$_]->{mask}) . $list->[$_]->{mask}
+        for @longer;
+
+    # this order puts a subnet before those inside it, so checking each
+    # against the last subnet kept finds every repeat and nested subnet
+    my $outer;
+    for my $i (sort { $key[$a] cmp $key[$b] } @longer) {
+        if (defined $outer && $outer->contains($list->[$i])) {
+            $nested{$i} = 1;
+        }
+        else {
+            $outer = $list->[$i];
+        }
+    }
+    return [ @{$list}[ grep { ! $nested{$_} } 0 .. $#$list ] ];
 }
 
 

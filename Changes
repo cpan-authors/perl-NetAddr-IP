@@ -2,6 +2,11 @@ Revision history for Perl extension NetAddr::IP
 
 {{$NEXT}}
 
+    - Fix GH#232: The coalesce method and the Coalesce function count
+      each address once. A subnet listed twice, or a subnet inside
+      another one in the list, no longer counts its addresses twice,
+      so two copies of 192.0.2.1/32 count 1, not 2.
+
     - Fix GH#231: Comparing an address with the string NetAddr::IP or
       NetAddr::IP::Lite, or giving either to within() or contains(),
       answers as for any other string, where it died.

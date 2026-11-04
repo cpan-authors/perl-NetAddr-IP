@@ -138,6 +138,83 @@ subtest 'coalesce counts subnet addresses, not usable hosts' => sub {
     is( scalar @$r, 1, 'two /25 nets reach a threshold of 256 under :old_nth' );
 };
 
+subtest 'coalesce counts each address once' => sub {
+
+    # result counts at each threshold, so [ 1, 0 ] reaches the first only
+    my $results = sub {
+        my ( $masklen, $numbers, @subnets ) = @_;
+        my @nets = map { NetAddr::IP->new($_) } @subnets;
+        return [ map { scalar @{ Coalesce( $masklen, $_, @nets ) } }
+              @$numbers ];
+    };
+
+    my @twice = ( '192.0.2.1/32', '192.0.2.1/32' );
+    is(
+        $results->( 24, [ 1, 2 ], @twice ),
+        [ 1, 0 ],
+        'two copies of 192.0.2.1/32 count 1, reaching 1 but not 2'
+    );
+
+    my @inside = ( '192.0.2.0/30', '192.0.2.1/32' );
+    is(
+        $results->( 24, [ 4, 5 ], @inside ),
+        [ 1, 0 ],
+        'a /30 with a /32 inside it counts 4, reaching 4 but not 5'
+    );
+    is(
+        $results->( 24, [ 4, 5 ], reverse @inside ),
+        [ 1, 0 ],
+        'a /32 listed before the /30 holding it counts 4'
+    );
+
+    my @thrice = ( ('198.51.100.0/25') x 3, '198.51.100.64/26' );
+    is(
+        $results->( 24, [ 128, 129 ], @thrice ),
+        [ 1, 0 ],
+        'a /25 listed three times with a /26 inside it counts 128'
+    );
+
+    my @nested = (
+        '203.0.113.0/27', '203.0.113.0/26',
+        '203.0.113.0/25', '203.0.113.128/32'
+    );
+    is(
+        $results->( 24, [ 129, 130 ], @nested ),
+        [ 1, 0 ],
+        'nested /25, /26 and /27 count 128, and a /32 beside them makes 129'
+    );
+
+    my @two24 =
+      ( '192.0.2.1/32', '198.51.100.1/32', '198.51.100.1/32', '192.0.2.1/32' );
+    is(
+        $results->( 24, [ 1, 2 ], @two24 ),
+        [ 2, 0 ],
+        'a /32 repeated in each of two /24 nets counts once in each'
+    );
+
+    my $me     = NetAddr::IP->new('203.0.113.7/32');
+    my @method = map { scalar @{ $me->coalesce( 24, $_, $me->copy ) } } 1, 2;
+    is(
+        \@method,
+        [ 1, 0 ],
+        'the method form counts an invocant and its copy once'
+    );
+
+    my @twice6 = ( '2001:db8::1/128', '2001:db8::1/128' );
+    is(
+        $results->( 120, [ 1, 2 ], @twice6 ),
+        [ 1, 0 ],
+        'two copies of 2001:db8::1/128 count 1'
+    );
+
+    my @inside6 = ( '2001:db8::/126', '2001:db8::1/128' );
+    is(
+        $results->( 120, [ 4, 5 ], @inside6 ),
+        [ 1, 0 ],
+        'an IPv6 /126 with a /128 inside it counts 4'
+    );
+};
+
 subtest 'coalesce empty address list' => sub {
     my $r = Coalesce( 24, 2 );
     ref_ok( $r, 'ARRAY', 'an empty address list gives an array ref' );
