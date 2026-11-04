@@ -1465,6 +1465,9 @@ As usual, a faster version of C<-E<gt>compact()> that returns a
 reference to a list. Note that this method takes a reference to a list
 instead.
 
+With no list, C<$me-E<gt>compactref()> compacts C<$me> alone, as
+C<$me-E<gt>compactref([])> and C<$me-E<gt>compact()> do.
+
 Note that C<$me> must be a C<NetAddr::IP> or C<NetAddr::IP::Lite> object.
 
 =cut
@@ -1472,6 +1475,9 @@ Note that C<$me> must be a C<NetAddr::IP> or C<NetAddr::IP::Lite> object.
 sub compactref($) {
     my ($first, $rest) = @_;
     _croak_on_class('compactref', 'Compact', $first);
+
+    # with no list, a method call compacts the invocant alone
+    $rest //= [];
 
     # a method call compacts the invocant with the list, a function call the list alone
     my $unr = _is_address($first) && ref $rest eq 'ARRAY'

@@ -2,6 +2,11 @@ Revision history for Perl extension NetAddr::IP
 
 {{$NEXT}}
 
+    - Fix GH#233: Calling compactref on an object with no list, as in
+      $ip->compactref(), gives the object's network, as $ip->compact()
+      does, where it gave blocks built from the host addresses inside it,
+      or croaked "netlimit exceeded" on a large network.
+
     - Fix GH#232: The coalesce method and the Coalesce function count
       each address once. A subnet listed twice, or a subnet inside
       another one in the list, no longer counts its addresses twice,

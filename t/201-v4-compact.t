@@ -202,4 +202,44 @@ subtest 'argument preservation' => sub {
     is( scalar @$ref, 2, 'compactref returns the two non-adjacent nets' );
 };
 
+subtest 'a call with no list compacts the invocant alone' => sub {
+
+    # the CIDR text of $ip->compactref(@arg), or undef when the call dies
+    my $compacted = sub {
+        my ( $ip, @arg ) = @_;
+        my $r = eval { $ip->compactref(@arg) };
+        return defined $r ? [ map { "$_" } @$r ] : undef;
+    };
+    my $net = NetAddr::IP->new('192.0.2.0/28');
+
+    is( $compacted->($net), ['192.0.2.0/28'],
+        'no list on 192.0.2.0/28 returns that network' );
+    is(
+        $compacted->($net),
+        $compacted->( $net, [] ),
+        'no list agrees with an empty list'
+    );
+    is(
+        $compacted->($net),
+        [ map { "$_" } $net->compact() ],
+        'no list agrees with compact of no list'
+    );
+    is( $compacted->( $net, undef ),
+        ['192.0.2.0/28'],
+        'an undef list on 192.0.2.0/28 returns that network' );
+    is( $compacted->( NetAddr::IP->new('192.0.2.5/28') ),
+        ['192.0.2.0/28'],
+        'no list on 192.0.2.5/28 returns its network' );
+    is(
+        $compacted->( NetAddr::IP->new('2001:db8::/32') ),
+        ['2001:DB8:0:0:0:0:0:0/32'],
+        'no list on 2001:db8::/32 returns it whole'
+    );
+    is(
+        $compacted->( NetAddr::IP::Lite->new('192.0.2.0/28') ),
+        ['192.0.2.0/28'],
+        'no list on a Lite object returns that network'
+    );
+};
+
 done_testing;
