@@ -1075,6 +1075,8 @@ sub _xnew($$;$$) {
             $hasmask    = 0;
             $mask    = 'host';
         }
+        # a whole-number mask above 128 is a raw mask, as numeric() returns
+        my $raw_mask = $hasmask && "$mask" =~ /\A[0-9]+\z/ && "$mask" > $IPV6_BITS;
 
         # two kinds of IP's can turn on the isV6 flag
         # 1) big digits that are over the IPv4 boundry
@@ -1201,7 +1203,8 @@ sub _xnew($$;$$) {
                 ? "${1}.${2}.${3}.0"
                 : "${1}.${2}.0.${3}";
             }
-            elsif ($ip =~ /^([0-9]+)$/ && $hasmask && $1 >= 0 and $1 < 256) { # pure numeric
+            # with a prefix length a small number is the first octet; a raw mask keeps it a number
+            elsif ($ip =~ /^([0-9]+)$/ && $hasmask && !$raw_mask && $1 >= 0 and $1 < 256) {
         $ip = sprintf("%d.0.0.0", $1);
             }
             #      elsif ($ip =~ /^[0-9]+$/ && !$hasmask) {    # a big integer
@@ -1210,8 +1213,8 @@ sub _xnew($$;$$) {
         last;
             }
             # binary and hex literals, 0b[01]+ or 0x[0-9a-f]+ ($ip is already lower case)
-            elsif ($ip =~ /^(?:0b[01]+|0x[0-9a-f]+)$/ && $hasmask && !_wider_than_ipv4($ip) &&
-                ($tmp = oct($ip)) < 256) {
+            elsif ($ip =~ /^(?:0b[01]+|0x[0-9a-f]+)$/ && $hasmask && !$raw_mask &&
+                !_wider_than_ipv4($ip) && ($tmp = oct($ip)) < 256) {
                 $ip = sprintf("%d.0.0.0", $tmp);
             }
             elsif ($ip =~ /^-?[0-9]+$/) {
@@ -1381,6 +1384,15 @@ host address; with a mask it is the network of that size:
   NetAddr::IP::Lite->new('10.1', 8);      # 10.1.0.0/8
   NetAddr::IP::Lite->new('10.1.2');       # 10.1.0.2/32
   NetAddr::IP::Lite->new('10.1.2', 24);   # 10.1.2.0/24
+
+A whole number follows the same rule. On its own it is the address with
+that value; with a prefix length, a number below 256 is the first octet.
+A mask written as a whole number above 128, as C<numeric> returns it,
+keeps the number as the address value:
+
+  NetAddr::IP::Lite->new('10');               # 0.0.0.10/32
+  NetAddr::IP::Lite->new('10', 8);            # 10.0.0.0/8
+  NetAddr::IP::Lite->new('10', 4294967040);   # 0.0.0.10/24
 
 RFC 3986 brackets around an IPv6 literal, which is how a URI carries one:
 
@@ -1612,6 +1624,14 @@ netmask.
 
 This method is essential for serializing the representation of a
 subnet.
+
+Passing both values back to C<new> rebuilds an IPv4 object when the
+numeric mask is above 128, including an address below 256. A numeric
+mask of 0 is still prefix length 0, so 0.0.0.5/0 comes back as
+5.0.0.0/0:
+
+  my $ip = NetAddr::IP::Lite->new('0.0.0.5/30');
+  print NetAddr::IP::Lite->new($ip->numeric), "\n";   # 0.0.0.5/30
 
 The ipV6 value has more digits than a Perl number holds, so C<==>,
 C<E<lt>=E<gt>> and C<sort> on two C<numeric()> results compare them as

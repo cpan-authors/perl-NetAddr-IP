@@ -78,14 +78,22 @@ subtest 'v4 new_cis' => sub {
         [ $binword,          '255.255.0.0' ],
     );
 
+    # a whole-number mask above 128 makes a small number the address value
+    my %raw_mask_addr = ( 1 => '0.0.0.1' );
+
     for my $entry (@a) {
         for my $m (@m) {
-            my $ip = new_cis_quiet("$entry->[0] $m->[0]");
+            my $ip            = new_cis_quiet("$entry->[0] $m->[0]");
+            my $expected_addr = $entry->[1];
+            $expected_addr = $raw_mask_addr{ $entry->[0] }
+              if exists $raw_mask_addr{ $entry->[0] }
+              && $m->[0] =~ /\A[0-9]+\z/
+              && $m->[0] > 128;
           SKIP: {
                 skip "Failed to make an object for $entry->[0]/$m->[0]", 4
                   unless defined $ip;
-                is( $ip->addr, $entry->[1],
-                    "$entry->[0] / $m->[0] is $entry->[1]" );
+                is( $ip->addr, $expected_addr,
+                    "$entry->[0] / $m->[0] is $expected_addr" );
                 is( $ip->mask,    $m->[1], "$entry->[0] / $m->[0] is $m->[1]" );
                 is( $ip->bits,    32, "$entry->[0] / $m->[0] is 32 bits wide" );
                 is( $ip->version, 4,  "$entry->[0] / $m->[0] is version 4" );

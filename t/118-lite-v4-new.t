@@ -61,10 +61,17 @@ for my $invalid (
     );
 }
 
+# a whole-number mask above 128 makes a small number the address value
+my %raw_mask_addr = ( 1 => '0.0.0.1' );
+
 for my $entry (@a) {
     for my $m (@m) {
         my ( $input,      $expected_addr ) = %$entry;
         my ( $mask_input, $expected_mask ) = %$m;
+        $expected_addr = $raw_mask_addr{$input}
+          if exists $raw_mask_addr{$input}
+          && $mask_input =~ /\A[0-9]+\z/
+          && $mask_input > 128;
         my $ip = NetAddr::IP::Lite->new( $input, $mask_input );
       SKIP: {
             skip "Failed to make an object for $input/$mask_input", 4
