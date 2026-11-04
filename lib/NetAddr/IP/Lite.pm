@@ -605,9 +605,19 @@ address in C<$addr> and an optional netmask C<$mask>, which can be omitted to
 get a /32 or /128 netmask for IPv4 / IPv6 addresses respectively.
 
 The third constructor, C<new6FFFF>, is what makes an IPv4-mapped
-address, RFC 4291 s2.5.5.2:
+address, RFC 4291 s2.5.5.2. An IPv4 address, whether dotted, short,
+a range or a number of up to 32 bits, comes back inside
+C<::ffff:0:0/96>, so a /24 becomes a /120. An IPv6 address comes back
+as C<new6> gives it:
 
-  NetAddr::IP::Lite->new6FFFF('192.0.2.1');   # 0:0:0:0:0:FFFF:C000:201/128
+  NetAddr::IP::Lite->new6FFFF('192.0.2.1');     # 0:0:0:0:0:FFFF:C000:201/128
+  NetAddr::IP::Lite->new6FFFF('192.0.2.0/24');  # 0:0:0:0:0:FFFF:C000:200/120
+  NetAddr::IP::Lite->new6FFFF('2001:db8::1');   # 2001:DB8:0:0:0:0:0:1/128
+  NetAddr::IP::Lite->new6FFFF('::192.0.2.1');   # 0:0:0:0:0:0:C000:201/128
+
+IPv6 text such as C<::192.0.2.1> is an IPv6 address, and so are a
+number wider than 32 bits and the keywords, such as C<loopback>, which
+C<new6> reads as IPv6. A host name follows the address it resolves to.
 
 An IPv4 address with a leading zero in any part, such as C<192.0.2.010>
 or C<010>, is not an address to C<new>: the C library's C<inet_aton>
@@ -844,10 +854,8 @@ sub new6($;$$) {
 }
 
 sub new6FFFF($;$$) {
-    my $ip = _xnew(1, @_);
-    return undef unless defined $ip;
-    $ip->{addr} |= $_ipv4FFFF;
-    return $ip;
+    unshift @_, 2;
+    goto &_xnew;
 }
 
 sub new_cis($;$$) {
@@ -942,10 +950,18 @@ sub _resolve_host {
 
 sub _xnew($$;$$) {
     my $noctal    = 0;
+    my $map_ipv4    = 0;
+    # true once the address is read as IPv6: IPv6 text, a number over 32 bits,
+    # an IPv6 keyword, an AAAA answer or 16 packed bytes
+    my $v6_input    = 0;
     my $isV6    = shift;
     if ($isV6 < 0) {        # flag for no octal?
         $isV6    = 0;
         $noctal    = 1;
+    }
+    elsif ($isV6 > 1) {        # the new6FFFF flag: an address read as IPv4 becomes ::ffff:a.b.c.d
+        $isV6    = 1;
+        $map_ipv4    = 1;
     }
     my $proto    = shift;
     my $class    = ref $proto || $proto || __PACKAGE__;
@@ -988,7 +1004,7 @@ sub _xnew($$;$$) {
             if ($ip !~ /[^0-9]/) {        # binary number notation
         return undef unless defined ($ip = _bcd2bin_or_undef($ip));
         $mask = Ones;
-        $isV6 = 1 unless isIPv4($ip);
+        $isV6 = $v6_input = 1 unless isIPv4($ip);
         last;
             }
             # whitespace beside a dash means range notation, read further down
@@ -1006,6 +1022,7 @@ sub _xnew($$;$$) {
             elsif (grep($ip eq $_,(qw(default any broadcast loopback unspecified)))) {
         $isV6 = 1 if $ip eq 'unspecified';
         if ($isV6) {
+            $v6_input = 1;
             $mask = $fip6m{$ip};
             return undef unless defined ($ip = $fip6{$ip});
         }
@@ -1027,6 +1044,7 @@ sub _xnew($$;$$) {
         if (grep($ip eq $_,(qw(default any loopback unspecified)))) {
             $isV6    = 1 unless $isV6;    # the ipv6 mask picks the IPv6 address of the keyword
             if ($_[0] =~ /ipv6/i) {
+                $v6_input = 1;
                 $mask    = $fip6m{$ip};
                 $ip    = $fip6{$ip};
                 last;
@@ -1065,7 +1083,7 @@ sub _xnew($$;$$) {
         # check these conditions and set isV6 as appropriate
         #
         my $try;
-        $isV6 = 1 if    # check big bcd and IPv6 RFC 4291 s2.2
+        $isV6 = $v6_input = 1 if    # check big bcd and IPv6 RFC 4291 s2.2
         ( $ip !~ /[^0-9]/ &&                   # ip is all decimal
             (length($ip) > 3 || $ip > 255) &&          # exclude a single digit in the range of zero to 255, could be funny IPv4
             ($try = _bcd2bin_or_undef($ip)) && ! isIPv4($try)) ||      # precedence so $try is not corrupted
@@ -1277,7 +1295,7 @@ sub _xnew($$;$$) {
                 && (my @answer = _resolve_host($ip, $isV6))) {
         ($ip, my $from_aaaa) = @answer;
         # an AAAA answer stays IPv6 even inside ::/96; an A answer keeps the caller's family
-        $isV6 = 1 if $from_aaaa;
+        $isV6 = $v6_input = 1 if $from_aaaa;
         last;
             }
             elsif ($Accept_Binary_IP && ! $hasmask) {
@@ -1286,7 +1304,7 @@ sub _xnew($$;$$) {
         }
         elsif (length($raw) == $V6_PACKED_BYTES) {
             $ip = $raw;
-            $isV6 = 1;
+            $isV6 = $v6_input = 1;
         }
         else {
             return undef;
@@ -1302,7 +1320,7 @@ sub _xnew($$;$$) {
         }
         ########## continuing
         else {                        # ipv6 address
-            $isV6 = 1;
+            $isV6 = $v6_input = 1;
             if (index($ip,'[') >= 0 || index($ip,']') >= 0) {    # transform URI notation
         return undef unless $ip =~ /^\[([^[\]]+)\]$/;    # nothing may follow the closing bracket
         $ip = $1;
@@ -1321,6 +1339,7 @@ sub _xnew($$;$$) {
     # an IPv4 mask keeps the 96 ones above the address, or its length would
     # be negative; a mask of no ones reads as /0
     return undef if !$isV6 && $ones && $ones < $IPV4_OFFSET && isIPv4($ip);
+    $ip |= $_ipv4FFFF if $map_ipv4 && !$v6_input;
 
     my $self = {
         addr    => $ip,

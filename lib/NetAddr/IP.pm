@@ -639,9 +639,19 @@ address in C<$addr> and an optional netmask C<$mask>, which can be omitted to
 get a /32 or /128 netmask for IPv4 / IPv6 addresses respectively.
 
 The third constructor, C<new6FFFF>, is what makes an IPv4-mapped
-address, RFC 4291 s2.5.5.2:
+address, RFC 4291 s2.5.5.2. An IPv4 address, whether dotted, short,
+a range or a number of up to 32 bits, comes back inside
+C<::ffff:0:0/96>, so a /24 becomes a /120. An IPv6 address comes back
+as C<new6> gives it:
 
-  NetAddr::IP->new6FFFF('192.0.2.1');   # 0:0:0:0:0:FFFF:C000:201/128
+  NetAddr::IP->new6FFFF('192.0.2.1');     # 0:0:0:0:0:FFFF:C000:201/128
+  NetAddr::IP->new6FFFF('192.0.2.0/24');  # 0:0:0:0:0:FFFF:C000:200/120
+  NetAddr::IP->new6FFFF('2001:db8::1');   # 2001:DB8:0:0:0:0:0:1/128
+  NetAddr::IP->new6FFFF('::192.0.2.1');   # 0:0:0:0:0:0:C000:201/128
+
+IPv6 text such as C<::192.0.2.1> is an IPv6 address, and so are a
+number wider than 32 bits and the keywords, such as C<loopback>, which
+C<new6> reads as IPv6. A host name follows the address it resolves to.
 
 An IPv4 address with a leading zero in any part, such as C<192.0.2.010>
 or C<010>, is not an address to C<new>: the C library's C<inet_aton>

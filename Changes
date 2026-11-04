@@ -2,6 +2,12 @@ Revision history for Perl extension NetAddr::IP
 
 {{$NEXT}}
 
+    - Fix GH#234: The new6FFFF constructor maps only an IPv4 address.
+      It wrote ffff into every address, so 2001:db8::1 came back as
+      2001:db8::ffff:0:1 and ::1 as ::ffff:0:1. An IPv6 address,
+      including ::192.0.2.1 and a keyword such as loopback, now comes
+      back as new6 gives it.
+
     - Fix GH#233: Calling compactref on an object with no list, as in
       $ip->compactref(), gives the object's network, as $ip->compact()
       does, where it gave blocks built from the host addresses inside it,
