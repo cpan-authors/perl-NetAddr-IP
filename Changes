@@ -2,6 +2,8 @@ Revision history for Perl extension NetAddr::IP
 
 {{$NEXT}}
 
+4.080_07  2026-11-05 08:59:56+11:00 Australia/Sydney (TRIAL RELEASE)
+
     - Fix GH#237: Add new4(), which reads its input as new() does and
       returns undef unless the result is IPv4. IPv4-mapped text such as
       ::ffff:192.0.2.1 gives that IPv4 address. A call to new4()
