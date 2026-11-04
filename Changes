@@ -2,6 +2,25 @@ Revision history for Perl extension NetAddr::IP
 
 {{$NEXT}}
 
+    - Fix GH#237: Add new4(), which reads its input as new() does and
+      returns undef unless the result is IPv4. IPv4-mapped text such as
+      ::ffff:192.0.2.1 gives that IPv4 address. A call to new4()
+      rebuilds an IPv4 object from numeric() when the mask is above
+      128. A numeric mask of 0 is still prefix length 0, so 0.0.0.5/0
+      comes back as 5.0.0.0/0.
+    - Fix GH#237: The new6() constructor reads a whole number as a
+      128-bit value, so new6('5', 8) gives 0:0:0:0:0:0:0:5/8 where it
+      gave 0:0:0:0:0:0:500:0/104. A call to new6() rebuilds an IPv6
+      object from numeric(), ::/0 and ::1/0 included. Dotted text keeps
+      its IPv4 prefix length, so new6('127.0/8') is still
+      0:0:0:0:0:0:7F00:0/104, but new6('127/8') is now
+      0:0:0:0:0:0:0:7F/8. A negative number gives undef. The
+      constructors new6FFFF() and new_cis6() use this same reading, so
+      new6FFFF('5', 8) is 0:0:0:0:0:FFFF:0:5/8 where it was
+      0:0:0:0:0:FFFF:500:0/104, and a negative number is undef from
+      both. An IPv4 reading still gains the mapped prefix. An IPv6
+      address stays as new6 gives it.
+
     - Fix GH#236: An IPv4 address with a mask written as a whole number
       wider than 32 bits needs the 96 leading ones, as the same mask in
       IPv6 form already did. So new('192.0.2.4', N), with N the number

@@ -157,10 +157,9 @@ subtest 'a signed Math::BigInt gives the same address as its text' => sub {
 
     my $neg_five = Math::BigInt->new(-5);
 
-    is( NetAddr::IP::Lite->new6($neg_five), '0:0:0:0:0:0:FFFF:FFFB/128',
-        'new6 of -5' );
+    is( NetAddr::IP::Lite->new6($neg_five), undef, 'a call to new6 refuses -5' );
     is( NetAddr::IP::Lite->new6($neg_five), NetAddr::IP::Lite->new6('-5'),
-        'new6 of -5 matches its text' );
+        'a call to new6 of -5 matches its text' );
     is( NetAddr::IP::Lite->new_no($neg_five), '255.255.255.251/32',
         'new_no of -5' );
     is(

@@ -588,6 +588,8 @@ sub _new ($$$) {
 
 =item C<-E<gt>new([$addr, [ $mask|IPv6 ]])>
 
+=item C<-E<gt>new4([$addr, [ $mask]])>
+
 =item C<-E<gt>new6([$addr, [ $mask]])>
 
 =item C<-E<gt>new6FFFF([$addr, [ $mask]])>
@@ -600,16 +602,19 @@ sub _new ($$$) {
 
 =item C<-E<gt>new_cis6("$addr $mask")>
 
-The constructors C<new> and C<new6> create a new address with the supplied
-address in C<$addr> and an optional netmask C<$mask>, which can be omitted to
-get a /32 or /128 netmask for IPv4 / IPv6 addresses respectively.
+The constructors C<new>, C<new4> and C<new6> create a new address with the
+supplied address in C<$addr> and an optional netmask C<$mask>, which can be
+omitted to get a /32 or /128 netmask for IPv4 / IPv6 addresses respectively.
+All three accept the same notations. The C<new> constructor returns
+whichever family the input reads as, C<new4> returns IPv4 or undef, and
+C<new6> returns IPv6. See L</Numbers and masks> for how each one reads a
+number and a mask.
 
 The third constructor, C<new6FFFF>, is what makes an IPv4-mapped
 address, RFC 4291 s2.5.5.2. An IPv4 address, whether dotted, short,
 a range or a number of up to 32 bits, comes back inside
 C<::ffff:0:0/96>, so a /24 becomes a /120. An IPv6 address comes back
 as C<new6> gives it:
-
   NetAddr::IP::Lite->new6FFFF('192.0.2.1');     # 0:0:0:0:0:FFFF:C000:201/128
   NetAddr::IP::Lite->new6FFFF('192.0.2.0/24');  # 0:0:0:0:0:FFFF:C000:200/120
   NetAddr::IP::Lite->new6FFFF('2001:db8::1');   # 2001:DB8:0:0:0:0:0:1/128
@@ -858,6 +863,17 @@ sub new_from_aton($$) {
         isv6    => 0,
     };
     return bless $self, $class;
+}
+
+sub new4($;$$) {
+    my $ip = _xnew(0, @_);
+    return $ip unless defined $ip && $ip->{isv6};
+    # an IPv4-mapped address with a prefix of 96 bits or more is that IPv4 address
+    return undef unless ($ip->{addr} & $_v4mask) eq $_ipv4FFFF
+        && ($ip->{mask} & $_v4mask) eq $_v4mask;
+    $ip->{addr} ^= $_ipv4FFFF;
+    $ip->{isv6} = 0;
+    return $ip;
 }
 
 sub new6($;$$) {
@@ -1118,7 +1134,9 @@ sub _xnew($$;$$) {
             if ($isV6) {
         if ($isCIDR) {
             my ($dq1, $dq2, $dq3, $dq4);
-            if ($ip =~ /^([0-9]+)(?:|\.([0-9]+)(?:|\.([0-9]+)(?:|\.([0-9]+))))$/ &&
+            # dotted text keeps an IPv4 prefix length; a whole number is 128 bits
+            if (index($ip, '.') >= 0 &&
+                $ip =~ /^([0-9]+)(?:|\.([0-9]+)(?:|\.([0-9]+)(?:|\.([0-9]+))))$/ &&
                 do {$dq1 = $1;
                 $dq2 = $2 || 0;
                 $dq3 = $3 || 0;
@@ -1216,8 +1234,9 @@ sub _xnew($$;$$) {
                 ? "${1}.${2}.${3}.0"
                 : "${1}.${2}.0.${3}";
             }
-            # with a prefix length a small number is the first octet; a raw mask keeps it a number
-            elsif ($ip =~ /^([0-9]+)$/ && $hasmask && !$raw_mask && $1 >= 0 and $1 < 256) {
+            # with a prefix length a small number is the first octet, except under new6
+            # or with a raw mask, which keep it a number
+            elsif ($ip =~ /^([0-9]+)$/ && $hasmask && !$isV6 && !$raw_mask && $1 >= 0 and $1 < 256) {
         $ip = sprintf("%d.0.0.0", $1);
             }
             #      elsif ($ip =~ /^[0-9]+$/ && !$hasmask) {    # a big integer
@@ -1226,12 +1245,13 @@ sub _xnew($$;$$) {
         last;
             }
             # binary and hex literals, 0b[01]+ or 0x[0-9a-f]+ ($ip is already lower case)
-            elsif ($ip =~ /^(?:0b[01]+|0x[0-9a-f]+)$/ && $hasmask && !$raw_mask &&
+            elsif ($ip =~ /^(?:0b[01]+|0x[0-9a-f]+)$/ && $hasmask && !$isV6 && !$raw_mask &&
                 !_wider_than_ipv4($ip) && ($tmp = oct($ip)) < 256) {
                 $ip = sprintf("%d.0.0.0", $tmp);
             }
             elsif ($ip =~ /^-?[0-9]+$/) {
-        return undef if !$noctal && _leading_zero($ip);
+        # a negative number is a 32-bit two's complement, so new6 refuses it
+        return undef if $isV6 || (!$noctal && _leading_zero($ip));
         # negative values in -1 .. -(2**32) are accepted as 2's complement
         $ip += 2 ** $IPV4_BITS;
         return undef if $ip < 0;        # would wrap in pack
@@ -1240,7 +1260,7 @@ sub _xnew($$;$$) {
             }
             elsif ($ip =~ /^(-?)(0b[01]+|0x[0-9a-f]+)$/) {
         # more than 32 bits is not an IPv4 address, and oct would warn
-        return undef if _wider_than_ipv4($2);
+        return undef if _wider_than_ipv4($2) || ($1 && $isV6);
         $ip = oct($2);
         $ip = 2 ** $IPV4_BITS - $ip if $1 && $ip;
         $ip = pack('L3N', 0, 0, 0, $ip);
@@ -1398,15 +1418,6 @@ host address; with a mask it is the network of that size:
   NetAddr::IP::Lite->new('10.1.2');       # 10.1.0.2/32
   NetAddr::IP::Lite->new('10.1.2', 24);   # 10.1.2.0/24
 
-A whole number follows the same rule. On its own it is the address with
-that value; with a prefix length, a number below 256 is the first octet.
-A mask written as a whole number above 128, as C<numeric> returns it,
-keeps the number as the address value:
-
-  NetAddr::IP::Lite->new('10');               # 0.0.0.10/32
-  NetAddr::IP::Lite->new('10', 8);            # 10.0.0.0/8
-  NetAddr::IP::Lite->new('10', 4294967040);   # 0.0.0.10/24
-
 RFC 3986 brackets around an IPv6 literal, which is how a URI carries one:
 
   NetAddr::IP::Lite->new('[2001:db8::1]/64');  # 2001:DB8:0:0:0:0:0:1/64
@@ -1414,7 +1425,7 @@ RFC 3986 brackets around an IPv6 literal, which is how a URI carries one:
 
 Brackets around an IPv4 literal are not accepted and return undef.
 
-Keywords. The set is not the same for both constructors, which is worth
+Keywords. The set is not the same for every constructor, which is worth
 knowing before reaching for one:
 
   NetAddr::IP::Lite->new('broadcast');     # 255.255.255.255/32
@@ -1435,7 +1446,87 @@ The C<broadcast> keyword is IPv4 only: C<new6('broadcast')> returns
 undef, while C<new6('unspecified')> gives an IPv6 unspecified address.
 The C<loopback> keyword gives a /8, not a /32. The name C<localhost> is
 not a keyword at all: it is resolved, so it is undef under C<:nofqdn>
-and resolver-dependent otherwise.
+and resolver-dependent otherwise. Under C<new4>, C<unspecified> and the
+C<ipv6> mask give undef, since both name IPv6 addresses.
+
+=head3 Numbers and masks
+
+Text says which family it is in: dotted text such as C<192.0.2.1> is
+IPv4, and text with a colon such as C<2001:db8::1> is IPv6. A number
+does not, so the constructor decides:
+
+  input                  new         new4        new6
+  IPv4 text              IPv4        IPv4        IPv6, ::a.b.c.d
+  IPv6 text              IPv6        undef       IPv6
+  ::ffff:a.b.c.d text    IPv6        IPv4        IPv6
+  number below 2**32     IPv4        IPv4        IPv6
+  number from 2**32      IPv6        undef       IPv6
+  negative number        IPv4        IPv4        undef
+
+Under C<new4>, IPv4-mapped text such as C<::ffff:192.0.2.1> is the IPv4
+address it carries, when its prefix is 96 bits or longer. A host name
+takes the family of its answer, so C<new4> gives undef for a name with
+no IPv4 address. Since C<new> reads a number below 2**32 as IPv4, it
+cannot make an IPv6 address inside ::/96, such as ::1, from a number;
+C<new6> can.
+
+A number is a whole decimal number such as C<3221225985>, a C<0x> or
+C<0b> literal of up to 32 bits such as C<0xc0000201>, or a
+Math::BigInt. A decimal number or a Math::BigInt goes up to 2**128 - 1.
+On its own a number is the address with that value:
+
+  NetAddr::IP::Lite->new('3221225985');    # 192.0.2.1/32
+  NetAddr::IP::Lite->new('4294967296');    # 0:0:0:0:0:1:0:0/128
+  NetAddr::IP::Lite->new4('4294967296');   # undef
+  NetAddr::IP::Lite->new6('1');            # 0:0:0:0:0:0:0:1/128
+
+With a prefix length, C<new> and C<new4> read a number from 0 to 255 as
+the first octet, the short form of 10.0.0.0/8, and a larger number as
+the address value. Under C<new6> the number is always the address
+value, and the prefix length is an IPv6 one:
+
+  NetAddr::IP::Lite->new('10', 8);     # 10.0.0.0/8
+  NetAddr::IP::Lite->new('300', 24);   # 0.0.1.44/24
+  NetAddr::IP::Lite->new6('10', 8);    # 0:0:0:0:0:0:0:A/8
+  NetAddr::IP::Lite->new6('10', 64);   # 0:0:0:0:0:0:0:A/64
+
+A mask written as a whole number above 128 is a raw mask, the form
+C<numeric> returns. With a raw mask the number is always the address
+value:
+
+  NetAddr::IP::Lite->new('10', 4294967040);   # 0.0.0.10/24
+
+A negative number counts down from 2**32, so -1 is 255.255.255.255.
+Both C<new> and C<new4> accept -1 to -4294967296, and C<new6> refuses a
+negative number:
+
+  NetAddr::IP::Lite->new('-1');    # 255.255.255.255/32
+  NetAddr::IP::Lite->new6('-1');   # undef
+
+A mask is read for the family of the address:
+
+  mask                      IPv4 address          IPv6 address
+  prefix length 0 to 32     IPv4 prefix           IPv6 prefix
+  prefix length 33 to 128   undef                 IPv6 prefix
+  dotted, 255.255.255.0     IPv4 mask             96 plus its length
+  IPv6 form, ffff::         needs the 96          IPv6 mask
+                            leading ones
+  whole number above 128    32 bits, or 128       128 bits
+                            with the 96 leading
+                            ones
+  host                      /32                   /128
+  default, any              /0                    /0
+  loopback                  /8                    /128
+  broadcast                 /32                   undef
+  unspecified               undef                 /128
+
+Under C<new6>, IPv4 text becomes ::a.b.c.d. A prefix length or a dotted
+mask on it is read as an IPv4 one and gains 96, and any other mask is
+read as for an IPv6 address:
+
+  NetAddr::IP::Lite->new6('192.0.2.1', 24);         # 0:0:0:0:0:0:C000:201/120
+  NetAddr::IP::Lite->new6('192.0.2.1', 'ffff::');   # 0:0:0:0:0:0:C000:201/16
+  NetAddr::IP::Lite->new6('192.0.2.1', 'host');     # 0:0:0:0:0:0:C000:201/128
 
 =head2 Address and mask
 
@@ -1638,13 +1729,16 @@ netmask.
 This method is essential for serializing the representation of a
 subnet.
 
-Passing both values back to C<new> rebuilds an IPv4 object when the
-numeric mask is above 128, including an address below 256. A numeric
-mask of 0 is still prefix length 0, so 0.0.0.5/0 comes back as
-5.0.0.0/0:
+Passing both values back rebuilds the object. The new6 constructor
+rebuilds an IPv6 object, including ::/0 and ::1/0. The new4 constructor
+and new rebuild an IPv4 object when the numeric mask is above 128. A
+numeric mask of 0 is still prefix length 0, so 0.0.0.5/0 comes back as
+5.0.0.0/0. The new constructor reads the values of an IPv6 object
+inside ::/96, such as ::1, as IPv4:
 
-  my $ip = NetAddr::IP::Lite->new('0.0.0.5/30');
-  print NetAddr::IP::Lite->new($ip->numeric), "\n";   # 0.0.0.5/30
+  my $ip = NetAddr::IP::Lite->new6('::1');
+  print NetAddr::IP::Lite->new6($ip->numeric), "\n";  # 0:0:0:0:0:0:0:1/128
+  print NetAddr::IP::Lite->new($ip->numeric), "\n";   # 0.0.0.1/32
 
 The ipV6 value has more digits than a Perl number holds, so C<==>,
 C<E<lt>=E<gt>> and C<sort> on two C<numeric()> results compare them as

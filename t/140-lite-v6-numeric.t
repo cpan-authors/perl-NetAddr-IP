@@ -125,7 +125,7 @@ subtest 'an address inside ::/96 rebuilds from numeric' => sub {
     is(
         NetAddr::IP::Lite->new6( NetAddr::IP::Lite->new6('::1/0')->numeric )
           . '',
-        '0:0:0:0:0:0:100:0/96',
+        '0:0:0:0:0:0:0:1/0',
         'a numeric mask of 0 stays an IPv6 prefix of 0'
     );
 };
