@@ -779,6 +779,14 @@ Range and prefix notation, where the prefix has to name a valid subnet:
   NetAddr::IP->new('10.');                     # 10.0.0.0/8
   NetAddr::IP->new('192.0-3.');                # 192.0.0.0/14
 
+A range has to cover exactly one subnet: its first address has to start
+the subnet and its last has to end it. Any other range gives undef, in
+the short form as in the full one:
+
+  NetAddr::IP->new('192.0.2.5-6');             # undef
+  NetAddr::IP->new('192.1-2.');                # undef
+  NetAddr::IP->new('192.0.2.5-192.0.2.6');     # undef
+
 Short dotted forms change meaning when a mask argument is given, which
 is the one trap here worth writing out. On its own the short form is a
 host address; with a mask it is the network of that size:

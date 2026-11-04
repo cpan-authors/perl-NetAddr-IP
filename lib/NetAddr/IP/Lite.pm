@@ -781,9 +781,11 @@ my $ffffff00 = pack('L3N', 0xffffffff, 0xffffffff, 0xffffffff, 0xFFFFFF00);
 
 sub _obits ($$) {
     my ($lo, $hi) = @_;
+    my $size = $hi - $lo + 1;
 
-    return 0xFF if $lo == $hi;
-    return (~ ($hi ^ $lo)) & 0xFF;
+    # undef unless lo-hi is one aligned block; the byte is the ones above it
+    return undef if $size & ($size - 1) || $lo % $size;
+    return 256 - $size;
 }
 
 sub new_no($;$$) {
@@ -1194,13 +1196,15 @@ sub _xnew($$;$$) {
             }
             elsif ($ip =~ m/^([0-9]+)\.([0-9]+)-([0-9]+)\.?$/ && $2 <= $3 && $3 < 256) {
         return undef if !$noctal && _leading_zero($3);
+        return undef unless defined ($tmp = _obits($2, $3));
         $ip = "${1}.${2}.0.0";
-        $mask = pack('L3C4', 0xffffffff, 0xffffffff, 0xffffffff, 255, _obits($2, $3), 0, 0);
+        $mask = pack('L3C4', 0xffffffff, 0xffffffff, 0xffffffff, 255, $tmp, 0, 0);
             }
             elsif ($ip =~ m/^([0-9]+)-([0-9]+)\.?$/ and $1 <= $2 && $2 < 256) {
         return undef if !$noctal && _leading_zero($2);
+        return undef unless defined ($tmp = _obits($1, $2));
         $ip = "${1}.0.0.0";
-        $mask = pack('L3C4', 0xffffffff, 0xffffffff, 0xffffffff, _obits($1, $2), 0, 0, 0)
+        $mask = pack('L3C4', 0xffffffff, 0xffffffff, 0xffffffff, $tmp, 0, 0, 0)
             }
             elsif ($ip =~ m/^([0-9]+)\.([0-9]+)\.$/) {
         $ip = "${1}.${2}.0.0";
@@ -1208,8 +1212,9 @@ sub _xnew($$;$$) {
             }
             elsif ($ip =~ m/^([0-9]+)\.([0-9]+)\.([0-9]+)-([0-9]+)\.?$/ && $3 <= $4 && $4 < 256) {
         return undef if !$noctal && _leading_zero($4);
+        return undef unless defined ($tmp = _obits($3, $4));
         $ip = "${1}.${2}.${3}.0";
-        $mask = pack('L3C4', 0xffffffff, 0xffffffff, 0xffffffff, 255, 255, _obits($3, $4), 0);
+        $mask = pack('L3C4', 0xffffffff, 0xffffffff, 0xffffffff, 255, 255, $tmp, 0);
             }
             elsif ($ip =~ m/^([0-9]+)\.([0-9]+)\.([0-9]+)\.$/) {
         $ip = "${1}.${2}.${3}.0";
@@ -1217,8 +1222,9 @@ sub _xnew($$;$$) {
             }
             elsif ($ip =~ m/^([0-9]+)\.([0-9]+)\.([0-9]+)\.([0-9]+)-([0-9]+)$/ && $4 <= $5 && $5 < 256) {
         return undef if !$noctal && _leading_zero($5);
+        return undef unless defined ($tmp = _obits($4, $5));
         $ip = "${1}.${2}.${3}.${4}";
-        $mask = pack('L3C4', 0xffffffff, 0xffffffff, 0xffffffff, 255, 255, 255, _obits($4, $5));
+        $mask = pack('L3C4', 0xffffffff, 0xffffffff, 0xffffffff, 255, 255, 255, $tmp);
             }
             elsif ($ip =~ m/^([0-9]+\.[0-9]+\.[0-9]+\.[0-9]+)
                 \s*-\s*([0-9]+\.[0-9]+\.[0-9]+\.[0-9]+)$/x) {
@@ -1314,6 +1320,14 @@ Range and prefix notation, where the prefix has to name a valid subnet:
   NetAddr::IP::Lite->new('192.0.');                  # 192.0.0.0/16
   NetAddr::IP::Lite->new('10.');                     # 10.0.0.0/8
   NetAddr::IP::Lite->new('192.0-3.');                # 192.0.0.0/14
+
+A range has to cover exactly one subnet: its first address has to start
+the subnet and its last has to end it. Any other range gives undef, in
+the short form as in the full one:
+
+  NetAddr::IP::Lite->new('192.0.2.5-6');             # undef
+  NetAddr::IP::Lite->new('192.1-2.');                # undef
+  NetAddr::IP::Lite->new('192.0.2.5-192.0.2.6');     # undef
 
 Short dotted forms change meaning when a mask argument is given, which
 is the one trap here worth writing out. On its own the short form is a
