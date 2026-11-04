@@ -228,24 +228,24 @@ use overload
     '""'    => sub { $_[0]->cidr(); },
 
     'eq'    => sub {
-    my $a = (UNIVERSAL::isa($_[0], __PACKAGE__)) ? $_[0]->cidr : $_[0];
-    my $b = (UNIVERSAL::isa($_[1], __PACKAGE__)) ? $_[1]->cidr : $_[1];
+    my $a = _is_address($_[0]) ? $_[0]->cidr : $_[0];
+    my $b = _is_address($_[1]) ? $_[1]->cidr : $_[1];
     $a eq $b;
     },
 
     'ne'    => sub {
-    my $a = (UNIVERSAL::isa($_[0], __PACKAGE__)) ? $_[0]->cidr : $_[0];
-    my $b = (UNIVERSAL::isa($_[1], __PACKAGE__)) ? $_[1]->cidr : $_[1];
+    my $a = _is_address($_[0]) ? $_[0]->cidr : $_[0];
+    my $b = _is_address($_[1]) ? $_[1]->cidr : $_[1];
     $a ne $b;
     },
 
     '=='    => sub {
-    return 0 unless UNIVERSAL::isa($_[0], __PACKAGE__) && UNIVERSAL::isa($_[1], __PACKAGE__);
+    return 0 unless _is_address($_[0]) && _is_address($_[1]);
     $_[0]->cidr eq $_[1]->cidr;
     },
 
     '!='    => sub {
-    return 1 unless UNIVERSAL::isa($_[0], __PACKAGE__) && UNIVERSAL::isa($_[1], __PACKAGE__);
+    return 1 unless _is_address($_[0]) && _is_address($_[1]);
     $_[0]->cidr ne $_[1]->cidr;
     },
 
@@ -1738,9 +1738,14 @@ different addresses.
 
 =cut
 
+# true for a NetAddr::IP::Lite object, NetAddr::IP included; a class name
+# such as 'NetAddr::IP' is a string, not an address
+sub _is_address {
+    return blessed $_[0] && $_[0]->isa(__PACKAGE__);
+}
+
 sub within ($$) {
-    return undef unless UNIVERSAL::isa($_[0], __PACKAGE__)
-        && UNIVERSAL::isa($_[1], __PACKAGE__);
+    return undef unless _is_address($_[0]) && _is_address($_[1]);
     return 0 if ($_[0]->{isv6} ? 1 : 0) != ($_[1]->{isv6} ? 1 : 0);    # different address families
     return 1 unless hasbits($_[1]->{mask});    # 0x0 contains everything
     my $netme    = $_[0]->{addr} & $_[0]->{mask};

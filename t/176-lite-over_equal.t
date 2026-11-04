@@ -3,6 +3,8 @@
 use Test2::V1 -ipP;
 use Test2::Plugin::NoWarnings;
 
+# loaded, so the name NetAddr::IP is a subclass of NetAddr::IP::Lite
+use NetAddr::IP       ();
 use NetAddr::IP::Lite ();
 
 my $four    = NetAddr::IP::Lite->new('0.0.0.4');
@@ -62,6 +64,30 @@ subtest 'numeric comparisons' => sub {
     ## since both of these are string scalars, the != should fail
     $rv = $t532 != $t432 ? 1 : 0;
     ok( !$rv, '!= scalar to scalar should be false' );
+};
+
+subtest 'a class name is a string, not an address' => sub {
+    my $ip = NetAddr::IP::Lite->new('192.0.2.1');
+
+    # the truth of a comparison as 1 or 0, or 'dies'
+    my $truth = sub {
+        my $r = eval { $_[0]->() ? 1 : 0 };
+        return $@ ? 'dies' : $r;
+    };
+    for my $class (qw(NetAddr::IP NetAddr::IP::Lite)) {
+        is( $truth->( sub { $ip eq $class } ),
+            0, "the address eq '$class' is false" );
+        is( $truth->( sub { $class eq $ip } ),
+            0, "the string '$class' eq the address is false" );
+        is( $truth->( sub { $ip ne $class } ),
+            1, "the address ne '$class' is true" );
+        is( $truth->( sub { $ip == $class } ),
+            0, "the address == '$class' is false" );
+        is( $truth->( sub { $class == $ip } ),
+            0, "the string '$class' == the address is false" );
+        is( $truth->( sub { $ip != $class } ),
+            1, "the address != '$class' is true" );
+    }
 };
 
 done_testing;

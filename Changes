@@ -2,6 +2,10 @@ Revision history for Perl extension NetAddr::IP
 
 {{$NEXT}}
 
+    - Fix GH#231: Comparing an address with the string NetAddr::IP or
+      NetAddr::IP::Lite, or giving either to within() or contains(),
+      answers as for any other string, where it died.
+
     - Fix GH#230: The POD lists compactref() with Compact(\@list), which
       it describes, where it sat under coalesce().
 
@@ -25,7 +29,6 @@ Revision history for Perl extension NetAddr::IP
       so new6('192.0.2.5-6') is undef where it was
       0:0:0:0:0:0:C000:205/126. An aligned range is unchanged, so
       new6('192.0.2.4-7') stays 0:0:0:0:0:0:C000:204/126.
-
     - Fix GH#212: The documentation of :old_storable says what the tag
       does. The tag makes Storable freeze objects as a plain hash. Reading
       data frozen that way does not need it. Importing the tag stops a

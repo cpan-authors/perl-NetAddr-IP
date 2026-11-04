@@ -3,6 +3,8 @@
 use Test2::V1 -ipP;
 use Test2::Plugin::NoWarnings;
 
+# loaded, so the name NetAddr::IP is a subclass of NetAddr::IP::Lite
+use NetAddr::IP       ();
 use NetAddr::IP::Lite ();
 
 my $net4 = NetAddr::IP::Lite->new('192.0.2.5/30');
@@ -43,5 +45,22 @@ $rv = NetAddr::IP::Lite->new('192.0.2.5')
 is( "$rv", '0', 'v4 within v6 is 0' );
 $rv = eval { $net4->within('192.0.2.5') };
 ok( !defined $rv && $@ eq '', 'non object returns undef' );
+
+subtest 'a class name is not an address to within or contains' => sub {
+    my $net = NetAddr::IP::Lite->new('192.0.2.0/24');
+
+    # the result of a method call, or 'dies'
+    my $call = sub {
+        my ( $method, $arg ) = @_;
+        my $r = eval { $net->$method($arg) };
+        return $@ ? 'dies' : $r;
+    };
+    for my $class (qw(NetAddr::IP NetAddr::IP::Lite)) {
+        is( $call->( within => $class ),
+            undef, "a call to within('$class') is undef" );
+        is( $call->( contains => $class ),
+            undef, "a call to contains('$class') is undef" );
+    }
+};
 
 done_testing;
