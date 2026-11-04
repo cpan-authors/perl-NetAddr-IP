@@ -695,6 +695,18 @@ returns C<undef>; through C<new6> the same mask is an IPv6 prefix:
   NetAddr::IP::Lite->new('192.0.2.4',
       'ffff:ffff:ffff:ffff:ffff:ffff:ffff:ff00');   # 192.0.2.4/24
 
+The same holds for a mask written as a whole number. One that fits in
+32 bits is an IPv4 mask. A wider one covers all 128 bits, so it needs
+the 96 leading ones too. The two long masks below are
+ffff:ffff:ffff:ffff:ffff:ffff:ffff:ff00 and ffff:: written as whole
+numbers:
+
+  NetAddr::IP::Lite->new('192.0.2.4', 4294967040);   # 192.0.2.4/24
+  NetAddr::IP::Lite->new('192.0.2.4',
+      '340282366920938463463374607431768211200');   # 192.0.2.4/24
+  NetAddr::IP::Lite->new('192.0.2.4',
+      '340277174624079928635746076935438991360');   # undef
+
 Addresses in the packed format returned by C<inet_aton> or
 C<gethostbyname> are understood only under the deprecated C<:aton> tag,
 and no mask can be specified for them. Even then a packed string is
@@ -1160,7 +1172,8 @@ sub _xnew($$;$$) {
             }
             else {                    # also V4
         return undef unless defined ($mask = _bcd2bin_or_undef($mask));
-        $mask |= $_v4mask;
+        # a 32-bit mask gains the 96 ones above it; a wider one must already have them
+        $mask |= $_v4mask unless hasbits($mask & $_v4mask);
             }
             if ($try) {                # is a big number
         $ip = $try;

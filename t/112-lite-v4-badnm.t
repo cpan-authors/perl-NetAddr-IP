@@ -4,6 +4,7 @@ use strict;
 use Test2::V1 -ipP;
 use Test2::Plugin::NoWarnings;
 
+use Math::BigInt      ();
 use NetAddr::IP::Lite ();
 
 my @badnets = (
@@ -73,6 +74,42 @@ subtest 'an IPv6-form mask shorter than /96 is no IPv4 mask' => sub {
         '2001:DB8:0:0:0:0:0:1/16',
         'an IPv6 address keeps an IPv6 mask of any length'
     );
+};
+
+subtest 'a whole-number mask wider than 32 bits needs the 96 ones too' => sub {
+    my $two = Math::BigInt->new(2);
+    my %mask_of =
+      map {
+        $_ => $two->copy->bpow(128)->bsub( $two->copy->bpow( 128 - $_ ) )->bstr
+      } ( 1, 16, 95, 96, 120 );
+    for my $ones ( 1, 16, 95 ) {
+        is(
+            NetAddr::IP::Lite->new( '192.0.2.4', $mask_of{$ones} ),
+            undef,
+            "an IPv6 /$ones given as a number to new('192.0.2.4', N) is undef"
+        );
+        is( NetAddr::IP::Lite->new("192.0.2.4/$mask_of{$ones}"),
+            undef,
+            "an IPv6 /$ones given as a number to new('192.0.2.4/N') is undef" );
+    }
+    is(
+        NetAddr::IP::Lite->new( '192.0.2.4', $mask_of{96} ) . '',
+        '192.0.2.4/0',
+        'ninety-six leading ones are an IPv4 /0'
+    );
+    is(
+        NetAddr::IP::Lite->new( '192.0.2.4', $mask_of{120} ) . '',
+        '192.0.2.4/24',
+        '120 leading ones are an IPv4 /24'
+    );
+    is(
+        NetAddr::IP::Lite->new( '192.0.2.4', 4_294_967_040 ) . '',
+        '192.0.2.4/24',
+        'a 32-bit whole-number mask is an IPv4 mask'
+    );
+    is( NetAddr::IP::Lite->new6( '192.0.2.4', $mask_of{16} )->masklen,
+        16,
+        'the new6 constructor keeps a whole-number IPv6 mask of any length' );
 };
 
 done_testing;

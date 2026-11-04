@@ -2,6 +2,11 @@ Revision history for Perl extension NetAddr::IP
 
 {{$NEXT}}
 
+    - Fix GH#236: An IPv4 address with a mask written as a whole number
+      wider than 32 bits needs the 96 leading ones, as the same mask in
+      IPv6 form already did. So new('192.0.2.4', N), with N the number
+      for ffff::, gives undef where it gave 192.0.2.4/0.
+
     - Fix GH#235: A small number given with a mask written as a whole
       number, as numeric() returns it, is read as the address value. So
       new(5, 4294967292) gives 0.0.0.5/30 where it gave 5.0.0.0/30. A
