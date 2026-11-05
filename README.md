@@ -207,7 +207,10 @@ Negation and `abs` croak, since neither means anything for an address:
 Comparisons run on the 128-bit form: address first, then the mask as a
 number, so at the same address `/24` sorts after `/16`. That is
 predictable but not the order that ranks netblocks by size; compare
-`masklen` for that.
+`masklen` for that. An IPv4 address sorts before the IPv6 address with
+the same 128 bits, and an IPv4 `/p` mask ties with an IPv6 `/(96+p)`
+mask, so `192.0.2.4/24` comes before `::192.0.2.4/120`, and `<=>`
+gives 0 only when `==` is true.
 
 ## Import tags
 

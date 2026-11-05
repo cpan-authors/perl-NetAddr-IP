@@ -107,6 +107,62 @@ subtest 'spaceship and cmp' => sub {
     }
 };
 
+subtest 'IPv4 orders before IPv6 holding the same 128 bits' => sub {
+    my %same_bits = (
+        'a host'          => [ '192.0.2.4',    '::192.0.2.4' ],
+        'a subnet'        => [ '192.0.2.4/24', '::192.0.2.4/120' ],
+        'the /0 boundary' => [ '192.0.2.4/0',  '::192.0.2.4/96' ],
+    );
+    for my $name ( sort keys %same_bits ) {
+        my ( $v4, $v6 ) =
+          map { NetAddr::IP::Lite->new($_) } @{ $same_bits{$name} };
+        is(
+            order( $v4, $v6 ),
+            { '<' => 1, '<=' => 1, '<=>' => -1, '>' => 0, '>=' => 0 },
+            "$name in IPv4 orders before $v6"
+        );
+        is(
+            order( $v6, $v4 ),
+            { '<' => 0, '<=' => 0, '<=>' => 1, '>' => 1, '>=' => 1 },
+            "$name in IPv6 orders after $v4"
+        );
+        is(
+            text_order( $v4, $v6 ),
+            { cmp => -1, ge => '', gt => '', le => 1, lt => 1 },
+            "$name in IPv4 sorts before $v6 under cmp"
+        );
+        is(
+            [ map { "$_" } sort $v6, $v4 ],
+            [ "$v4",                 "$v6" ],
+            "sort puts $name in IPv4 first"
+        );
+    }
+};
+
+subtest 'spaceship gives 0 only for ==, cmp gives 0 only for eq' => sub {
+    my @ips = (
+        NetAddr::IP::Lite->new('192.0.2.4'),
+        NetAddr::IP::Lite->new('192.0.2.4/32'),
+        NetAddr::IP->new('192.0.2.4'),
+        NetAddr::IP::Lite->new('::192.0.2.4'),
+        NetAddr::IP::Lite->new('::ffff:192.0.2.4'),
+        NetAddr::IP::Lite->new('192.0.2.4/24'),
+        NetAddr::IP::Lite->new('::192.0.2.4/120'),
+    );
+    my @disagree;
+    for my $left (@ips) {
+        for my $right (@ips) {
+            push @disagree, "$left <=> $right"
+              if ( ( $left <=> $right ) == 0 ? 1 : 0 ) !=
+              ( $left == $right ? 1 : 0 );
+            push @disagree, "$left cmp $right"
+              if ( ( $left cmp $right ) == 0 ? 1 : 0 ) !=
+              ( $left eq $right ? 1 : 0 );
+        }
+    }
+    is( \@disagree, [], 'no pair of addresses disagrees' );
+};
+
 subtest 'an operand that is not an object is unordered' => sub {
     my $ip         = NetAddr::IP::Lite->new('192.0.2.1');
     my %not_object = (
