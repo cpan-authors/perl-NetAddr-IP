@@ -1364,6 +1364,11 @@ ERROR conditions:
   ->splitref will DIE with the same message if a supplied ipV4,
     ipV6, or NetAddr mask is inappropriately formatted.
 
+  ->splitref will DIE with the message 'netmask error: the piece
+    ... does not start on its own boundary; order the split plan
+    from the largest piece to the smallest' when the plan puts a
+    piece at an address that is not a multiple of its own size.
+
 The B<bits> argument may be a CIDR mask, a dot quad or ipV6 string or a
 NetAddr::IP object. If C<bits> is missing, the object is split for into all
 available addresses within the ipV4 or ipV6 object ( auto-mask of CIDR 32, 128
@@ -1379,22 +1384,30 @@ the C<bits> list.
   i.e.
 
   my $ip     = NetAddr::IP->new('192.0.2.0/24');
-  my $objptr = $ip->splitref(28, 29, 28, 29, 26);
+  my $objptr = $ip->splitref(25, 27);
 
-  has split plan 28 29 28 29 26 26 26 28
+  has split plan 25 27 27 27 27
   and returns this list of objects
 
-  192.0.2.0/28
-  192.0.2.16/29
-  192.0.2.24/28
-  192.0.2.40/29
-  192.0.2.48/26
-  192.0.2.112/26
-  192.0.2.176/26
-  192.0.2.240/28
+  192.0.2.0/25
+  192.0.2.128/27
+  192.0.2.160/27
+  192.0.2.192/27
+  192.0.2.224/27
 
-NOTE: that /26 replicates twice beyond the original request and /28 fills
-the remaining return object requirement.
+NOTE: that /27 replicates three times beyond the original request. In
+C<splitref(26, 26, 26, 25)> the /25 has no room after three /26s, so a
+/26 fills the last quarter.
+
+Each piece starts where the one before it ends, and a CIDR block has to
+start on a multiple of its own size. A plan ordered from the largest
+piece to the smallest always does. A larger piece after a smaller one
+may not, and then the call croaks, naming the first piece that does not
+start on its own boundary:
+
+  NetAddr::IP->new('192.0.2.0/28')->splitref(30, 29);
+  # netmask error: the piece 192.0.2.4/29 does not start on its own
+  # boundary; order the split plan from the largest piece to the smallest
 
 =item C<-E<gt>rsplit($bits,[optional $bits1,$bits2,...])>
 
@@ -1530,7 +1543,11 @@ sub _splitref {
     my @ret;
     while (@plan) {
         my $mask = $masks->{ shift @plan };
-        push @ret, $net->_new($addr, $mask, $isV6);
+        my $piece = $net->_new($addr, $mask, $isV6);
+        # a CIDR block starts on a multiple of its own size
+        croak("netmask error: the piece $piece does not start on its own boundary; order the split plan from the largest piece to the smallest")
+            if hasbits($addr & ~ $mask);
+        push @ret, $piece;
         last unless @plan;
         $addr = (sub128($addr, $mask))[1];
     }
@@ -1546,19 +1563,20 @@ that the split plan is applied to the original object in reverse order.
   i.e.
 
   my $ip     = NetAddr::IP->new('192.0.2.0/24');
-  my $objptr = $ip->rsplitref(28, 29, 28, 29, 26);
+  my $objptr = $ip->rsplitref(25, 27);
 
-  has split plan 28 26 26 26 29 28 29 28
+  has split plan 27 27 27 27 25
   and returns this list of objects
 
-  192.0.2.0/28
-  192.0.2.16/26
-  192.0.2.80/26
-  192.0.2.144/26
-  192.0.2.208/29
-  192.0.2.216/28
-  192.0.2.232/29
-  192.0.2.240/28
+  192.0.2.0/27
+  192.0.2.32/27
+  192.0.2.64/27
+  192.0.2.96/27
+  192.0.2.128/25
+
+A plan ordered from the largest piece to the smallest also gives aligned
+pieces in reverse, since the smaller pieces fill up to the boundary of
+each larger one.
 
 =back
 

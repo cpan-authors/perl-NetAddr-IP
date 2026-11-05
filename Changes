@@ -2,6 +2,12 @@ Revision history for Perl extension NetAddr::IP
 
 {{$NEXT}}
 
+    - Fix GH#259: The split methods croak when a plan puts a piece at an
+      address that is not a multiple of its own size, as split(30, 29) on
+      192.0.2.0/28 did with 192.0.2.4/29, a /29 whose network is
+      192.0.2.0. A plan ordered from the largest piece to the smallest
+      splits as before. Plans that 4.079 accepted now croak, so this is a
+      breaking change.
     - Fix GH#256: The test helpers bcdn2bin() and bcdn2txt() croak on a
       packed digit above 9, as bcd2bin() does on a character outside 0-9.
       The XS build used such a digit as its value, and the pure Perl build
