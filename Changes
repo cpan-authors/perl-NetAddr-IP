@@ -16,6 +16,8 @@ Revision history for Perl extension NetAddr::IP
       ::192.0.2.4/120. The two compared as equal under <=> and cmp, while
       == and eq said they differ. Now <=> gives 0 only when == is true,
       and cmp only when eq is.
+    - Fix GH#251: The :nofqdn test skips its check when the resolver
+      cannot find arin.net, where it stopped with an error.
 
 4.080_07  2026-11-05 08:59:56+11:00 Australia/Sydney (TRIAL RELEASE)
 
