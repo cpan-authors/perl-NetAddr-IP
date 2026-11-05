@@ -8,18 +8,12 @@ use NetAddr::IP ();
 
 subtest 'DNS resolution check' => sub {
     my $ip = NetAddr::IP->new('arin.net');
-    my $ip2;
-    if ( defined $ip ) {
-        pass("resolved $ip");
+  SKIP: {
+        skip( 'resolver cannot resolve arin.net', 1 ) unless defined $ip;
         NetAddr::IP->import(':nofqdn');
-        $ip2 = NetAddr::IP->new('arin.net');
+        is( NetAddr::IP->new('arin.net'),
+            undef, 'arin.net, which resolves, is undef under :nofqdn' );
     }
-    else {
-        pass('resolver not working');
-        skip( 'resolver not working', 1 );
-    }
-
-    ok( !defined $ip2, 'unexpected response with :nofqdn' );
 };
 
 done_testing;
