@@ -148,9 +148,9 @@ A /31 or /127 counts as two usable addresses, per RFC 3021, and a /32 or
 These are methods on an object, not functions called on the class name:
 
     $ip->split(26)                # 192.0.2.0/26, 192.0.2.64/26, ...
-    $ip->rsplit(28, 29, 28, 29, 26)   # the plan applied in reverse
+    $ip->rsplit(25, 27)           # the plan applied in reverse
     $ip->splitref(26)             # the same, as an arrayref
-    $ip->rsplitref(28, 29, 28, 29, 26)
+    $ip->rsplitref(25, 27)
     $ip->hostenum                 # every usable address
     $ip->hostenumref              # the same, as an arrayref
     $ip->compact(@other)          # merge adjacent subnets, returns a list
@@ -174,9 +174,17 @@ larger than the subnet or has no room left when its turn comes:
 
 `rsplit` differs from `split` only in the order the plan is applied:
 
-    my @plan = (28, 29, 28, 29, 26);
-    # splitref gives  0/28, 16/29, 24/28, 40/29, 48/26, 112/26, 176/26, 240/28
-    # rsplitref gives 0/28, 16/26, 80/26, 144/26, 208/29, 216/28, 232/29, 240/28
+    my @plan = (25, 27);
+    # splitref gives  0/25, 128/27, 160/27, 192/27, 224/27
+    # rsplitref gives 0/27, 32/27, 64/27, 96/27, 128/25
+
+A CIDR block starts on a multiple of its own size, so a plan that puts a
+piece anywhere else croaks. Order the plan from the largest piece to the
+smallest:
+
+    NetAddr::IP->new('192.0.2.0/24')->split(26, 25);
+    # netmask error: the piece 192.0.2.64/25 does not start on its own
+    # boundary; order the split plan from the largest piece to the smallest
 
 ### Functions
 

@@ -145,10 +145,17 @@ subtest 'splitplan 54 or more bits deep, last mask does not fit' => sub {
         'that plan ends with a 65 and two 67s'
     );
 
-    my @nets = $ip64->split(@bits);
+    like(
+        dies { $ip64->split(@bits) },
+qr{^netmask error: the piece 2001:DB8:0:0:4000:0:0:0/65 does not start on its own boundary; },
+        'that split croaks, since its 65 starts at 2**62'
+    );
+
+    my @nets = $ip64->split( 65 .. 120, 120 );
+    is( scalar @nets, 57, 'the same depth largest first splits into 57' );
     is(
         "$nets[-1]",
-        '2001:DB8:0:0:E000:0:0:0/67',
+        '2001:DB8:0:0:FFFF:FFFF:FFFF:FF00/120',
         'the last piece of that split ends the /64'
     );
 };
