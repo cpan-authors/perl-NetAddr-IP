@@ -1924,7 +1924,23 @@ Returns true when C<$me> is an RFC 1918 address.
   172.16.0.0   -  172.31.255.255  (172.16/12 prefix)
   192.168.0.0  -  192.168.255.255 (192.168/16 prefix)
 
+An RFC 1918 address held in an IPv6 object, whether from C<new6> or as a
+mapped address such as ::ffff:10.0.0.1, is an RFC 1918 address, the same
+as its IPv4 form.
+
 =cut
+
+# The network and broadcast of an object read as IPv4. An IPv6 object that
+# holds ::a.b.c.d or ::ffff:a.b.c.d reads as a.b.c.d; any other gives ().
+sub _ipv4_bounds {
+    my $self = $_[0];
+    my $addr = $self->{addr};
+    if ($self->{isv6}) {
+        return unless isAnyIPv4($addr);
+        $addr &= ~ $_ipv4FFFF;        # drop the mapped prefix
+    }
+    return ($addr & $self->{mask}, $addr | ~ $self->{mask});
+}
 
 # each network carries its own mask. inet_any2n packs the literal, so
 # loading does not ask the resolver
@@ -1938,8 +1954,7 @@ my $ip_192n = inet_any2n('192.168.0.0');
 my $ip_192b = $ip_192n | ~ mask4to6(pack('C4', 255, 255, 0, 0));
 
 sub is_rfc1918 ($) {
-    my $netme     = $_[0]->{addr} & $_[0]->{mask};
-    my $brdme     = $_[0]->{addr} | ~ $_[0]->{mask};
+    my ($netme, $brdme) = _ipv4_bounds($_[0]) or return 0;
     return 1 if (sub128($netme, $ip_10n) && sub128($ip_10b, $brdme));
     return 1 if (sub128($netme, $ip_192n) && sub128($ip_192b, $brdme));
     return (sub128($netme, $ip_172n) && sub128($ip_172b, $brdme))
@@ -1965,15 +1980,8 @@ my $_lclnetn = inet_any2n('127.0.0.0');
 my $_lclnetb = $_lclnetn | ~ mask4to6(pack('C4', 255, 0, 0, 0));
 
 sub is_local ($) {
-    my $self = $_[0];
-    my $addr = $self->{addr};
-    if ($self->{isv6}) {
-        return 1 if $self == $_lclhost6;
-        return 0 unless isAnyIPv4($addr);    # ::a.b.c.d or ::ffff:a.b.c.d
-        $addr &= ~ $_ipv4FFFF;        # drop the mapped prefix
-    }
-    my $netme = $addr & $self->{mask};
-    my $brdme = $addr | ~ $self->{mask};
+    return 1 if $_[0]->{isv6} && $_[0] == $_lclhost6;
+    my ($netme, $brdme) = _ipv4_bounds($_[0]) or return 0;
     return (sub128($netme, $_lclnetn) && sub128($_lclnetb, $brdme))
         ? 1 : 0;
 }

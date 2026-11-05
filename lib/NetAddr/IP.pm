@@ -1297,6 +1297,10 @@ Returns true when C<$me> is an RFC 1918 address.
   172.16.0.0   -  172.31.255.255  (172.16/12 prefix)
   192.168.0.0  -  192.168.255.255 (192.168/16 prefix)
 
+An RFC 1918 address held in an IPv6 object, whether from C<new6> or as a
+mapped address such as ::ffff:10.0.0.1, is an RFC 1918 address, the same
+as its IPv4 form.
+
 =item C<-E<gt>is_local()>
 
 Returns true when C<$me> is a local network address.

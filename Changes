@@ -7,6 +7,10 @@ Revision history for Perl extension NetAddr::IP
       The XS build used such a digit as its value, and the pure Perl build
       read it as 0 with a warning or as a letter, so the two builds gave
       different answers.
+    - Fix GH#253: An RFC 1918 address held in an IPv6 object as a mapped
+      address, such as ::ffff:10.0.0.1, is RFC 1918 under is_rfc1918(),
+      the same as its IPv4 form, where it gave false. This follows
+      is_local(), which answers ::ffff:127.0.0.1 as local since GH#27.
     - Fix GH#252: An IPv4 address sorts before the IPv6 address that
       holds the same 128 bits, so 192.0.2.4/24 comes before
       ::192.0.2.4/120. The two compared as equal under <=> and cmp, while

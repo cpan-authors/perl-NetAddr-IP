@@ -127,9 +127,10 @@ rest.
     $ip->is_local           # true for 127.0.0.0/8, ::1, ::127.0.0.0/8
                             # and ::ffff:127.0.0.0/8
 
-An IPv4 loopback address held in an IPv6 object is still local:
+An IPv4 address held in an IPv6 object answers both as its IPv4 form:
 
     NetAddr::IP->new('::ffff:127.0.0.1')->is_local;   # true
+    NetAddr::IP->new('::ffff:10.0.0.1')->is_rfc1918;  # true
 
 ### Host enumeration
 
