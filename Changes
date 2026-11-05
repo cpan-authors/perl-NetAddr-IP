@@ -2,6 +2,12 @@ Revision history for Perl extension NetAddr::IP
 
 {{$NEXT}}
 
+    - Fix GH#256: The test helpers bcdn2bin() and bcdn2txt() croak on a
+      packed digit above 9, as bcd2bin() does on a character outside 0-9.
+      The XS build used such a digit as its value, and the pure Perl build
+      read it as 0 with a warning or as a letter, so the two builds gave
+      different answers.
+
 4.080_07  2026-11-05 08:59:56+11:00 Australia/Sydney (TRIAL RELEASE)
 
     - Fix GH#237: Add new4(), which reads its input as new() does and

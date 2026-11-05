@@ -209,6 +209,37 @@ for my $input ( "1\x002", "5\x003\x001", "\xb1\xb2", "1\xb2" ) {
     );
 }
 
+subtest 'bcdn2bin and bcdn2txt croak on a packed digit above 9' => sub {
+    for my $case ( [ "\x1a", 2, 'a' ], [ "\xf1", 2, 'f' ],
+        [ "\x12\x3c", 4, 'c' ], )
+    {
+        my ( $packed, $digits, $char ) = @{$case};
+        like(
+            dies { bcdn2bin( $packed, $digits ) },
+qr/^Bad char in string for NetAddr::IP::Util::bcdn2bin, character is '$char', allowed are 0-9 at /,
+            sprintf(
+                'bcdn2bin of 0x%s croaks naming %s',
+                unpack( 'H*', $packed ), $char
+            )
+        );
+    }
+    is(
+        unpack( 'H*', bcdn2bin( "\x1a", 1 ) ),
+        '0' x 31 . '1',
+        'bcdn2bin of 0x1a reads only the one digit it is told to'
+    );
+    like(
+        dies { bcdn2txt( "\xab" x 20 ) },
+qr/^Bad char in string for NetAddr::IP::Util::bcdn2txt, character is 'a', allowed are 0-9 at /,
+        'bcdn2txt of 20 bytes of 0xab croaks naming a'
+    );
+    like(
+        dies { bcdn2txt( ( "\x00" x 19 ) . "\x0e" ) },
+qr/^Bad char in string for NetAddr::IP::Util::bcdn2txt, character is 'e', allowed are 0-9 at /,
+        'bcdn2txt of a last digit of 0xe croaks naming e'
+    );
+};
+
 ## shiftleft, addconst, bcdn2bin - a count or constant out of range dies on both builds
 
 my $v = ipv6_aton('::1');

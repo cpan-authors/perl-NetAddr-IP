@@ -342,6 +342,21 @@ _simple_pack(const unsigned char * sp, int len, BCD * n, unsigned char * bad)
   return 0;
 }
 
+/*	the first of the leading len digits of packed bcd that is above 9, as
+	the hex character unpack('H') gives for it, or 0 when all are 0-9	*/
+static unsigned char
+_bcdn_bad(const unsigned char * bp, int len)
+{
+  int i;
+
+  for (i = 0; i < len; i++) {
+    unsigned char d = (i & 1) ? (bp[i >> 1] & 0xF) : (bp[i >> 1] >> 4);
+    if (d > 9)
+      return (unsigned char)('a' + (d - 10));
+  }
+  return 0;
+}
+
 /*	convert a packed bcd string to 128 bit binary string
 	returns non-zero if the value does not fit in 128 bits
  */
@@ -675,7 +690,7 @@ ALIAS:
 	NetAddr::IP::Util::bin2bcdn = 1
 PREINIT:
 	BCD n;
-	unsigned char * cp;
+	unsigned char * cp, badc;
 	STRLEN	len;
 PPCODE:
 	if (!_packed_ok(aTHX_ s))
@@ -704,6 +719,10 @@ PPCODE:
 	  if (len != 20) {
 	    croak("Bad arg length for %s, length is %" UVuf ", should be %d digits",
 		"NetAddr::IP::Util::bcdn2txt",(UV)(len *2),40);
+	  }
+	  if ((badc = _bcdn_bad(cp, 40))) {
+	    croak("Bad char in string for %s, character is '%c', allowed are 0-9",
+		"NetAddr::IP::Util::bcdn2txt",badc);
 	  }
 	  XPUSHs(sv_2mortal(newSVpvn((char *)n.txt,_bcd2txt(cp,&n))));
 	}
@@ -763,6 +782,10 @@ PPCODE:
 	  }
 	  digits = (int)nv;
 	  subname = is_bcdn2bin;
+	  if ((badc = _bcdn_bad(cp, digits))) {
+	    croak("Bad char in string for %s%s, character is '%c', allowed are 0-9",
+		"NetAddr::IP::Util::",subname,badc);
+	  }
 	  if (_bcdn2bin(cp,&a128,&c128,digits))
 	    croak("Bad arg value for %s%s, number is larger than 128 bits",
 		"NetAddr::IP::Util::",subname);
