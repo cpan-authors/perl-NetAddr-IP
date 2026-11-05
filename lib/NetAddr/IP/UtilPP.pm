@@ -704,7 +704,9 @@ sub bcdn2txt($) {
             . $digits
             . ", should be $MAX_BCD_DIGITS digits"
     }
-    (unpack("H$MAX_BCD_DIGITS", $bcdn)) =~ /^0*(.+)/;
+    my $txt = unpack("H$MAX_BCD_DIGITS", $bcdn);
+    _bcdcheck($txt);    # a nibble above 9 unpacks as a-f
+    $txt =~ /^0*(.+)/;
     return $1;
 }
 
@@ -725,6 +727,9 @@ Convert a packed bcd string into a 128 bit string variable
         number of digits in string
   returns:    128 bit string variable
 
+Croaks when one of the digits it reads is above 9, as C<bcd2bin> does for
+a character outside 0-9.
+
 =cut
 
 sub bcdn2bin($;@) {
@@ -742,7 +747,9 @@ sub bcdn2bin($;@) {
     croak "Bad digit count for NetAddr::IP::Util::bcdn2bin, is $dc, should be 1 to $digits digits"
         unless looks_like_number($dc) && $dc >= 1 && $dc < $digits + 1 && $dc == int($dc);
     $dc = int($dc);
-    return _bcd2bin(unpack("H$dc", $bcd), 'NetAddr::IP::Util::bcdn2bin');
+    my $txt = unpack("H$dc", $bcd);
+    _bcdcheck($txt);    # a nibble above 9 unpacks as a-f
+    return _bcd2bin($txt, 'NetAddr::IP::Util::bcdn2bin');
 }
 
 sub _bcd2bin {
