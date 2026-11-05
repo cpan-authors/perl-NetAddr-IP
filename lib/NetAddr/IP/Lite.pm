@@ -287,7 +287,10 @@ sub comp_addr_mask {
     return 1 if hasbits($rv);
     ($c, $rv) = sub128($_[0]->{mask}, $_[1]->{mask});
     return -1 unless $c;
-    return hasbits($rv) ? 1 : 0;
+    return 1 if hasbits($rv);
+    # 192.0.2.4/24 and ::192.0.2.4/120 hold the same bits: IPv4 first, so
+    # <=> gives 0 only when == holds
+    return ($_[0]->{isv6} ? 1 : 0) <=> ($_[1]->{isv6} ? 1 : 0);
 }
 
 =over
@@ -359,6 +362,17 @@ mean by "bigger". To rank netblocks by size, compare the mask lengths
 directly:
 
   $ip1->masklen <=> $ip2->masklen
+
+An IPv4 object keeps its address in the same 128 bits as the IPv6
+address ::a.b.c.d, and its mask carries 96 leading ones, so an IPv4
+/p ties with an IPv6 /(96+p), not with an IPv6 /p. The family
+breaks the tie, IPv4 first, so C<E<lt>=E<gt>> gives 0 only when C<==>
+is true, and C<cmp> only when C<eq> is:
+
+  my $v4 = NetAddr::IP::Lite->new('192.0.2.4/24');
+  my $v6 = NetAddr::IP::Lite->new('::192.0.2.4/120');
+  $v4 <=> $v6;    # -1
+  $v4 == $v6;     # false
 
 Against an operand that is not a NetAddr::IP::Lite object, such as a
 string, a number or undef, C<E<lt>=E<gt>> returns undef, as Perl's own

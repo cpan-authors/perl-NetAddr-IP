@@ -7,6 +7,11 @@ Revision history for Perl extension NetAddr::IP
       The XS build used such a digit as its value, and the pure Perl build
       read it as 0 with a warning or as a letter, so the two builds gave
       different answers.
+    - Fix GH#252: An IPv4 address sorts before the IPv6 address that
+      holds the same 128 bits, so 192.0.2.4/24 comes before
+      ::192.0.2.4/120. The two compared as equal under <=> and cmp, while
+      == and eq said they differ. Now <=> gives 0 only when == is true,
+      and cmp only when eq is.
 
 4.080_07  2026-11-05 08:59:56+11:00 Australia/Sydney (TRIAL RELEASE)
 

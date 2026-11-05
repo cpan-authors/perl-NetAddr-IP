@@ -327,6 +327,17 @@ directly:
 
   $ip1->masklen <=> $ip2->masklen
 
+An IPv4 object keeps its address in the same 128 bits as the IPv6
+address ::a.b.c.d, and its mask carries 96 leading ones, so an IPv4
+/p ties with an IPv6 /(96+p), not with an IPv6 /p. The family
+breaks the tie, IPv4 first, so C<E<lt>=E<gt>> gives 0 only when C<==>
+is true, and C<cmp> only when C<eq> is:
+
+  my $v4 = NetAddr::IP->new('192.0.2.4/24');
+  my $v6 = NetAddr::IP->new('::192.0.2.4/120');
+  $v4 <=> $v6;    # -1
+  $v4 == $v6;     # false
+
 Against an operand that is not a NetAddr::IP or NetAddr::IP::Lite
 object, such as a string, a number or undef, C<E<lt>=E<gt>> returns
 undef, as Perl's own C<E<lt>=E<gt>> does for NaN, and C<E<gt>>,
