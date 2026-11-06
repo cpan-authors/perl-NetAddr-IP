@@ -26,7 +26,10 @@ subtest 'new numeric returns' => sub {
     }
 };
 
-import NetAddr::IP::Lite qw(:old_nth);
+{
+    no warnings 'deprecated';    # the old behaviour is what follows
+    import NetAddr::IP::Lite qw(:old_nth);
+}
 $new = 0;
 
 subtest 'old numeric returns' => sub {

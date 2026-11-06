@@ -130,6 +130,8 @@ it cannot be scoped with C<local>. Once the hooks are gone, data frozen
 with them no longer thaws there, and C<thaw> dies with a message that
 starts "No STORABLE_thaw defined for objects of class NetAddr::IP".
 
+Importing it warns, since the tag is deprecated; see L</DEPRECATED>.
+
 =item C<:old_nth>
 
 Restore the pre-4.00 C<nth()> and C<num()> behaviour, which counted the
@@ -138,9 +140,13 @@ C<$NetAddr::IP::Lite::Old_nth>. See L</THREADS>.
 
   use NetAddr::IP qw(:old_nth);
 
+Importing it warns, since the tag and its switch are deprecated; see
+L</DEPRECATED>.
+
 =back
 
-The tags C<:aton> and C<:rfc3021> are listed under L</DEPRECATED>.
+The tags C<:aton> and C<:rfc3021> are listed under L</DEPRECATED>, beside
+C<:old_nth> and C<:old_storable>.
 
 =head1 THREADS
 
@@ -159,7 +165,7 @@ C<die>:
 
   local $NetAddr::IP::InetBase::Upper = 0;   # lowercase IPv6 text
   local $NetAddr::IP::Lite::NoFQDN    = 1;   # do not resolve a name
-  local $NetAddr::IP::Lite::Old_nth   = 1;   # pre-4.00 nth() and num()
+  local $NetAddr::IP::Lite::Old_nth   = 1;   # pre-4.00 nth() and num(), deprecated
   local $NetAddr::IP::netlimit        = 20;  # see L</netlimit>
 
 The C<:old_storable> tag deletes the Storable hooks and has no variable, so it
@@ -479,6 +485,8 @@ sub STORABLE_thaw
 sub import
 {
     if (grep { $_ eq ':old_storable' } @_) {
+    warnings::warnif('deprecated',
+        ':old_storable is deprecated and will be removed in version 5; without it Storable freezes an object as its CIDR text, and data frozen as a plain hash still thaws');
     @_ = grep { $_ ne ':old_storable' } @_;
     delete $NetAddr::IP::{STORABLE_freeze};
     delete $NetAddr::IP::{STORABLE_thaw};
@@ -493,6 +501,8 @@ sub import
     }
     if (grep { $_ eq ':old_nth' } @_)
     {
+    warnings::warnif('deprecated',
+        ':old_nth is deprecated and will be removed in version 5; without it nth(0) is the first usable host and num() counts only usable hosts');
     $NetAddr::IP::Lite::Old_nth = 1;
     @_ = grep { $_ ne ':old_nth' } @_;
     }
@@ -1842,7 +1852,8 @@ usable addresses per RFC 3021, and a /32 or /128 counts as 1:
   print NetAddr::IP->new('192.0.2.1/32')->num();     # 1
 
 
-To use the old behavior for C<-E<gt>nth($index)> and C<-E<gt>num()>:
+To use the old behavior for C<-E<gt>nth($index)> and C<-E<gt>num()>,
+which is deprecated and warns on import:
 
   use NetAddr::IP qw(:old_nth);
 
@@ -1870,7 +1881,8 @@ C<undef> is returned.
 See L</DEPRECATED> and the Changes file for the change, and the
 C<:old_nth> tag for the old behaviour.
 
-To use the old behavior for C<-E<gt>nth($index)> and C<-E<gt>num()>:
+To use the old behavior for C<-E<gt>nth($index)> and C<-E<gt>num()>,
+which is deprecated and warns on import:
 
   use NetAddr::IP qw(:old_nth);
 
@@ -2214,6 +2226,24 @@ byte string as packed and makes no lookup. There is no replacement for
 the packed sixteen byte case.
 
   use NetAddr::IP qw(:aton);
+
+=item C<:old_nth> and C<$NetAddr::IP::Lite::Old_nth>
+
+Restore the pre-4.00 C<nth()> and C<num()>: C<num()> counts the broadcast
+address, and C<nth()> counts from 1, so C<nth(0)> is undef. Without them,
+C<nth(0)> is the first usable host and C<num()> counts only usable hosts.
+Importing the tag warns; setting the variable does not.
+
+  use NetAddr::IP qw(:old_nth);   # warns
+
+=item C<:old_storable>
+
+Make L<Storable> freeze objects as a plain hash, as it did before this
+module had its own Storable hooks. Without it, Storable freezes an object
+as its CIDR text, and data frozen as a plain hash still thaws. Importing
+it warns.
+
+  use NetAddr::IP qw(:old_storable);   # warns
 
 =item C<:rfc3021>
 

@@ -2,6 +2,12 @@ Revision history for Perl extension NetAddr::IP
 
 {{$NEXT}}
 
+    - Fix GH#261: Importing :old_nth or :old_storable warns that the tag
+      is deprecated and will be removed in version 5, as the README
+      already said. Neither tag changes what it does. The variable
+      $NetAddr::IP::Lite::Old_nth is deprecated with :old_nth but does not
+      warn. Code that makes warnings fatal now dies at the import, so this
+      is a breaking change for it.
     - Fix GH#259: The split methods croak when a plan puts a piece at an
       address that is not a multiple of its own size, as split(30, 29) on
       192.0.2.0/28 did with 192.0.2.4/29, a /29 whose network is
