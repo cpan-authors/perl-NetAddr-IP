@@ -2,6 +2,10 @@ Revision history for Perl extension NetAddr::IP
 
 {{$NEXT}}
 
+    - Fix GH#263: Running perl Makefile.PL again in a directory that
+      holds an XS build no longer installs the generated Util.c and
+      Util.o beside the modules. The configure step deletes them on
+      every run, where it did so only for a pure Perl build.
     - Fix GH#261: Importing :old_nth or :old_storable warns that the tag
       is deprecated and will be removed in version 5, as the README
       already said. Neither tag changes what it does. The variable

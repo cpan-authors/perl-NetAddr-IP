@@ -110,6 +110,15 @@ jobs:
           make
           perl -Mblib -MNetAddr::IP::Util -e 'my $mode = NetAddr::IP::Util::mode(); $mode eq q{CC XS} or die "built $mode, expected CC XS\n"'
           make test
+      - name: Configure again and check what installs
+        if: success()
+        # a second perl Makefile.PL after make must not pick up the C source and object the XS build left under lib/
+        run: |
+          perl Makefile.PL
+          make
+          make pure_install DESTDIR="$PWD/stage"
+          stray=$(find stage -path '*/NetAddr/IP/*' \( -name '*.c' -o -name '*.o' -o -name '*.xsc' \))
+          if [ -n "$stray" ]; then echo "build products installed: $stray"; exit 1; fi
 
   test_linux_pureperl:
     runs-on: ubuntu-latest
