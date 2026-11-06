@@ -2005,7 +2005,8 @@ usable addresses per RFC 3021, and a /32 or /128 counts as 1:
   print NetAddr::IP::Lite->new('192.0.2.1/32')->num();     # 1
 
 
-To use the old behavior for C<-E<gt>nth($index)> and C<-E<gt>num()>:
+To use the old behavior for C<-E<gt>nth($index)> and C<-E<gt>num()>,
+which is deprecated and warns on import:
 
   use NetAddr::IP::Lite qw(:old_nth);
 
@@ -2052,7 +2053,8 @@ C<undef> is returned.
 See L</DEPRECATED> and the Changes file for the change, and the
 C<:old_nth> tag for the old behaviour.
 
-To use the old behavior for C<-E<gt>nth($index)> and C<-E<gt>num()>:
+To use the old behavior for C<-E<gt>nth($index)> and C<-E<gt>num()>,
+which is deprecated and warns on import:
 
   use NetAddr::IP::Lite qw(:old_nth);
 
@@ -2131,6 +2133,8 @@ sub import {
         @_ = grep { $_ ne ':aton' } @_;
     }
     if (grep { $_ eq ':old_nth' } @_) {
+        warnings::warnif('deprecated',
+            ':old_nth is deprecated and will be removed in version 5; without it nth(0) is the first usable host and num() counts only usable hosts');
         $Old_nth = 1;
         @_ = grep { $_ ne ':old_nth' } @_;
     }
@@ -2208,8 +2212,10 @@ L</THREADS>.
 =item C<:old_nth>
 
 Restore the pre-4.00 C<nth()> and C<num()> behaviour. The switch is
-C<$NetAddr::IP::Lite::Old_nth>. Deprecated; see L</DEPRECATED> and
-L</THREADS>.
+C<$NetAddr::IP::Lite::Old_nth>. See L</THREADS>.
+
+Importing it warns, since the tag and its switch are deprecated; see
+L</DEPRECATED>.
 
 =item C<:aton>
 
@@ -2236,7 +2242,7 @@ C<die>:
 
   local $NetAddr::IP::InetBase::Upper = 0;   # lowercase IPv6 text
   local $NetAddr::IP::Lite::NoFQDN    = 1;   # do not resolve a name
-  local $NetAddr::IP::Lite::Old_nth   = 1;   # pre-4.00 nth() and num()
+  local $NetAddr::IP::Lite::Old_nth   = 1;   # pre-4.00 nth() and num(), deprecated
 
 =head1 DEPRECATED
 
@@ -2294,6 +2300,15 @@ byte string as packed and makes no lookup. There is no replacement for
 the packed sixteen byte case.
 
   use NetAddr::IP::Lite qw(:aton);
+
+=item C<:old_nth> and C<$NetAddr::IP::Lite::Old_nth>
+
+Restore the pre-4.00 C<nth()> and C<num()>: C<num()> counts the broadcast
+address, and C<nth()> counts from 1, so C<nth(0)> is undef. Without them,
+C<nth(0)> is the first usable host and C<num()> counts only usable hosts.
+Importing the tag warns; setting the variable does not.
+
+  use NetAddr::IP::Lite qw(:old_nth);   # warns
 
 =item C<new_cis> and C<new_cis6>
 

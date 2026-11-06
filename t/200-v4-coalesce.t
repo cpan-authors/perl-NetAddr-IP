@@ -3,6 +3,7 @@
 use Test2::V1 -ipP;
 use Test2::Tools::Exception qw(dies lives);
 use Test2::Plugin::NoWarnings;
+use Test2::Tools::Warnings qw(warning);
 
 plan skip_all => 'LIGHTERIPTESTS = yes'
   if defined $ENV{LIGHTERIPTESTS} && $ENV{LIGHTERIPTESTS} =~ m/yes/i;
@@ -47,7 +48,11 @@ subtest 'default imports' => sub {
 
 {
     delete $NetAddr::IP::{Coalesce};
-    import NetAddr::IP qw(:old_nth);
+    like(
+        warning { import NetAddr::IP qw(:old_nth) },
+qr/^:old_nth is deprecated and will be removed in version 5; without it nth\(0\) is the first usable host and num\(\) counts only usable hosts at /,
+        'importing :old_nth through NetAddr::IP warns that it is deprecated'
+    );
 
     subtest ':old_nth imports' => sub {
         tst();
@@ -132,7 +137,10 @@ subtest 'coalesce counts subnet addresses, not usable hosts' => sub {
     $r = Coalesce( 24, 257, @all32 );
     is( scalar @$r, 0, 'two hundred and fifty six /32 nets do not reach 257' );
 
-    import NetAddr::IP qw(:old_nth);
+    {
+        no warnings 'deprecated';    # the first import asserts the warning
+        import NetAddr::IP qw(:old_nth);
+    }
     is( $NetAddr::IP::Lite::Old_nth, 1, ':old_nth is in effect' );
     $r = Coalesce( 24, 256, @two25 );
     is( scalar @$r, 1, 'two /25 nets reach a threshold of 256 under :old_nth' );

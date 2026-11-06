@@ -3,14 +3,25 @@
 use Test2::V1 -ipP;
 use Test2::Plugin::NoWarnings;
 use Test2::Tools::Exception qw( lives );
+use Test2::Tools::Warnings  qw( warnings );
 
 SKIP: {
     skip 'Storable not available'
       unless eval { require Storable; Storable->import(qw(freeze thaw)); 1; };
 
     skip 'NetAddr::IP not available'
-      unless
-      eval { require NetAddr::IP; NetAddr::IP->import(':old_storable'); 1; };
+      unless eval { require NetAddr::IP; 1; };
+
+    my $import_warnings = warnings { NetAddr::IP->import(':old_storable') };
+
+    subtest 'importing :old_storable warns that it is deprecated' => sub {
+        is( scalar @{$import_warnings}, 1, 'the import warns once' );
+        like(
+            $import_warnings->[0],
+qr/^:old_storable is deprecated and will be removed in version 5; without it Storable freezes an object as its CIDR text, and data frozen as a plain hash still thaws at /,
+            'the warning names the tag and what Storable does without it'
+        );
+    };
 
     subtest 'old storable round-trip' => sub {
         my $oip = NetAddr::IP->new('localhost');

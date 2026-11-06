@@ -3,7 +3,12 @@
 use Test2::V1 -ipP;
 use Test2::Plugin::NoWarnings;
 
-use NetAddr::IP::Lite qw(:old_nth);
+use NetAddr::IP::Lite ();
+
+BEGIN {
+    no warnings 'deprecated';    # the old behaviour is what this file tests
+    NetAddr::IP::Lite->import(':old_nth');
+}
 
 my %try = (
     '10/32'       => 0,

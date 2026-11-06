@@ -2,8 +2,25 @@
 
 use Test2::V1 -ipP;
 use Test2::Plugin::NoWarnings;
+use Test2::Tools::Warnings qw( no_warnings warning );
 
-use NetAddr::IP::Lite qw(:old_nth);
+use NetAddr::IP::Lite ();
+
+subtest 'importing :old_nth warns that it is deprecated' => sub {
+    like(
+        warning { NetAddr::IP::Lite->import(':old_nth') },
+qr/^:old_nth is deprecated and will be removed in version 5; without it nth\(0\) is the first usable host and num\(\) counts only usable hosts at /,
+        'the warning names the tag and what the code does without it'
+    );
+    is( $NetAddr::IP::Lite::Old_nth, 1, 'the tag still takes effect' );
+    ok(
+        no_warnings {
+            no warnings 'deprecated';
+            NetAddr::IP::Lite->import(':old_nth');
+        },
+        'no warnings deprecated silences it'
+    );
+};
 
 my $ip4 = NetAddr::IP::Lite->new('192.0.2.11/29');
 
