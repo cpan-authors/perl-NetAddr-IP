@@ -119,6 +119,18 @@ jobs:
           make pure_install DESTDIR="$PWD/stage"
           stray=$(find stage -path '*/NetAddr/IP/*' \( -name '*.c' -o -name '*.o' -o -name '*.xsc' \))
           if [ -n "$stray" ]; then echo "build products installed: $stray"; exit 1; fi
+      - name: Check that configure tests the compiler and linker the build uses
+        if: success()
+        # CC= and LD= given to Makefile.PL decide, and LD in the environment does not, as for MakeMaker
+        run: |
+          make realclean
+          perl Makefile.PL CC=false
+          make
+          perl -Mblib -MNetAddr::IP::Util -e 'my $mode = NetAddr::IP::Util::mode(); $mode eq q{Pure Perl} or die "built $mode with CC=false, expected Pure Perl\n"'
+          make realclean
+          LD=false perl Makefile.PL
+          make
+          perl -Mblib -MNetAddr::IP::Util -e 'my $mode = NetAddr::IP::Util::mode(); $mode eq q{CC XS} or die "built $mode with LD=false in the environment, expected CC XS\n"'
 
   test_linux_pureperl:
     runs-on: ubuntu-latest
