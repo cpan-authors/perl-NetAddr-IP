@@ -1,0 +1,108 @@
+name: Rerun runner failures
+
+# GitHub reads this file from the default branch only.
+on:
+  workflow_run:
+    workflows: [dzil build and test]
+    types: [completed]
+
+permissions:
+  actions: write
+  checks: read
+
+jobs:
+  rerun:
+    # once per run: a failure on the rerun stands
+    if: github.event.workflow_run.conclusion == 'failure' && github.event.workflow_run.run_attempt == 1
+    runs-on: ubuntu-latest
+    steps:
+      - name: Rerun the failed jobs when none of them failed in a build or test step
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPO: ${{ github.repository }}
+          RUN_ID: ${{ github.event.workflow_run.id }}
+        run: |
+          # a failed step with one of these names is a build or test failure, which a rerun would only repeat
+          build_or_test='^(Build |Check |Configure again|Test on )'
+          if ! jobs=$(gh api --paginate "repos/$REPO/actions/runs/$RUN_ID/attempts/1/jobs?per_page=100" \
+            --jq '.jobs[] | select(.conclusion == "failure" or .conclusion == "cancelled") | [.id, .name, .conclusion, ([.steps[] | select(.conclusion == "failure" or .conclusion == "cancelled") | .name][0] // "")] | @tsv'); then
+            echo "could not read the jobs of run $RUN_ID; failing loudly" >&2
+            exit 1
+          fi
+          infra=0
+          real=0
+          cancelled=0
+          if [ -n "$jobs" ]; then
+            while IFS=$'\t' read -r job_id job_name conclusion step; do
+              if [ "$conclusion" = 'cancelled' ]; then
+                cancelled=$((cancelled + 1))
+              fi
+              if ! lost=$(gh api "repos/$REPO/check-runs/$job_id/annotations?per_page=100" --jq 'map(select(.message | contains("lost communication"))) | length'); then
+                echo "could not read the annotations of check run $job_id; failing loudly" >&2
+                exit 1
+              fi
+              if [ "$lost" -eq 0 ] && [[ $step =~ $build_or_test ]]; then
+                echo "build or test: $job_name, step '$step'"
+                real=$((real + 1))
+              else
+                echo "infrastructure: $job_name, step '${step:-none}'"
+                infra=$((infra + 1))
+              fi
+            done <<< "$jobs"
+          else
+            echo "no failed or cancelled jobs found"
+          fi
+          if [ "$infra" -gt 0 ] && [ "$real" -eq 0 ]; then
+            # the target may have moved on since the event fired, either
+            # by a rerun of the target or by a newer run of the same
+            # workflow on the same event, branch, repository, and PR
+            if ! meta=$(gh api "repos/$REPO/actions/runs/$RUN_ID" --jq '[.run_attempt, .status, .conclusion, .workflow_id, .head_branch, .head_sha, .event, .head_repository.full_name, (.pull_requests[0].number // 0)] | @tsv'); then
+              echo "could not read run $RUN_ID again; skipping the rerun" >&2
+              exit 1
+            fi
+            IFS=$'\t' read -r cur_attempt cur_status cur_conclusion wf branch _ event hr pr <<< "$meta"
+            if [ "$cur_attempt" != '1' ] || [ "$cur_status" != 'completed' ] || [ "$cur_conclusion" != 'failure' ]; then
+              echo "run $RUN_ID is attempt $cur_attempt ($cur_status, $cur_conclusion) now; skipping the rerun"
+              exit 0
+            fi
+            # a fork PR reporting from `master` must not be treated as
+            # superseded by an upstream master run: the concurrency group
+            # follows github.ref, not head_branch, so match the event class,
+            # branch, head repository and PR number instead of branch alone;
+            # push and workflow_dispatch share a ref, so they share a class
+            case "$event" in
+              push|workflow_dispatch) sel='select(.event == "push" or .event == "workflow_dispatch")' ;;
+              *) sel="select(.event == \"$event\")" ;;
+            esac
+            # paginate so the filters do not truncate at one page of a
+            # shared branch; the sort puts the newest matching run first,
+            # and an empty match is a supersession we cannot rule out
+            if ! cand=$(gh api --method GET "repos/$REPO/actions/workflows/$wf/runs" \
+              -F branch="$branch" -F per_page=100 --paginate \
+              --jq "
+                .workflow_runs[] | $sel
+                | select(.head_repository.full_name == \"$hr\")
+                | select((.pull_requests | length) == 0
+                  or any(.pull_requests[]; .number == $pr))
+                | [.created_at, (.id | tostring)] | @tsv"); then
+              echo "could not read the runs on $branch; skipping the rerun" >&2
+              exit 1
+            fi
+            if [ -z "$cand" ]; then
+              echo "run $RUN_ID is not the latest run on $branch; skipping the rerun"
+              exit 0
+            fi
+            newest=$(printf '%s\n' "$cand" | sort -k1,1r -k2,2rn | head -n 1)
+            IFS=$'\t' read -r _ newest_id <<< "$newest"
+            if [ "$newest_id" != "$RUN_ID" ]; then
+              echo "run $RUN_ID is superseded by a newer run on $branch; skipping the rerun"
+              exit 0
+            fi
+            # rerun-failed-jobs re-queues failed jobs only, so a cancelled,
+            # never-acquired job would be left behind; rerun the whole run then
+            if [ "$cancelled" -gt 0 ]; then
+              gh run rerun "$RUN_ID" --repo "$REPO"
+            else
+              gh run rerun "$RUN_ID" --failed --repo "$REPO"
+            fi
+          fi
