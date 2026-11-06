@@ -2,6 +2,12 @@ Revision history for Perl extension NetAddr::IP
 
 {{$NEXT}}
 
+    - Fix GH#268: The configure step chooses XS or pure Perl by testing
+      the compiler and linker the build will use: CC= and LD= given to
+      Makefile.PL, else perl's own. It tested the CC environment
+      variable first and took LD, CFLAGS and LDFLAGS from the
+      environment, which the build ignores, so a build could fail after
+      the test passed, or install pure Perl where XS would have built.
     - Fix GH#263: Running perl Makefile.PL again in a directory that
       holds an XS build no longer installs the generated Util.c and
       Util.o beside the modules. The configure step deletes them on

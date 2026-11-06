@@ -26,11 +26,12 @@ if (!defined $useXS && $pure_perl_os{$^O}) {
     $useXS = 0;
 }
 
-# build XS when a C compiler works, unless --xs or -noxs was given
+# the compiler and linker MakeMaker writes into the Makefile: CC= and LD= on this command line, else perl's own
+my %mm_tool = (CC => $Config{cc}, LD => $Config{ld}, map { /\A(CC|LD)=(.+)\z/s ? ($1 => $2) : () } @ARGV);
+
+# build XS when that compiler works, unless --xs or -noxs was given
 unless (defined $useXS) {
-    my $compiler = _test_cc();
-    if ($compiler) {
-        $ENV{CC} = $compiler;
+    if (_test_cc(@mm_tool{qw(CC LD)})) {
         print "You have a working compiler.\n";
         $useXS = 1;
     }
@@ -139,13 +140,14 @@ if ($useXS) {
 # make clean removes the file Makefile.PL writes and the XS build's output
 push @mm_args, clean => { FILES => join q{ }, $util_is_path, @xs_outputs };
 
-# the first compiler that builds and links an empty C program, or undef
+# true when the given compiler and linker build and link an empty C program
 sub _test_cc {
-    print "Testing for a working C compiler....\n";
+    my ($cc, $ld) = @_;
+    print "Testing for a working C compiler, $cc...\n";
     require ExtUtils::CBuilder;
-    foreach my $cc (grep { defined && length } $ENV{CC}, $Config{cc}, $Config{ccname}) {
-        local $ENV{CC} = $cc;    # CBuilder reads the compiler from CC ahead of its config
-        return $cc if ExtUtils::CBuilder->new(quiet => 1)->have_compiler;
-    }
-    return;
+    # CBuilder reads these ahead of its config, where MakeMaker ignores them
+    local %ENV = %ENV;
+    delete @ENV{qw(CFLAGS LDFLAGS)};
+    @ENV{qw(CC LD)} = ($cc, $ld);
+    return ExtUtils::CBuilder->new(quiet => 1)->have_compiler;
 }
