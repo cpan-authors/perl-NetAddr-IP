@@ -1,7 +1,7 @@
 use Config;
 use Getopt::Long qw(GetOptions);
 
-# an XS build writes these under lib/, where a pure Perl build would copy them into blib
+# an XS build writes these under lib/, where the next perl Makefile.PL would take them for module files
 my @xs_outputs = qw(lib/NetAddr/IP/Util.c lib/NetAddr/IP/Util.c.xsc lib/NetAddr/IP/Util.o);
 
 # and puts its shared object here, which a pure Perl build would install
@@ -48,9 +48,12 @@ END
     }
 }
 
-# a pure Perl build drops what an earlier XS build left behind
+# drop the files an earlier XS build left; make writes them again
+unlink @xs_outputs;
+
+# a pure Perl build also drops the shared object an earlier XS build put in blib
 unless ($useXS) {
-    unlink @xs_outputs, glob "$xs_blib_dir/* $xs_blib_dir/.exists";
+    unlink glob "$xs_blib_dir/* $xs_blib_dir/.exists";
     rmdir $xs_blib_dir;
 }
 
