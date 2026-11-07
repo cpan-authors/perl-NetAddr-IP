@@ -10,12 +10,14 @@ my $rv;
 
 subtest 'splitref with same cidr' => sub {
     ok( ( $rv = sprintf( '%s', $ip ) ) eq 'FFFF:A123:B345:C789:0:0:0:0/48',
-        "$rv eq FFFF:A123:B345:C789:0:0:0:0/48" );
+        "$rv eq FFFF:A123:B345:C789:0:0:0:0/48"
+    );
     my $nets = $ip->splitref(48);
     ok( $nets,       'there is a net' );
     ok( @$nets == 1, 'one item net' );
     ok( ( $rv = sprintf( '%s', $ip ) ) eq 'FFFF:A123:B345:C789:0:0:0:0/48',
-        "$rv eq FFFF:A123:B345:C789:0:0:0:0/48" );
+        "$rv eq FFFF:A123:B345:C789:0:0:0:0/48"
+    );
 };
 
 subtest 'splitref with multiple cidrs' => sub {
@@ -24,14 +26,15 @@ subtest 'splitref with multiple cidrs' => sub {
     ok( ( $rv = @$nets ) == 3, "$rv is 3 item net" );
 
     my @exp = qw(
-      FFFF:A123:B345:0:0:0:0:0/49
-      FFFF:A123:B345:8000:0:0:0:0/50
-      FFFF:A123:B345:C000:0:0:0:0/50
+        FFFF:A123:B345:0:0:0:0:0/49
+        FFFF:A123:B345:8000:0:0:0:0/50
+        FFFF:A123:B345:C000:0:0:0:0/50
     );
 
     for my $i ( 0 .. $#$nets ) {
         ok( ( $rv = sprintf( '%s', $nets->[$i] ) ) eq $exp[$i],
-            "$rv eq $exp[$i]" );
+            "$rv eq $exp[$i]"
+        );
     }
 };
 
@@ -50,19 +53,18 @@ subtest q{splitting leaves the caller's $_ alone} => sub {
         my @aliased = ('kept');
         for (@aliased) { my @got = $call{$name}->() }
         is( $aliased[0], 'kept',
-            "$name leaves the foreach element in \$_ alone" );
+            "$name leaves the foreach element in \$_ alone"
+        );
     }
 
     my @nets   = map { NetAddr::IP->new($_) } qw(192.0.2.0/30 198.51.100.0/30);
     my @halves = map { $_->split(31) } @nets;
-    is(
-        [ map { "$_" } @nets ],
+    is( [ map { "$_" } @nets ],
         [ '192.0.2.0/30', '198.51.100.0/30' ],
         'map over split keeps the source objects'
     );
     is( scalar @halves, 4, 'map over split returns both halves of each net' );
-    ok(
-        lives {
+    ok( lives {
             for (qw(a b)) { my @got = $net->split(31) }
         },
         'split inside a foreach over a literal list lives'

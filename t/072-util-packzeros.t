@@ -33,8 +33,7 @@ subtest 'packzeros is lowercase whatever the case setting' => sub {
     NetAddr::IP::InetBase::lower();
     is( packzeros($input), '2001:db8::a:b', 'packzeros after lower()' );
     NetAddr::IP::InetBase::upper();
-    is(
-        NetAddr::IP::InetBase::inet_ntop(
+    is( NetAddr::IP::InetBase::inet_ntop(
             NetAddr::IP::InetBase::AF_INET6(),
             NetAddr::IP::InetBase::ipv6_aton($input)
         ),

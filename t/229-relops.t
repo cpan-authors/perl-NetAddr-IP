@@ -21,18 +21,18 @@ my @ngt = (
 );
 
 my @cmp = (
-    [ '0.0.0.0/0',          '255.255.255.255/32',                      -1 ],
-    [ '::/0',               'ffff:ffff:ffff:ffff:ffff:ffff:ffff:ffff', -1 ],
-    [ '10.0.0.0/16',        '10.0.0.0/8',                               1 ],
-    [ 'dead:beef::/60',     'dead:beef::/40',                           1 ],
-    [ '10.0.0.0/24',        '10.0.0.0/8',                               1 ],
-    [ '255.255.255.255/32', '0.0.0.0/0',                                1 ],
-    [ 'ffff:ffff:ffff:ffff:ffff:ffff:ffff:ffff', '::/0',               1 ],
-    [ '142.52.5.87',                             '142.52.2.88',        1 ],
-    [ '10.0.0.0/24',                             '10.0.0.0/24',        0 ],
-    [ 'default',                                 'default',            0 ],
-    [ 'broadcast',                               'broadcast',          0 ],
-    [ 'loopback',                                'loopback',           0 ],
+    [ '0.0.0.0/0',                               '255.255.255.255/32',                      -1 ],
+    [ '::/0',                                    'ffff:ffff:ffff:ffff:ffff:ffff:ffff:ffff', -1 ],
+    [ '10.0.0.0/16',                             '10.0.0.0/8',                               1 ],
+    [ 'dead:beef::/60',                          'dead:beef::/40',                           1 ],
+    [ '10.0.0.0/24',                             '10.0.0.0/8',                               1 ],
+    [ '255.255.255.255/32',                      '0.0.0.0/0',                                1 ],
+    [ 'ffff:ffff:ffff:ffff:ffff:ffff:ffff:ffff', '::/0',                                     1 ],
+    [ '142.52.5.87',                             '142.52.2.88',                              1 ],
+    [ '10.0.0.0/24',                             '10.0.0.0/24',                              0 ],
+    [ 'default',                                 'default',                                  0 ],
+    [ 'broadcast',                               'broadcast',                                0 ],
+    [ 'loopback',                                'loopback',                                 0 ],
 );
 
 subtest 'greater than' => sub {

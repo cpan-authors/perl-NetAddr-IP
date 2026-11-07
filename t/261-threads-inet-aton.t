@@ -27,17 +27,10 @@ my $WANT    = '1 192.0.2.0/28';
 # contains and compactref on objects built from literal text. A single
 # thread is the reference the workers have to match.
 sub once {
-    my $contains =
-      NetAddr::IP->new('198.51.100.0/24')
-      ->contains( NetAddr::IP->new('198.51.100.7') ) ? 1 : 0;
-    my $compact = join(
+    my $contains = NetAddr::IP->new('198.51.100.0/24')->contains( NetAddr::IP->new('198.51.100.7') ) ? 1 : 0;
+    my $compact  = join(
         ',',
-        @{
-            NetAddr::IP::compactref(
-                [ map { NetAddr::IP->new("192.0.2.$_/32") } 0 .. 15 ]
-            )
-        }
-    );
+        @{ NetAddr::IP::compactref( [ map { NetAddr::IP->new("192.0.2.$_/32") } 0 .. 15 ] ) } );
     return "$contains $compact";
 }
 
@@ -52,13 +45,13 @@ subtest 'literal addresses agree across threads' => sub {
                     push @bad, "round $round: $got" if $got ne $WANT;
                 }
                 return join "\n", @bad;
-            }
-        );
+            } );
     } 1 .. $THREADS;
     for my $worker (@workers) {
         my $tid = $worker->tid;
         is( $worker->join, q{},
-            "thread $tid matches the single-threaded result" );
+            "thread $tid matches the single-threaded result"
+        );
     }
 };
 

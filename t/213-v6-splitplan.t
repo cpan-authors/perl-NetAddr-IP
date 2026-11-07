@@ -11,7 +11,8 @@ my $rv;
 
 subtest 'splitplan with same cidr' => sub {
     ok( ( $rv = sprintf( "%s", $ip ) ) eq 'FFFF:A123:B345:C789:0:0:0:0/48',
-        "$rv eq FFFF:A123:B345:C789:0:0:0:0/48" );
+        "$rv eq FFFF:A123:B345:C789:0:0:0:0/48"
+    );
 
     my ( $plan, $masks ) = $ip->_splitplan(48);
     ok( $plan,                      'there is a plan' );
@@ -22,8 +23,7 @@ subtest 'splitplan with same cidr' => sub {
 
 subtest 'splitplan with mask containing bits' => sub {
     my $cmask = NetAddr::IP->new('ffff:7fff:ffff:ffff::');
-    ok(
-        ( $rv = sprintf( "%s", $cmask ) ) eq 'FFFF:7FFF:FFFF:FFFF:0:0:0:0/128',
+    ok( ( $rv = sprintf( "%s", $cmask ) ) eq 'FFFF:7FFF:FFFF:FFFF:0:0:0:0/128',
         "$rv eq FFFF:7FFF:FFFF:FFFF:0:0:0:0/128"
     );
 
@@ -34,7 +34,8 @@ subtest 'splitplan with mask containing bits' => sub {
 subtest 'splitplan with matching object mask' => sub {
     my $cmask = NetAddr::IP->new('FFFF:fFFF:FFFF::');
     ok( ( $rv = sprintf( "%s", $cmask ) ) eq 'FFFF:FFFF:FFFF:0:0:0:0:0/128',
-        "$rv eq FFFF:FFFF:FFFF:0:0:0:0:0/128" );
+        "$rv eq FFFF:FFFF:FFFF:0:0:0:0:0/128"
+    );
 
     my ( $plan, $masks ) = $ip->_splitplan($cmask);
     ok( $plan,                      'there is a plan' );
@@ -99,7 +100,8 @@ subtest 'splitplan with netlimit' => sub {
 
     ( $plan, $masks ) = $ip->_splitplan( 49, 50, 51, 51 );
     ok( $plan,
-        "plan of 49, 50, 51, 51 fits netlimit 4 although 8 51's would not" );
+        "plan of 49, 50, 51, 51 fits netlimit 4 although 8 51's would not"
+    );
     is( scalar @{$plan}, 4, 'that plan has 4 items' );
 };
 
@@ -129,7 +131,8 @@ subtest 'splitplan 54 or more bits below the base mask' => sub {
 
     ( $plan, $masks ) = $all->_splitplan( 1 .. 128, 128 );
     is( scalar @{$plan},
-        129, '1 to 128 then one more 128 fills ::/0 in 129 items' );
+        129, '1 to 128 then one more 128 fills ::/0 in 129 items'
+    );
     is( [ @{$plan}[ -2, -1 ] ], [ 128, 128 ], 'that plan ends with two 128s' );
 };
 
@@ -139,22 +142,20 @@ subtest 'splitplan 54 or more bits deep, last mask does not fit' => sub {
 
     my ( $plan, $masks ) = $ip64->_splitplan(@bits);
     is( scalar @{$plan}, 58, 'a second 65 does not fit, so two 67s follow' );
-    is(
-        [ @{$plan}[ -3 .. -1 ] ],
+    is( [ @{$plan}[ -3 .. -1 ] ],
         [ 65, 67, 67 ],
         'that plan ends with a 65 and two 67s'
     );
 
     like(
         dies { $ip64->split(@bits) },
-qr{^netmask error: the piece 2001:DB8:0:0:4000:0:0:0/65 does not start on its own boundary; },
+        qr{^netmask error: the piece 2001:DB8:0:0:4000:0:0:0/65 does not start on its own boundary; },
         'that split croaks, since its 65 starts at 2**62'
     );
 
     my @nets = $ip64->split( 65 .. 120, 120 );
     is( scalar @nets, 57, 'the same depth largest first splits into 57' );
-    is(
-        "$nets[-1]",
+    is( "$nets[-1]",
         '2001:DB8:0:0:FFFF:FFFF:FFFF:FF00/120',
         'the last piece of that split ends the /64'
     );

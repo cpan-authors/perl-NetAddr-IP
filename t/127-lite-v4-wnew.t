@@ -8,8 +8,7 @@ use NetAddr::IP::Lite ();
 
 my @good = (qw(default any broadcast loopback));
 my @bad  = map {
-    (
-        "$_.neveranydomainlikethis.in-addr.arpa",
+    (   "$_.neveranydomainlikethis.in-addr.arpa",
         "nohostlikethis.${_}.in-addr.arpa"
     )
 } @good;
@@ -24,11 +23,11 @@ EOF
 
 SKIP: {
     skip 'defective or missing resolver', 12,
-      if defined NetAddr::IP::Lite->new('not.defined.in-addr.arpa');
+        if defined NetAddr::IP::Lite->new('not.defined.in-addr.arpa');
     ok( !defined NetAddr::IP::Lite->new($_), "not defined ->new($_)" )
-      for @bad;
+        for @bad;
     ok( defined NetAddr::IP::Lite->new($_), "defined ->new($_)" )
-      for @good;
+        for @good;
 }
 
 done_testing;

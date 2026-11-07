@@ -13,11 +13,12 @@ BEGIN {
 }
 
 ok( lives { require NetAddr::IP; 1 },
-    'NetAddr::IP loads with a resolver that answers nothing' )
-  or bail_out("NetAddr::IP did not load: $@");
+    'NetAddr::IP loads with a resolver that answers nothing'
+) or bail_out("NetAddr::IP did not load: $@");
 
 is( NetAddr::IP->new('loopback')->cidr,
-    '127.0.0.1/8', 'the loopback mask built at load time is still 255.0.0.0' );
+    '127.0.0.1/8', 'the loopback mask built at load time is still 255.0.0.0'
+);
 
 done_testing;
 

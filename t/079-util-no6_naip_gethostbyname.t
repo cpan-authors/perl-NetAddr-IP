@@ -4,9 +4,9 @@ use Test2::V1 -ipP;
 use Test2::Plugin::NoWarnings;
 
 use NetAddr::IP::Util qw(
-  havegethostbyname2
-  ipv6_n2x
-  naip_gethostbyname
+    havegethostbyname2
+    ipv6_n2x
+    naip_gethostbyname
 );
 
 my $exp  = '0:0:0:0:0:FFFF:7F00:1';
@@ -23,7 +23,8 @@ is( $got, $exp, 'naip_gethostbyname resolves localhost IPv6' );
 
 for my $host ( '256.0.2.1', '300' ) {
     is( [ naip_gethostbyname($host) ],
-        [], "naip_gethostbyname finds nothing for $host, without a warning" );
+        [], "naip_gethostbyname finds nothing for $host, without a warning"
+    );
 }
 
 done_testing;

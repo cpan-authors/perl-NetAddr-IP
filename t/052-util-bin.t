@@ -34,20 +34,23 @@ subtest 'bin2bcdn string unpack via val' => sub {
 
 subtest 'bin2bcdn reads one argument alike in both builds' => sub {
     is( prototype('NetAddr::IP::Util::bin2bcdn'),
-        '$', 'bin2bcdn has the prototype $' );
+        '$', 'bin2bcdn has the prototype $'
+    );
 
     my $arg = NetAddr::IP::Util::ipv6_aton('2001:db8::1');
 
     # compiled here, so the prototype decides how the line parses
     is( eval q{ bin2bcdn $arg ? 'yes' : 'no' },
-        'yes', 'a call without brackets binds before ?:' );
+        'yes', 'a call without brackets binds before ?:'
+    );
     is( $@, '', 'that call does not croak' );
 
     # in list context this returns a name and the argument, as a lookup does
     my $answer = sub { return wantarray ? ( 'host.example', $arg ) : $arg };
     is( eval { bin2bcdn( $answer->() ) },
         bin2bcdn($arg),
-        'an argument that returns a list is read in scalar context' );
+        'an argument that returns a list is read in scalar context'
+    );
     is( $@, '', 'that call does not croak' );
 };
 
@@ -62,21 +65,23 @@ subtest 'bin2bcdn string unpack via bcdn2txt' => sub {
 
 subtest 'bcdn2txt reads one argument alike in both builds' => sub {
     is( prototype('NetAddr::IP::Util::bcdn2txt'),
-        '$', 'bcdn2txt has the prototype $' );
+        '$', 'bcdn2txt has the prototype $'
+    );
 
-    my $arg = NetAddr::IP::Util::bin2bcdn(
-        NetAddr::IP::Util::ipv6_aton('2001:db8::1') );
+    my $arg = NetAddr::IP::Util::bin2bcdn( NetAddr::IP::Util::ipv6_aton('2001:db8::1') );
 
     # compiled here, so the prototype decides how the line parses
     is( eval q{ bcdn2txt $arg ? 'yes' : 'no' },
-        'yes', 'a call without brackets binds before ?:' );
+        'yes', 'a call without brackets binds before ?:'
+    );
     is( $@, '', 'that call does not croak' );
 
     # in list context this returns a name and the argument, as a lookup does
     my $answer = sub { return wantarray ? ( 'host.example', $arg ) : $arg };
     is( eval { bcdn2txt( $answer->() ) },
         bcdn2txt($arg),
-        'an argument that returns a list is read in scalar context' );
+        'an argument that returns a list is read in scalar context'
+    );
     is( $@, '', 'that call does not croak' );
 };
 
@@ -90,20 +95,23 @@ subtest 'bin2bcd' => sub {
 
 subtest 'bin2bcd reads one argument alike in both builds' => sub {
     is( prototype('NetAddr::IP::Util::bin2bcd'),
-        '$', 'bin2bcd has the prototype $' );
+        '$', 'bin2bcd has the prototype $'
+    );
 
     my $arg = NetAddr::IP::Util::ipv6_aton('2001:db8::1');
 
     # compiled here, so the prototype decides how the line parses
     is( eval q{ bin2bcd $arg ? 'yes' : 'no' },
-        'yes', 'a call without brackets binds before ?:' );
+        'yes', 'a call without brackets binds before ?:'
+    );
     is( $@, '', 'that call does not croak' );
 
     # in list context this returns a name and the argument, as a lookup does
     my $answer = sub { return wantarray ? ( 'host.example', $arg ) : $arg };
     is( eval { bin2bcd( $answer->() ) },
         bin2bcd($arg),
-        'an argument that returns a list is read in scalar context' );
+        'an argument that returns a list is read in scalar context'
+    );
     is( $@, '', 'that call does not croak' );
 };
 

@@ -18,11 +18,11 @@ $ip[2]++;
 isa_ok( $_, 'NetAddr::IP::Lite' ) for @ip;
 
 diag "$ip[0] -- $ip[1]"
-  unless ok( $ip[0] != $ip[1], 'Auto incremented once differ' );
+    unless ok( $ip[0] != $ip[1], 'Auto incremented once differ' );
 diag "$ip[0] -- $ip[2]"
-  unless ok( $ip[0] != $ip[2], 'Auto incremented twice differ' );
+    unless ok( $ip[0] != $ip[2], 'Auto incremented twice differ' );
 diag "$ip[1] -- $ip[2]"
-  unless ok( $ip[1] != $ip[2], 'Auto incremented two times differ' );
+    unless ok( $ip[1] != $ip[2], 'Auto incremented two times differ' );
 
 is( $ip[1], $ip[0] + 1, 'Test of first auto-increment' );
 is( $ip[2], $ip[0] + 2, 'Test of second auto-increment' );

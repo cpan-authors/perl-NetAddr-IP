@@ -5,12 +5,12 @@ use Test2::Plugin::NoWarnings;
 use Test2::Mock;
 
 use Socket qw(
-  AF_INET
-  AF_INET6
-  SOCK_STREAM
-  inet_pton
-  pack_sockaddr_in
-  pack_sockaddr_in6
+    AF_INET
+    AF_INET6
+    SOCK_STREAM
+    inet_pton
+    pack_sockaddr_in
+    pack_sockaddr_in6
 );
 
 our @gai;
@@ -48,10 +48,10 @@ BEGIN {
 }
 
 use NetAddr::IP::Util qw(
-  :noSock6
-  havegethostbyname2
-  ipv6_n2x
-  naip_gethostbyname
+    :noSock6
+    havegethostbyname2
+    ipv6_n2x
+    naip_gethostbyname
 );
 use NetAddr::IP::Lite ();
 
@@ -98,7 +98,7 @@ subtest 'text ending in a number or 0x hex label is not looked up' => sub {
         local @gai;
         local @ghbn;
         is( NetAddr::IP::Lite->$method('0xc0.0.2.010'), undef, "$method(0xc0.0.2.010)" );
-        is( \@ghbn, [], "$method(0xc0.0.2.010) does not call gethostbyname" );
+        is( \@ghbn,                                     [],    "$method(0xc0.0.2.010) does not call gethostbyname" );
     }
 };
 
@@ -106,10 +106,11 @@ subtest 'a short IPv4 text is not looked up' => sub {
     local @gai;
     local @ghbn;
     is( ipv6_n2x( scalar naip_gethostbyname('127.1') ),
-        '0:0:0:0:0:FFFF:7F00:1', 'naip_gethostbyname packs 127.1' );
+        '0:0:0:0:0:FFFF:7F00:1', 'naip_gethostbyname packs 127.1'
+    );
     is( NetAddr::IP::Lite->new('127.1')->cidr, '127.0.0.1/32', 'new(127.1)' );
-    is( \@gai,                                 [], 'no getaddrinfo' );
-    is( \@ghbn,                                [], 'no gethostbyname' );
+    is( \@gai,                                 [],             'no getaddrinfo' );
+    is( \@ghbn,                                [],             'no gethostbyname' );
 };
 
 subtest 'an all-zero answer is no answer' => sub {

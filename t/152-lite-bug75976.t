@@ -17,8 +17,8 @@ my @bugtest = (
 
 for ( my $i = 0 ; $i <= $#bugtest ; $i += 3 ) {
     my $ip6 =
-      sprintf( '%s', NetAddr::IP::Lite->new6( $bugtest[$i] ) || 'undef' );
-    my $ip = sprintf( '%s', NetAddr::IP::Lite->new( $bugtest[$i] ) || 'undef' );
+        sprintf( '%s', NetAddr::IP::Lite->new6( $bugtest[$i] ) || 'undef' );
+    my $ip     = sprintf( '%s', NetAddr::IP::Lite->new( $bugtest[$i] ) || 'undef' );
     my $expip  = $bugtest[ $i + 1 ];
     my $expip6 = $bugtest[ $i + 2 ];
 

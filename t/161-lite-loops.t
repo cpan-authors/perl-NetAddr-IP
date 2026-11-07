@@ -7,12 +7,7 @@ use NetAddr::IP::Lite ();
 
 subtest 'increment loop' => sub {
     my $count = 1;
-    for (
-        my $ip = NetAddr::IP::Lite->new('192.0.2.1/28') ;
-        $ip < $ip->broadcast ;
-        $ip++
-      )
-    {
+    for ( my $ip = NetAddr::IP::Lite->new('192.0.2.1/28') ; $ip < $ip->broadcast ; $ip++ ) {
         my $o = $ip->addr;
         $o =~ s/^.+\.([0-9]+)$/$1/;
         ok( $o == $count, "IP $count incremented correctly" );

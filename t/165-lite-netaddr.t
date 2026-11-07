@@ -8,8 +8,8 @@ use NetAddr::IP::Lite ();
 sub list2NetAddr {
     my ( $inref, $outref ) = @_;
     return undef
-      unless ref $inref eq 'ARRAY'
-      && ref $outref eq 'ARRAY';
+        unless ref $inref eq 'ARRAY'
+        && ref $outref eq 'ARRAY';
     @$outref = ();
     no strict;
     unless ($SKIP_NetAddrIP) {
@@ -25,12 +25,9 @@ sub list2NetAddr {
         }
 
         # 11.22.33.44 - 11.22.33.49
-        elsif ( $IP =~
-/^([0-9]+\.[0-9]+\.[0-9]+\.[0-9]+)\s*\-\s*([0-9]+\.[0-9]+\.[0-9]+\.[0-9]+)$/o
-          )
-        {
+        elsif ( $IP =~ /^([0-9]+\.[0-9]+\.[0-9]+\.[0-9]+)\s*\-\s*([0-9]+\.[0-9]+\.[0-9]+\.[0-9]+)$/o ) {
             push @$outref, NetAddr::IP::Lite->new($1),
-              NetAddr::IP::Lite->new($2);
+                NetAddr::IP::Lite->new($2);
         }
 
         # 11.22.33.44/63
@@ -39,10 +36,7 @@ sub list2NetAddr {
         }
 
         # 11.22.33.44/255.255.255.224
-        elsif ( $IP =~
-            m|^[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+/[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+$|o
-          )
-        {
+        elsif ( $IP =~ m|^[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+/[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+$|o ) {
             push @$outref, NetAddr::IP::Lite->new($IP), 0;
         }
 
@@ -112,34 +106,29 @@ list2NetAddr( \@tstrng, \@NAobject );
 
 my @chkary =    # 5 x 6 tests
                 #  out left    in left     middle      in right    out right
-  qw(
-  11.22.33.43   11.22.33.44   11.22.33.44   11.22.33.44   11.22.33.45
-  22.33.44.54   22.33.44.55   22.33.44.60   22.33.44.65   22.33.44.66
-  45.67.89.9    45.67.89.10   45.67.89.20   45.67.89.32   45.67.89.33
-  5.6.7.15      5.6.7.16      5.6.7.20      5.6.7.31      5.6.7.32
-  7.8.9.127     7.8.9.128     7.8.9.138     7.8.9.143     7.8.9.144
-  126.255.255.255   127.0.0.0   127.128.128.128   127.255.255.255   128.0.0.0
-  );
+    qw(
+    11.22.33.43   11.22.33.44   11.22.33.44   11.22.33.44   11.22.33.45
+    22.33.44.54   22.33.44.55   22.33.44.60   22.33.44.65   22.33.44.66
+    45.67.89.9    45.67.89.10   45.67.89.20   45.67.89.32   45.67.89.33
+    5.6.7.15      5.6.7.16      5.6.7.20      5.6.7.31      5.6.7.32
+    7.8.9.127     7.8.9.128     7.8.9.138     7.8.9.143     7.8.9.144
+    126.255.255.255   127.0.0.0   127.128.128.128   127.255.255.255   128.0.0.0
+    );
 
 for ( my $i = 0 ; $i <= $#chkary ; $i += 5 ) {
-    ok(
-        !matchNetAddr( $chkary[$i], \@NAobject ),
+    ok( !matchNetAddr( $chkary[$i], \@NAobject ),
         "accepted outside left bound $chkary[$i]"
     );
-    ok(
-        matchNetAddr( $chkary[ $i + 1 ], \@NAobject ),
+    ok( matchNetAddr( $chkary[ $i + 1 ], \@NAobject ),
         "rejected inside left bound $chkary[$i + 1]"
     );
-    ok(
-        matchNetAddr( $chkary[ $i + 2 ], \@NAobject ),
+    ok( matchNetAddr( $chkary[ $i + 2 ], \@NAobject ),
         "rejected inside middle bound $chkary[$i + 2]"
     );
-    ok(
-        matchNetAddr( $chkary[ $i + 3 ], \@NAobject ),
+    ok( matchNetAddr( $chkary[ $i + 3 ], \@NAobject ),
         "rejected inside right bound $chkary[$i + 3]"
     );
-    ok(
-        !matchNetAddr( $chkary[ $i + 4 ], \@NAobject ),
+    ok( !matchNetAddr( $chkary[ $i + 4 ], \@NAobject ),
         "accepted outside right bound $chkary[$i + 4]"
     );
 }

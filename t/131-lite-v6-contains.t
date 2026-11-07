@@ -6,33 +6,27 @@ use Test2::Plugin::NoWarnings;
 use NetAddr::IP::Lite ();
 
 my %yes_pairs = (
-    '::/0 vs 2001:620:0:4:a00:20ff:fe9c:7e4a' =>
-      [ '::/0', '2001:620:0:4:a00:20ff:fe9c:7e4a' ],
+    '::/0 vs 2001:620:0:4:a00:20ff:fe9c:7e4a'                => [ '::/0', '2001:620:0:4:a00:20ff:fe9c:7e4a' ],
     '3ffe:2000:0:4::/64 vs 3ffe:2000:0:4:a00:20ff:fe9c:7e4a' =>
-      [ '3ffe:2000:0:4::/64', '3ffe:2000:0:4:a00:20ff:fe9c:7e4a' ],
+        [ '3ffe:2000:0:4::/64', '3ffe:2000:0:4:a00:20ff:fe9c:7e4a' ],
     '3ffe:2000:0:4::/64 vs 3ffe:2000:0:4:a00:20ff:fe9c:7e4a/65' =>
-      [ '3ffe:2000:0:4::/64', '3ffe:2000:0:4:a00:20ff:fe9c:7e4a/65' ],
+        [ '3ffe:2000:0:4::/64', '3ffe:2000:0:4:a00:20ff:fe9c:7e4a/65' ],
     '2001:620:0:4::/64 vs 2001:620:0:4:a00:20ff:fe9c:7e4a' =>
-      [ '2001:620:0:4::/64', '2001:620:0:4:a00:20ff:fe9c:7e4a' ],
+        [ '2001:620:0:4::/64', '2001:620:0:4:a00:20ff:fe9c:7e4a' ],
     '2001:620:0:4::/64 vs 2001:620:0:4:a00:20ff:fe9c:7e4a/65' =>
-      [ '2001:620:0:4::/64', '2001:620:0:4:a00:20ff:fe9c:7e4a/65' ],
-    '2001:620:0:4::/64 vs 2001:620:0:4::1' =>
-      [ '2001:620:0:4::/64', '2001:620:0:4::1' ],
-    '2001:620:0:4::/64 vs 2001:620:0:4:0:0:0:1' =>
-      [ '2001:620:0:4::/64', '2001:620:0:4:0:0:0:1' ],
-    'deaf:beef::/32 vs deaf:beef::1'   => [ 'deaf:beef::/32', 'deaf:beef::1' ],
-    'deaf:beef::/32 vs deaf:beef::1:1' =>
-      [ 'deaf:beef::/32', 'deaf:beef::1:1' ],
-    'deaf:beef::/32 vs deaf:beef::1:0:1' =>
-      [ 'deaf:beef::/32', 'deaf:beef::1:0:1' ],
-    'deaf:beef::/32 vs deaf:beef::1:0:0:1' =>
-      [ 'deaf:beef::/32', 'deaf:beef::1:0:0:1' ],
-    'deaf:beef::/32 vs deaf:beef::1:0:0:0:1' =>
-      [ 'deaf:beef::/32', 'deaf:beef::1:0:0:0:1' ],
+        [ '2001:620:0:4::/64', '2001:620:0:4:a00:20ff:fe9c:7e4a/65' ],
+    '2001:620:0:4::/64 vs 2001:620:0:4::1'      => [ '2001:620:0:4::/64', '2001:620:0:4::1' ],
+    '2001:620:0:4::/64 vs 2001:620:0:4:0:0:0:1' => [ '2001:620:0:4::/64', '2001:620:0:4:0:0:0:1' ],
+    'deaf:beef::/32 vs deaf:beef::1'            => [ 'deaf:beef::/32',    'deaf:beef::1' ],
+    'deaf:beef::/32 vs deaf:beef::1:1'          => [ 'deaf:beef::/32',    'deaf:beef::1:1' ],
+    'deaf:beef::/32 vs deaf:beef::1:0:1'        => [ 'deaf:beef::/32',    'deaf:beef::1:0:1' ],
+    'deaf:beef::/32 vs deaf:beef::1:0:0:1'      => [ 'deaf:beef::/32',    'deaf:beef::1:0:0:1' ],
+    'deaf:beef::/32 vs deaf:beef::1:0:0:0:1'    => [ 'deaf:beef::/32',    'deaf:beef::1:0:0:0:1' ],
 );
 
 ok( NetAddr::IP::Lite->new('::')->contains( NetAddr::IP::Lite->new('::') ),
-    ':: contains itself' );
+    ':: contains itself'
+);
 
 subtest 'contains and within pairs' => sub {
     for my $name ( sort keys %yes_pairs ) {

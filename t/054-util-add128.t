@@ -6,20 +6,20 @@ use Test2::Plugin::NoWarnings;
 use NetAddr::IP::Util qw( add128 comp128 ipv6_aton ipv6_n2x sub128 );
 
 my @num = qw(
-  FFFF:FFFF:FFFF:FFFF:FFFF:FFFF:FFFF:FFFE   ::1                               0  FFFF:FFFF:FFFF:FFFF:FFFF:FFFF:FFFF:FFFF
-  ::1                                       FFFF:FFFF:FFFF:FFFF:FFFF:FFFF:FFFF:FFFE  0  FFFF:FFFF:FFFF:FFFF:FFFF:FFFF:FFFF:FFFF
-  ::2                                       FFFF:FFFF:FFFF:FFFF:FFFF:FFFF:FFFF:FFFE  1  0:0:0:0:0:0:0:0
-  FFFF:FFFF:FFFF:FFFF:FFFF:FFFF:FFFF:FFFE   ::2                               1  0:0:0:0:0:0:0:0
-  FFFF:FFFF:FFFF:FFFF:FFFF:8FFF:FFFF:FFFE   ::7000:0:2                        1  0:0:0:0:0:0:0:0
-  FFFF:FFFF:FFFF:FFFF:FFFF:FFFF:FFFF:FFFE   ::3                               1  0:0:0:0:0:0:0:1
-  ::1                                       ::2                               0  0:0:0:0:0:0:0:3
-  ::FFFF                                    ::FFFF                            0  0:0:0:0:0:0:1:FFFE
-  ::FFFF:FFFF                               ::FFFF:FFFF                       0  0:0:0:0:0:1:FFFF:FFFE
-  ::FFFF:FFFF:FFFF                          ::FFFF:FFFF:FFFF                  0  0:0:0:0:1:FFFF:FFFF:FFFE
-  ::FFFF:FFFF:FFFF:FFFF                     ::FFFF:FFFF:FFFF:FFFF             0  0:0:0:1:FFFF:FFFF:FFFF:FFFE
-  ::FFFF:FFFF:FFFF:FFFF:FFFF                ::FFFF:FFFF:FFFF:FFFF:FFFF        0  0:0:1:FFFF:FFFF:FFFF:FFFF:FFFE
-  ::FFFF:FFFF:FFFF:FFFF:FFFF:FFFF           ::FFFF:FFFF:FFFF:FFFF:FFFF:FFFF   0  0:1:FFFF:FFFF:FFFF:FFFF:FFFF:FFFE
-  ::FFFF:FFFF:FFFF:FFFF:FFFF:FFFF:FFFF      ::FFFF:FFFF:FFFF:FFFF:FFFF:FFFF:FFFF  0  1:FFFF:FFFF:FFFF:FFFF:FFFF:FFFF:FFFE
+    FFFF:FFFF:FFFF:FFFF:FFFF:FFFF:FFFF:FFFE   ::1                               0  FFFF:FFFF:FFFF:FFFF:FFFF:FFFF:FFFF:FFFF
+    ::1                                       FFFF:FFFF:FFFF:FFFF:FFFF:FFFF:FFFF:FFFE  0  FFFF:FFFF:FFFF:FFFF:FFFF:FFFF:FFFF:FFFF
+    ::2                                       FFFF:FFFF:FFFF:FFFF:FFFF:FFFF:FFFF:FFFE  1  0:0:0:0:0:0:0:0
+    FFFF:FFFF:FFFF:FFFF:FFFF:FFFF:FFFF:FFFE   ::2                               1  0:0:0:0:0:0:0:0
+    FFFF:FFFF:FFFF:FFFF:FFFF:8FFF:FFFF:FFFE   ::7000:0:2                        1  0:0:0:0:0:0:0:0
+    FFFF:FFFF:FFFF:FFFF:FFFF:FFFF:FFFF:FFFE   ::3                               1  0:0:0:0:0:0:0:1
+    ::1                                       ::2                               0  0:0:0:0:0:0:0:3
+    ::FFFF                                    ::FFFF                            0  0:0:0:0:0:0:1:FFFE
+    ::FFFF:FFFF                               ::FFFF:FFFF                       0  0:0:0:0:0:1:FFFF:FFFE
+    ::FFFF:FFFF:FFFF                          ::FFFF:FFFF:FFFF                  0  0:0:0:0:1:FFFF:FFFF:FFFE
+    ::FFFF:FFFF:FFFF:FFFF                     ::FFFF:FFFF:FFFF:FFFF             0  0:0:0:1:FFFF:FFFF:FFFF:FFFE
+    ::FFFF:FFFF:FFFF:FFFF:FFFF                ::FFFF:FFFF:FFFF:FFFF:FFFF        0  0:0:1:FFFF:FFFF:FFFF:FFFF:FFFE
+    ::FFFF:FFFF:FFFF:FFFF:FFFF:FFFF           ::FFFF:FFFF:FFFF:FFFF:FFFF:FFFF   0  0:1:FFFF:FFFF:FFFF:FFFF:FFFF:FFFE
+    ::FFFF:FFFF:FFFF:FFFF:FFFF:FFFF:FFFF      ::FFFF:FFFF:FFFF:FFFF:FFFF:FFFF:FFFF  0  1:FFFF:FFFF:FFFF:FFFF:FFFF:FFFF:FFFE
 );
 
 subtest 'check carry' => sub {

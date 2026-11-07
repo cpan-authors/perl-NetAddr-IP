@@ -50,18 +50,17 @@ subtest 'netmask error' => sub {
 
 subtest 'exact netlimit' => sub {
     ok( lives { NetAddr::IP->new('10.0.0.0/16')->splitref(32) },
-        'split of exactly netlimit nets succeeds' );
+        'split of exactly netlimit nets succeeds'
+    );
 };
 
 subtest 'short plans' => sub {
     my $r;
-    ok(
-        lives { $r = $big->splitref( 9 .. 25, 25 ) },
+    ok( lives { $r = $big->splitref( 9 .. 25, 25 ) },
         'split of a /8 into 9..25 with a /25 tail lives'
     );
     is( scalar @{ $r || [] }, 18, 'that split is 18 nets' );
-    ok(
-        lives {
+    ok( lives {
             $r = NetAddr::IP->new('2001:db8::/32')->splitref( 33 .. 64, 64 )
         },
         'split of a /32 into 33..64 with a /64 tail lives'
@@ -74,7 +73,7 @@ subtest 'local scopes the exponent' => sub {
     {
         local $NetAddr::IP::netlimit;
         is( NetAddr::IP::netlimit(20), 1_048_576, 'netlimit(20) returns 2**20' );
-        is( $NetAddr::IP::netlimit, 20, 'netlimit(20) stores the exponent' );
+        is( $NetAddr::IP::netlimit,    20,        'netlimit(20) stores the exponent' );
     }
     is( $NetAddr::IP::netlimit, 16, 'the exponent is 16 again after netlimit(20)' );
 

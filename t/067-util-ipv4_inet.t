@@ -6,10 +6,10 @@ use Test2::Plugin::NoWarnings;
 use NetAddr::IP::Util qw( inet_aton inet_ntoa );
 
 my @num = qw(
-  0.0.0.0
-  255.255.255.255
-  1.2.3.4
-  10.253.230.9
+    0.0.0.0
+    255.255.255.255
+    1.2.3.4
+    10.253.230.9
 );
 
 for my $input (@num) {

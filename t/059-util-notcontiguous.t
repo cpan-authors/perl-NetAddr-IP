@@ -6,32 +6,32 @@ use Test2::Plugin::NoWarnings;
 use NetAddr::IP::Util qw( inet_any2n notcontiguous );
 
 my @num =    #	input				    expected	spur
-  qw(
-  FFFF:FFFF:FFFF:FFFF:FFFF:FFFF:FFFF:FFFF		128	0
-  FFFF:FFFF:FFFF:FFFF:FFFF:FFFF:FFFF:FFFE		127	0
-  FFFF:FFFF:FFFF:FFFF:FFFF:FFFF:FFFF:FFFC		126	0
-  FFFF:FFFF:FFFF:FFFF:FFFF:FFFF:FFFF:FFF8		125	0
-  FFFF:FFFF:FFFF:FFFF:FFFF:FFFF:FFFF:FFF0		124	0
-  FFFF:FFFF:FFFF:FFFF:FFFF:FFFF:FFFF:FFE0		123	0
-  FFFF:FFFF:FFFF:FFFF:FFFF:FFFF:FFFF:FFC0		122	0
-  FFFF:FFFF:FFFF:FFFF:FFFF:FFFF:FFFF:FF80		121	0
-  FFFF:FFFF:FFFF:FFFF:FFFF:FFFF:FFFF:FF00		120	0
-  FFFF:FFFF:FFFF:FFFF:FFFF:FFFF:FFFF:0		112	0
-  FFFF:FFFF:FFFF:FFFF:FFFF:FFFF:FFF0:0		108	0
-  FFeF:FFFF:FFFF:FFFF:FFFF:FFFF:FFFF:FFFF		128	1
-  FFFF:FFeF:FFFF:FFFF:FFFF:FFFF:FFFF:FFFE		127	1
-  FFFF:FFFF:FeFF:FFFF:FFFF:FFFF:FFFF:FFFC		126	1
-  FFFF:FFFF:FFFF:eFFF:FFFF:FFFF:FFFF:FFF8		125	1
-  FFFF:FFFF:FFFF:FFFF:FFFe:FFFF:FFFF:FFF0		124	1
-  FFFF:FFFF:FFF:FFFF:FFFF:FFFF:FFFF:FFE0		123	1
-  FFFF:FFFF:FFFF:FFFF:FFFF:FFeF:FFFF:FFC0		122	1
-  FFFF:FFFF:FFFF:FFFF:FFFF:FFFF:FeFF:FF80		121	1
-  FFFF:FFFF:FFFF:FFFF:FFFF:FFFF:FFFF:eF00		120	1
-  eFFF:FFFF:FFFF:FFFF:FFFF:FFFF:FFFF:0		112	1
-  FFFF:FeFF:FFFF:FFFF:FFFF:FFFF:FFF0:0		108	1
-  F000::						4	0
-  A000::						3	1
-  );
+    qw(
+    FFFF:FFFF:FFFF:FFFF:FFFF:FFFF:FFFF:FFFF		128	0
+    FFFF:FFFF:FFFF:FFFF:FFFF:FFFF:FFFF:FFFE		127	0
+    FFFF:FFFF:FFFF:FFFF:FFFF:FFFF:FFFF:FFFC		126	0
+    FFFF:FFFF:FFFF:FFFF:FFFF:FFFF:FFFF:FFF8		125	0
+    FFFF:FFFF:FFFF:FFFF:FFFF:FFFF:FFFF:FFF0		124	0
+    FFFF:FFFF:FFFF:FFFF:FFFF:FFFF:FFFF:FFE0		123	0
+    FFFF:FFFF:FFFF:FFFF:FFFF:FFFF:FFFF:FFC0		122	0
+    FFFF:FFFF:FFFF:FFFF:FFFF:FFFF:FFFF:FF80		121	0
+    FFFF:FFFF:FFFF:FFFF:FFFF:FFFF:FFFF:FF00		120	0
+    FFFF:FFFF:FFFF:FFFF:FFFF:FFFF:FFFF:0		112	0
+    FFFF:FFFF:FFFF:FFFF:FFFF:FFFF:FFF0:0		108	0
+    FFeF:FFFF:FFFF:FFFF:FFFF:FFFF:FFFF:FFFF		128	1
+    FFFF:FFeF:FFFF:FFFF:FFFF:FFFF:FFFF:FFFE		127	1
+    FFFF:FFFF:FeFF:FFFF:FFFF:FFFF:FFFF:FFFC		126	1
+    FFFF:FFFF:FFFF:eFFF:FFFF:FFFF:FFFF:FFF8		125	1
+    FFFF:FFFF:FFFF:FFFF:FFFe:FFFF:FFFF:FFF0		124	1
+    FFFF:FFFF:FFF:FFFF:FFFF:FFFF:FFFF:FFE0		123	1
+    FFFF:FFFF:FFFF:FFFF:FFFF:FFeF:FFFF:FFC0		122	1
+    FFFF:FFFF:FFFF:FFFF:FFFF:FFFF:FeFF:FF80		121	1
+    FFFF:FFFF:FFFF:FFFF:FFFF:FFFF:FFFF:eF00		120	1
+    eFFF:FFFF:FFFF:FFFF:FFFF:FFFF:FFFF:0		112	1
+    FFFF:FeFF:FFFF:FFFF:FFFF:FFFF:FFF0:0		108	1
+    F000::						4	0
+    A000::						3	1
+    );
 
 for ( my $i = 0 ; $i < @num ; $i += 3 ) {
     my $bstr  = inet_any2n( $num[$i] );
@@ -46,20 +46,23 @@ for ( my $i = 0 ; $i < @num ; $i += 3 ) {
 
 subtest 'notcontiguous reads one argument alike in both builds' => sub {
     is( prototype('NetAddr::IP::Util::notcontiguous'),
-        '$', 'notcontiguous has the prototype $' );
+        '$', 'notcontiguous has the prototype $'
+    );
 
     my $arg = NetAddr::IP::Util::ipv6_aton('ffff:ffff:ffff:ffff::');
 
     # compiled here, so the prototype decides how the line parses
     is( eval q{ notcontiguous $arg ? 'yes' : 'no' },
-        'no', 'a call without brackets binds before ?:' );
+        'no', 'a call without brackets binds before ?:'
+    );
     is( $@, '', 'that call does not croak' );
 
     # in list context this returns a name and the argument, as a lookup does
     my $answer = sub { return wantarray ? ( 'host.example', $arg ) : $arg };
     is( eval { notcontiguous( $answer->() ) },
         notcontiguous($arg),
-        'an argument that returns a list is read in scalar context' );
+        'an argument that returns a list is read in scalar context'
+    );
     is( $@, '', 'that call does not croak' );
 };
 

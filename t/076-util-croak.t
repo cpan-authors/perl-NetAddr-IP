@@ -6,29 +6,29 @@ use Test2::Tools::Exception qw( dies );
 use Tie::Hash;
 
 use NetAddr::IP::Util qw(
-  add128
-  addconst
-  bcd2bin
-  bcdn2bin
-  bcdn2txt
-  bin2bcd
-  bin2bcdn
-  comp128
-  hasbits
-  ipanyto6
-  ipv4to6
-  ipv6_aton
-  ipv6_n2x
-  ipv6to4
-  isAnyIPv4
-  isIPv4
-  isNewIPv4
-  mask4to6
-  maskanyto6
-  notcontiguous
-  shiftleft
-  simple_pack
-  sub128
+    add128
+    addconst
+    bcd2bin
+    bcdn2bin
+    bcdn2txt
+    bin2bcd
+    bin2bcdn
+    comp128
+    hasbits
+    ipanyto6
+    ipv4to6
+    ipv6_aton
+    ipv6_n2x
+    ipv6to4
+    isAnyIPv4
+    isIPv4
+    isNewIPv4
+    mask4to6
+    maskanyto6
+    notcontiguous
+    shiftleft
+    simple_pack
+    sub128
 );
 
 ## simple_pack – bad character input
@@ -41,10 +41,11 @@ for my $input (
     "\x{0663}\x{0663}\x{0663}\x{0663}",    # Arabic-Indic digits
     "\x{0969}\x{0969}\x{0969}\x{0969}",    # Devanagari digits
     "\x{FF13}\x{FF13}\x{FF13}\x{FF13}",    # Fullwidth digits
-  )
-{
-    like( dies { simple_pack($input) },
-        qr/Bad/, "simple_pack dies on non-ASCII digit input" );
+) {
+    like(
+        dies { simple_pack($input) },
+        qr/Bad/, "simple_pack dies on non-ASCII digit input"
+    );
 }
 
 ## bcd2bin – bad character input
@@ -55,13 +56,17 @@ for my $input ( '1234/', '1234:', 'a1234', '&1234', ) {
 
 ## bcdn2bin – bad vector string length
 
-like( dies { bcdn2bin('123456789012345678901') },
-    qr/Bad/, 'bcdn2bin dies on bad length' );
+like(
+    dies { bcdn2bin('123456789012345678901') },
+    qr/Bad/, 'bcdn2bin dies on bad length'
+);
 
 ## bcdn2bin – missing length specifier
 
-like( dies { bcdn2bin('12345678901234567890') },
-    qr/Bad/, 'bcdn2bin dies on missing length specifier' );
+like(
+    dies { bcdn2bin('12345678901234567890') },
+    qr/Bad/, 'bcdn2bin dies on missing length specifier'
+);
 
 ## bin2bcd – bad vector string length
 
@@ -73,8 +78,10 @@ like( dies { bin2bcdn('123') }, qr/Bad/, 'bin2bcdn dies on bad length' );
 
 ## bcdn2txt – bad vector string length
 
-like( dies { bcdn2txt('123456789012345678901') },
-    qr/Bad/, 'bcdn2txt dies on bad length' );
+like(
+    dies { bcdn2txt('123456789012345678901') },
+    qr/Bad/, 'bcdn2txt dies on bad length'
+);
 
 ## bcdn2txt – success case
 
@@ -88,8 +95,10 @@ like( dies { hasbits('123') }, qr/Bad/, 'hasbits dies on bad length' );
 
 ## isIPv4 – bad vector string length
 
-like( dies { isIPv4('12345678901234567') },
-    qr/Bad/, 'isIPv4 dies on bad length' );
+like(
+    dies { isIPv4('12345678901234567') },
+    qr/Bad/, 'isIPv4 dies on bad length'
+);
 
 # the message names the function the caller used, not the caller's own sub
 like(
@@ -110,13 +119,17 @@ like(
 
 ## add128 – bad vector string length
 
-like( dies { add128( '123', '1234567890123456' ) },
-    qr/Bad/, 'add128 dies on bad length' );
+like(
+    dies { add128( '123', '1234567890123456' ) },
+    qr/Bad/, 'add128 dies on bad length'
+);
 
 ## sub128 – bad vector string length
 
-like( dies { sub128( '1234567890123456', '12345678901234567' ) },
-    qr/Bad/, 'sub128 dies on bad length' );
+like(
+    dies { sub128( '1234567890123456', '12345678901234567' ) },
+    qr/Bad/, 'sub128 dies on bad length'
+);
 
 ## comp128 – bad vector string length
 
@@ -124,18 +137,24 @@ like( dies { comp128('123') }, qr/Bad/, 'comp128 dies on bad length' );
 
 ## shiftleft – bad vector string length
 
-like( dies { shiftleft('12345678901234567') },
-    qr/Bad/, 'shiftleft dies on bad length' );
+like(
+    dies { shiftleft('12345678901234567') },
+    qr/Bad/, 'shiftleft dies on bad length'
+);
 
 ## shiftleft – bad shift count (negative)
 
-like( dies { shiftleft( '1234567890123456', -1 ) },
-    qr/Bad/, 'shiftleft dies on negative shift count' );
+like(
+    dies { shiftleft( '1234567890123456', -1 ) },
+    qr/Bad/, 'shiftleft dies on negative shift count'
+);
 
 ## shiftleft – bad shift count (too large)
 
-like( dies { shiftleft( '1234567890123456', 129 ) },
-    qr/Bad/, 'shiftleft dies on shift count too large' );
+like(
+    dies { shiftleft( '1234567890123456', 129 ) },
+    qr/Bad/, 'shiftleft dies on shift count too large'
+);
 
 ## bcd2bin – empty string
 
@@ -155,8 +174,10 @@ like( dies { bcdn2bin( '', 40 ) }, qr/Bad/, 'bcdn2bin dies on empty string' );
 
 ## bcdn2bin – digit count larger than packed string
 
-like( dies { bcdn2bin( "\x12", 40 ) },
-    qr/Bad/, 'bcdn2bin dies on digit count larger than input' );
+like(
+    dies { bcdn2bin( "\x12", 40 ) },
+    qr/Bad/, 'bcdn2bin dies on digit count larger than input'
+);
 
 ## bcdn2bin - over-long packed input reports its length in digits, like every other length croak
 
@@ -210,32 +231,31 @@ for my $input ( "1\x002", "5\x003\x001", "\xb1\xb2", "1\xb2" ) {
 }
 
 subtest 'bcdn2bin and bcdn2txt croak on a packed digit above 9' => sub {
-    for my $case ( [ "\x1a", 2, 'a' ], [ "\xf1", 2, 'f' ],
-        [ "\x12\x3c", 4, 'c' ], )
-    {
+    for my $case (
+        [ "\x1a",     2, 'a' ], [ "\xf1", 2, 'f' ],
+        [ "\x12\x3c", 4, 'c' ],
+    ) {
         my ( $packed, $digits, $char ) = @{$case};
         like(
             dies { bcdn2bin( $packed, $digits ) },
-qr/^Bad char in string for NetAddr::IP::Util::bcdn2bin, character is '$char', allowed are 0-9 at /,
+            qr/^Bad char in string for NetAddr::IP::Util::bcdn2bin, character is '$char', allowed are 0-9 at /,
             sprintf(
                 'bcdn2bin of 0x%s croaks naming %s',
                 unpack( 'H*', $packed ), $char
-            )
-        );
+            ) );
     }
-    is(
-        unpack( 'H*', bcdn2bin( "\x1a", 1 ) ),
+    is( unpack( 'H*', bcdn2bin( "\x1a", 1 ) ),
         '0' x 31 . '1',
         'bcdn2bin of 0x1a reads only the one digit it is told to'
     );
     like(
         dies { bcdn2txt( "\xab" x 20 ) },
-qr/^Bad char in string for NetAddr::IP::Util::bcdn2txt, character is 'a', allowed are 0-9 at /,
+        qr/^Bad char in string for NetAddr::IP::Util::bcdn2txt, character is 'a', allowed are 0-9 at /,
         'bcdn2txt of 20 bytes of 0xab croaks naming a'
     );
     like(
         dies { bcdn2txt( ( "\x00" x 19 ) . "\x0e" ) },
-qr/^Bad char in string for NetAddr::IP::Util::bcdn2txt, character is 'e', allowed are 0-9 at /,
+        qr/^Bad char in string for NetAddr::IP::Util::bcdn2txt, character is 'e', allowed are 0-9 at /,
         'bcdn2txt of a last digit of 0xe croaks naming e'
     );
 };
@@ -247,17 +267,18 @@ my $v = ipv6_aton('::1');
 for my $count ( 4294967297, 2**40 + 3, -4294967295, 1.5, 'abc' ) {
     like(
         dies { shiftleft( $v, $count ) },
-qr/^Bad arg value for NetAddr::IP::Util::shiftleft, is \Q$count\E, should be 0 thru 128/,
+        qr/^Bad arg value for NetAddr::IP::Util::shiftleft, is \Q$count\E, should be 0 thru 128/,
         "shiftleft dies on count $count"
     );
 }
 is( ipv6_n2x( shiftleft( $v, undef ) ),
-    '0:0:0:0:0:0:0:1', 'shiftleft with an undef count returns the input' );
+    '0:0:0:0:0:0:0:1', 'shiftleft with an undef count returns the input'
+);
 is( ipv6_n2x( shiftleft( $v, 128 ) ),
-    '0:0:0:0:0:0:0:0', 'shiftleft accepts 128' );
+    '0:0:0:0:0:0:0:0', 'shiftleft accepts 128'
+);
 
-for my $const ( 2**31, -( 2**31 ) - 1, 2**32, 18446744073709551615, 1.5, 'abc' )
-{
+for my $const ( 2**31, -( 2**31 ) - 1, 2**32, 18446744073709551615, 1.5, 'abc' ) {
     like(
         dies { addconst( $v, $const ) },
 qr/^Bad arg value for NetAddr::IP::Util::addconst, is \Q$const\E, should be an integer from -2147483648 thru 2147483647/,
@@ -265,27 +286,31 @@ qr/^Bad arg value for NetAddr::IP::Util::addconst, is \Q$const\E, should be an i
     );
 }
 is( ipv6_n2x( ( addconst( $v, 2147483647 ) )[1] ),
-    '0:0:0:0:0:0:8000:0', 'addconst accepts 2**31 - 1' );
-is(
-    ipv6_n2x( ( addconst( $v, -2147483648 ) )[1] ),
+    '0:0:0:0:0:0:8000:0', 'addconst accepts 2**31 - 1'
+);
+is( ipv6_n2x( ( addconst( $v, -2147483648 ) )[1] ),
     'FFFF:FFFF:FFFF:FFFF:FFFF:FFFF:8000:1',
     'addconst accepts -2**31'
 );
 is( ipv6_n2x( ( addconst( $v, undef ) )[1] ),
-    '0:0:0:0:0:0:0:1', 'addconst with an undef constant returns the input' );
+    '0:0:0:0:0:0:0:1', 'addconst with an undef constant returns the input'
+);
 SKIP: {
     skip 'Math::BigInt not found', 1 unless eval { require Math::BigInt; 1 };
     is( ipv6_n2x( ( addconst( $v, Math::BigInt->new(5) ) )[1] ),
-        '0:0:0:0:0:0:0:6', 'addconst numifies a Math::BigInt constant' );
+        '0:0:0:0:0:0:0:6', 'addconst numifies a Math::BigInt constant'
+    );
 }
 
 # $1 and a tied scalar are read through their get magic
 '5x' =~ /([0-9])/;
 is( ipv6_n2x( shiftleft( $v, $1 ) ),
-    '0:0:0:0:0:0:0:20', 'shiftleft reads a count held in $1' );
+    '0:0:0:0:0:0:0:20', 'shiftleft reads a count held in $1'
+);
 '5x' =~ /([0-9])/;
 is( ipv6_n2x( ( addconst( $v, $1 ) )[1] ),
-    '0:0:0:0:0:0:0:6', 'addconst reads a constant held in $1' );
+    '0:0:0:0:0:0:0:6', 'addconst reads a constant held in $1'
+);
 {
 
     package Local::Five;
@@ -294,13 +319,14 @@ is( ipv6_n2x( ( addconst( $v, $1 ) )[1] ),
 }
 tie my $five, 'Local::Five';
 is( ipv6_n2x( shiftleft( $v, $five ) ),
-    '0:0:0:0:0:0:0:20', 'shiftleft reads a tied count' );
+    '0:0:0:0:0:0:0:20', 'shiftleft reads a tied count'
+);
 is( ipv6_n2x( ( addconst( $v, $five ) )[1] ),
-    '0:0:0:0:0:0:0:6', 'addconst reads a tied constant' );
-is(
-    ipv6_n2x( ( addconst( $v, ' 7' ) )[1] ),
+    '0:0:0:0:0:0:0:6', 'addconst reads a tied constant'
+);
+is( ipv6_n2x( ( addconst( $v, ' 7' ) )[1] ),
     '0:0:0:0:0:0:0:8',
-'addconst accepts a number with leading space, as NetAddr::IP::Lite::plus passes it'
+    'addconst accepts a number with leading space, as NetAddr::IP::Lite::plus passes it'
 );
 for my $nan ( 'nan', 'inf', '-inf' ) {
     like(
@@ -317,25 +343,23 @@ for my $nan ( 'nan', 'inf', '-inf' ) {
 
 # the digit count is a number on both builds, in any form looks_like_number accepts
 my $packed_bcd = pack( 'H*', '12345678' );
-is(
-    bcdn2bin( $packed_bcd, ' 7' ),
+is( bcdn2bin( $packed_bcd, ' 7' ),
     bcdn2bin( $packed_bcd, 7 ),
     'bcdn2bin reads a digit count with leading space'
 );
-is(
-    bcdn2bin( $packed_bcd, '5e0' ),
+is( bcdn2bin( $packed_bcd, '5e0' ),
     bcdn2bin( $packed_bcd, 5 ),
     'bcdn2bin reads a digit count in exponent form'
 );
 like(
     dies { bcdn2bin( $packed_bcd, 'nan' ) },
-qr/^Bad digit count for NetAddr::IP::Util::bcdn2bin, is nan, should be 1 to 8 digits/,
+    qr/^Bad digit count for NetAddr::IP::Util::bcdn2bin, is nan, should be 1 to 8 digits/,
     'bcdn2bin dies on a digit count of nan'
 );
 
 like(
     dies { bcdn2bin( simple_pack('123456789'), 4294967299 ) },
-qr/^Bad digit count for NetAddr::IP::Util::bcdn2bin, is 4294967299, should be 1 to 40 digits/,
+    qr/^Bad digit count for NetAddr::IP::Util::bcdn2bin, is 4294967299, should be 1 to 40 digits/,
     'bcdn2bin dies on a digit count that a C int would wrap'
 );
 
@@ -354,7 +378,8 @@ qr/^Bad digit count for NetAddr::IP::Util::bcdn2bin, is 4294967299, should be 1 
 my $numify_five = bless \do { my $n = 5 },     'Local::Numify';
 my $text_abc    = bless \do { my $s = 'abc' }, 'Local::Text';
 is( ipv6_n2x( shiftleft( $v, $numify_five ) ),
-    '0:0:0:0:0:0:0:20', 'shiftleft reads an object that overloads 0+' );
+    '0:0:0:0:0:0:0:20', 'shiftleft reads an object that overloads 0+'
+);
 like(
     dies { shiftleft( $v, $text_abc ) },
     qr/^Bad arg value for NetAddr::IP::Util::shiftleft, is abc,/,
@@ -373,27 +398,27 @@ our $moving = ipv6_aton('2001:db8::1');
 
     package Local::Moves;
     use overload
-      q{0+} => sub {
+        q{0+} => sub {
         $main::moving = 'x' x 4096;
         $main::moving = main::ipv6_aton('2001:db8::1');
         return 1;
-      },
-      fallback => 1;
+        },
+        fallback => 1;
 }
 is( ipv6_n2x( shiftleft( $moving, bless {}, 'Local::Moves' ) ),
     '4002:1B70:0:0:0:0:0:2',
-    'shiftleft reads the address after the count reallocates it' );
+    'shiftleft reads the address after the count reallocates it'
+);
 
 our %holder = ( address => ipv6_aton('2001:db8::1') );
 {
 
     package Local::Deletes;
     use overload
-      q{0+}    => sub { delete $main::holder{address}; return 1 },
-      fallback => 1;
+        q{0+}    => sub { delete $main::holder{address}; return 1 },
+        fallback => 1;
 }
-is(
-    ipv6_n2x( shiftleft( $holder{address}, bless {}, 'Local::Deletes' ) ),
+is( ipv6_n2x( shiftleft( $holder{address}, bless {}, 'Local::Deletes' ) ),
     '4002:1B70:0:0:0:0:0:2',
     'shiftleft keeps the address alive while the count deletes it'
 );
@@ -406,19 +431,19 @@ my $one = pack( 'N4', 0, 0, 0, 1 );
 
     package Local::Reassigns;
     use overload
-      q{""}    => sub { $main::first = 'x' x 4096; return $one },
-      fallback => 1;
+        q{""}    => sub { $main::first = 'x' x 4096; return $one },
+        fallback => 1;
 }
 for my $case (
     [ add128 => \&add128, '2001:DB8:0:0:0:0:0:6' ],
     [ sub128 => \&sub128, '2001:DB8:0:0:0:0:0:4' ],
-  )
-{
+) {
     my ( $name, $function, $want ) = @{$case};
     $first = ipv6_aton('2001:db8::5');
     my ( undef, $result ) = $function->( $first, bless {}, 'Local::Reassigns' );
     is( ipv6_n2x($result), $want,
-        "$name reads the first address before the second reallocates it" );
+        "$name reads the first address before the second reallocates it"
+    );
 }
 
 ## the first address is copied before the second argument's get magic
@@ -439,8 +464,7 @@ tie my $rewrites, 'Local::FetchRewrites';
 for my $case (
     [ add128 => \&add128, '2001:DB8:0:0:0:0:0:6' ],
     [ sub128 => \&sub128, '2001:DB8:0:0:0:0:0:4' ],
-  )
-{
+) {
     my ( $name, $function, $want ) = @{$case};
     $held = ipv6_aton('2001:db8::5');
     my ( undef, $result ) = $function->( $held, $rewrites );
@@ -455,7 +479,7 @@ for my $name (qw(add128 sub128)) {
     my $function = NetAddr::IP::Util->can($name);
     like(
         dies { $function->( 'abc', undef ) },
-qr/^Bad arg length for NetAddr::IP::Util::$name, length is 24, should be 128/,
+        qr/^Bad arg length for NetAddr::IP::Util::$name, length is 24, should be 128/,
         "$name reports a short first address before an undefined second"
     );
 }
@@ -464,12 +488,12 @@ qr/^Bad arg length for NetAddr::IP::Util::$name, length is 24, should be 128/,
 
 like(
     dies { bcdn2bin( pack( 'H*', '12345678' ), 1.5 ) },
-qr/^Bad digit count for NetAddr::IP::Util::bcdn2bin, is 1.5, should be 1 to 8 digits/,
+    qr/^Bad digit count for NetAddr::IP::Util::bcdn2bin, is 1.5, should be 1 to 8 digits/,
     'bcdn2bin dies on a fractional digit count'
 );
 like(
     dies { addconst( 'short', 'abc' ) },
-qr/^Bad arg length for NetAddr::IP::Util::addconst, length is 40, should be 128/,
+    qr/^Bad arg length for NetAddr::IP::Util::addconst, length is 40, should be 128/,
     'addconst reports a bad address before a bad constant'
 );
 
@@ -483,20 +507,24 @@ my $four_up = $four;
 utf8::upgrade($four_up);
 
 is( hasbits($upgraded), hasbits($packed),
-    'hasbits reads an upgraded packed address' );
+    'hasbits reads an upgraded packed address'
+);
 is( comp128($upgraded), comp128($packed),
-    'comp128 reads an upgraded packed address' );
+    'comp128 reads an upgraded packed address'
+);
 is( ipv6to4($upgraded), ipv6to4($packed),
-    'ipv6to4 reads an upgraded packed address' );
+    'ipv6to4 reads an upgraded packed address'
+);
 is( bin2bcd($upgraded), bin2bcd($packed),
-    'bin2bcd reads an upgraded packed address' );
-is(
-    ( add128( $upgraded, $packed ) )[1],
+    'bin2bcd reads an upgraded packed address'
+);
+is( ( add128( $upgraded, $packed ) )[1],
     ( add128( $packed,   $packed ) )[1],
     'add128 reads an upgraded packed address'
 );
 is( ipv4to6($four_up), ipv4to6($four),
-    'ipv4to6 reads an upgraded packed IPv4 address' );
+    'ipv4to6 reads an upgraded packed IPv4 address'
+);
 
 ## wide character above 0xFF in packed arguments
 
@@ -511,20 +539,17 @@ my $w_high_bcd = pack( 'H*', '987650' );
 
 # [desc, func_name, call_wrapper, byte_len, plain_arg]
 my @wide_cases = (
-    [
-        'add128 first argument',             'add128',
+    [   'add128 first argument',             'add128',
         sub { $_[0]->( $_[1], $w_packed ) }, 16,
         $w_packed
     ],
-    [
-        'add128 second argument',            'add128',
+    [   'add128 second argument',            'add128',
         sub { $_[0]->( $w_packed, $_[1] ) }, 16,
         $w_packed
     ],
     [ 'addconst', 'addconst', sub { $_[0]->( $_[1], 1 ) }, 16, $w_packed ],
     [ 'bcdn2bin', 'bcdn2bin', sub { $_[0]->( $_[1], 5 ) }, 3,  $w_high_bcd ],
-    [
-        'bcdn2txt',               'bcdn2txt',
+    [   'bcdn2txt',               'bcdn2txt',
         sub { $_[0]->( $_[1] ) }, 20,
         bin2bcdn($w_packed)
     ],
@@ -532,45 +557,38 @@ my @wide_cases = (
     [ 'bin2bcdn', 'bin2bcdn', sub { $_[0]->( $_[1] ) }, 16, $w_packed ],
     [ 'comp128',  'comp128',  sub { $_[0]->( $_[1] ) }, 16, $w_packed ],
     [ 'hasbits',  'hasbits',  sub { $_[0]->( $_[1] ) }, 16, $w_packed ],
-    [
-        'ipanyto6 of four bytes', 'ipanyto6',
+    [   'ipanyto6 of four bytes', 'ipanyto6',
         sub { $_[0]->( $_[1] ) }, 4,
         $w_four
     ],
-    [
-        'ipanyto6 of sixteen bytes', 'ipanyto6',
+    [   'ipanyto6 of sixteen bytes', 'ipanyto6',
         sub { $_[0]->( $_[1] ) },    16,
         $w_packed
     ],
     [ 'ipv4to6',  'ipv4to6',  sub { $_[0]->( $_[1] ) }, 4,  $w_four ],
     [ 'ipv6to4',  'ipv6to4',  sub { $_[0]->( $_[1] ) }, 16, $w_packed ],
     [ 'mask4to6', 'mask4to6', sub { $_[0]->( $_[1] ) }, 4,  $w_four ],
-    [
-        'maskanyto6 of four bytes', 'maskanyto6',
+    [   'maskanyto6 of four bytes', 'maskanyto6',
         sub { $_[0]->( $_[1] ) },   4,
         $w_four
     ],
-    [
-        'maskanyto6 of sixteen bytes', 'maskanyto6',
+    [   'maskanyto6 of sixteen bytes', 'maskanyto6',
         sub { $_[0]->( $_[1] ) },      16,
         $w_mask
     ],
-    [ 'notcontiguous', 'notcontiguous', sub { $_[0]->( $_[1] ) }, 16, $w_mask ],
-    [ 'shiftleft', 'shiftleft', sub { $_[0]->( $_[1], 1 ) }, 16, $w_packed ],
-    [
-        'sub128 first argument',             'sub128',
+    [ 'notcontiguous', 'notcontiguous', sub { $_[0]->( $_[1] ) },    16, $w_mask ],
+    [ 'shiftleft',     'shiftleft',     sub { $_[0]->( $_[1], 1 ) }, 16, $w_packed ],
+    [   'sub128 first argument',             'sub128',
         sub { $_[0]->( $_[1], $w_packed ) }, 16,
         $w_packed
     ],
-    [
-        'sub128 second argument',            'sub128',
+    [   'sub128 second argument',            'sub128',
         sub { $_[0]->( $w_packed, $_[1] ) }, 16,
         $w_packed
     ],
 );
 
-subtest 'wide string of the expected length croaks "Wide character in ..."' =>
-  sub {
+subtest 'wide string of the expected length croaks "Wide character in ..."' => sub {
     for my $c (@wide_cases) {
         my ( $desc, $func, $call, $n, $plain ) = @$c;
         my $wide = "\x{100}" x $n;
@@ -583,15 +601,13 @@ subtest 'wide string of the expected length croaks "Wide character in ..."' =>
 
         like(
             dies { $call->( NetAddr::IP::UtilPP->can($func), $wide ) },
-qr/^Wide character in NetAddr::IP::Util::\Q$func\E at \Q$THIS_FILE\E line [0-9]+/,
+            qr/^Wide character in NetAddr::IP::Util::\Q$func\E at \Q$THIS_FILE\E line [0-9]+/,
             "$desc direct via UtilPP names public Util::$func"
         );
     }
-  };
+};
 
-subtest
-  'wrong-length wide string still croaks as wide char, not length error' =>
-  sub {
+subtest 'wrong-length wide string still croaks as wide char, not length error' => sub {
     for my $c (@wide_cases) {
         my ( $desc, $func, $call, $n, $plain ) = @$c;
         my $wide = "\x{100}" x 2;
@@ -602,22 +618,20 @@ subtest
             "$desc (2 wide chars) via Util"
         );
     }
-  };
+};
 
-subtest 'upgraded string that only contains bytes is still read correctly' =>
-  sub {
+subtest 'upgraded string that only contains bytes is still read correctly' => sub {
     for my $c (@wide_cases) {
         my ( $desc, $func, $call, $n, $plain ) = @$c;
         my $up = $plain;
         utf8::upgrade($up);
 
-        is(
-            $call->( NetAddr::IP::UtilPP->can($func), $up ),
+        is( $call->( NetAddr::IP::UtilPP->can($func), $up ),
             $call->( NetAddr::IP::UtilPP->can($func), $plain ),
             "$desc via UtilPP (upgraded bytes)"
         );
     }
-  };
+};
 
 ## packed arguments held in $1, substr or a tied value are read through their get magic
 
@@ -657,8 +671,7 @@ my %magic_form = (
         my ( $first, $second ) = map { "<$_>" } @args, q{};
         return $code->(
             substr( $first,  1, length $args[0] ),
-            substr( $second, 1, length( $args[1] // q{} ) )
-        );
+            substr( $second, 1, length( $args[1] // q{} ) ) );
     },
     'substr of an upgraded string' => sub {
         my ( $code, @args ) = @_;
@@ -667,8 +680,7 @@ my %magic_form = (
         utf8::upgrade($second);
         return $code->(
             substr( $first,  1, length $args[0] ),
-            substr( $second, 1, length( $args[1] // q{} ) )
-        );
+            substr( $second, 1, length( $args[1] // q{} ) ) );
     },
     'tied hash element' => sub {
         my ( $code, @args ) = @_;
@@ -683,7 +695,8 @@ for my $name ( sort keys %packed_call ) {
     my $plain = $code->(@args);
     for my $form ( sort keys %magic_form ) {
         is( $magic_form{$form}->( $code, @args ),
-            $plain, "$name reads a packed argument from a $form" );
+            $plain, "$name reads a packed argument from a $form"
+        );
     }
 }
 
@@ -704,12 +717,12 @@ for my $name ( sort keys %packed_call ) {
     tie my $first,  'Local::CountsFetch', $args[0];
     tie my $second, 'Local::CountsFetch', $args[1];
     is( $code->( $first, $second ),
-        $code->(@args), "$name reads a tied packed argument" );
+        $code->(@args), "$name reads a tied packed argument"
+    );
     my @fetches = map { tied($_)->{fetches} } $first,
-      ( @args > 1 ? $second : () );
+        ( @args > 1 ? $second : () );
 
-    is(
-        \@fetches,
+    is( \@fetches,
         [ (1) x @args ],
         "$name fetches each tied packed argument once"
     );
@@ -718,12 +731,12 @@ for my $name ( sort keys %packed_call ) {
 tie my $tied_undef, 'Local::CountsFetch', undef;
 like(
     dies { hasbits($tied_undef) },
-qr/^Bad arg length for NetAddr::IP::Util::hasbits, length is undefined, should be 128/,
+    qr/^Bad arg length for NetAddr::IP::Util::hasbits, length is undefined, should be 128/,
     'hasbits reports a tied undef as undefined'
 );
 like(
     dies { add128( $packed, $tied_undef ) },
-qr/^Bad arg length for NetAddr::IP::Util::add128, length is undefined, should be 128/,
+    qr/^Bad arg length for NetAddr::IP::Util::add128, length is undefined, should be 128/,
     'add128 reports a tied undef second argument as undefined'
 );
 

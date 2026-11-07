@@ -15,8 +15,7 @@ my %num = (
     '1::8'                                  => '1::8',
     'FF00::FFFF'                            => 'ff00::ffff',
     'FFFF::FFFF:FFFF'                       => 'ffff::ffff:ffff',
-    'A1B2:C3D4:E5D6:F7E8:08F9:190A:1.2.3.4' =>
-      'a1b2:c3d4:e5d6:f7e8:8f9:190a:102:304',
+    'A1B2:C3D4:E5D6:F7E8:08F9:190A:1.2.3.4' => 'a1b2:c3d4:e5d6:f7e8:8f9:190a:102:304',
 );
 
 subtest 'ipv6_ntoa' => sub {
@@ -29,7 +28,9 @@ subtest 'ipv6_ntoa' => sub {
     }
 };
 
-like( dies { ipv6_ntoa('1234') },
-    qr/Bad arg/, 'ipv6_ntoa with bad length dies' );
+like(
+    dies { ipv6_ntoa('1234') },
+    qr/Bad arg/, 'ipv6_ntoa with bad length dies'
+);
 
 done_testing;

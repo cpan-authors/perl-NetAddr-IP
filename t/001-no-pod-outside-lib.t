@@ -43,6 +43,6 @@ for my $file ( sort keys %{$files} ) {
 }
 
 ok( !@found, 'no shipped file outside lib/ carries a POD command at column 0' )
-  or diag( "found:\n  " . join "\n  ", @found );
+    or diag( "found:\n  " . join "\n  ", @found );
 
 done_testing;

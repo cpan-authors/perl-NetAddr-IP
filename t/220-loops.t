@@ -10,12 +10,7 @@ my @deltas = ( 0, 1, 2, 3, 255 );
 subtest 'octet increment' => sub {
     my $count = 1;
 
-    for (
-        my $ip = NetAddr::IP->new('10.0.0.1/28') ;
-        $ip < $ip->broadcast ;
-        $ip++
-      )
-    {
+    for ( my $ip = NetAddr::IP->new('10.0.0.1/28') ; $ip < $ip->broadcast ; $ip++ ) {
         my $o = $ip->addr;
 
         $o =~ s/^.+\.([0-9]+)$/$1/;

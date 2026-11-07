@@ -13,9 +13,9 @@ my $addr = {
 
 SKIP: {
     skip "overload dereferencing not supported in version $] of Perl",
-      scalar keys %$addr
-      unless $overload::ops{dereferencing}
-      && $overload::ops{dereferencing} =~ m/\@\{\}/;
+        scalar keys %$addr
+        unless $overload::ops{dereferencing}
+        && $overload::ops{dereferencing} =~ m/\@\{\}/;
 
     for my $input ( sort keys %$addr ) {
         my $ip = NetAddr::IP->new($input);

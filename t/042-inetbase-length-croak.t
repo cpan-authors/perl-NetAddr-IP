@@ -5,17 +5,16 @@ use Test2::Plugin::NoWarnings;
 use Test2::Tools::Exception qw( dies );
 
 use NetAddr::IP::InetBase qw(
-  :lower
-  inet_n2ad
-  inet_n2dx
-  ipv6_n2d
-  ipv6_n2x
-  isAnyIPv4
-  isIPv4
+    :lower
+    inet_n2ad
+    inet_n2dx
+    ipv6_n2d
+    ipv6_n2x
+    isAnyIPv4
+    isIPv4
 );
 
-my $ISANY_DIES =
-  'Bad arg length for NetAddr::IP::InetBase::isAnyIPv4, length is';
+my $ISANY_DIES  = 'Bad arg length for NetAddr::IP::InetBase::isAnyIPv4, length is';
 my $ISIPV4_DIES = 'Bad arg length for NetAddr::IP::InetBase::isIPv4, length is';
 my $N2D_DIES    = q{Bad arg length for 'ipv6_n2d', length is};
 my $N2X_DIES    = q{Bad arg length for 'ipv6_n2x', length is};
@@ -27,8 +26,7 @@ my $v4_compat = pack 'H*', '000000000000000000000000c0000201';    # ::192.0.2.1
 my $v6_packed = pack 'H*', '20010db8000000000000000000000001';
 my $seventeen = $v6_packed . "\0";
 
-subtest 'an undefined argument is named as undefined, without a warning' =>
-  sub {
+subtest 'an undefined argument is named as undefined, without a warning' => sub {
     like(
         dies { ipv6_n2x(undef) },
         qr/\A\Q$N2X_DIES undefined should be 16 bytes\E at /,
@@ -59,7 +57,7 @@ subtest 'an undefined argument is named as undefined, without a warning' =>
         qr/\A\Q$N2D_DIES undefined should be 16 bytes\E at /,
         'inet_n2ad of undef stops at the ipv6_n2d it calls first'
     );
-  };
+};
 
 subtest 'a defined argument of the wrong length is measured' => sub {
     like(

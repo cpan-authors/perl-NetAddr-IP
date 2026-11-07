@@ -5,12 +5,12 @@ use Test2::Plugin::NoWarnings;
 use Test2::Mock;
 
 use Socket qw(
-  AF_INET
-  AF_INET6
-  SOCK_STREAM
-  inet_pton
-  pack_sockaddr_in
-  pack_sockaddr_in6
+    AF_INET
+    AF_INET6
+    SOCK_STREAM
+    inet_pton
+    pack_sockaddr_in
+    pack_sockaddr_in6
 );
 
 # installed before Lite loads Util, which imports getaddrinfo at that point
@@ -80,11 +80,11 @@ $answers{'mapped.example'} = [
     result( AF_INET,  $v4,     \&pack_sockaddr_in ),
 ];
 $answers{'mapped-only.example'} =
-  [ result( AF_INET6, $mapped_b, \&pack_sockaddr_in6 ), ];
+    [ result( AF_INET6, $mapped_b, \&pack_sockaddr_in6 ), ];
 $answers{'loop6.example'} =
-  [ result( AF_INET6, inet_pton( AF_INET6, '::1' ), \&pack_sockaddr_in6 ) ];
+    [ result( AF_INET6, inet_pton( AF_INET6, '::1' ), \&pack_sockaddr_in6 ) ];
 $answers{'compat6.example'} =
-  [ result( AF_INET6, inet_pton( AF_INET6, '::c000:201' ), \&pack_sockaddr_in6 ) ];
+    [ result( AF_INET6, inet_pton( AF_INET6, '::c000:201' ), \&pack_sockaddr_in6 ) ];
 $a_of{'v4.example'}     = $v4;
 $a_of{'both.example'}   = $v4;
 $a_of{'mapped.example'} = $v4;
@@ -97,8 +97,7 @@ sub resolved {
     my $got = defined $ip ? $ip->cidr : undef;
     is( $got,         $cidr,    "$method($name)" );
     is( $ip->version, $version, "$method($name) version" ) if defined $ip;
-    is(
-        \@gai,
+    is( \@gai,
         [ [ $name, '', { socktype => SOCK_STREAM } ] ],
         "$method($name) is one getaddrinfo, no family"
     );
@@ -106,19 +105,21 @@ sub resolved {
 }
 
 subtest 'one getaddrinfo, and the address stays the same' => sub {
-    resolved( 'new',  'v4.example',         '192.0.2.1/32',             4 );
-    resolved( 'new6', 'v4.example',         '0:0:0:0:0:0:C000:201/128', 6 );
-    resolved( 'new',  'v6.example',         '2001:DB8:0:0:0:0:0:1/128', 6 );
-    resolved( 'new6', 'v6.example',         '2001:DB8:0:0:0:0:0:1/128', 6 );
-    resolved( 'new',  'both.example',       '192.0.2.1/32',             4 );
-    resolved( 'new6', 'both.example',       '2001:DB8:0:0:0:0:0:1/128', 6 );
-    resolved( 'new',  'missing.example',    undef,                      undef );
-    resolved( 'new6', 'missing.example',    undef,                      undef );
-    resolved( 'new',  'mapped.example',     '192.0.2.1/32',             4 );
-    resolved( 'new6', 'mapped.example',     '0:0:0:0:0:0:C000:201/128', 6 );
-    resolved( 'new', 'mapped-only.example', '0:0:0:0:0:FFFF:C633:640A/128', 6 );
-    resolved( 'new6', 'mapped-only.example',
-        '0:0:0:0:0:FFFF:C633:640A/128', 6 );
+    resolved( 'new',  'v4.example',          '192.0.2.1/32',                 4 );
+    resolved( 'new6', 'v4.example',          '0:0:0:0:0:0:C000:201/128',     6 );
+    resolved( 'new',  'v6.example',          '2001:DB8:0:0:0:0:0:1/128',     6 );
+    resolved( 'new6', 'v6.example',          '2001:DB8:0:0:0:0:0:1/128',     6 );
+    resolved( 'new',  'both.example',        '192.0.2.1/32',                 4 );
+    resolved( 'new6', 'both.example',        '2001:DB8:0:0:0:0:0:1/128',     6 );
+    resolved( 'new',  'missing.example',     undef,                          undef );
+    resolved( 'new6', 'missing.example',     undef,                          undef );
+    resolved( 'new',  'mapped.example',      '192.0.2.1/32',                 4 );
+    resolved( 'new6', 'mapped.example',      '0:0:0:0:0:0:C000:201/128',     6 );
+    resolved( 'new',  'mapped-only.example', '0:0:0:0:0:FFFF:C633:640A/128', 6 );
+    resolved(
+        'new6',                         'mapped-only.example',
+        '0:0:0:0:0:FFFF:C633:640A/128', 6
+    );
 };
 
 subtest 'an AAAA answer inside ::/96 stays IPv6' => sub {
@@ -133,7 +134,8 @@ subtest 'a short IPv4 text is not looked up' => sub {
     local @ghbn;
     is( NetAddr::IP::Lite->new('127.1')->cidr, '127.0.0.1/32', 'new(127.1)' );
     is( NetAddr::IP::Lite->new6('127.1')->cidr,
-        '0:0:0:0:0:0:7F00:1/128', 'new6(127.1)' );
+        '0:0:0:0:0:0:7F00:1/128', 'new6(127.1)'
+    );
     is( \@gai,  [], 'no getaddrinfo' );
     is( \@ghbn, [], 'no gethostbyname' );
 };
@@ -144,8 +146,8 @@ subtest 'text ending in a number or 0x hex label is not looked up' => sub {
             local @gai;
             local @ghbn;
             is( NetAddr::IP::Lite->$method($text), undef, "$method($text)" );
-            is( \@gai,  [], "$method($text) does not call getaddrinfo" );
-            is( \@ghbn, [], "$method($text) does not call gethostbyname" );
+            is( \@gai,                             [],    "$method($text) does not call getaddrinfo" );
+            is( \@ghbn,                            [],    "$method($text) does not call gethostbyname" );
         }
     }
 };
@@ -162,7 +164,7 @@ subtest 'NoFQDN does not ask the resolver' => sub {
 
 subtest 'an all-zero answer is no answer' => sub {
     local $answers{'zero.example'} =
-      [ result( AF_INET, inet_pton( AF_INET, '0.0.0.0' ), \&pack_sockaddr_in ) ];
+        [ result( AF_INET, inet_pton( AF_INET, '0.0.0.0' ), \&pack_sockaddr_in ) ];
     resolved( 'new',  'zero.example', undef, undef );
     resolved( 'new6', 'zero.example', undef, undef );
 };

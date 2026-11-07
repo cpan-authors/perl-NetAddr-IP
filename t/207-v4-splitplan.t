@@ -11,7 +11,8 @@ my $rv;
 
 subtest 'splitplan with same cidr' => sub {
     ok( ( $rv = sprintf( '%s', $ip ) ) eq '192.168.21.13/15',
-        "$rv eq 192.168.21.13/15" );
+        "$rv eq 192.168.21.13/15"
+    );
 
     my ( $plan, $masks ) = $ip->_splitplan(15);
     ok( $plan,                      'there is a plan' );
@@ -23,7 +24,8 @@ subtest 'splitplan with same cidr' => sub {
 subtest 'splitplan with mask containing bits' => sub {
     my $cmask = NetAddr::IP->new('255.126.0.0');
     ok( ( $rv = sprintf( '%s', $cmask ) ) eq '255.126.0.0/32',
-        "$rv eq 255.126.0.0/32" );
+        "$rv eq 255.126.0.0/32"
+    );
 
     my ( $plan, $masks ) = $ip->_splitplan($cmask);
     ok( !$plan, 'failing because of bits in mask' );
@@ -32,7 +34,8 @@ subtest 'splitplan with mask containing bits' => sub {
 subtest 'splitplan with matching object mask' => sub {
     my $cmask = NetAddr::IP->new('255.254.0.0');
     ok( ( $rv = sprintf( '%s', $cmask ) ) eq '255.254.0.0/32',
-        "$rv eq 255.254.0.0/32" );
+        "$rv eq 255.254.0.0/32"
+    );
 
     my ( $plan, $masks ) = $ip->_splitplan($cmask);
     ok( $plan,                      'there is a plan' );
@@ -97,7 +100,8 @@ subtest 'splitplan with netlimit' => sub {
 
     ( $plan, $masks ) = $ip->_splitplan( 16, 17, 18, 18 );
     ok( $plan,
-        "plan of 16, 17, 18, 18 fits netlimit 4 although 8 18's would not" );
+        "plan of 16, 17, 18, 18 fits netlimit 4 although 8 18's would not"
+    );
     is( scalar @{$plan}, 4, 'that plan has 4 items' );
 };
 
