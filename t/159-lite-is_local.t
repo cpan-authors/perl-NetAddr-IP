@@ -22,11 +22,11 @@ my %ips = (
     '::ffff:128.0.0.0'  => 0,
 );
 
-for my $addr ( sort keys %ips ) {
+for my $addr (sort keys %ips) {
     my $ip  = NetAddr::IP::Lite->new($addr);
     my $got = $ip->is_local();
     my $exp = $ips{$addr};
-    cmp_ok( $got, '==', $exp, "is_local($addr) returns $exp" );
+    cmp_ok($got, '==', $exp, "is_local($addr) returns $exp");
 }
 
 my @ips6 = (
@@ -35,11 +35,11 @@ my @ips6 = (
     '128.0.0.0'       => 0,
 );
 
-for ( my $i = 0 ; $i <= $#ips6 ; $i += 2 ) {
-    my $ip  = NetAddr::IP::Lite->new6( $ips6[$i] );
+for (my $i = 0 ; $i <= $#ips6 ; $i += 2) {
+    my $ip  = NetAddr::IP::Lite->new6($ips6[$i]);
     my $got = $ip->is_local();
     my $exp = $ips6[ $i + 1 ];
-    cmp_ok( $got, '==', $exp, "is_local(new6($ips6[$i])) returns $exp" );
+    cmp_ok($got, '==', $exp, "is_local(new6($ips6[$i])) returns $exp");
 }
 
 done_testing;

@@ -6,106 +6,106 @@ use Test2::Plugin::NoWarnings;
 use NetAddr::IP::InetBase qw( ipv6_aton ipv6_n2x isAnyIPv4 isIPv4 isNewIPv4 );
 
 my @num = qw(
-  ::
-  8000::
-  4000::
-  2000::
-  1000::
-  800::
-  400::
-  200::
-  100::
-  80::
-  40::
-  20::
-  10::
-  1::
-  0:8000::
-  0:4000::
-  0:2000::
-  0:1000::
-  0:800::
-  0:400::
-  0:200::
-  0:100::
-  0:80::
-  0:40::
-  0:20::
-  0:10::
-  0:1::
-  0:0:8000::
-  0:0:4000::
-  0:0:2000::
-  0:0:1000::
-  0:0:800::
-  0:0:400::
-  0:0:200::
-  0:0:100::
-  0:0:80::
-  0:0:40::
-  0:0:20::
-  0:0:10::
-  0:0:1::
-  0:0:0:8000::
-  0:0:0:4000::
-  0:0:0:2000::
-  0:0:0:1000::
-  0:0:0:800::
-  0:0:0:400::
-  0:0:0:200::
-  0:0:0:100::
-  0:0:0:80::
-  0:0:0:40::
-  0:0:0:20::
-  0:0:0:10::
-  0:0:0:1::
-  0:0:0:0:8000::
-  0:0:0:0:4000::
-  0:0:0:0:2000::
-  0:0:0:0:1000::
-  0:0:0:0:800::
-  0:0:0:0:400::
-  0:0:0:0:200::
-  0:0:0:0:100::
-  0:0:0:0:80::
-  0:0:0:0:40::
-  0:0:0:0:20::
-  0:0:0:0:10::
-  0:0:0:0:1::
-  ::8000:0
-  ::4000:0
-  ::2000:0
-  ::1000:0
-  ::800:0
-  ::400:0
-  ::200:0
-  ::100:0
-  ::80:0
-  ::40:0
-  ::20:0
-  ::10:0
-  ::1:0
-  ::8000
-  ::4000
-  ::2000
-  ::1000
-  ::800
-  ::400
-  ::200
-  ::100
-  ::80
-  ::40
-  ::20
-  ::10
-  ::1
+    ::
+    8000::
+    4000::
+    2000::
+    1000::
+    800::
+    400::
+    200::
+    100::
+    80::
+    40::
+    20::
+    10::
+    1::
+    0:8000::
+    0:4000::
+    0:2000::
+    0:1000::
+    0:800::
+    0:400::
+    0:200::
+    0:100::
+    0:80::
+    0:40::
+    0:20::
+    0:10::
+    0:1::
+    0:0:8000::
+    0:0:4000::
+    0:0:2000::
+    0:0:1000::
+    0:0:800::
+    0:0:400::
+    0:0:200::
+    0:0:100::
+    0:0:80::
+    0:0:40::
+    0:0:20::
+    0:0:10::
+    0:0:1::
+    0:0:0:8000::
+    0:0:0:4000::
+    0:0:0:2000::
+    0:0:0:1000::
+    0:0:0:800::
+    0:0:0:400::
+    0:0:0:200::
+    0:0:0:100::
+    0:0:0:80::
+    0:0:0:40::
+    0:0:0:20::
+    0:0:0:10::
+    0:0:0:1::
+    0:0:0:0:8000::
+    0:0:0:0:4000::
+    0:0:0:0:2000::
+    0:0:0:0:1000::
+    0:0:0:0:800::
+    0:0:0:0:400::
+    0:0:0:0:200::
+    0:0:0:0:100::
+    0:0:0:0:80::
+    0:0:0:0:40::
+    0:0:0:0:20::
+    0:0:0:0:10::
+    0:0:0:0:1::
+    ::8000:0
+    ::4000:0
+    ::2000:0
+    ::1000:0
+    ::800:0
+    ::400:0
+    ::200:0
+    ::100:0
+    ::80:0
+    ::40:0
+    ::20:0
+    ::10:0
+    ::1:0
+    ::8000
+    ::4000
+    ::2000
+    ::1000
+    ::800
+    ::400
+    ::200
+    ::100
+    ::80
+    ::40
+    ::20
+    ::10
+    ::1
 );
 
 subtest 'isIPv4' => sub {
     for my $input (@num) {
         my $bstr = ipv6_aton($input);
         my $rv   = isIPv4($bstr);
-        my $exp  = ( $input =~ m/[0-9]::$/ ) ? 0 : 1;
-        is( $rv, $exp, "isIPv4 for " . ipv6_n2x($bstr) );
+        my $exp  = ($input =~ m/[0-9]::$/) ? 0 : 1;
+        is($rv, $exp, "isIPv4 for " . ipv6_n2x($bstr));
     }
 };
 
@@ -113,8 +113,8 @@ subtest 'isAnyIPv4' => sub {
     for my $input (@num) {
         my $bstr = ipv6_aton($input);
         my $rv   = isAnyIPv4($bstr);
-        my $exp  = ( $input =~ m/[0-9]::$/ ) ? 0 : 1;
-        is( $rv, $exp, "isAnyIPv4 for " . ipv6_n2x($bstr) );
+        my $exp  = ($input =~ m/[0-9]::$/) ? 0 : 1;
+        is($rv, $exp, "isAnyIPv4 for " . ipv6_n2x($bstr));
     }
 };
 
@@ -125,8 +125,8 @@ subtest 'isAnyIPv4 with compatible high bits' => sub {
         my $bstr = ipv6_aton($input);
         $bstr ^= $compat;
         my $rv  = isAnyIPv4($bstr);
-        my $exp = ( $input =~ m/[0-9]::$/ ) ? 0 : 1;
-        is( $rv, $exp, "isAnyIPv4 compat for " . ipv6_n2x($bstr) );
+        my $exp = ($input =~ m/[0-9]::$/) ? 0 : 1;
+        is($rv, $exp, "isAnyIPv4 compat for " . ipv6_n2x($bstr));
     }
 };
 
@@ -135,8 +135,8 @@ subtest 'isNewIPv4 with compatible high bits' => sub {
         my $bstr = ipv6_aton($input);
         $bstr ^= $compat;
         my $rv  = isNewIPv4($bstr);
-        my $exp = ( $input =~ m/[0-9]::$/ ) ? 0 : 1;
-        is( $rv, $exp, "isNewIPv4 compat for " . ipv6_n2x($bstr) );
+        my $exp = ($input =~ m/[0-9]::$/) ? 0 : 1;
+        is($rv, $exp, "isNewIPv4 compat for " . ipv6_n2x($bstr));
     }
 };
 
@@ -150,13 +150,13 @@ my %wrong_length = (
 );
 
 subtest 'all three croak on an argument that is not 16 bytes' => sub {
-    for my $case ( sort keys %wrong_length ) {
-        my ( $bits128, $bits ) = @{ $wrong_length{$case} };
+    for my $case (sort keys %wrong_length) {
+        my ($bits128, $bits) = @{ $wrong_length{$case} };
         for my $name (qw( isAnyIPv4 isIPv4 isNewIPv4 )) {
             my $predicate = NetAddr::IP::InetBase->can($name);
             like(
                 dies { $predicate->($bits128) },
-qr/\ABad arg length for NetAddr::IP::InetBase::$name, length is $bits, should be 128 at /,
+                qr/\ABad arg length for NetAddr::IP::InetBase::$name, length is $bits, should be 128 at /,
                 "$name of $case croaks, naming $name"
             );
         }

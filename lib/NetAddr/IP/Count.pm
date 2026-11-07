@@ -6,9 +6,10 @@ use strict;
 use warnings;
 
 package NetAddr::IP::Count;
+
 # VERSION
 
-use Carp qw(croak);
+use Carp         qw(croak);
 use Scalar::Util qw(blessed looks_like_number);
 
 # the cache size NetAddr::IP::Count 2.01 reported for a new counter
@@ -19,30 +20,31 @@ my $WANT_ADDRESS = q{a NetAddr::IP object};
 my $WANT_NUMBER  = q{a number};
 
 sub new {
-    my ( $proto, @pairs ) = @_;
+    my ($proto, @pairs) = @_;
     croak sprintf(
         '%s::new takes group name and subnet pairs, got %d arguments',
-        __PACKAGE__, scalar @pairs )
-        if @pairs % 2;
+        __PACKAGE__, scalar @pairs
+    ) if @pairs % 2;
     my %groups = @pairs;
     my $self   = bless {
         cache_size => $DEFAULT_CACHE_SIZE,
         subnets    => {},
         totals     => {},
-    }, ref $proto || $proto;
-    $self->add( $_, $groups{$_} ) for keys %groups;
+        },
+        ref $proto || $proto;
+    $self->add($_, $groups{$_}) for keys %groups;
     return $self;
 }
 
 sub add {
-    my ( $self, $name, @subnets ) = @_;
-    croak sprintf( '%s::add needs a group name', __PACKAGE__ )
+    my ($self, $name, @subnets) = @_;
+    croak sprintf('%s::add needs a group name', __PACKAGE__)
         unless defined $name;
     @subnets = @{ $subnets[0] }
         if @subnets == 1 && ref $subnets[0] eq 'ARRAY';
-    for my $i ( 0 .. $#subnets ) {
-        croak _bad_argument( 'add', $i + 2, $subnets[$i], $WANT_ADDRESS )
-            unless _is_address( $subnets[$i] );
+    for my $i (0 .. $#subnets) {
+        croak _bad_argument('add', $i + 2, $subnets[$i], $WANT_ADDRESS)
+            unless _is_address($subnets[$i]);
     }
     push @{ $self->{subnets}{$name} }, @subnets;
     $self->{totals}{$name} //= 0;
@@ -50,33 +52,33 @@ sub add {
 }
 
 sub count {
-    my ( $self, @addresses ) = @_;
-    for my $i ( 0 .. $#addresses ) {
-        croak _bad_argument( 'count', $i + 1, $addresses[$i], $WANT_ADDRESS )
-            unless _is_address( $addresses[$i] );
+    my ($self, @addresses) = @_;
+    for my $i (0 .. $#addresses) {
+        croak _bad_argument('count', $i + 1, $addresses[$i], $WANT_ADDRESS)
+            unless _is_address($addresses[$i]);
     }
-    $self->_add_to_totals( $_, 1 ) for @addresses;
+    $self->_add_to_totals($_, 1) for @addresses;
     return $self;
 }
 
 sub valcount {
-    my ( $self, @pairs ) = @_;
+    my ($self, @pairs) = @_;
     croak sprintf(
         '%s::valcount takes address and value pairs, got %d arguments',
-        __PACKAGE__, scalar @pairs )
-        if @pairs % 2;
-    for my $i ( 0 .. $#pairs ) {
-        if ( $i % 2 ) {
-            croak _bad_argument( 'valcount', $i + 1, $pairs[$i], $WANT_NUMBER )
-                unless looks_like_number( $pairs[$i] );
+        __PACKAGE__, scalar @pairs
+    ) if @pairs % 2;
+    for my $i (0 .. $#pairs) {
+        if ($i % 2) {
+            croak _bad_argument('valcount', $i + 1, $pairs[$i], $WANT_NUMBER)
+                unless looks_like_number($pairs[$i]);
         }
         else {
-            croak _bad_argument( 'valcount', $i + 1, $pairs[$i], $WANT_ADDRESS )
-                unless _is_address( $pairs[$i] );
+            croak _bad_argument('valcount', $i + 1, $pairs[$i], $WANT_ADDRESS)
+                unless _is_address($pairs[$i]);
         }
     }
-    while ( my ( $address, $value ) = splice @pairs, 0, 2 ) {
-        $self->_add_to_totals( $address, $value );
+    while (my ($address, $value) = splice @pairs, 0, 2) {
+        $self->_add_to_totals($address, $value);
     }
     return $self;
 }
@@ -87,11 +89,11 @@ sub result {
 }
 
 sub cache {
-    my ( $self, @size ) = @_;
+    my ($self, @size) = @_;
     my $old = $self->{cache_size};
     if (@size) {
-        croak _bad_argument( 'cache', 1, $size[0], $WANT_NUMBER )
-            unless looks_like_number( $size[0] );
+        croak _bad_argument('cache', 1, $size[0], $WANT_NUMBER)
+            unless looks_like_number($size[0]);
         $self->{cache_size} = $size[0] if $size[0] >= 0;
     }
     return $old;
@@ -99,11 +101,11 @@ sub cache {
 
 # every group with a subnet that contains the address takes the value, once
 sub _add_to_totals {
-    my ( $self, $address, $value ) = @_;
+    my ($self, $address, $value) = @_;
     my $subnets = $self->{subnets};
-  GROUP:
-    for my $name ( keys %{$subnets} ) {
-        for my $subnet ( @{ $subnets->{$name} } ) {
+    GROUP:
+    for my $name (keys %{$subnets}) {
+        for my $subnet (@{ $subnets->{$name} }) {
             next unless $subnet->contains($address);
             $self->{totals}{$name} += $value;
             next GROUP;
@@ -118,13 +120,15 @@ sub _is_address {
 }
 
 sub _bad_argument {
-    my ( $method, $position, $arg, $wanted ) = @_;
-    my $got
-        = !defined $arg ? 'undefined'
-        : ref $arg      ? ref $arg
-        :                 "'$arg'";
-    return sprintf( '%s::%s needs %s for argument %d, got %s',
-        __PACKAGE__, $method, $wanted, $position, $got );
+    my ($method, $position, $arg, $wanted) = @_;
+    my $got =
+         !defined $arg ? 'undefined'
+        : ref $arg     ? ref $arg
+        :                "'$arg'";
+    return sprintf(
+        '%s::%s needs %s for argument %d, got %s',
+        __PACKAGE__, $method, $wanted, $position, $got
+    );
 }
 
 1;

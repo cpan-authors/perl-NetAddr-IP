@@ -13,9 +13,9 @@ my %subnets = (
     '::1234:BEEF:DEAD FFFF:FF00::' => '0:0:0:0:0:1234:BEEF:DEAD/24',
 );
 
-for my $input ( sort keys %subnets ) {
+for my $input (sort keys %subnets) {
     my $ip = NetAddr::IP::Lite->new($input);
-    is( "$ip", $subnets{$input}, "$input parses correctly" );
+    is("$ip", $subnets{$input}, "$input parses correctly");
 }
 
 done_testing;

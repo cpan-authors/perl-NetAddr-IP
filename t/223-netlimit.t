@@ -29,7 +29,7 @@ subtest 'netlimit exceeded' => sub {
         'split over netlimit'
     );
     like(
-        dies { $big->rsplit( 24, 32 ) },
+        dies { $big->rsplit(24, 32) },
         qr/^netlimit exceeded/,
         'rsplit with mask list over netlimit'
     );
@@ -50,33 +50,32 @@ subtest 'netmask error' => sub {
 
 subtest 'exact netlimit' => sub {
     ok( lives { NetAddr::IP->new('10.0.0.0/16')->splitref(32) },
-        'split of exactly netlimit nets succeeds' );
+        'split of exactly netlimit nets succeeds'
+    );
 };
 
 subtest 'short plans' => sub {
     my $r;
-    ok(
-        lives { $r = $big->splitref( 9 .. 25, 25 ) },
+    ok( lives { $r = $big->splitref(9 .. 25, 25) },
         'split of a /8 into 9..25 with a /25 tail lives'
     );
-    is( scalar @{ $r || [] }, 18, 'that split is 18 nets' );
-    ok(
-        lives {
-            $r = NetAddr::IP->new('2001:db8::/32')->splitref( 33 .. 64, 64 )
+    is(scalar @{ $r || [] }, 18, 'that split is 18 nets');
+    ok( lives {
+            $r = NetAddr::IP->new('2001:db8::/32')->splitref(33 .. 64, 64)
         },
         'split of a /32 into 33..64 with a /64 tail lives'
     );
-    is( scalar @{ $r || [] }, 33, 'that split is 33 nets' );
+    is(scalar @{ $r || [] }, 33, 'that split is 33 nets');
 };
 
 subtest 'local scopes the exponent' => sub {
-    is( $NetAddr::IP::netlimit, 16, 'the default exponent is 16' );
+    is($NetAddr::IP::netlimit, 16, 'the default exponent is 16');
     {
         local $NetAddr::IP::netlimit;
-        is( NetAddr::IP::netlimit(20), 1_048_576, 'netlimit(20) returns 2**20' );
-        is( $NetAddr::IP::netlimit, 20, 'netlimit(20) stores the exponent' );
+        is(NetAddr::IP::netlimit(20), 1_048_576, 'netlimit(20) returns 2**20');
+        is($NetAddr::IP::netlimit,    20,        'netlimit(20) stores the exponent');
     }
-    is( $NetAddr::IP::netlimit, 16, 'the exponent is 16 again after netlimit(20)' );
+    is($NetAddr::IP::netlimit, 16, 'the exponent is 16 again after netlimit(20)');
 
     my $ip = NetAddr::IP->new('192.0.2.0/24');
     {
@@ -87,7 +86,7 @@ subtest 'local scopes the exponent' => sub {
             'exponent 2 rejects a plan of 8 nets'
         );
     }
-    is( $NetAddr::IP::netlimit, 16, 'the exponent is 16 again after the block' );
+    is($NetAddr::IP::netlimit, 16, 'the exponent is 16 again after the block');
 };
 
 done_testing;

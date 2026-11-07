@@ -6,32 +6,28 @@ use Test2::Tools::Exception qw( dies );
 use Test2::Tools::Warnings  qw( no_warnings );
 
 use NetAddr::IP::InetBase ();
-use Socket               ();
+use Socket                ();
 
 my $BAD_FAMILY = 4_278_190_080;    # 0xFF000000, which is no address family
-my $NTOP_DIES =
-  'Unsupported address family for NetAddr::IP::InetBase::inet_ntop, af is';
-my $PTON_DIES = 'Bad address family for NetAddr::IP::InetBase::inet_pton, got';
-my $V4_TEXT   = '192.0.2.1';
-my $V6_TEXT   = '2001:db8::1';
+my $NTOP_DIES  = 'Unsupported address family for NetAddr::IP::InetBase::inet_ntop, af is';
+my $PTON_DIES  = 'Bad address family for NetAddr::IP::InetBase::inet_pton, got';
+my $V4_TEXT    = '192.0.2.1';
+my $V6_TEXT    = '2001:db8::1';
 
 my $AF_INET  = NetAddr::IP::InetBase::AF_INET();
 my $AF_INET6 = NetAddr::IP::InetBase::AF_INET6();
 my $accepted = sprintf 'should be AF_INET (%d) or AF_INET6 (%d)', $AF_INET,
-  $AF_INET6;
+    $AF_INET6;
 my $v4_packed = pack 'H*', 'c0000201';
 my $v6_packed = pack 'H*', '20010db8000000000000000000000001';
 
 # both functions die naming the family, and neither warns on the way
 sub refused_without_warning {
     my ($af) = @_;
-    my ( $ntop_error, $pton_error );
-    ok(
-        no_warnings {
-            $ntop_error =
-              dies { NetAddr::IP::InetBase::inet_ntop( $af, $v4_packed ) };
-            $pton_error =
-              dies { NetAddr::IP::InetBase::inet_pton( $af, $V4_TEXT ) };
+    my ($ntop_error, $pton_error);
+    ok( no_warnings {
+            $ntop_error = dies { NetAddr::IP::InetBase::inet_ntop($af, $v4_packed) };
+            $pton_error = dies { NetAddr::IP::InetBase::inet_pton($af, $V4_TEXT) };
         },
         "family '$af' does not warn"
     );
@@ -57,33 +53,31 @@ sub socket_message {
     return $err;
 }
 
-my $ntop_socket = socket_message(
-    dies { Socket::inet_ntop( $BAD_FAMILY, $v6_packed ) } );
+my $ntop_socket = socket_message(dies { Socket::inet_ntop($BAD_FAMILY, $v6_packed) });
 my $pton_socket =
-  socket_message( dies { Socket::inet_pton( $BAD_FAMILY, $V4_TEXT ) } );
+    socket_message(dies { Socket::inet_pton($BAD_FAMILY, $V4_TEXT) });
 
-subtest 'a numeric family that is neither AF_INET nor AF_INET6 is Socket' =>
-  sub {
+subtest 'a numeric family that is neither AF_INET nor AF_INET6 is Socket' => sub {
     like(
-        dies { NetAddr::IP::InetBase::inet_ntop( $BAD_FAMILY, $v4_packed ) },
+        dies { NetAddr::IP::InetBase::inet_ntop($BAD_FAMILY, $v4_packed) },
         qr/\A\Q$ntop_socket\E at /,
         'inet_ntop of family 0xFF000000 matches Socket'
     );
     like(
-        dies { NetAddr::IP::InetBase::inet_pton( $BAD_FAMILY, $V4_TEXT ) },
+        dies { NetAddr::IP::InetBase::inet_pton($BAD_FAMILY, $V4_TEXT) },
         qr/\A\Q$pton_socket\E at /,
         'inet_pton of family 0xFF000000 matches Socket'
     );
-  };
+};
 
 subtest 'an undefined family is named as undefined, without a warning' => sub {
     like(
-        dies { NetAddr::IP::InetBase::inet_ntop( undef, $v4_packed ) },
+        dies { NetAddr::IP::InetBase::inet_ntop(undef, $v4_packed) },
         qr/\A\Q$NTOP_DIES undefined, $accepted\E at /,
         'inet_ntop of an undefined family says undefined'
     );
     like(
-        dies { NetAddr::IP::InetBase::inet_pton( undef, $V4_TEXT ) },
+        dies { NetAddr::IP::InetBase::inet_pton(undef, $V4_TEXT) },
         qr/\A\Q$PTON_DIES undefined, $accepted\E at /,
         'inet_pton of an undefined family says undefined'
     );
@@ -108,23 +102,29 @@ subtest 'a padded, signed or exponent family still converts' => sub {
         [ 'an exponent',        "${AF_INET6}e0", $v6_packed, $V6_TEXT ],
     );
     for my $case (@written) {
-        my ( $form, $af, $packed, $text ) = @{$case};
-        is( eval { NetAddr::IP::InetBase::inet_ntop( $af, $packed ) } // $@,
-            $text, "inet_ntop of a family with $form" );
-        is( eval { NetAddr::IP::InetBase::inet_pton( $af, $text ) } // $@,
-            $packed, "inet_pton of a family with $form" );
+        my ($form, $af, $packed, $text) = @{$case};
+        is( eval { NetAddr::IP::InetBase::inet_ntop($af, $packed) } // $@,
+            $text, "inet_ntop of a family with $form"
+        );
+        is( eval { NetAddr::IP::InetBase::inet_pton($af, $text) } // $@,
+            $packed, "inet_pton of a family with $form"
+        );
     }
 };
 
 subtest 'AF_INET and AF_INET6 still convert' => sub {
-    is( NetAddr::IP::InetBase::inet_ntop( $AF_INET, $v4_packed ),
-        $V4_TEXT, 'inet_ntop of AF_INET' );
-    is( NetAddr::IP::InetBase::inet_ntop( $AF_INET6, $v6_packed ),
-        $V6_TEXT, 'inet_ntop of AF_INET6' );
-    is( NetAddr::IP::InetBase::inet_pton( $AF_INET, $V4_TEXT ),
-        $v4_packed, 'inet_pton of AF_INET' );
-    is( NetAddr::IP::InetBase::inet_pton( $AF_INET6, $V6_TEXT ),
-        $v6_packed, 'inet_pton of AF_INET6' );
+    is( NetAddr::IP::InetBase::inet_ntop($AF_INET, $v4_packed),
+        $V4_TEXT, 'inet_ntop of AF_INET'
+    );
+    is( NetAddr::IP::InetBase::inet_ntop($AF_INET6, $v6_packed),
+        $V6_TEXT, 'inet_ntop of AF_INET6'
+    );
+    is( NetAddr::IP::InetBase::inet_pton($AF_INET, $V4_TEXT),
+        $v4_packed, 'inet_pton of AF_INET'
+    );
+    is( NetAddr::IP::InetBase::inet_pton($AF_INET6, $V6_TEXT),
+        $v6_packed, 'inet_pton of AF_INET6'
+    );
 };
 
 done_testing;

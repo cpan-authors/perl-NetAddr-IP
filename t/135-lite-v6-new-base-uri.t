@@ -32,29 +32,29 @@ subtest 'nth on v6 URI addresses' => sub {
     );
 
     for my $entry (@addr) {
-        my ( $input, $index, $expected, $should_pass ) = @{$entry};
+        my ($input, $index, $expected, $should_pass) = @{$entry};
         my $ip = NetAddr::IP::Lite->new($input);
-        ( my $base = $input ) =~ s{/[0-9]+}{};
-        isa_ok( $ip, ['NetAddr::IP::Lite'], "$base " );
-        is( $ip->bits,    128, 'bits == 128' );
-        is( $ip->version, 6,   'version == 6' );
+        (my $base = $input) =~ s{/[0-9]+}{};
+        isa_ok($ip, ['NetAddr::IP::Lite'], "$base ");
+        is($ip->bits,    128, 'bits == 128');
+        is($ip->version, 6,   'version == 6');
         if ($should_pass) {
-            is( uc $ip->nth($index), $expected, "nth $base, $index" );
+            is(uc $ip->nth($index), $expected, "nth $base, $index");
         }
         else {
-            ok( !$ip->nth($index), "nth $base, undef" );
+            ok(!$ip->nth($index), "nth $base, undef");
         }
     }
 };
 
 subtest 'contains' => sub {
     my $test = NetAddr::IP::Lite->new('f34::1');
-    isa_ok( $test, 'NetAddr::IP::Lite' );
-    ok( $test->network->contains($test), '->contains /128' );
+    isa_ok($test, 'NetAddr::IP::Lite');
+    ok($test->network->contains($test), '->contains /128');
 
     $test = NetAddr::IP::Lite->new('f35::1/40');
-    isa_ok( $test, 'NetAddr::IP::Lite' );
-    ok( $test->network->contains($test), '->contains /40' );
+    isa_ok($test, 'NetAddr::IP::Lite');
+    ok($test->network->contains($test), '->contains /40');
 };
 
 subtest 'URI bracket notation [addr]/mask' => sub {
@@ -68,24 +68,21 @@ subtest 'URI bracket notation [addr]/mask' => sub {
         '[2001:db8::1] 48' => '2001:DB8:0:0:0:0:0:1/48',
         '[DEAD::CAFE]/32'  => 'DEAD:0:0:0:0:0:0:CAFE/32',
     );
-    for my $input ( sort keys %cases ) {
+    for my $input (sort keys %cases) {
         my $ip = NetAddr::IP::Lite->new($input);
-        isa_ok( $ip, ['NetAddr::IP::Lite'], "$input parses" );
-        is( "$ip", $cases{$input}, "$input => $cases{$input}" );
+        isa_ok($ip, ['NetAddr::IP::Lite'], "$input parses");
+        is("$ip", $cases{$input}, "$input => $cases{$input}");
     }
 
     for my $input (
         '[192.0.2.99]/24', '[192.0.2.99/24]',
         '[192.0.2.99] 24', '[192.0.2.99]'
-      )
-    {
-        ok(
-            !defined NetAddr::IP::Lite->new($input),
+    ) {
+        ok( !defined NetAddr::IP::Lite->new($input),
             "$input rejected, brackets are IPv6 only"
         );
     }
-    is(
-        "" . NetAddr::IP::Lite->new('[::ffff:192.0.2.99]/96'),
+    is( "" . NetAddr::IP::Lite->new('[::ffff:192.0.2.99]/96'),
         '0:0:0:0:0:FFFF:C000:263/96',
         'IPv4-mapped IPv6 literal in brackets accepted'
     );
@@ -101,23 +98,23 @@ subtest 'URI bracket notation with the mask as a separate argument' => sub {
         [ '[2001:db8::1]',      ' 64 ', '2001:DB8:0:0:0:0:0:1/64' ],
         [ '[::1]',              120,    '0:0:0:0:0:0:0:1/120' ],
         [ '[::ffff:192.0.2.1]', 24,     '0:0:0:0:0:FFFF:C000:201/24' ],
-      )
-    {
-        my ( $text, $mask, $want ) = @{$case};
+    ) {
+        my ($text, $mask, $want) = @{$case};
         for my $ctor (qw(new new6)) {
-            my $ip = NetAddr::IP::Lite->$ctor( $text, $mask );
-            is( defined $ip ? "$ip" : undef, $want, "$ctor('$text', '$mask')" );
+            my $ip = NetAddr::IP::Lite->$ctor($text, $mask);
+            is(defined $ip ? "$ip" : undef, $want, "$ctor('$text', '$mask')");
         }
     }
 
     # the brackets change nothing: the same literal and mask give the same object without them
-    for my $literal ( '2001:db8::1', '::1', '::ffff:192.0.2.1' ) {
-        for my $mask ( 0, 1, 31, 32, 33, 63, 64, 95, 96, 97, 127, 128 ) {
+    for my $literal ('2001:db8::1', '::1', '::ffff:192.0.2.1') {
+        for my $mask (0, 1, 31, 32, 33, 63, 64, 95, 96, 97, 127, 128) {
             for my $ctor (qw(new new6)) {
-                my $bare      = NetAddr::IP::Lite->$ctor( $literal, $mask );
-                my $bracketed = NetAddr::IP::Lite->$ctor( "[$literal]", $mask );
+                my $bare      = NetAddr::IP::Lite->$ctor($literal,     $mask);
+                my $bracketed = NetAddr::IP::Lite->$ctor("[$literal]", $mask);
                 is( defined $bracketed ? "$bracketed" : undef,
-                    "$bare", "$ctor('[$literal]', $mask) equals $ctor('$literal', $mask)" );
+                    "$bare", "$ctor('[$literal]', $mask) equals $ctor('$literal', $mask)"
+                );
             }
         }
     }
@@ -130,12 +127,12 @@ subtest 'URI bracket notation with the mask as a separate argument' => sub {
         [ '[[2001:db8::1]',     64 ],
         [ '[[2001:db8::1]]',    64 ],
         [ '[2001:db8::1][::1]', 64 ],
-      )
-    {
-        my ( $text, $mask ) = @{$case};
+    ) {
+        my ($text, $mask) = @{$case};
         for my $ctor (qw(new new6)) {
-            ok( !defined NetAddr::IP::Lite->$ctor( $text, $mask ),
-                "$ctor('$text', $mask) rejected" );
+            ok( !defined NetAddr::IP::Lite->$ctor($text, $mask),
+                "$ctor('$text', $mask) rejected"
+            );
         }
     }
 };
@@ -148,9 +145,8 @@ subtest 'URI bracket notation rejects text outside brackets' => sub {
         '[2001:db8::1][',        '[[2001:db8::1]',
         '][2001:db8::1]',        '[2001:db8::1]2001:db8::2',
         '[2001:db8::1]/[2001:db8::2]'
-      )
-    {
-        ok( !defined NetAddr::IP::Lite->new($input), "$input rejected" );
+    ) {
+        ok(!defined NetAddr::IP::Lite->new($input), "$input rejected");
     }
 };
 

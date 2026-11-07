@@ -17,9 +17,9 @@ my %subnets = (
     '10.10.10 255.255.255.0' => '10.10.10.0/24',
 );
 
-for my $input ( sort keys %subnets ) {
+for my $input (sort keys %subnets) {
     my $ip = NetAddr::IP::Lite->new($input);
-    is( "$ip", $subnets{$input}, "$input converts to $subnets{$input}" );
+    is("$ip", $subnets{$input}, "$input converts to $subnets{$input}");
 }
 
 done_testing;

@@ -6,6 +6,7 @@ use strict;
 use warnings;
 
 package NetAddr::IP::Constants;
+
 # VERSION
 
 use Exporter qw(import);
@@ -26,22 +27,22 @@ our @EXPORT_OK = qw(
     $V4_PACKED_BYTES
     $V6_PACKED_BYTES
 );
-our %EXPORT_TAGS = ( all => [@EXPORT_OK] );
+our %EXPORT_TAGS = (all => [@EXPORT_OK]);
 
-our $DEFAULT_NETLIMIT_EXP = 16;                        # 2**16 = 65536
-our $IPV4_BITS            = 32;                        # RFC 791
-our $IPV6_BITS            = 128;                       # RFC 4291
-our $MAX_BCD_DIGITS       = 40;                        # 128 bit BCD digits
-our $MAX_NETLIMIT_EXP     = 24;                        # 2**24 = 16M
-our $MAX_OCTET            = 255;                       # RFC 791
-our $OCTET_BITS           = 8;                         # RFC 791
-our $OCTET_COUNT          = 4;                         # RFC 791
-our $PACKED_BCD_BYTES     = 20;                        # 40/2
-our $V4_PACKED_BYTES      = 4;                         # 32/8
-our $V6_PACKED_BYTES      = 16;                        # 128/8
-our $IPV4_OFFSET          = $IPV6_BITS - $IPV4_BITS;   # 96, RFC 4291 s2.5.5
-our $MAX_SHIFTLEFT        = $IPV6_BITS;                # 128
-our $RFC3021_THRESHOLD    = $IPV6_BITS - 1;            # 127, RFC 3021
+our $DEFAULT_NETLIMIT_EXP = 16;                         # 2**16 = 65536
+our $IPV4_BITS            = 32;                         # RFC 791
+our $IPV6_BITS            = 128;                        # RFC 4291
+our $MAX_BCD_DIGITS       = 40;                         # 128 bit BCD digits
+our $MAX_NETLIMIT_EXP     = 24;                         # 2**24 = 16M
+our $MAX_OCTET            = 255;                        # RFC 791
+our $OCTET_BITS           = 8;                          # RFC 791
+our $OCTET_COUNT          = 4;                          # RFC 791
+our $PACKED_BCD_BYTES     = 20;                         # 40/2
+our $V4_PACKED_BYTES      = 4;                          # 32/8
+our $V6_PACKED_BYTES      = 16;                         # 128/8
+our $IPV4_OFFSET          = $IPV6_BITS - $IPV4_BITS;    # 96, RFC 4291 s2.5.5
+our $MAX_SHIFTLEFT        = $IPV6_BITS;                 # 128
+our $RFC3021_THRESHOLD    = $IPV6_BITS - 1;             # 127, RFC 3021
 
 1;
 

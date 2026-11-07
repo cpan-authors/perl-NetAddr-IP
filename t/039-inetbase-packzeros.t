@@ -20,10 +20,10 @@ my %addr = (    # input                         expected
     '12:0:0:0:34:0:00:000'             => '12::34:0:0:0',
 );
 
-for my $input ( sort keys %addr ) {
+for my $input (sort keys %addr) {
     my $rv  = packzeros($input);
     my $exp = $addr{$input};
-    is( $rv, $exp, "packzeros('$input')" );
+    is($rv, $exp, "packzeros('$input')");
 }
 
 done_testing;

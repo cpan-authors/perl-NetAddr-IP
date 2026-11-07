@@ -15,7 +15,7 @@ sub shown {
 }
 
 sub made {
-    my ( $method, @args ) = @_;
+    my ($method, @args) = @_;
     my $ip = NetAddr::IP::Lite->$method(@args);
     return defined $ip ? "$ip" : undef;
 }
@@ -30,61 +30,63 @@ subtest 'an address with surrounding whitespace converts' => sub {
         "::ffff:192.0.2.1\n"        => '0:0:0:0:0:FFFF:C000:201/128',
         "[2001:db8::1]/64\n"        => '2001:DB8:0:0:0:0:0:1/64',
     );
-    for my $text ( sort keys %cidr ) {
+    for my $text (sort keys %cidr) {
         my $name = shown($text);
-        is( made( 'new', $text ), $cidr{$text}, "->new('$name')" );
+        is(made('new', $text), $cidr{$text}, "->new('$name')");
     }
 };
 
 subtest 'a separate mask with surrounding whitespace converts' => sub {
     my @cases = (
-        [ 'new', '192.0.2.0',  " 24",               '192.0.2.0/24' ],
-        [ 'new', '192.0.2.0',  "24\n",              '192.0.2.0/24' ],
-        [ 'new', '192.0.2.0',  "255.255.255.0\r\n", '192.0.2.0/24' ],
-        [ 'new', '2001:db8::', "32\n",              '2001:DB8:0:0:0:0:0:0/32' ],
-        [ 'new6', '192.0.2.0', "24\n", '0:0:0:0:0:0:C000:200/120' ],
+        [ 'new',  '192.0.2.0',  " 24",               '192.0.2.0/24' ],
+        [ 'new',  '192.0.2.0',  "24\n",              '192.0.2.0/24' ],
+        [ 'new',  '192.0.2.0',  "255.255.255.0\r\n", '192.0.2.0/24' ],
+        [ 'new',  '2001:db8::', "32\n",              '2001:DB8:0:0:0:0:0:0/32' ],
+        [ 'new6', '192.0.2.0',  "24\n",              '0:0:0:0:0:0:C000:200/120' ],
     );
     for my $case (@cases) {
-        my ( $method, $addr, $mask, $cidr ) = @{$case};
+        my ($method, $addr, $mask, $cidr) = @{$case};
         my $name = shown($mask);
-        is( made( $method, $addr, $mask ),
-            $cidr, "->$method('$addr', '$name')" );
+        is( made($method, $addr, $mask),
+            $cidr, "->$method('$addr', '$name')"
+        );
     }
-    is( made( 'new', '192.0.2.0', '  ' ),
-        undef, "->new('192.0.2.0', '  ') is undef, as with an empty mask" );
+    is( made('new', '192.0.2.0', '  '),
+        undef, "->new('192.0.2.0', '  ') is undef, as with an empty mask"
+    );
 };
 
-subtest 'an IPv4 tail with a leading zero in an octet is not an address' =>
-  sub {
-    for my $text ( '::192.0.2.010', '::ffff:192.0.02.1', '::ffff:192.0.2.010' )
-    {
+subtest 'an IPv4 tail with a leading zero in an octet is not an address' => sub {
+    for my $text ('::192.0.2.010', '::ffff:192.0.02.1', '::ffff:192.0.2.010') {
         for my $method (qw( new new6 new_no )) {
-            is( made( $method, $text ), undef, "->$method('$text')" );
+            is(made($method, $text), undef, "->$method('$text')");
         }
     }
-    is( made( 'new', '::ffff:192.0.2.10' ),
-        '0:0:0:0:0:FFFF:C000:20A/128', "->new('::ffff:192.0.2.10')" );
-    is( made( 'new_no', '192.0.2.010' ),
-        '192.0.2.10/32', "->new_no('192.0.2.010') still reads decimal" );
-  };
+    is( made('new', '::ffff:192.0.2.10'),
+        '0:0:0:0:0:FFFF:C000:20A/128', "->new('::ffff:192.0.2.10')"
+    );
+    is( made('new_no', '192.0.2.010'),
+        '192.0.2.10/32', "->new_no('192.0.2.010') still reads decimal"
+    );
+};
 
-subtest 'an IPv4 address with a leading zero in any part is not an address'
-  => sub {
+subtest 'an IPv4 address with a leading zero in any part is not an address' => sub {
     for my $text (
-        '00',          '010',            '010/8',
-        '010.0.2.1',   '010.1',          '192.0.02.1',
-        '192.0.2.01',  '192.0.2.010',    '192.0.2.010/24',
+        '00',         '010',         '010/8',
+        '010.0.2.1',  '010.1',       '192.0.02.1',
+        '192.0.2.01', '192.0.2.010', '192.0.2.010/24',
         '192.000.002.010',
-      )
-    {
+    ) {
         for my $method (qw( new new6 )) {
-            is( made( $method, $text ), undef, "->$method('$text')" );
+            is(made($method, $text), undef, "->$method('$text')");
         }
     }
-    is( made( 'new', '192.0.2.010', '24' ),
-        undef, "->new('192.0.2.010', '24')" );
-    is( made( 'new', '192.0.2.0', '255.255.255.000' ),
-        undef, "->new('192.0.2.0', '255.255.255.000')" );
+    is( made('new', '192.0.2.010', '24'),
+        undef, "->new('192.0.2.010', '24')"
+    );
+    is( made('new', '192.0.2.0', '255.255.255.000'),
+        undef, "->new('192.0.2.0', '255.255.255.000')"
+    );
     my %cidr = (
         '0'             => '0.0.0.0/32',
         '0.0.0.0'       => '0.0.0.0/32',
@@ -92,18 +94,19 @@ subtest 'an IPv4 address with a leading zero in any part is not an address'
         '10.1'          => '10.0.0.1/32',
         '192.0.2.0/024' => '192.0.2.0/24',
     );
-    for my $text ( sort keys %cidr ) {
-        is( made( 'new', $text ), $cidr{$text}, "->new('$text')" );
+    for my $text (sort keys %cidr) {
+        is(made('new', $text), $cidr{$text}, "->new('$text')");
     }
     my %decimal = (
         '010'             => '0.0.0.10/32',
         '192.000.002.010' => '192.0.2.10/32',
     );
-    for my $text ( sort keys %decimal ) {
-        is( made( 'new_no', $text ),
-            $decimal{$text}, "->new_no('$text') reads decimal" );
+    for my $text (sort keys %decimal) {
+        is( made('new_no', $text),
+            $decimal{$text}, "->new_no('$text') reads decimal"
+        );
     }
-  };
+};
 
 # :aton is process-wide, so it goes last
 like(
@@ -112,46 +115,43 @@ like(
     ':aton is deprecated and warns on import'
 ) or bail_out(':aton did not import');
 
-subtest 'under :aton only a string of four or sixteen bytes keeps its ends' =>
-  sub {
-    is( made( 'new', "192.0.2.1\n" ),
-        '192.0.2.1/32', "->new('192.0.2.1\\n'), ten bytes, is stripped" );
-    is( made( 'new', "::ffff:192.0.2.1\n" ),
+subtest 'under :aton only a string of four or sixteen bytes keeps its ends' => sub {
+    is( made('new', "192.0.2.1\n"),
+        '192.0.2.1/32', "->new('192.0.2.1\\n'), ten bytes, is stripped"
+    );
+    is( made('new', "::ffff:192.0.2.1\n"),
         '0:0:0:0:0:FFFF:C000:201/128',
-        "->new('::ffff:192.0.2.1\\n'), seventeen bytes, is stripped" );
+        "->new('::ffff:192.0.2.1\\n'), seventeen bytes, is stripped"
+    );
     my %packed = (
-        '192.0.2.10, ending in a newline' =>
-          [ pack( 'C4', 192, 0, 2, 10 ), '192.0.2.10/32' ],
-        '192.0.2.32, ending in a space' =>
-          [ pack( 'C4', 192, 0, 2, 32 ), '192.0.2.32/32' ],
+        '192.0.2.10, ending in a newline'  => [ pack('C4', 192, 0, 2, 10), '192.0.2.10/32' ],
+        '192.0.2.32, ending in a space'    => [ pack('C4', 192, 0, 2, 32), '192.0.2.32/32' ],
         '2001:db8::a, ending in a newline' => [
-            pack( 'n8', 0x2001, 0x0db8, 0, 0, 0, 0, 0, 0x0a ),
+            pack('n8', 0x2001, 0x0db8, 0, 0, 0, 0, 0, 0x0a),
             '2001:DB8:0:0:0:0:0:A/128'
         ],
     );
-    for my $addr ( sort keys %packed ) {
-        my ( $bytes, $cidr ) = @{ $packed{$addr} };
-        is( made( 'new', $bytes ), $cidr, "->new(packed $addr)" );
+    for my $addr (sort keys %packed) {
+        my ($bytes, $cidr) = @{ $packed{$addr} };
+        is(made('new', $bytes), $cidr, "->new(packed $addr)");
     }
-  };
+};
 
-subtest 'under :aton packed bytes that spell a range or a negative number stay packed' =>
-  sub {
+subtest 'under :aton packed bytes that spell a range or a negative number stay packed' => sub {
+
     # the bytes have to spell the text, so these addresses cannot come from RFC 5737 or 3849
     my %packed = (
-        '45.48.49.47, the bytes -01/' =>
-          [ pack( 'C4', 45, 48, 49, 47 ), '45.48.49.47/32' ],
-        '45.48.49.32, the bytes -01 and a space' =>
-          [ pack( 'C4', 45, 48, 49, 32 ), '45.48.49.32/32' ],
+        '45.48.49.47, the bytes -01/'                      => [ pack('C4', 45, 48, 49, 47), '45.48.49.47/32' ],
+        '45.48.49.32, the bytes -01 and a space'           => [ pack('C4', 45, 48, 49, 32), '45.48.49.32/32' ],
         '312d:3031:2f00::, sixteen bytes that begin 1-01/' => [
-            pack( 'C16', 0x31, 0x2d, 0x30, 0x31, 0x2f, (0) x 11 ),
+            pack('C16', 0x31, 0x2d, 0x30, 0x31, 0x2f, (0) x 11),
             '312D:3031:2F00:0:0:0:0:0/128'
         ],
     );
-    for my $addr ( sort keys %packed ) {
-        my ( $bytes, $cidr ) = @{ $packed{$addr} };
-        is( made( 'new', $bytes ), $cidr, "->new(packed $addr)" );
+    for my $addr (sort keys %packed) {
+        my ($bytes, $cidr) = @{ $packed{$addr} };
+        is(made('new', $bytes), $cidr, "->new(packed $addr)");
     }
-  };
+};
 
 done_testing;

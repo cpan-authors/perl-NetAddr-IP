@@ -145,6 +145,7 @@ sub _test_cc {
     my ($cc, $ld) = @_;
     print "Testing for a working C compiler, $cc...\n";
     require ExtUtils::CBuilder;
+
     # CBuilder reads these ahead of its config, where MakeMaker ignores them
     local %ENV = %ENV;
     delete @ENV{qw(CFLAGS LDFLAGS)};

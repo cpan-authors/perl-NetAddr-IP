@@ -15,9 +15,9 @@ my @addr = (
 );
 
 for my $row (@addr) {
-    my $ip = NetAddr::IP->new( $row->[0], $row->[1] );
-    my $r  = $ip->splitref( $row->[2] );
-    is( @$r, $row->[3] );
+    my $ip = NetAddr::IP->new($row->[0], $row->[1]);
+    my $r  = $ip->splitref($row->[2]);
+    is(@$r, $row->[3]);
 }
 
 done_testing;

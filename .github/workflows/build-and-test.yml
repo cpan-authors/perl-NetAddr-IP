@@ -16,9 +16,29 @@ concurrency:
 
 jobs:
 
+  perltidy:
+    name: Check Perl formatting
+    runs-on: ubuntu-latest
+    strategy:
+      max-parallel: 1
+    container:
+      image: perldocker/perl-tester:5.42
+    steps:
+      - uses: actions/checkout@v6
+      - name: Allow for file ownership conflicts with Docker and GitHub Actions
+        run: git config --global --add safe.directory '*'
+      - name: Install perltidy
+        run: cpanm -n 'Perl::Tidy@20260204'
+      - name: Check formatting with perltidy
+        run: |
+          set -e
+          git ls-files -z '*.pm' '*.PL' '*.t' '*.pl' \
+            | xargs -0 perltidy --assert-tidy -pro=.perltidyrc
+
   build:
     name: Build distribution
     runs-on: ubuntu-latest
+    needs: perltidy
     strategy:
       max-parallel: 1
     container:
