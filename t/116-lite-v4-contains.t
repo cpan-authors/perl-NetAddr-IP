@@ -27,19 +27,19 @@ my @no_pairs = (
 
 subtest 'contains' => sub {
     for my $p (@yes_pairs) {
-        my $ip_a = NetAddr::IP::Lite->new( $p->[0]->[0], $p->[0]->[1] );
-        my $ip_b = NetAddr::IP::Lite->new( $p->[1]->[0], $p->[1]->[1] );
-        ok( $ip_a->contains($ip_b), "$ip_a contains $ip_b" );
-        ok( $ip_b->within($ip_a),   "$ip_b within $ip_a" );
+        my $ip_a = NetAddr::IP::Lite->new($p->[0]->[0], $p->[0]->[1]);
+        my $ip_b = NetAddr::IP::Lite->new($p->[1]->[0], $p->[1]->[1]);
+        ok($ip_a->contains($ip_b), "$ip_a contains $ip_b");
+        ok($ip_b->within($ip_a),   "$ip_b within $ip_a");
     }
 };
 
 subtest 'does not contain' => sub {
     for my $p (@no_pairs) {
-        my $ip_a = NetAddr::IP::Lite->new( $p->[0]->[0], $p->[0]->[1] );
-        my $ip_b = NetAddr::IP::Lite->new( $p->[1]->[0], $p->[1]->[1] );
-        ok( !$ip_a->contains($ip_b), "$ip_a does not contain $ip_b" );
-        ok( !$ip_b->within($ip_a),   "$ip_b not within $ip_a" );
+        my $ip_a = NetAddr::IP::Lite->new($p->[0]->[0], $p->[0]->[1]);
+        my $ip_b = NetAddr::IP::Lite->new($p->[1]->[0], $p->[1]->[1]);
+        ok(!$ip_a->contains($ip_b), "$ip_a does not contain $ip_b");
+        ok(!$ip_b->within($ip_a),   "$ip_b not within $ip_a");
     }
 };
 

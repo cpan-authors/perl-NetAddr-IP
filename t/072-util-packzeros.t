@@ -22,19 +22,18 @@ my %addr = (
 );
 
 # loading NetAddr::IP::Util sets uppercase, so this loop runs under it
-for my $input ( sort keys %addr ) {
-    is( packzeros($input), $addr{$input}, "packzeros($input)" );
+for my $input (sort keys %addr) {
+    is(packzeros($input), $addr{$input}, "packzeros($input)");
 }
 
 subtest 'packzeros is lowercase whatever the case setting' => sub {
     my $input = '2001:0DB8:0:0:0:0:A:B';
     NetAddr::IP::InetBase::upper();
-    is( packzeros($input), '2001:db8::a:b', 'packzeros after upper()' );
+    is(packzeros($input), '2001:db8::a:b', 'packzeros after upper()');
     NetAddr::IP::InetBase::lower();
-    is( packzeros($input), '2001:db8::a:b', 'packzeros after lower()' );
+    is(packzeros($input), '2001:db8::a:b', 'packzeros after lower()');
     NetAddr::IP::InetBase::upper();
-    is(
-        NetAddr::IP::InetBase::inet_ntop(
+    is( NetAddr::IP::InetBase::inet_ntop(
             NetAddr::IP::InetBase::AF_INET6(),
             NetAddr::IP::InetBase::ipv6_aton($input)
         ),

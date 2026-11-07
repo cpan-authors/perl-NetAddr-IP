@@ -33,24 +33,26 @@ my %num = (
 );
 
 ## check pack correct
-for my $input ( sort { $a <=> $b } keys %num ) {
+for my $input (sort { $a <=> $b } keys %num) {
     my $bits = bcd2bin($input);
     my $ip   = ipv6_n2x($bits);
-    is( $ip, $num{$input}, "bcd2bin($input)" );
+    is($ip, $num{$input}, "bcd2bin($input)");
 }
 
 subtest 'bcd2bin reads its first argument alike in both builds' => sub {
     is( prototype('NetAddr::IP::Util::bcd2bin'),
-        '$;@', 'bcd2bin has the prototype $;@' );
+        '$;@', 'bcd2bin has the prototype $;@'
+    );
 
     my $arg = '12345';
 
     # in list context this returns a name and the argument, as a lookup does
-    my $answer = sub { return wantarray ? ( 'host.example', $arg ) : $arg };
-    is( eval { bcd2bin( $answer->() ) },
+    my $answer = sub { return wantarray ? ('host.example', $arg) : $arg };
+    is( eval { bcd2bin($answer->()) },
         bcd2bin($arg),
-        'a first argument that returns a list is read in scalar context' );
-    is( $@, '', 'that call does not croak' );
+        'a first argument that returns a list is read in scalar context'
+    );
+    is($@, '', 'that call does not croak');
 };
 
 done_testing;

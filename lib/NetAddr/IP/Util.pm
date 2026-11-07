@@ -6,136 +6,140 @@ use strict;
 use warnings;
 
 package NetAddr::IP::Util;
+
 # VERSION
 
-use parent qw(Exporter DynaLoader);
+use parent     qw(Exporter DynaLoader);
 use DynaLoader ();
 
-
 our @EXPORT_OK = qw(
-        inet_aton
-        inet_ntoa
-        ipv6_aton
-        ipv6_ntoa
-        ipv6_n2x
-        ipv6_n2d
-        inet_any2n
-        hasbits
-        isIPv4
-        isNewIPv4
-        isAnyIPv4
-        inet_n2dx
-        inet_n2ad
-        inet_pton
-        inet_ntop
-        inet_4map6
-        shiftleft
-        addconst
-        add128
-        sub128
-        notcontiguous
-        bin2bcd
-        bcd2bin
-        mode
-        ipv4to6
-        mask4to6
-        ipanyto6
-        maskanyto6
-        ipv6to4
-        bin2bcdn
-        bcdn2txt
-        bcdn2bin
-        simple_pack
-        comp128
-        packzeros
-        AF_INET
-        AF_INET6
-        naip_gethostbyname
-        havegethostbyname2
+    inet_aton
+    inet_ntoa
+    ipv6_aton
+    ipv6_ntoa
+    ipv6_n2x
+    ipv6_n2d
+    inet_any2n
+    hasbits
+    isIPv4
+    isNewIPv4
+    isAnyIPv4
+    inet_n2dx
+    inet_n2ad
+    inet_pton
+    inet_ntop
+    inet_4map6
+    shiftleft
+    addconst
+    add128
+    sub128
+    notcontiguous
+    bin2bcd
+    bcd2bin
+    mode
+    ipv4to6
+    mask4to6
+    ipanyto6
+    maskanyto6
+    ipv6to4
+    bin2bcdn
+    bcdn2txt
+    bcdn2bin
+    simple_pack
+    comp128
+    packzeros
+    AF_INET
+    AF_INET6
+    naip_gethostbyname
+    havegethostbyname2
 );
 our %EXPORT_TAGS = (
-        all     => [@EXPORT_OK],
-        inet    => [qw(
-                inet_aton
-                inet_ntoa
-                ipv6_aton
-                ipv6_ntoa
-                ipv6_n2x
-                ipv6_n2d
-                inet_any2n
-                inet_n2dx
-                inet_n2ad
-                inet_pton
-                inet_ntop
-                inet_4map6
-                ipv4to6
-                mask4to6
-                ipanyto6
-                maskanyto6
-                ipv6to4
-                packzeros
-                naip_gethostbyname
-        )],
-        math    => [qw(
-                shiftleft
-                hasbits
-                isIPv4
-                isNewIPv4
-                isAnyIPv4
-                addconst
-                add128
-                sub128
-                notcontiguous
-                bin2bcd
-                bcd2bin
-        )],
-        ipv4    => [qw(
-                inet_aton
-                inet_ntoa
-        )],
-        ipv6    => [qw(
-                ipv6_aton
-                ipv6_ntoa
-                ipv6_n2x
-                ipv6_n2d
-                inet_any2n
-                inet_n2dx
-                inet_n2ad
-                inet_pton
-                inet_ntop
-                inet_4map6
-                ipv4to6
-                mask4to6
-                ipanyto6
-                maskanyto6
-                ipv6to4
-                packzeros
-                naip_gethostbyname
-        )],
+    all  => [@EXPORT_OK],
+    inet => [ qw(
+            inet_aton
+            inet_ntoa
+            ipv6_aton
+            ipv6_ntoa
+            ipv6_n2x
+            ipv6_n2d
+            inet_any2n
+            inet_n2dx
+            inet_n2ad
+            inet_pton
+            inet_ntop
+            inet_4map6
+            ipv4to6
+            mask4to6
+            ipanyto6
+            maskanyto6
+            ipv6to4
+            packzeros
+            naip_gethostbyname
+        )
+    ],
+    math => [ qw(
+            shiftleft
+            hasbits
+            isIPv4
+            isNewIPv4
+            isAnyIPv4
+            addconst
+            add128
+            sub128
+            notcontiguous
+            bin2bcd
+            bcd2bin
+        )
+    ],
+    ipv4 => [ qw(
+            inet_aton
+            inet_ntoa
+        )
+    ],
+    ipv6 => [ qw(
+            ipv6_aton
+            ipv6_ntoa
+            ipv6_n2x
+            ipv6_n2d
+            inet_any2n
+            inet_n2dx
+            inet_n2ad
+            inet_pton
+            inet_ntop
+            inet_4map6
+            ipv4to6
+            mask4to6
+            ipanyto6
+            maskanyto6
+            ipv6to4
+            packzeros
+            naip_gethostbyname
+        )
+    ],
 );
 our $Mode;
 
 use NetAddr::IP::Constants qw($V4_PACKED_BYTES $V6_PACKED_BYTES);
-use NetAddr::IP::Util_IS ();
-use NetAddr::IP::InetBase qw(
-        :upper
-        AF_INET
-        AF_INET6
-        inet_any2n
-        inet_aton
-        inet_n2ad
-        inet_n2dx
-        inet_ntoa
-        inet_ntop
-        inet_pton
-        ipv6_aton
-        ipv6_n2d
-        ipv6_n2x
-        ipv6_ntoa
-        isAnyIPv4
-        isIPv4
-        isNewIPv4
-        packzeros
+use NetAddr::IP::Util_IS   ();
+use NetAddr::IP::InetBase  qw(
+    :upper
+    AF_INET
+    AF_INET6
+    inet_any2n
+    inet_aton
+    inet_n2ad
+    inet_n2dx
+    inet_ntoa
+    inet_ntop
+    inet_pton
+    ipv6_aton
+    ipv6_n2d
+    ipv6_n2x
+    ipv6_ntoa
+    isAnyIPv4
+    isIPv4
+    isNewIPv4
+    packzeros
 );
 
 *NetAddr::IP::Util::upper = \&NetAddr::IP::InetBase::upper;
@@ -144,15 +148,15 @@ use NetAddr::IP::InetBase qw(
 my $xs_ok;
 if (NetAddr::IP::Util_IS->not_pure) {
     my $xs_err;
-    eval {        ## attempt to load 'C' version of utilities
+    eval {    ## attempt to load 'C' version of utilities
         local $SIG{__DIE__};
         __PACKAGE__->bootstrap;
     };
     $xs_err = $@;
-    $xs_ok  = ! $xs_err;
+    $xs_ok  = !$xs_err;
     warn "XS bootstrap failed with: $xs_err\n" if $xs_err;
 }
-if (NetAddr::IP::Util_IS->pure || ! $xs_ok) {    ## load the pure perl version if 'C' lib missing
+if (NetAddr::IP::Util_IS->pure || !$xs_ok) {    ## load the pure perl version if 'C' lib missing
     require NetAddr::IP::UtilPP;
     import NetAddr::IP::UtilPP qw( :all );
     $Mode = 'Pure Perl';
@@ -166,7 +170,7 @@ else {
 #my $overange = yinet_aton('256.1') ? 1:0;
 #my $overange = gethostbyname('256.1') ? 1:0;
 
-sub mode() { $Mode };
+sub mode() { $Mode }
 
 my $_newV4compat = pack('N4', 0, 0, 0xffff, 0);
 
@@ -186,7 +190,7 @@ sub inet_4map6 {
     return $naddr;
 }
 
-sub DESTROY {};
+sub DESTROY { }
 
 # True on every supported perl. :noSock6 clears $_Sock6ok, and
 # havegethostbyname2 then returns false.
@@ -203,7 +207,7 @@ sub havegethostbyname2 {
 sub import {
     if (grep { $_ eq ':noSock6' } @_) {
         $_Sock6ok = 0;
-        @_ = grep { $_ ne ':noSock6' } @_;
+        @_        = grep { $_ ne ':noSock6' } @_;
     }
     NetAddr::IP::Util->export_to_level(1, @_);
 }
@@ -215,16 +219,16 @@ package NetAddr::IP::UtilPolluted {
 
     use strict;
     use Socket qw(
-            AF_INET
-            AF_INET6
-            SOCK_STREAM
-            getaddrinfo
-            unpack_sockaddr_in
-            unpack_sockaddr_in6
+        AF_INET
+        AF_INET6
+        SOCK_STREAM
+        getaddrinfo
+        unpack_sockaddr_in
+        unpack_sockaddr_in6
     );
 
-    my $_v4zero = pack('L', 0);
-    my $_zero = pack('L4', 0, 0, 0, 0);
+    my $_v4zero = pack('L',  0);
+    my $_zero   = pack('L4', 0, 0, 0, 0);
 
     # getaddrinfo can hand back the same address more than once. The first
     # copy is the one kept, in the order the results arrived.
@@ -241,22 +245,25 @@ package NetAddr::IP::UtilPolluted {
     }
 
     sub _end_gethostbyname {
+
         #  my ($name, $aliases, $addrtype, $length, @addrs) = @_;
         my @rv = @_;
+
         # first ip address = rv[4]
         my $tip = $rv[4];
         unless ($tip && $tip ne $_v4zero && $tip ne $_zero) {
             @rv = ();
         }
+
         # length = rv[3]
         elsif ($rv[3] && $rv[3] == $NetAddr::IP::Util::V4_PACKED_BYTES) {
-            foreach (4..$#rv) {
+            for (4 .. $#rv) {
                 $rv[$_] = NetAddr::IP::Util::inet_4map6(NetAddr::IP::Util::ipv4to6($rv[$_]));
             }
             $rv[3] = $NetAddr::IP::Util::V6_PACKED_BYTES;    # unconditionally set length to 16
         }
         elsif ($rv[3] == $NetAddr::IP::Util::V6_PACKED_BYTES) {
-            ;    # is ok
+            ;                                                # is ok
         }
         else {
             @rv = ();
@@ -288,26 +295,32 @@ package NetAddr::IP::UtilPolluted {
         my ($name) = @_;
         my ($err, @res) = getaddrinfo($name, '', { socktype => SOCK_STREAM });
         return if $err;
-        my @v6 = _addrs_once(\&unpack_sockaddr_in6,
-            grep { $_->{family} == AF_INET6() } @res);
-        my @v4 = _addrs_once(\&unpack_sockaddr_in,
-            grep { $_->{family} == AF_INET() } @res);
+        my @v6 = _addrs_once(
+            \&unpack_sockaddr_in6,
+            grep { $_->{family} == AF_INET6() } @res
+        );
+        my @v4 = _addrs_once(
+            \&unpack_sockaddr_in,
+            grep { $_->{family} == AF_INET() } @res
+        );
         return (\@v4, \@v6);
     }
 
     sub _gethostbyname {
         my ($name) = @_;
+
         # A leading zero or an octet past 255 is not an address. fillIPv4
         # returns undef for those. getaddrinfo would read the zero as octal.
         my $host = NetAddr::IP::InetBase::fillIPv4($name);
         return unless defined $host;
         return if _numeric_text($host);
+
         # A literal is not a name. gethostbyname keeps one static buffer, so
         # a short form such as 127.1 is packed after fillIPv4 expands it.
         if (my $addr = _packed_quad($host)) {
-            return &_end_gethostbyname(
-                $name, '', AF_INET(), $NetAddr::IP::Util::V4_PACKED_BYTES, $addr);
+            return &_end_gethostbyname($name, '', AF_INET(), $NetAddr::IP::Util::V4_PACKED_BYTES, $addr);
         }
+
         # :noSock6 does not call getaddrinfo. The name goes to gethostbyname.
         unless ($_Sock6ok) {
             my @tip = gethostbyname($host);
@@ -315,14 +328,13 @@ package NetAddr::IP::UtilPolluted {
         }
         my ($v4, $v6) = _lookup_both($host);
         return unless $v4;
+
         # A name with both an AAAA and an A answer returns only the IPv6
         # addresses.
         if (@$v6) {
-            return &_end_gethostbyname(
-                $name, '', AF_INET6(), $NetAddr::IP::Util::V6_PACKED_BYTES, @$v6);
+            return &_end_gethostbyname($name, '', AF_INET6(), $NetAddr::IP::Util::V6_PACKED_BYTES, @$v6);
         }
-        return &_end_gethostbyname(
-            $name, '', AF_INET(), $NetAddr::IP::Util::V4_PACKED_BYTES, @$v4);
+        return &_end_gethostbyname($name, '', AF_INET(), $NetAddr::IP::Util::V4_PACKED_BYTES, @$v4);
     }
 
 }

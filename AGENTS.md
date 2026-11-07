@@ -85,10 +85,9 @@ adds the `author-` and `release-` files, so the numbers stay clear of them.
 
 - Start with `use Test2::V1 -ipP;` and `use Test2::Plugin::NoWarnings;`. Name
   subtests and assertions, and compare exact values with `is`.
-- New files are `t/NNN-name.t` with the next free number in the block for that
-  package, formatted with `perltidy -b -bext=/`. The blocks are below, and a
-  filename keeps its package prefix, so `t/134-inetbase-inet_pton.t` belongs to
-  the InetBase block.
+- New files are `t/NNN-name.t` with the next free number in that package's
+  block. Format Perl with `perltidy -b -bext=/` from the repository root
+  (uses `.perltidyrc`). Example: `perltidy -b -bext=/ t/NNN-name.t`.
 - A test for a fix must fail without the fix. Check that before calling the
   work done.
 - Bail out with `bail_out`, since Test2::V1 does not define `BAIL_OUT`. That
@@ -105,6 +104,9 @@ adds the `author-` and `release-` files, so the numbers stay clear of them.
 
 - ASCII only. Four spaces, no tabs, LF, a final newline, no trailing
   whitespace. Follow .editorconfig.
+- Perl source and tests follow `.perltidyrc`. Run from the repository root:
+  `perltidy -b -bext=/ path/to/file.pm` (`-b -bext=/` edits in place).
+  Do not reformat the whole repository unless that is the task.
 - **Use documentation addresses only.** RFC 5737 for IPv4, so 192.0.2.0/24,
   198.51.100.0/24 or 203.0.113.0/24, and RFC 3849 for IPv6, so 2001:db8::/32.
   Loopback is fine where the example is about loopback. This holds in tests,

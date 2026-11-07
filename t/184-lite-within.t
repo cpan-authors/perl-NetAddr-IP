@@ -24,42 +24,43 @@ my %try  = (
     'FF::88'    => 0,
 );
 
-for my $input ( sort keys %try ) {
+for my $input (sort keys %try) {
     my $ip = NetAddr::IP::Lite->new($input);
     my $rv =
-      ( $input =~ /:/ )
-      ? $ip->within($net6)
-      : $ip->within($net4);
-    cmp_ok( $rv, '==', $try{$input}, "$input within result is $try{$input}" );
+        ($input =~ /:/)
+        ? $ip->within($net6)
+        : $ip->within($net4);
+    cmp_ok($rv, '==', $try{$input}, "$input within result is $try{$input}");
 }
 
 # cross family: never contained, non object: undef
 
 my $rv;
 $rv = NetAddr::IP::Lite->new6('2001:db8::192.0.2.5')->within($net4);
-is( "$rv", '0', 'v6 within v4 is 0' );
+is("$rv", '0', 'v6 within v4 is 0');
 $rv = NetAddr::IP::Lite->new('::ffff:192.0.2.5')->within($net4);
-is( "$rv", '0', 'mapped v6 within v4 is 0' );
-$rv = NetAddr::IP::Lite->new('192.0.2.5')
-  ->within( NetAddr::IP::Lite->new6('2001:db8::192.0.2.5/126') );
-is( "$rv", '0', 'v4 within v6 is 0' );
+is("$rv", '0', 'mapped v6 within v4 is 0');
+$rv = NetAddr::IP::Lite->new('192.0.2.5')->within(NetAddr::IP::Lite->new6('2001:db8::192.0.2.5/126'));
+is("$rv", '0', 'v4 within v6 is 0');
 $rv = eval { $net4->within('192.0.2.5') };
-ok( !defined $rv && $@ eq '', 'non object returns undef' );
+ok(!defined $rv && $@ eq '', 'non object returns undef');
 
 subtest 'a class name is not an address to within or contains' => sub {
     my $net = NetAddr::IP::Lite->new('192.0.2.0/24');
 
     # the result of a method call, or 'dies'
     my $call = sub {
-        my ( $method, $arg ) = @_;
+        my ($method, $arg) = @_;
         my $r = eval { $net->$method($arg) };
         return $@ ? 'dies' : $r;
     };
     for my $class (qw(NetAddr::IP NetAddr::IP::Lite)) {
-        is( $call->( within => $class ),
-            undef, "a call to within('$class') is undef" );
-        is( $call->( contains => $class ),
-            undef, "a call to contains('$class') is undef" );
+        is( $call->(within => $class),
+            undef, "a call to within('$class') is undef"
+        );
+        is( $call->(contains => $class),
+            undef, "a call to contains('$class') is undef"
+        );
     }
 };
 

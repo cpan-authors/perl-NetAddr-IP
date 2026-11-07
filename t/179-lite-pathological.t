@@ -15,7 +15,7 @@ subtest 'bad addresses' => sub {
         '99999999999999999999999999999999999999999',    # 41 nines
     );
     for my $addr (@addrs) {
-        ok( !NetAddr::IP::Lite->new($addr), "new('$addr') returns undef" );
+        ok(!NetAddr::IP::Lite->new($addr), "new('$addr') returns undef");
     }
 };
 
@@ -24,9 +24,10 @@ subtest 'oversized decimal leaves the caller error state alone' => sub {
     my $hits = 0;
     local $SIG{__DIE__} = sub { $hits++ };
     ok( !NetAddr::IP::Lite->new('340282366920938463463374607431768211456'),
-        '2**128 returns undef' );
-    is( $@,    "caller error\n", 'caller $@ is preserved' );
-    is( $hits, 0,                'caller $SIG{__DIE__} is not invoked' );
+        '2**128 returns undef'
+    );
+    is($@,    "caller error\n", 'caller $@ is preserved');
+    is($hits, 0,                'caller $SIG{__DIE__} is not invoked');
 };
 
 subtest 'bad masks' => sub {
@@ -42,10 +43,9 @@ subtest 'bad masks' => sub {
         '::1'         => [ '129', '256' ],
         '2001:db8::1' => [ 'abc', '0xff' ],
     );
-    for my $addr ( sort keys %bad ) {
-        for my $mask ( @{ $bad{$addr} } ) {
-            ok(
-                !NetAddr::IP::Lite->new( $addr, $mask ),
+    for my $addr (sort keys %bad) {
+        for my $mask (@{ $bad{$addr} }) {
+            ok( !NetAddr::IP::Lite->new($addr, $mask),
                 "new('$addr', '$mask') returns undef"
             );
         }

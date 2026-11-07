@@ -10,7 +10,7 @@ use Test2::Plugin::NoWarnings;
 use Test2::Tools::Exception qw( dies lives );
 
 plan skip_all => 'Math::BigInt not found'
-  unless eval { require Math::BigInt };
+    unless eval { require Math::BigInt };
 
 use NetAddr::IP       ();
 use NetAddr::IP::Lite ();
@@ -20,47 +20,42 @@ my $v6    = NetAddr::IP::Lite->new('2001:db8::/64');
 my $two32 = Math::BigInt->new('4294967296');
 
 subtest 'a Math::BigInt is a constant, not an address' => sub {
-    is(
-        "" . ( $v4 + Math::BigInt->new(5) ),
+    is( "" . ($v4 + Math::BigInt->new(5)),
         '192.0.2.6/24',
         'addition of a small Math::BigInt, which always worked'
     );
-    is(
-        "" . ( $v4 - Math::BigInt->new(5) ),
+    is( "" . ($v4 - Math::BigInt->new(5)),
         '192.0.2.252/24',
         'subtraction of a small Math::BigInt'
     );
-    is(
-        "" . ( $v6 + $two32 ),
+    is( "" . ($v6 + $two32),
         '2001:DB8:0:0:0:1:0:0/64',
         'addition of 2**32 as a Math::BigInt, the 128 bit path'
     );
-    is(
-        "" . ( $v6 - $two32 ),
+    is( "" . ($v6 - $two32),
         '2001:DB8:0:0:FFFF:FFFF:0:0/64',
         'subtraction of 2**32 as a Math::BigInt, the 128 bit path'
     );
-    is( "" . ( $v6 + $two32 - $two32 ),
-        "$v6", 'adding then subtracting 2**32 returns the address' );
+    is( "" . ($v6 + $two32 - $two32),
+        "$v6", 'adding then subtracting 2**32 returns the address'
+    );
 };
 
 subtest 'the difference of two addresses still works' => sub {
-    is(
-        NetAddr::IP::Lite->new('192.0.2.9') -
-          NetAddr::IP::Lite->new('192.0.2.1'),
+    is( NetAddr::IP::Lite->new('192.0.2.9') - NetAddr::IP::Lite->new('192.0.2.1'),
         8,
         'two NetAddr::IP::Lite addresses'
     );
     is( NetAddr::IP->new('192.0.2.9') - NetAddr::IP->new('192.0.2.1'),
-        8, 'two NetAddr::IP addresses, which inherit from Lite' );
+        8, 'two NetAddr::IP addresses, which inherit from Lite'
+    );
     is( NetAddr::IP::Lite->new('192.0.2.9') - NetAddr::IP->new('192.0.2.1'),
-        8, 'a Lite address minus an IP address' );
+        8, 'a Lite address minus an IP address'
+    );
 
     # minus() returns a number here, not an address, and undef when the
     # difference does not fit the sign guard. Both predate this change.
-    is(
-        NetAddr::IP::Lite->new('FFFF:FFFF:FFFF:FFFF:FFFF:FFFF:FFFF:FFFE/128') -
-          NetAddr::IP::Lite->new('::1/128'),
+    is( NetAddr::IP::Lite->new('FFFF:FFFF:FFFF:FFFF:FFFF:FFFF:FFFF:FFFE/128') - NetAddr::IP::Lite->new('::1/128'),
         undef,
         'a difference outside the sign range is undef, as before'
     );
@@ -83,13 +78,13 @@ subtest 'a reference that is not an address is rejected as a constant' => sub {
         'an unblessed scalar reference'
     );
     like(
-        dies { my $dif = $v4 - bless( {}, 'Some::Other::Class' ) },
+        dies { my $dif = $v4 - bless({}, 'Some::Other::Class') },
         qr/constant must be an exact integer/,
         'some other blessed class'
     );
-  SKIP: {
+    SKIP: {
         skip 'Math::BigFloat not found', 1
-          unless eval { require Math::BigFloat; 1 };
+            unless eval { require Math::BigFloat; 1 };
 
         # A BigFloat of 1 numifies to exactly 1 and is a valid constant,
         # so this wants a value that numifies to something fractional,
@@ -103,13 +98,12 @@ subtest 'a reference that is not an address is rejected as a constant' => sub {
 };
 
 subtest 'plain scalars behave as before' => sub {
-    is( "" . ( $v4 - 5 ), '192.0.2.252/24', 'a small integer' );
-    is(
-        "" . ( $v6 - $two32 ),
-        "" . ( $v6 - Math::BigInt->new('4294967296') ),
+    is("" . ($v4 - 5), '192.0.2.252/24', 'a small integer');
+    is( "" . ($v6 - $two32),
+        "" . ($v6 - Math::BigInt->new('4294967296')),
         'a string of digits and a Math::BigInt agree'
     );
-    is( "" . ( $v4 - '5' ), '192.0.2.252/24', 'a quoted small integer' );
+    is("" . ($v4 - '5'), '192.0.2.252/24', 'a quoted small integer');
     like(
         dies { my $dif = $v4 - '0x10' },
         qr/constant must be an exact integer/,
@@ -118,9 +112,10 @@ subtest 'plain scalars behave as before' => sub {
 };
 
 subtest 'a Math::BigInt of magnitude 2**64 or more is refused' => sub {
-    for my $text ( '18446744073709551616', '-18446744073709551616',
-        '18446744073709551617' )
-    {
+    for my $text (
+        '18446744073709551616', '-18446744073709551616',
+        '18446744073709551617'
+    ) {
         my $const = Math::BigInt->new($text);
         like(
             dies { my $sum = $v6 + $const },
@@ -134,10 +129,12 @@ subtest 'a Math::BigInt of magnitude 2**64 or more is refused' => sub {
         );
     }
     my $largest = Math::BigInt->new('18446744073709551615');
-    is( "" . ( $v6 - $largest ), '2001:DB8:0:0:0:0:0:1/64',
-        'subtraction of Math::BigInt 2**64 - 1, the largest magnitude' );
-    is( "" . ( $v6 + -$largest ), '2001:DB8:0:0:0:0:0:1/64',
-        'addition of Math::BigInt -(2**64 - 1)' );
+    is( "" . ($v6 - $largest), '2001:DB8:0:0:0:0:0:1/64',
+        'subtraction of Math::BigInt 2**64 - 1, the largest magnitude'
+    );
+    is( "" . ($v6 + -$largest), '2001:DB8:0:0:0:0:0:1/64',
+        'addition of Math::BigInt -(2**64 - 1)'
+    );
 };
 
 done_testing;

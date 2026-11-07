@@ -22,17 +22,17 @@ subtest 'ipv6_n2x and ipv6_n2d' => sub {
         'FFFF:0:0:0:0:0:FFFF:FFFF',   'FFFF:0:0:0:0:0:255.255.255.255',
     );
 
-    for ( my $i = 0 ; $i < @num ; $i += 3 ) {
-        my $bits = ipv6_aton( $num[$i] );
-        is( length($bits), 16, 'length is 16 bytes' );
+    for (my $i = 0 ; $i < @num ; $i += 3) {
+        my $bits = ipv6_aton($num[$i]);
+        is(length($bits), 16, 'length is 16 bytes');
         my $ipv6x = ipv6_n2x($bits);
-        is( $ipv6x, $num[ $i + 1 ], "ipv6_n2x of $num[$i]" );
+        is($ipv6x, $num[ $i + 1 ], "ipv6_n2x of $num[$i]");
         my $ipv6d = ipv6_n2d($bits);
-        is( $ipv6d, $num[ $i + 2 ], "ipv6_n2d of $num[$i]" );
+        is($ipv6d, $num[ $i + 2 ], "ipv6_n2d of $num[$i]");
     }
 };
 
-like( dies { ipv6_n2x('1234') }, qr/Bad arg/, 'ipv6_n2x dies on bad length' );
-like( dies { ipv6_n2d('1234') }, qr/Bad arg/, 'ipv6_n2d dies on bad length' );
+like(dies { ipv6_n2x('1234') }, qr/Bad arg/, 'ipv6_n2x dies on bad length');
+like(dies { ipv6_n2d('1234') }, qr/Bad arg/, 'ipv6_n2d dies on bad length');
 
 done_testing;

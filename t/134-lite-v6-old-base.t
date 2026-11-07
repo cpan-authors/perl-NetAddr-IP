@@ -37,27 +37,27 @@ my @addr = (
 
 subtest 'v6 old base' => sub {
     for my $entry (@addr) {
-        my $ip = NetAddr::IP::Lite->new( $entry->[0] );
-        ( my $addr = $entry->[0] ) =~ s,/\d+,,;
-        isa_ok( $ip, ['NetAddr::IP::Lite'], "$addr " );
-        is( $ip->bits,    128, 'bits == 128' );
-        is( $ip->version, 6,   'version == 6' );
+        my $ip = NetAddr::IP::Lite->new($entry->[0]);
+        (my $addr = $entry->[0]) =~ s,/\d+,,;
+        isa_ok($ip, ['NetAddr::IP::Lite'], "$addr ");
+        is($ip->bits,    128, 'bits == 128');
+        is($ip->version, 6,   'version == 6');
         my $index = $entry->[1];
-        if ( $entry->[3] ) {
-            is( uc $ip->nth($index), $entry->[2], "nth $addr, $index" );
+        if ($entry->[3]) {
+            is(uc $ip->nth($index), $entry->[2], "nth $addr, $index");
         }
         else {
-            ok( !$ip->nth($index), "nth $addr, undef" );
+            ok(!$ip->nth($index), "nth $addr, undef");
         }
     }
 };
 
 my $test = NetAddr::IP::Lite->new('f34::1');
-isa_ok( $test, 'NetAddr::IP::Lite' );
-ok( $test->network->contains($test), '->contains' );
+isa_ok($test, 'NetAddr::IP::Lite');
+ok($test->network->contains($test), '->contains');
 
 $test = NetAddr::IP::Lite->new('f35::1/40');
-isa_ok( $test, 'NetAddr::IP::Lite' );
-ok( $test->network->contains($test), '->contains' );
+isa_ok($test, 'NetAddr::IP::Lite');
+ok($test->network->contains($test), '->contains');
 
 done_testing;

@@ -13,11 +13,11 @@ my %w = (
     '10.10.10/24' => [ '10.10.10.254',    '255.255.255.0' ],
 );
 
-for my $key ( keys %w ) {
+for my $key (keys %w) {
     my $ip = NetAddr::IP::Lite->new($key)->last;
 
-    is( $ip->addr, $w{$key}->[0], "$key last address" );
-    is( $ip->mask, $w{$key}->[1], "$key last mask" );
+    is($ip->addr, $w{$key}->[0], "$key last address");
+    is($ip->mask, $w{$key}->[1], "$key last mask");
 }
 
 done_testing;

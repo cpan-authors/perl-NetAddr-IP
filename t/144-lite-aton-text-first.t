@@ -14,8 +14,7 @@ BEGIN {
         my ($name) = @_;
         return CORE::gethostbyname($name) if $name =~ /\A[0-9.]+\z/;
         push @looked_up, $name;
-        return
-          wantarray ? ( $answer ? ( $name, '', 2, 4, $answer ) : () ) : $answer;
+        return wantarray ? ($answer ? ($name, '', 2, 4, $answer) : ()) : $answer;
     };
 }
 
@@ -40,26 +39,28 @@ subtest 'new under :aton reads packed bytes that spell text as text' => sub {
         '::1f'             => '0:0:0:0:0:0:0:1F/128',
         'a bc'             => undef,
     );
-    for my $bytes ( sort keys %text ) {
+    for my $bytes (sort keys %text) {
         my $ip = NetAddr::IP::Lite->new($bytes);
         is( defined $ip ? $ip->cidr : undef,
-            $text{$bytes}, "->new('$bytes') is read as text, not packed" );
+            $text{$bytes}, "->new('$bytes') is read as text, not packed"
+        );
     }
     is( NetAddr::IP::Lite->new_from_aton('1 23')->cidr,
-        '49.32.50.51/32', '->new_from_aton reads the same bytes as packed' );
+        '49.32.50.51/32', '->new_from_aton reads the same bytes as packed'
+    );
 };
 
 subtest 'new under :aton returns undef for a packed colon byte' => sub {
     my %colon = (
-        '192.0.2.58'   => pack( 'C4', 192,    0, 2, 58 ),
-        '2001:db8::3a' => pack( 'n8', 0x2001, 0x0db8, 0, 0, 0, 0, 0, 0x3a ),
+        '192.0.2.58'   => pack('C4', 192,    0, 2, 58),
+        '2001:db8::3a' => pack('n8', 0x2001, 0x0db8, 0, 0, 0, 0, 0, 0x3a),
     );
-    for my $addr ( sort keys %colon ) {
-        is( NetAddr::IP::Lite->new( $colon{$addr} ),
-            undef, "->new(packed $addr) is undef" );
+    for my $addr (sort keys %colon) {
+        is( NetAddr::IP::Lite->new($colon{$addr}),
+            undef, "->new(packed $addr) is undef"
+        );
     }
-    is(
-        NetAddr::IP::Lite->new_from_aton( $colon{'192.0.2.58'} )->cidr,
+    is( NetAddr::IP::Lite->new_from_aton($colon{'192.0.2.58'})->cidr,
         '192.0.2.58/32',
         '->new_from_aton(packed 192.0.2.58) is the address'
     );
@@ -68,26 +69,26 @@ subtest 'new under :aton returns undef for a packed colon byte' => sub {
 subtest 'new under :aton looks up packed bytes that spell a host name' => sub {
     local @looked_up;
     local $answer;
-    is(
-        NetAddr::IP::Lite->new('mail')->cidr,
+    is( NetAddr::IP::Lite->new('mail')->cidr,
         '109.97.105.108/32',
         '->new(packed 109.97.105.108) is packed when no host answers'
     );
     is( \@looked_up, ['mail'],
-        'the bytes were looked up as a host name first' );
+        'the bytes were looked up as a host name first'
+    );
 
     @looked_up = ();
-    $answer    = pack( 'C4', 192, 0, 2, 1 );
-    is(
-        NetAddr::IP::Lite->new('mail')->cidr,
+    $answer    = pack('C4', 192, 0, 2, 1);
+    is( NetAddr::IP::Lite->new('mail')->cidr,
         '192.0.2.1/32',
         '->new(packed 109.97.105.108) is the answer when a host answers'
     );
 
     @looked_up = ();
     is( NetAddr::IP::Lite->new_from_aton('mail')->cidr,
-        '109.97.105.108/32', '->new_from_aton reads the same bytes as packed' );
-    is( \@looked_up, [], '->new_from_aton makes no lookup' );
+        '109.97.105.108/32', '->new_from_aton reads the same bytes as packed'
+    );
+    is(\@looked_up, [], '->new_from_aton makes no lookup');
 };
 
 done_testing;

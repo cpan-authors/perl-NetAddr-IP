@@ -18,22 +18,22 @@ use ExtUtils::Manifest qw(maniread);
 # of its own. A walk reads other people's files and then fails on them, which
 # is what it did, on all five Windows jobs.
 
-if ( !-f 'MANIFEST' ) {
+if (!-f 'MANIFEST') {
     skip_all('no MANIFEST here, so there is no shipped file list to read');
 }
 
 my $files = maniread('MANIFEST');
 
 my @found;
-for my $file ( sort keys %{$files} ) {
+for my $file (sort keys %{$files}) {
     next if $file =~ m{^lib/};
     my $fh;
-    if ( !open $fh, '<', $file ) {
+    if (!open $fh, '<', $file) {
         push @found, "$file: unreadable, and the distribution ships it";
         next;
     }
     my $line = 0;
-    while ( my $text = <$fh> ) {
+    while (my $text = <$fh>) {
         $line++;
         next unless $text =~ m{^=[a-zA-Z]};
         chomp $text;
@@ -42,7 +42,7 @@ for my $file ( sort keys %{$files} ) {
     close $fh;
 }
 
-ok( !@found, 'no shipped file outside lib/ carries a POD command at column 0' )
-  or diag( "found:\n  " . join "\n  ", @found );
+ok(!@found, 'no shipped file outside lib/ carries a POD command at column 0')
+    or diag("found:\n  " . join "\n  ", @found);
 
 done_testing;

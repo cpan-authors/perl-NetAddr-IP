@@ -11,10 +11,10 @@ my %nets = (
     '192.168.0.10' => [ 17, '192.168.127.255', '192.168.0.0' ],
 );
 
-for my $addr ( keys %nets ) {
-    my $ip = NetAddr::IP::Lite->new( $addr, $nets{$addr}->[0] );
-    is( $ip->broadcast->addr, $nets{$addr}->[1], "$addr broadcast" );
-    is( $ip->network->addr,   $nets{$addr}->[2], "$addr network" );
+for my $addr (keys %nets) {
+    my $ip = NetAddr::IP::Lite->new($addr, $nets{$addr}->[0]);
+    is($ip->broadcast->addr, $nets{$addr}->[1], "$addr broadcast");
+    is($ip->network->addr,   $nets{$addr}->[2], "$addr network");
 }
 
 done_testing;

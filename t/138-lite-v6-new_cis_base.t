@@ -51,28 +51,28 @@ my @addr = (
 
 subtest 'new_cis basic v6 tests' => sub {
     for my $entry (@addr) {
-        my $ip   = new_cis_quiet( $entry->[0] );
+        my $ip   = new_cis_quiet($entry->[0]);
         my $addr = $entry->[0];
         $addr =~ s,/\d+,,;
-        isa_ok( $ip, ['NetAddr::IP::Lite'], "$addr " );
-        is( $ip->bits,    128, 'bits == 128' );
-        is( $ip->version, 6,   'version == 6' );
+        isa_ok($ip, ['NetAddr::IP::Lite'], "$addr ");
+        is($ip->bits,    128, 'bits == 128');
+        is($ip->version, 6,   'version == 6');
         my $index = $entry->[1];
-        if ( $entry->[3] ) {
-            is( uc $ip->nth($index), $entry->[2], "nth $addr, $index" );
+        if ($entry->[3]) {
+            is(uc $ip->nth($index), $entry->[2], "nth $addr, $index");
         }
         else {
-            ok( !$ip->nth($index), "nth $addr, undef" );
+            ok(!$ip->nth($index), "nth $addr, undef");
         }
     }
 };
 
 my $ip = new_cis_quiet('f34::1');
-isa_ok( $ip, 'NetAddr::IP::Lite' );
-ok( $ip->network->contains($ip), '->contains' );
+isa_ok($ip, 'NetAddr::IP::Lite');
+ok($ip->network->contains($ip), '->contains');
 
 $ip = new_cis_quiet('f35::1 40');
-isa_ok( $ip, 'NetAddr::IP::Lite' );
-ok( $ip->network->contains($ip), '->contains' );
+isa_ok($ip, 'NetAddr::IP::Lite');
+ok($ip->network->contains($ip), '->contains');
 
 done_testing;

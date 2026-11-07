@@ -6,60 +6,63 @@ use strict;
 use warnings;
 
 package NetAddr::IP::InetBase;
+
 # VERSION
 
 use parent 'Exporter';
-use Carp qw( croak );
+use Carp                   qw( croak );
 use NetAddr::IP::Constants qw(
-        $IPV6_BITS
-        $MAX_OCTET
-        $OCTET_BITS
-        $V4_PACKED_BYTES
-        $V6_PACKED_BYTES
+    $IPV6_BITS
+    $MAX_OCTET
+    $OCTET_BITS
+    $V4_PACKED_BYTES
+    $V6_PACKED_BYTES
 );
 use Scalar::Util qw( looks_like_number );
-use Socket qw( AF_INET AF_INET6 );
+use Socket       qw( AF_INET AF_INET6 );
 
 our @EXPORT_OK = qw(
-        inet_aton
-        inet_ntoa
-        ipv6_aton
-        ipv6_ntoa
-        ipv6_n2x
-        ipv6_n2d
-        inet_any2n
-        inet_n2dx
-        inet_n2ad
-        inet_ntop
-        inet_pton
-        packzeros
-        isIPv4
-        isNewIPv4
-        isAnyIPv4
-        AF_INET
-        AF_INET6
-        fake_AF_INET6
-        fillIPv4
+    inet_aton
+    inet_ntoa
+    ipv6_aton
+    ipv6_ntoa
+    ipv6_n2x
+    ipv6_n2d
+    inet_any2n
+    inet_n2dx
+    inet_n2ad
+    inet_ntop
+    inet_pton
+    packzeros
+    isIPv4
+    isNewIPv4
+    isAnyIPv4
+    AF_INET
+    AF_INET6
+    fake_AF_INET6
+    fillIPv4
 );
 our %EXPORT_TAGS = (
-        all     => [@EXPORT_OK],
-        ipv4    => [qw(
-                inet_aton
-                inet_ntoa
-                fillIPv4
-        )],
-        ipv6    => [qw(
-                ipv6_aton
-                ipv6_ntoa
-                ipv6_n2x
-                ipv6_n2d
-                inet_any2n
-                inet_n2dx
-                inet_n2ad
-                inet_pton
-                inet_ntop
-                packzeros
-        )],
+    all  => [@EXPORT_OK],
+    ipv4 => [ qw(
+            inet_aton
+            inet_ntoa
+            fillIPv4
+        )
+    ],
+    ipv6 => [ qw(
+            ipv6_aton
+            ipv6_ntoa
+            ipv6_n2x
+            ipv6_n2d
+            inet_any2n
+            inet_n2dx
+            inet_n2ad
+            inet_pton
+            inet_ntop
+            packzeros
+        )
+    ],
 );
 our $Mode;
 
@@ -84,12 +87,15 @@ my $WIDE_DIES = 'Wide character in %s';
 
 # deprecated: AF_INET6 always comes from Socket, so there is no guess to report
 sub fake_AF_INET6 {
-    warnings::warnif('deprecated',
-        'fake_AF_INET6 is deprecated and will be removed in version 5; AF_INET6 always comes from Socket');
+    warnings::warnif(
+        'deprecated',
+        'fake_AF_INET6 is deprecated and will be removed in version 5; AF_INET6 always comes from Socket'
+    );
     return 0;
 }
 
 our ($n2x_format, $n2d_format, $Upper);
+
 BEGIN {
     $n2x_format = "%x:%x:%x:%x:%x:%x:%x:%x";
     $n2d_format = "%x:%x:%x:%x:%x:%x:%d.%d.%d.%d";
@@ -114,12 +120,14 @@ sub _case_tags {
 
 sub ipv6_n2x {
     my $packed = $_[0];
+
     # measure bytes, as the XS does: a character above 0xFF fails to downgrade
     croak sprintf($WIDE_DIES, __PACKAGE__ . '::ipv6_n2x')
         unless utf8::downgrade($packed, 1);
-    croak sprintf($N2_LENGTH_DIES, 'ipv6_n2x',
-        defined $packed ? length($packed) : 'undefined', $V6_PACKED_BYTES)
-        unless defined $packed && length($packed) == $V6_PACKED_BYTES;
+    croak sprintf(
+        $N2_LENGTH_DIES,                                 'ipv6_n2x',
+        defined $packed ? length($packed) : 'undefined', $V6_PACKED_BYTES
+    ) unless defined $packed && length($packed) == $V6_PACKED_BYTES;
     return sprintf($Upper ? $n2x_upper : $n2x_format, unpack("n8", $packed));
 }
 
@@ -127,9 +135,10 @@ sub ipv6_n2d {
     my $packed = $_[0];
     croak sprintf($WIDE_DIES, __PACKAGE__ . '::ipv6_n2d')
         unless utf8::downgrade($packed, 1);
-    croak sprintf($N2_LENGTH_DIES, 'ipv6_n2d',
-        defined $packed ? length($packed) : 'undefined', $V6_PACKED_BYTES)
-        unless defined $packed && length($packed) == $V6_PACKED_BYTES;
+    croak sprintf(
+        $N2_LENGTH_DIES,                                 'ipv6_n2d',
+        defined $packed ? length($packed) : 'undefined', $V6_PACKED_BYTES
+    ) unless defined $packed && length($packed) == $V6_PACKED_BYTES;
     my @hex = (unpack("n8", $packed));
     $hex[9] = $hex[7] & $MAX_OCTET;
     $hex[8] = $hex[7] >> $OCTET_BITS;
@@ -144,35 +153,46 @@ sub ipv6_n2d {
 sub fillIPv4 {
     my $host = $_[0];
     return undef unless defined $host;
+
     # the C resolver stops at a NUL byte, so the text after it would go unread
     return undef if index($host, "\0") >= 0;
     if ($host =~ /^([0-9]+)(?:|\.([0-9]+)(?:|\.([0-9]+)(?:|\.([0-9]+))))\z/) {
+
         # a leading zero reads as octal to inet_aton and as decimal to people, so it is refused
         return undef if $host =~ /(?:\A|[.])0[0-9]/;
         if (defined $4) {
-            return undef unless
-                $1 >= 0 && $1 < 256 &&
-                $2 >= 0 && $2 < 256 &&
-                $3 >= 0 && $3 < 256 &&
-                $4 >= 0 && $4 < 256;
-            $host = $1.'.'.$2.'.'.$3.'.'.$4;
+            return undef
+                unless $1 >= 0
+                && $1 < 256
+                && $2 >= 0
+                && $2 < 256
+                && $3 >= 0
+                && $3 < 256
+                && $4 >= 0
+                && $4 < 256;
+            $host = $1 . '.' . $2 . '.' . $3 . '.' . $4;
         }
         elsif (defined $3) {
-            return undef unless
-                $1 >= 0 && $1 < 256 &&
-                $2 >= 0 && $2 < 256 &&
-                $3 >= 0 && $3 < 256;
-            $host = $1.'.'.$2.'.0.'.$3
+            return undef
+                unless $1 >= 0
+                && $1 < 256
+                && $2 >= 0
+                && $2 < 256
+                && $3 >= 0
+                && $3 < 256;
+            $host = $1 . '.' . $2 . '.0.' . $3;
         }
         elsif (defined $2) {
-            return undef unless
-                $1 >= 0 && $1 < 256 &&
-                $2 >= 0 && $2 < 256;
-            $host = $1.'.0.0.'.$2;
+            return undef
+                unless $1 >= 0
+                && $1 < 256
+                && $2 >= 0
+                && $2 < 256;
+            $host = $1 . '.0.0.' . $2;
         }
         else {
             return undef unless $1 >= 0 && $1 < 256;
-            $host = '0.0.0.'.$1;
+            $host = '0.0.0.' . $1;
         }
     }
     $host;
@@ -185,37 +205,40 @@ sub inet_aton {
     return undef if defined $_[0] && $_[0] =~ $WHITESPACE;
     my $host = fillIPv4($_[0]);
     return undef unless defined $host && $host ne '';
+
     # gethostbyname keeps the answer in one static buffer. Two threads
     # looking up at once can swap answers, so a literal is packed here.
     if ($host =~ /\A([0-9]+)[.]([0-9]+)[.]([0-9]+)[.]([0-9]+)\z/) {
-        return pack( 'C4', $1, $2, $3, $4 );
+        return pack('C4', $1, $2, $3, $4);
     }
     return scalar gethostbyname($host);
 }
 
-my $_zero = pack('L4', 0, 0, 0, 0);
+my $_zero     = pack('L4', 0,          0,          0,          0);
 my $_ipv4mask = pack('L4', 0xffffffff, 0xffffffff, 0xffffffff, 0);
 
 sub isIPv4 {
     my $naddr = $_[0];
     my $bytes = utf8::downgrade($naddr, 1);
     if (!$bytes || !defined $naddr || length($naddr) != $V6_PACKED_BYTES) {
+
         # name the InetBase function the caller entered, else isIPv4 itself
         my $caller = (caller(1))[3];
-        my $sub = defined $caller && index($caller, __PACKAGE__ . '::') == 0
+        my $sub =
+            defined $caller && index($caller, __PACKAGE__ . '::') == 0
             ? $caller
             : (caller(0))[3];
         croak sprintf($WIDE_DIES, $sub) unless $bytes;
         my $bits = defined $naddr ? length($naddr) * $OCTET_BITS : 'undefined';
         croak "Bad arg length for $sub, length is $bits, should be $IPV6_BITS";
     }
-    return ($naddr & $_ipv4mask) eq $_zero
-        ? 1 : 0;
+    return ($naddr & $_ipv4mask) eq $_zero ? 1 : 0;
 }
 
 my $_newV4compat = pack('N4', 0, 0, 0xffff, 0);
 
 sub isNewIPv4 {
+
     # croaks unless 16 bytes, naming isNewIPv4, as isIPv4 and isAnyIPv4 do
     isIPv4($_[0]);
     my $naddr = $_[0] ^ $_newV4compat;
@@ -224,12 +247,12 @@ sub isNewIPv4 {
 
 sub isAnyIPv4 {
     my $naddr = $_[0];
-    my $rv = isIPv4($_[0]);
+    my $rv    = isIPv4($_[0]);
     return $rv if $rv;
     return isNewIPv4($naddr);
 }
 
-sub DESTROY {};
+sub DESTROY { }
 
 sub import {
     _case_tags(\@_);
@@ -337,32 +360,34 @@ my $TAIL_OCTET = qr/0|[1-9][0-9]{0,2}/;
 sub ipv6_aton {
     my ($ipv6) = @_;
     return undef unless $ipv6;
-    if (my ($hex, @quad) = $ipv6 =~ /^(.*:)($TAIL_OCTET)\.($TAIL_OCTET)\.($TAIL_OCTET)\.($TAIL_OCTET)\z/) {    # mixed hex, dot-quad
+    if (my ($hex, @quad) = $ipv6 =~ /^(.*:)($TAIL_OCTET)\.($TAIL_OCTET)\.($TAIL_OCTET)\.($TAIL_OCTET)\z/)
+    {    # mixed hex, dot-quad
         return undef if grep { $_ > $MAX_OCTET } @quad;
-        $ipv6 = sprintf("%s%X%02X:%X%02X", $hex, @quad);            # convert to pure hex
+        $ipv6 = sprintf("%s%X%02X:%X%02X", $hex, @quad);    # convert to pure hex
     }
     my $c;
-    return undef if
-        $ipv6 =~ /[^:0-9a-fA-F]/ ||            # non-hex character
+    return undef
+        if $ipv6 =~ /[^:0-9a-fA-F]/ ||                      # non-hex character
         (($c = $ipv6) =~ s/::/x/ && $c =~ /(?:x|:):/) ||    # double :: ::?
-        $ipv6 =~ /[0-9a-fA-F]{5,}/ ||            # more than 4 digits
-        $ipv6 =~ /^:(?!:)/ ||                # single leading colon
-        $ipv6 =~ /(?<!:):$/;                # single trailing colon
-    $c = $ipv6 =~ tr/:/:/;                # count the colons
+        $ipv6 =~ /[0-9a-fA-F]{5,}/ ||                       # more than 4 digits
+        $ipv6 =~ /^:(?!:)/         ||                       # single leading colon
+        $ipv6 =~ /(?<!:):$/;                                # single trailing colon
+    $c = $ipv6 =~ tr/:/:/;                                  # count the colons
     return undef if $c < 7 && $ipv6 !~ /::/;
-    if ($c > 7) {                        # strip leading or trailing ::
-        return undef unless
-        $ipv6 =~ s/^::/:/ ||
-        $ipv6 =~ s/::$/:/;
+
+    if ($c > 7) {                                           # strip leading or trailing ::
+        return undef
+            unless $ipv6 =~ s/^::/:/
+            || $ipv6 =~ s/::$/:/;
         return undef if --$c > 7;
     }
-    while ($c++ < 7) {                    # expand compressed fields
+    while ($c++ < 7) {                                      # expand compressed fields
         $ipv6 =~ s/::/:::/;
     }
     $ipv6 .= 0 if $ipv6 =~ /:$/;
     my @hex = split(/:/, $ipv6);
-    return undef if @hex > 8;                # too many fields
-    foreach(0..$#hex) {
+    return undef if @hex > 8;                               # too many fields
+    for (0 .. $#hex) {
         $hex[$_] = hex($hex[$_] || 0);
     }
     pack("n8", @hex);
@@ -386,6 +411,7 @@ undefined argument is read as C<::>, the all-zero address.
 sub inet_any2n($) {
     my ($addr) = @_;
     $addr = '' unless defined $addr;
+
     # text without a colon is IPv4, so it has to be a dotted quad; a bare number is no address
     if ($addr !~ /:/) {
         return undef unless $addr eq '' || $addr =~ /\A[0-9]+(?:[.][0-9]+){3}\z/;
@@ -414,17 +440,22 @@ By contrast, C<inet_aton> accepts the short form and the host name.
 
 sub inet_pton {
     my ($af, $text) = @_;
+
     # A numeric compare, or Socket's int typemap, warns on undef and on
     # text that is not a number. Those families croak here, with no warning.
-    croak sprintf('Bad address family for %s::inet_pton, got %s, %s',
-        __PACKAGE__, defined $af ? $af : 'undefined', $FAMILY_SHOULD_BE)
-        unless defined $af && looks_like_number($af);
+    croak sprintf(
+        'Bad address family for %s::inet_pton, got %s, %s',
+        __PACKAGE__, defined $af ? $af : 'undefined', $FAMILY_SHOULD_BE
+    ) unless defined $af && looks_like_number($af);
+
     # any other number gets Socket's error
     goto &Socket::inet_pton unless $af == AF_INET() || $af == AF_INET6();
+
     # the text is read here, not by the platform inet_pton, so every host
     # reads it alike
     if ($af == AF_INET()) {
-        my @octets = defined $text
+        my @octets =
+            defined $text
             ? $text =~ /\A($TAIL_OCTET)\.($TAIL_OCTET)\.($TAIL_OCTET)\.($TAIL_OCTET)\z/
             : ();
         return undef if !@octets || grep { $_ > $MAX_OCTET } @octets;
@@ -454,10 +485,12 @@ sub inet_ntoa {
     my $packed = $_[0];
     croak sprintf($WIDE_DIES, __PACKAGE__ . '::inet_ntoa')
         unless utf8::downgrade($packed, 1);
-    croak 'Bad arg length for '. __PACKAGE__ ."::inet_ntoa, length is ".
-        (defined $packed ? length($packed) : 'undefined') .
-        " should be $V4_PACKED_BYTES bytes"
-                unless defined $packed && length($packed) == $V4_PACKED_BYTES;
+    croak 'Bad arg length for '
+        . __PACKAGE__
+        . "::inet_ntoa, length is "
+        . (defined $packed ? length($packed) : 'undefined')
+        . " should be $V4_PACKED_BYTES bytes"
+        unless defined $packed && length($packed) == $V4_PACKED_BYTES;
     my @hex = (unpack("n2", $packed));
     $hex[3] = $hex[1] & $MAX_OCTET;
     $hex[2] = $hex[1] >> $OCTET_BITS;
@@ -488,14 +521,17 @@ Stringification goes through ipv6_n2x, which is pure Perl on every host.
 
 sub ipv6_ntoa {
     my $packed = $_[0];
+
     # measured here, so the error names ipv6_ntoa, and the string is
     # downgraded before Socket reads it
     croak sprintf($WIDE_DIES, __PACKAGE__ . '::ipv6_ntoa')
         unless utf8::downgrade($packed, 1);
-    croak 'Bad arg length for '. __PACKAGE__ ."::ipv6_ntoa, length is ".
-        (defined $packed ? length($packed) : 'undefined') .
-        " should be $V6_PACKED_BYTES bytes"
-                unless defined $packed && length($packed) == $V6_PACKED_BYTES;
+    croak 'Bad arg length for '
+        . __PACKAGE__
+        . "::ipv6_ntoa, length is "
+        . (defined $packed ? length($packed) : 'undefined')
+        . " should be $V6_PACKED_BYTES bytes"
+        unless defined $packed && length($packed) == $V6_PACKED_BYTES;
     return inet_ntop(AF_INET6(), $packed);
 }
 
@@ -599,23 +635,29 @@ and case.
 
 sub inet_ntop {
     my ($af, $packed) = @_;
+
     # Same gate as inet_pton: undef and a non-number must not reach Socket.
-    croak sprintf('Unsupported address family for %s::inet_ntop, af is %s, %s',
-        __PACKAGE__, defined $af ? $af : 'undefined', $FAMILY_SHOULD_BE)
-        unless defined $af && looks_like_number($af);
+    croak sprintf(
+        'Unsupported address family for %s::inet_ntop, af is %s, %s',
+        __PACKAGE__, defined $af ? $af : 'undefined', $FAMILY_SHOULD_BE
+    ) unless defined $af && looks_like_number($af);
     if ($af == AF_INET()) {
+
         # inet_ntoa reads $_[0]. The family must not go with it.
         @_ = ($packed);
         goto &inet_ntoa;
     }
     if ($af == AF_INET6()) {
+
         # Socket 1.94 copies 16 bytes and does not check the length, so a
         # shorter string would be read past its end.
         croak sprintf($WIDE_DIES, __PACKAGE__ . '::inet_ntop')
             unless utf8::downgrade($packed, 1);
-        croak 'Bad arg length for '. __PACKAGE__ ."::inet_ntop, length is ".
-            (defined $packed ? length($packed) : 'undefined') .
-            " should be $V6_PACKED_BYTES bytes"
+        croak 'Bad arg length for '
+            . __PACKAGE__
+            . "::inet_ntop, length is "
+            . (defined $packed ? length($packed) : 'undefined')
+            . " should be $V6_PACKED_BYTES bytes"
             unless defined $packed && length($packed) == $V6_PACKED_BYTES;
     }
     goto &Socket::inet_ntop;
@@ -639,48 +681,48 @@ RFC 5952 s4.3, whatever the case setting.
 
 sub packzeros {
     my $x6 = shift;
-    if ($x6 =~ /\:\:/) {                # already contains ::
-        # then re-optimize
+    if ($x6 =~ /\:\:/) {    # already contains ::
+                            # then re-optimize
         $x6 = ($x6 =~ /\:[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+/)    # ipv4 notation ?
-        ? ipv6_n2d(ipv6_aton($x6))
-        : ipv6_n2x(ipv6_aton($x6));
+            ? ipv6_n2d(ipv6_aton($x6))
+            : ipv6_n2x(ipv6_aton($x6));
     }
-    $x6 = ':'. lc $x6;                # prefix : & always lower case
+    $x6 = ':' . lc $x6;                                       # prefix : & always lower case
     my $d = '';
     if ($x6 =~ /(.+\:)([0-9]+\.[0-9]+\.[0-9]+\.[0-9]+)/) {    # if contains dot quad
-        $x6 = $1;                    # save hex piece
-        $d = $2;                    # and dot quad piece
+        $x6 = $1;                                             # save hex piece
+        $d  = $2;                                             # and dot quad piece
     }
-    $x6 .= ':';                    # suffix :
-    $x6 =~ s/\:0+/\:0/g;                # compress strings of 0's to single '0'
-    $x6 =~ s/\:0([1-9a-f]+)/\:$1/g;        # eliminate leading 0's in hex strings
-    my @x = $x6 =~ /(?:\:0)*/g;            # split only strings of :0:0..."
+    $x6 .= ':';                                               # suffix :
+    $x6 =~ s/\:0+/\:0/g;                                      # compress strings of 0's to single '0'
+    $x6 =~ s/\:0([1-9a-f]+)/\:$1/g;                           # eliminate leading 0's in hex strings
+    my @x = $x6 =~ /(?:\:0)*/g;                               # split only strings of :0:0..."
 
     my $m = 0;
     my $i = 0;
 
-    for (0..$#x) {                # find next longest pattern :0:0:0...
+    for (0 .. $#x) {                                          # find next longest pattern :0:0:0...
         my $len = length($x[$_]);
         next unless $len > $m;
         $m = $len;
-        $i = $_;                    # index to first longest pattern
+        $i = $_;                                              # index to first longest pattern
     }
 
-    if ($m > 2) {                    # there was a string of 2 or more zeros
-        $x6 =~ s/$x[$i]/\:/;              # replace first longest :0:0:0... with "::"
-        unless ($i) {                # if it is the first match, $i = 0
-            $x6 = substr($x6, 0,-1);            # keep the leading ::, remove trailing ':'
+    if ($m > 2) {                                             # there was a string of 2 or more zeros
+        $x6 =~ s/$x[$i]/\:/;                                  # replace first longest :0:0:0... with "::"
+        unless ($i) {                                         # if it is the first match, $i = 0
+            $x6 = substr($x6, 0, -1);                         # keep the leading ::, remove trailing ':'
         }
         else {
-            $x6 = substr($x6, 1,-1);            # else remove leading & trailing ':'
+            $x6 = substr($x6, 1, -1);                         # else remove leading & trailing ':'
         }
-        $x6 .= ':' unless $x6 =~ /\:\:/;        # restore ':' if match and we can't see it, implies trailing '::'
+        $x6 .= ':' unless $x6 =~ /\:\:/;    # restore ':' if match and we can't see it, implies trailing '::'
     }
-    else {                    # there was no match
-        $x6 = substr($x6, 1,-1);            # remove leading & trailing ':'
+    else {                                  # there was no match
+        $x6 = substr($x6, 1, -1);           # remove leading & trailing ':'
     }
-    $x6 .= $d;                    # append digits if any
-    return $x6;                   # lowercase whatever the case setting, RFC 5952 s4.3
+    $x6 .= $d;                              # append digits if any
+    return $x6;                             # lowercase whatever the case setting, RFC 5952 s4.3
 }
 
 =back

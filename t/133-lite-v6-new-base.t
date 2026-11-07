@@ -32,28 +32,28 @@ my @addr = (
 
 subtest 'basic v6 functionality' => sub {
     for my $entry (@addr) {
-        my $ip = NetAddr::IP::Lite->new( $entry->[0] );
-        ( my $short = $entry->[0] ) =~ s,/\d+,,;
-        isa_ok( $ip, ['NetAddr::IP::Lite'], "$short " );
-        is( $ip->bits,    128, 'bits == 128' );
-        is( $ip->version, 6,   'version == 6' );
+        my $ip = NetAddr::IP::Lite->new($entry->[0]);
+        (my $short = $entry->[0]) =~ s,/\d+,,;
+        isa_ok($ip, ['NetAddr::IP::Lite'], "$short ");
+        is($ip->bits,    128, 'bits == 128');
+        is($ip->version, 6,   'version == 6');
         my $index = $entry->[1];
-        if ( $entry->[3] ) {
-            is( uc $ip->nth($index), $entry->[2], "nth $short, $index" );
+        if ($entry->[3]) {
+            is(uc $ip->nth($index), $entry->[2], "nth $short, $index");
         }
         else {
-            ok( !$ip->nth($index), "nth $short, undef" );
+            ok(!$ip->nth($index), "nth $short, undef");
         }
     }
 };
 
 my $test = NetAddr::IP::Lite->new('f34::1');
-isa_ok( $test, 'NetAddr::IP::Lite' );
-ok( $test->network->contains($test), '->contains' );
+isa_ok($test, 'NetAddr::IP::Lite');
+ok($test->network->contains($test), '->contains');
 
 $test = NetAddr::IP::Lite->new('f35::1/40');
-isa_ok( $test, 'NetAddr::IP::Lite' );
-ok( $test->network->contains($test), '->contains' );
+isa_ok($test, 'NetAddr::IP::Lite');
+ok($test->network->contains($test), '->contains');
 
 subtest 'a keyword with the ipv6 mask gives the IPv6 address' => sub {
     my %ipv6 = (
@@ -62,30 +62,33 @@ subtest 'a keyword with the ipv6 mask gives the IPv6 address' => sub {
         loopback    => '0:0:0:0:0:0:0:1/128',
         unspecified => '0:0:0:0:0:0:0:0/128',
     );
-    for my $keyword ( sort keys %ipv6 ) {
-        my $ip = NetAddr::IP::Lite->new( $keyword, 'ipv6' );
-        is( $ip->version, 6, "$keyword with the ipv6 mask is an IPv6 object" );
+    for my $keyword (sort keys %ipv6) {
+        my $ip = NetAddr::IP::Lite->new($keyword, 'ipv6');
+        is($ip->version, 6, "$keyword with the ipv6 mask is an IPv6 object");
         is( "$ip", $ipv6{$keyword},
-            "$keyword with the ipv6 mask is $ipv6{$keyword}" );
-        is(
-            "$ip",
+            "$keyword with the ipv6 mask is $ipv6{$keyword}"
+        );
+        is( "$ip",
             '' . NetAddr::IP::Lite->new6($keyword),
             "$keyword with the ipv6 mask matches new6"
         );
     }
 
-    my $upper = NetAddr::IP::Lite->new( 'loopback', 'IPv6' );
-    is( "$upper",        '0:0:0:0:0:0:0:1/128', 'the ipv6 mask is case blind' );
-    is( $upper->version, 6, 'loopback with an IPv6 mask is an IPv6 object' );
+    my $upper = NetAddr::IP::Lite->new('loopback', 'IPv6');
+    is("$upper",        '0:0:0:0:0:0:0:1/128', 'the ipv6 mask is case blind');
+    is($upper->version, 6,                     'loopback with an IPv6 mask is an IPv6 object');
 
-    my $no_octal = NetAddr::IP::Lite->new_no( 'loopback', 'ipv6' );
+    my $no_octal = NetAddr::IP::Lite->new_no('loopback', 'ipv6');
     is( "$no_octal", '0:0:0:0:0:0:0:1/128',
-        'new_no takes the ipv6 mask the same way' );
+        'new_no takes the ipv6 mask the same way'
+    );
 
     is( NetAddr::IP::Lite->new('loopback')->cidr,
-        '127.0.0.1/8', 'loopback with no mask is still IPv4' );
-    is( NetAddr::IP::Lite->new( 'broadcast', 'ipv6' ),
-        undef, 'broadcast has no IPv6 form' );
+        '127.0.0.1/8', 'loopback with no mask is still IPv4'
+    );
+    is( NetAddr::IP::Lite->new('broadcast', 'ipv6'),
+        undef, 'broadcast has no IPv6 form'
+    );
 };
 
 subtest 'new6 reads the mask given with a keyword' => sub {
@@ -95,29 +98,26 @@ subtest 'new6 reads the mask given with a keyword' => sub {
         loopback    => '::1',
         unspecified => '::',
     );
-    for my $keyword ( sort keys %address ) {
-        for my $mask ( 24, 64, 128, 'ffff::' ) {
-            is(
-                '' . NetAddr::IP::Lite->new6( $keyword,           $mask ),
-                '' . NetAddr::IP::Lite->new6( $address{$keyword}, $mask ),
+    for my $keyword (sort keys %address) {
+        for my $mask (24, 64, 128, 'ffff::') {
+            is( '' . NetAddr::IP::Lite->new6($keyword,           $mask),
+                '' . NetAddr::IP::Lite->new6($address{$keyword}, $mask),
                 "new6('$keyword', '$mask') matches its address"
             );
         }
-        is( NetAddr::IP::Lite->new6( $keyword, 'junk' ),
-            undef, "new6('$keyword', 'junk') is undef" );
+        is( NetAddr::IP::Lite->new6($keyword, 'junk'),
+            undef, "new6('$keyword', 'junk') is undef"
+        );
     }
-    is(
-        '' . NetAddr::IP::Lite->new6( 'loopback', 64 ),
+    is( '' . NetAddr::IP::Lite->new6('loopback', 64),
         '0:0:0:0:0:0:0:1/64',
         'new6 loopback with a mask of 64'
     );
-    is(
-        '' . NetAddr::IP::Lite->new6('default'),
+    is( '' . NetAddr::IP::Lite->new6('default'),
         '0:0:0:0:0:0:0:0/0',
         'default with no mask is still /0'
     );
-    is(
-        '' . NetAddr::IP::Lite->new6( 'loopback', 'ipv6' ),
+    is( '' . NetAddr::IP::Lite->new6('loopback', 'ipv6'),
         '0:0:0:0:0:0:0:1/128',
         'the ipv6 token still gives the keyword its own mask'
     );
@@ -130,17 +130,15 @@ subtest 'new6 reads a keyword with a mask in its string or as undef' => sub {
         loopback    => '::1',
         unspecified => '::',
     );
-    for my $keyword ( sort keys %address ) {
-        for my $form ( "$keyword/64", "$keyword 64" ) {
-            is(
-                '' . NetAddr::IP::Lite->new6($form),
-                '' . NetAddr::IP::Lite->new6( $address{$keyword}, 64 ),
+    for my $keyword (sort keys %address) {
+        for my $form ("$keyword/64", "$keyword 64") {
+            is( '' . NetAddr::IP::Lite->new6($form),
+                '' . NetAddr::IP::Lite->new6($address{$keyword}, 64),
                 "new6('$form') matches its address"
             );
         }
-        is(
-            '' . NetAddr::IP::Lite->new6( $keyword,           undef ),
-            '' . NetAddr::IP::Lite->new6( $address{$keyword}, undef ),
+        is( '' . NetAddr::IP::Lite->new6($keyword,           undef),
+            '' . NetAddr::IP::Lite->new6($address{$keyword}, undef),
             "new6('$keyword', undef) matches its address"
         );
     }
