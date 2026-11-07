@@ -13,8 +13,7 @@ qr/^:old_nth is deprecated and will be removed in version 5; without it nth\(0\)
         'the warning names the tag and what the code does without it'
     );
     is( $NetAddr::IP::Lite::Old_nth, 1, 'the tag still takes effect' );
-    ok(
-        no_warnings {
+    ok( no_warnings {
             no warnings 'deprecated';
             NetAddr::IP::Lite->import(':old_nth');
         },
@@ -39,11 +38,9 @@ my %try = (
 for my $input ( sort { $a <=> $b } keys %try ) {
     my $rv  = $ip4->nth($input);
     my $got = defined $rv ? $rv->addr : 'undef';
-    is(
-        $got,
+    is( $got,
         $try{$input} // 'undef',
-        "nth($input) returns " . ( $try{$input} // 'undef' )
-    );
+        "nth($input) returns " . ( $try{$input} // 'undef' ) );
 }
 
 done_testing;

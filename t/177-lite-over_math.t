@@ -70,48 +70,54 @@ subtest 'subtraction takes every constant that addition takes' => sub {
     SKIP: {
         # a perl with 32-bit integers reads these literals as floats
         skip 'constants above 2**32 need 64-bit integers', 19
-          unless ~0 > 4294967295;
+            unless ~0 > 4294967295;
 
         # from 2**63 + 1 up, an unsigned integer has no negative of the same size
         for my $case (
-            [ 9223372036854775808,  '2001:DB8:FFFF:FFFF:8000:0:0:0/32', '198.51.100.7/24' ],
+            [ 9223372036854775808,  '2001:DB8:FFFF:FFFF:8000:0:0:0/32',          '198.51.100.7/24' ],
             [ 9223372036854775809,  '2001:DB8:FFFF:FFFF:7FFF:FFFF:FFFF:FFFF/32', '198.51.100.6/24' ],
-            [ 18446744073709551615, '2001:DB8:FFFF:FFFF:0:0:0:1/32', '198.51.100.8/24' ],
-          )
-        {
+            [ 18446744073709551615, '2001:DB8:FFFF:FFFF:0:0:0:1/32',             '198.51.100.8/24' ],
+        ) {
             my ( $const, $want_v6, $want_v4 ) = @{$case};
 
             # eval, so a croak fails its own assertion and the rest still run
             is( eval { "" . ( $v6 - $const ) }, $want_v6, "2001:db8::/32 - $const" );
             is( eval { "" . ( $v6 - "$const" ) },
-                $want_v6, "2001:db8::/32 - '$const' as a string" );
+                $want_v6, "2001:db8::/32 - '$const' as a string"
+            );
             is( eval { "" . ( $v4 - $const ) }, $want_v4, "198.51.100.7/24 - $const" );
             is( eval { "" . ( $v6 - $const + $const ) },
-                "$v6", "2001:db8::/32 - $const + $const" );
+                "$v6", "2001:db8::/32 - $const + $const"
+            );
             is( eval { "" . ( $v6 + $const - $const ) },
-                "$v6", "2001:db8::/32 + $const - $const" );
+                "$v6", "2001:db8::/32 + $const - $const"
+            );
             is( eval { "" . ( $v4 + $const - $const ) },
-                "$v4", "198.51.100.7/24 + $const - $const" );
+                "$v4", "198.51.100.7/24 + $const - $const"
+            );
         }
 
         is( $v6 - -9223372036854775808, '2001:DB8:0:0:8000:0:0:0/32',
-            '2001:db8::/32 - -2**63' );
+            '2001:db8::/32 - -2**63'
+        );
     }
     is( $v6 - 2147483648, '2001:DB8:FFFF:FFFF:FFFF:FFFF:8000:0/32',
-        '2001:db8::/32 - 2**31' );
+        '2001:db8::/32 - 2**31'
+    );
     is( $v6 + -2147483648, '2001:DB8:FFFF:FFFF:FFFF:FFFF:8000:0/32',
-        '2001:db8::/32 + -2**31' );
+        '2001:db8::/32 + -2**31'
+    );
     is( $v6 - -2147483648, '2001:DB8:0:0:0:0:8000:0/32',
-        '2001:db8::/32 - -2**31' );
+        '2001:db8::/32 - -2**31'
+    );
 
     for my $case (
-        [ 18446744073709551616,  '2**64, a float' ],
+        [  18446744073709551616, '2**64, a float' ],
         [ -18446744073709551616, '-2**64, a float' ],
 
         # with long doubles or quadmath, 1e16 has unit precision and is taken
         ( 1e16 - 1 == 1e16 ? [ 1e16, '1e16, a float above 2**53' ] : () ),
-      )
-    {
+    ) {
         my ( $const, $name ) = @{$case};
         like(
             dies { my $sum = $v6 + $const },

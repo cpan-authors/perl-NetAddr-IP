@@ -25,22 +25,22 @@ use Tie::Scalar;
 
 use NetAddr::IP;
 use NetAddr::IP::Util qw(
-  add128
-  addconst
-  bcd2bin
-  bcdn2bin
-  bin2bcd
-  comp128
-  hasbits
-  ipanyto6
-  ipv4to6
-  ipv6_aton
-  ipv6_n2x
-  mask4to6
-  notcontiguous
-  shiftleft
-  simple_pack
-  sub128
+    add128
+    addconst
+    bcd2bin
+    bcdn2bin
+    bin2bcd
+    comp128
+    hasbits
+    ipanyto6
+    ipv4to6
+    ipv6_aton
+    ipv6_n2x
+    mask4to6
+    notcontiguous
+    shiftleft
+    simple_pack
+    sub128
 );
 
 my $THREADS          = 4;
@@ -58,10 +58,8 @@ sub battery {
     my $mask   = ipv6_aton('ffff:ffff:ffff:ffff:ffff:ffff:ffff:ff00');
     tie my $tied, 'Tie::StdScalar';
     $tied = $packed;
-    my $net = NetAddr::IP->new('192.0.2.0/28');
-    my $compact =
-      NetAddr::IP::compactref(
-        [ map { NetAddr::IP->new("192.0.2.$_/32") } 0 .. 15 ] );
+    my $net     = NetAddr::IP->new('192.0.2.0/28');
+    my $compact = NetAddr::IP::compactref( [ map { NetAddr::IP->new("192.0.2.$_/32") } 0 .. 15 ] );
     return [
         ipv6_n2x( ( add128( $packed, $packed ) )[1] ),
         ipv6_n2x( ( sub128( $packed, $packed ) )[1] ),
@@ -82,8 +80,7 @@ sub battery {
         NetAddr::IP->new6('2001:db8::1:0:0:1')->short,
         NetAddr::IP->new($V6_TEXT)->canon,
         "" . ( $net + 5 ),
-        NetAddr::IP->new('198.51.100.0/24')
-          ->contains( NetAddr::IP->new('198.51.100.7') ) ? 1 : 0,
+        NetAddr::IP->new('198.51.100.0/24')->contains( NetAddr::IP->new('198.51.100.7') ) ? 1 : 0,
         join( ',', map { "$_" } @{$compact} ),
     ];
 }
@@ -98,17 +95,17 @@ subtest 'results in several threads match the single-threaded ones' => sub {
                     my $got = battery();
                     for my $i ( 0 .. $#{$want} ) {
                         push @mismatch, "round $round item $i: $got->[$i]"
-                          if $got->[$i] ne $want->[$i];
+                            if $got->[$i] ne $want->[$i];
                     }
                 }
                 return join "\n", @mismatch;
-            }
-        )
+            } )
     } 1 .. $THREADS;
     for my $worker (@workers) {
         my $tid = $worker->tid;
         is( $worker->join, q{},
-            "thread $tid matches the single-threaded results" );
+            "thread $tid matches the single-threaded results"
+        );
     }
 };
 
@@ -119,20 +116,16 @@ subtest 'a case change in one thread stays in that thread' => sub {
             my $flips = 0;
             until ($stop) {
                 $flips++ % 2
-                  ? NetAddr::IP::Util::upper()
-                  : NetAddr::IP::Util::lower();
+                    ? NetAddr::IP::Util::upper()
+                    : NetAddr::IP::Util::lower();
             }
             return $flips;
-        }
-    );
+        } );
     my @readers = map {
         threads->create(
             sub {
-                return
-                  scalar grep { "" . NetAddr::IP->new($V6_TEXT) ne $V6_UPPER }
-                  1 .. $READS_PER_READER;
-            }
-        )
+                return scalar grep { "" . NetAddr::IP->new($V6_TEXT) ne $V6_UPPER } 1 .. $READS_PER_READER;
+            } )
     } 1 .. $READERS;
     my @changed = map { $_->join } @readers;
     $stop = 1;
@@ -143,17 +136,19 @@ subtest 'a case change in one thread stays in that thread' => sub {
 subtest 'a thread inherits the settings in force when it starts' => sub {
     NetAddr::IP::Util::lower();
     my $child =
-      threads->create( sub { return "" . NetAddr::IP->new($V6_TEXT) } );
+        threads->create( sub { return "" . NetAddr::IP->new($V6_TEXT) } );
     NetAddr::IP::Util::upper();
     is( $child->join, $V6_LOWER,
-        'the thread started after lower() prints lowercase' );
+        'the thread started after lower() prints lowercase'
+    );
     is( "" . NetAddr::IP->new($V6_TEXT),
-        $V6_UPPER, 'the main thread is back to uppercase' );
+        $V6_UPPER, 'the main thread is back to uppercase'
+    );
 };
 
 subtest 'netlimit raised in a thread does not change the caller' => sub {
     my $raiser =
-      threads->create( sub { return NetAddr::IP::netlimit($RAISED_NETLIMIT) } );
+        threads->create( sub { return NetAddr::IP::netlimit($RAISED_NETLIMIT) } );
     ok( $raiser->join, 'the thread raised its netlimit' );
     like(
         dies { NetAddr::IP->new('2001:db8::/111')->split(128) },

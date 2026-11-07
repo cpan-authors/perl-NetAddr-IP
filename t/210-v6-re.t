@@ -8,22 +8,22 @@ use NetAddr::IP       ();
 use NetAddr::IP::Util qw( addconst );
 
 my @ips = qw(
-  ::0:0f00
-  ::FF:1e10
-  ::ffFF:2d20
-  ::eFF:3c30
-  ::eeFF:4b40
-  ::FF:5a50
-  ::FF:6960
-  ::FF:7870
-  ::FF:8780
-  ::FF:9690
-  ::FF:a5a0
-  ::FF:b4b0
-  ::FF:c3c0
-  ::FF:d2d0
-  ::FF:e1e0
-  ::FF:f0f0
+    ::0:0f00
+    ::FF:1e10
+    ::ffFF:2d20
+    ::eFF:3c30
+    ::eeFF:4b40
+    ::FF:5a50
+    ::FF:6960
+    ::FF:7870
+    ::FF:8780
+    ::FF:9690
+    ::FF:a5a0
+    ::FF:b4b0
+    ::FF:c3c0
+    ::FF:d2d0
+    ::FF:e1e0
+    ::FF:f0f0
 );
 my @mask = qw( 128 126 125 124 123 122 121 120 );
 
@@ -46,19 +46,14 @@ subtest 're6 regex compilation and matching' => sub {
         my $rx;
 
         ok( lives { $rx = qr/$re/ },
-            'Compilation of the resulting regular expression' );
+            'Compilation of the resulting regular expression'
+        );
 
-        for (
-            my $ip = $subnet->network ;
-            $ip < $subnet->broadcast && $subnet->masklen != 128 ;
-            $ip++
-          )
-        {
+        for ( my $ip = $subnet->network ; $ip < $subnet->broadcast && $subnet->masklen != 128 ; $ip++ ) {
             ok( $ip->addr =~ m/$rx/, "Match of $ip in $subnet" );
         }
 
-        ok(
-            $subnet->broadcast->addr =~ m/$rx/,
+        ok( $subnet->broadcast->addr =~ m/$rx/,
             "Match of broadcast of $subnet"
         );
         my $under = $subnet->network->copy;
@@ -78,7 +73,8 @@ subtest 're6() returns a non-capturing group' => sub {
     ok( '2001:db8:0:0:0:0:0:1' =~ /^($re)$/, 'single capture group works' );
     is( $1, '2001:db8:0:0:0:0:0:1', 'captured address is correct' );
     ok( '2001:db8:0:0:0:0:0:1 port=80' =~ /^($re)\s+port=(\d+)$/,
-        'two caller groups with re6' );
+        'two caller groups with re6'
+    );
     is( $1, '2001:db8:0:0:0:0:0:1', 'first group captures address' );
     is( $2, '80',                   'second group captures port' );
 };

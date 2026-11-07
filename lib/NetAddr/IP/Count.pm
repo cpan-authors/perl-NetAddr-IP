@@ -6,9 +6,10 @@ use strict;
 use warnings;
 
 package NetAddr::IP::Count;
+
 # VERSION
 
-use Carp qw(croak);
+use Carp         qw(croak);
 use Scalar::Util qw(blessed looks_like_number);
 
 # the cache size NetAddr::IP::Count 2.01 reported for a new counter
@@ -22,14 +23,15 @@ sub new {
     my ( $proto, @pairs ) = @_;
     croak sprintf(
         '%s::new takes group name and subnet pairs, got %d arguments',
-        __PACKAGE__, scalar @pairs )
-        if @pairs % 2;
+        __PACKAGE__, scalar @pairs
+    ) if @pairs % 2;
     my %groups = @pairs;
     my $self   = bless {
         cache_size => $DEFAULT_CACHE_SIZE,
         subnets    => {},
         totals     => {},
-    }, ref $proto || $proto;
+        },
+        ref $proto || $proto;
     $self->add( $_, $groups{$_} ) for keys %groups;
     return $self;
 }
@@ -63,8 +65,8 @@ sub valcount {
     my ( $self, @pairs ) = @_;
     croak sprintf(
         '%s::valcount takes address and value pairs, got %d arguments',
-        __PACKAGE__, scalar @pairs )
-        if @pairs % 2;
+        __PACKAGE__, scalar @pairs
+    ) if @pairs % 2;
     for my $i ( 0 .. $#pairs ) {
         if ( $i % 2 ) {
             croak _bad_argument( 'valcount', $i + 1, $pairs[$i], $WANT_NUMBER )
@@ -101,7 +103,7 @@ sub cache {
 sub _add_to_totals {
     my ( $self, $address, $value ) = @_;
     my $subnets = $self->{subnets};
-  GROUP:
+    GROUP:
     for my $name ( keys %{$subnets} ) {
         for my $subnet ( @{ $subnets->{$name} } ) {
             next unless $subnet->contains($address);
@@ -119,12 +121,14 @@ sub _is_address {
 
 sub _bad_argument {
     my ( $method, $position, $arg, $wanted ) = @_;
-    my $got
-        = !defined $arg ? 'undefined'
-        : ref $arg      ? ref $arg
-        :                 "'$arg'";
-    return sprintf( '%s::%s needs %s for argument %d, got %s',
-        __PACKAGE__, $method, $wanted, $position, $got );
+    my $got =
+         !defined $arg ? 'undefined'
+        : ref $arg     ? ref $arg
+        :                "'$arg'";
+    return sprintf(
+        '%s::%s needs %s for argument %d, got %s',
+        __PACKAGE__, $method, $wanted, $position, $got
+    );
 }
 
 1;

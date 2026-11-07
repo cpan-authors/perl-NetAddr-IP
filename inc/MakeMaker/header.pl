@@ -22,16 +22,16 @@ GetOptions(
 print STDERR "building for $^O\n";
 
 # pure Perl by default on Windows, Cygwin and DOS, unless --xs is given
-if (!defined $useXS && $pure_perl_os{$^O}) {
+if ( !defined $useXS && $pure_perl_os{$^O} ) {
     $useXS = 0;
 }
 
 # the compiler and linker MakeMaker writes into the Makefile: CC= and LD= on this command line, else perl's own
-my %mm_tool = (CC => $Config{cc}, LD => $Config{ld}, map { /\A(CC|LD)=(.+)\z/s ? ($1 => $2) : () } @ARGV);
+my %mm_tool = ( CC => $Config{cc}, LD => $Config{ld}, map { /\A(CC|LD)=(.+)\z/s ? ( $1 => $2 ) : () } @ARGV );
 
 # build XS when that compiler works, unless --xs or -noxs was given
-unless (defined $useXS) {
-    if (_test_cc(@mm_tool{qw(CC LD)})) {
+unless ( defined $useXS ) {
+    if ( _test_cc( @mm_tool{qw(CC LD)} ) ) {
         print "You have a working compiler.\n";
         $useXS = 1;
     }
@@ -62,7 +62,7 @@ unless ($useXS) {
 # Generate Util_IS.pm
 #
 my $util_is_path = 'lib/NetAddr/IP/Util_IS.pm';
-open(F, '>', $util_is_path) or die "Cannot write $util_is_path: $!\n";
+open( F, '>', $util_is_path ) or die "Cannot write $util_is_path: $!\n";
 
 # indented, so no line of Makefile.PL starts a POD command; the indent comes off below
 my $util_is = q|#!/usr/bin/perl
@@ -77,10 +77,10 @@ my $util_is = q|#!/usr/bin/perl
 
 
     sub pure {
-        return | . (($useXS) ? 0 : 1) . q|;
+        return | . ( ($useXS) ? 0 : 1 ) . q|;
     }
     sub not_pure {
-        return | . (($useXS) ? 1 : 0) . q|;
+        return | . ( ($useXS) ? 1 : 0 ) . q|;
     }
     1;
     __END__
@@ -142,12 +142,13 @@ push @mm_args, clean => { FILES => join q{ }, $util_is_path, @xs_outputs };
 
 # true when the given compiler and linker build and link an empty C program
 sub _test_cc {
-    my ($cc, $ld) = @_;
+    my ( $cc, $ld ) = @_;
     print "Testing for a working C compiler, $cc...\n";
     require ExtUtils::CBuilder;
+
     # CBuilder reads these ahead of its config, where MakeMaker ignores them
     local %ENV = %ENV;
     delete @ENV{qw(CFLAGS LDFLAGS)};
-    @ENV{qw(CC LD)} = ($cc, $ld);
-    return ExtUtils::CBuilder->new(quiet => 1)->have_compiler;
+    @ENV{qw(CC LD)} = ( $cc, $ld );
+    return ExtUtils::CBuilder->new( quiet => 1 )->have_compiler;
 }

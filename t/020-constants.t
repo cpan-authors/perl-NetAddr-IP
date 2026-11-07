@@ -9,20 +9,20 @@ subtest 'Constants module exports :all tag' => sub {
 
     # Test that all documented constants are exported
     my @expected = qw(
-      DEFAULT_NETLIMIT_EXP
-      IPV4_BITS
-      IPV4_OFFSET
-      IPV6_BITS
-      MAX_BCD_DIGITS
-      MAX_NETLIMIT_EXP
-      MAX_OCTET
-      MAX_SHIFTLEFT
-      OCTET_BITS
-      OCTET_COUNT
-      PACKED_BCD_BYTES
-      RFC3021_THRESHOLD
-      V4_PACKED_BYTES
-      V6_PACKED_BYTES
+        DEFAULT_NETLIMIT_EXP
+        IPV4_BITS
+        IPV4_OFFSET
+        IPV6_BITS
+        MAX_BCD_DIGITS
+        MAX_NETLIMIT_EXP
+        MAX_OCTET
+        MAX_SHIFTLEFT
+        OCTET_BITS
+        OCTET_COUNT
+        PACKED_BCD_BYTES
+        RFC3021_THRESHOLD
+        V4_PACKED_BYTES
+        V6_PACKED_BYTES
     );
 
     for my $const (@expected) {

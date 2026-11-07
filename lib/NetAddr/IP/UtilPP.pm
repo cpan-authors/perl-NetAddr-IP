@@ -6,11 +6,12 @@ use strict;
 use warnings;
 
 package NetAddr::IP::UtilPP;
+
 # VERSION
 
 use parent 'Exporter';
-use Carp qw( croak );
-use Scalar::Util qw( looks_like_number );
+use Carp                   qw( croak );
+use Scalar::Util           qw( looks_like_number );
 use NetAddr::IP::Constants qw(
     $IPV4_BITS
     $IPV6_BITS
@@ -43,24 +44,24 @@ our @EXPORT_OK = qw(
     simple_pack
 );
 our %EXPORT_TAGS = (
-    all    => [@EXPORT_OK],
+    all => [@EXPORT_OK],
 );
 
 # the error for a packed argument with a character above 0xFF, worded as perl's own
 # from the XS, with the function named in place of "subroutine entry"
 my $WIDE_DIES = 'Wide character in %s';
 
-sub DESTROY {};
+sub DESTROY { }
 
 sub _callersub {
-    (my $sub = (caller(2))[3]) =~ s/UtilPP::/Util::/;    # callers use NetAddr::IP::Util
+    ( my $sub = ( caller(2) )[3] ) =~ s/UtilPP::/Util::/;    # callers use NetAddr::IP::Util
     return $sub;
 }
 
 # a downgraded copy of a packed argument, so it is measured in bytes as the XS measures it
 sub _bytes {
     my ($packed) = @_;
-    croak sprintf($WIDE_DIES, _callersub()) unless utf8::downgrade($packed, 1);
+    croak sprintf( $WIDE_DIES, _callersub() ) unless utf8::downgrade( $packed, 1 );
     return $packed;
 }
 
@@ -170,11 +171,12 @@ Croaks if the argument is not 16 bytes.
 =cut
 
 sub _deadlen {
-    my ($len, $should) = @_;
+    my ( $len, $should ) = @_;
     $should = $IPV6_BITS
         unless $should;
     my $sub = _callersub();
-    my $bits = defined $len
+    my $bits =
+        defined $len
         ? $len * $OCTET_BITS
         : 'undefined';
     croak "Bad arg length for $sub, length is $bits, should be $should";
@@ -182,12 +184,12 @@ sub _deadlen {
 
 sub hasbits($) {
     my $bits128 = _bytes(shift);
-    _deadlen(length($bits128))
+    _deadlen( length($bits128) )
         if !defined($bits128) || length($bits128) != $V6_PACKED_BYTES;
-    return 1 if vec($bits128, 0, $IPV4_BITS);
-    return 1 if vec($bits128, 1, $IPV4_BITS);
-    return 1 if vec($bits128, 2, $IPV4_BITS);
-    return 1 if vec($bits128, 3, $IPV4_BITS);
+    return 1 if vec( $bits128, 0, $IPV4_BITS );
+    return 1 if vec( $bits128, 1, $IPV4_BITS );
+    return 1 if vec( $bits128, 2, $IPV4_BITS );
+    return 1 if vec( $bits128, 3, $IPV4_BITS );
     return 0;
 }
 
@@ -223,12 +225,12 @@ does a C<$bits128> that is not 16 bytes.
 # returns true if the result overflowed 128 bits
 #
 sub _128x2 {
-    my $inp = shift;
-    my $carry = ($$inp[0] & 0x80000000) ? 1 : 0;    # bit shifted out the top
-    $$inp[0] = ($$inp[0] << 1 & 0xffffffff) + (($$inp[1] & 0x80000000) ? 1:0);
-    $$inp[1] = ($$inp[1] << 1 & 0xffffffff) + (($$inp[2] & 0x80000000) ? 1:0);
-    $$inp[2] = ($$inp[2] << 1 & 0xffffffff) + (($$inp[3] & 0x80000000) ? 1:0);
-    $$inp[3] = $$inp[3]  << 1 & 0xffffffff;
+    my $inp   = shift;
+    my $carry = ( $$inp[0] & 0x80000000 ) ? 1 : 0;    # bit shifted out the top
+    $$inp[0] = ( $$inp[0] << 1 & 0xffffffff ) + ( ( $$inp[1] & 0x80000000 ) ? 1 : 0 );
+    $$inp[1] = ( $$inp[1] << 1 & 0xffffffff ) + ( ( $$inp[2] & 0x80000000 ) ? 1 : 0 );
+    $$inp[2] = ( $$inp[2] << 1 & 0xffffffff ) + ( ( $$inp[3] & 0x80000000 ) ? 1 : 0 );
+    $$inp[3] = $$inp[3] << 1 & 0xffffffff;
     return $carry;
 }
 
@@ -236,11 +238,11 @@ sub _128x2 {
 #
 sub _128x10 {
     my $a128p    = shift;
-    my $overflow = _128x2($a128p);       # x2
-    my @x2 = @$a128p;                    # save the x2 value
+    my $overflow = _128x2($a128p);             # x2
+    my @x2       = @$a128p;                    # save the x2 value
     $overflow |= _128x2($a128p);
-    $overflow |= _128x2($a128p);         # x8
-    $overflow |= _sa128($a128p,\@x2, 0);  # add for x10
+    $overflow |= _128x2($a128p);               # x8
+    $overflow |= _sa128( $a128p, \@x2, 0 );    # add for x10
     return $overflow;
 }
 
@@ -249,16 +251,17 @@ sub _128x10 {
 sub _plain_number {
     my ($n) = @_;
     return $n unless ref $n;
-    return looks_like_number($n) ? sprintf('%.17g', $n) : "$n";
+    return looks_like_number($n) ? sprintf( '%.17g', $n ) : "$n";
 }
 
 sub shiftleft($;@) {
-    my $bits = _bytes($_[0]);
-    _deadlen(length($bits))
+    my $bits = _bytes( $_[0] );
+    _deadlen( length($bits) )
         if !defined($bits) || length($bits) != $V6_PACKED_BYTES;
-    my $given = $_[1];
+    my $given  = $_[1];
     my $shifts = _plain_number($given);
     return $bits unless defined $shifts && $shifts ne '';
+
     # an integer count from 0 to 128; undef or the empty string returns the input
     croak "Bad arg value for NetAddr::IP::Util::shiftleft, is $given, should be 0 thru $MAX_SHIFTLEFT"
         unless looks_like_number($shifts)
@@ -266,23 +269,23 @@ sub shiftleft($;@) {
         && $shifts <= $MAX_SHIFTLEFT
         && $shifts == int($shifts);
     return $bits if $shifts == 0;
-    my @uint32t = unpack('N4', $bits);
-    _128x2(\@uint32t) for 1 .. $shifts;
-    return pack('N4', @uint32t);
+    my @uint32t = unpack( 'N4', $bits );
+    _128x2( \@uint32t ) for 1 .. $shifts;
+    return pack( 'N4', @uint32t );
 }
 
 sub slowadd128 {
-    my @ua = unpack('N4', $_[0]);
-    my @ub = unpack('N4', $_[1]);
-    my $carry = _sa128(\@ua, \@ub, $_[2]);
-    return ($carry, pack('N4', @ua))
+    my @ua    = unpack( 'N4', $_[0] );
+    my @ub    = unpack( 'N4', $_[1] );
+    my $carry = _sa128( \@ua, \@ub, $_[2] );
+    return ( $carry, pack( 'N4', @ua ) )
         if wantarray;
     return $carry;
 }
 
 sub _sa128 {
-    my ($uap, $ubp, $carry) = @_;
-    if (($$uap[3] += $$ubp[3] + $carry) > 0xffffffff) {
+    my ( $uap, $ubp, $carry ) = @_;
+    if ( ( $$uap[3] += $$ubp[3] + $carry ) > 0xffffffff ) {
         $$uap[3] -= 4294967296;    # 0x1_00000000
         $carry = 1;
     }
@@ -290,7 +293,7 @@ sub _sa128 {
         $carry = 0;
     }
 
-    if (($$uap[2] += $$ubp[2] + $carry) > 0xffffffff) {
+    if ( ( $$uap[2] += $$ubp[2] + $carry ) > 0xffffffff ) {
         $$uap[2] -= 4294967296;
         $carry = 1;
     }
@@ -298,7 +301,7 @@ sub _sa128 {
         $carry = 0;
     }
 
-    if (($$uap[1] += $$ubp[1] + $carry) > 0xffffffff) {
+    if ( ( $$uap[1] += $$ubp[1] + $carry ) > 0xffffffff ) {
         $$uap[1] -= 4294967296;
         $carry = 1;
     }
@@ -306,7 +309,7 @@ sub _sa128 {
         $carry = 0;
     }
 
-    if (($$uap[0] += $$ubp[0] + $carry) > 0xffffffff) {
+    if ( ( $$uap[0] += $$ubp[0] + $carry ) > 0xffffffff ) {
         $$uap[0] -= 4294967296;
         $carry = 1;
     }
@@ -335,23 +338,25 @@ Croaks if C<$ipv6naddr> is not 16 bytes.
 =cut
 
 sub addconst {
-    my ($a128, $given) = (_bytes($_[0]), $_[1]);
+    my ( $a128, $given ) = ( _bytes( $_[0] ), $_[1] );
     my $const = _plain_number($given);
-    _deadlen(length($a128))
+    _deadlen( length($a128) )
         if !defined($a128) || length($a128) != $V6_PACKED_BYTES;
-    unless (defined $const && $const ne '') {
-        return (wantarray) ? (0, $a128) : 0;
+    unless ( defined $const && $const ne '' ) {
+        return (wantarray) ? ( 0, $a128 ) : 0;
     }
+
     # an integer in the signed 32 bit range, the rule the XS applies
-    croak "Bad arg value for NetAddr::IP::Util::addconst, is $given, should be an integer from -2147483648 thru 2147483647"
+    croak
+"Bad arg value for NetAddr::IP::Util::addconst, is $given, should be an integer from -2147483648 thru 2147483647"
         unless looks_like_number($const)
         && $const >= -2_147_483_648
         && $const <= 2_147_483_647
         && $const == int($const);
-    return (wantarray) ? (0, $a128) : 0 if $const == 0;
-    my $sign = ($const < 0) ? 0xffffffff : 0;
-    my $b128 = pack('N4', $sign, $sign, $sign, $const);
-    @_ = ($a128, $b128, 0);
+    return (wantarray) ? ( 0, $a128 ) : 0 if $const == 0;
+    my $sign = ( $const < 0 ) ? 0xffffffff : 0;
+    my $b128 = pack( 'N4', $sign, $sign, $sign, $const );
+    @_ = ( $a128, $b128, 0 );
     goto &slowadd128;
 }
 
@@ -368,14 +373,15 @@ Croaks if either argument is not 16 bytes.
 =cut
 
 sub add128 {
+
     # copied before the second argument is read: its get magic can replace it
-    my $a128 = _bytes($_[0]);
-    _deadlen(length($a128))
+    my $a128 = _bytes( $_[0] );
+    _deadlen( length($a128) )
         if !defined($a128) || length($a128) != $V6_PACKED_BYTES;
-    my $b128 = _bytes($_[1]);
-    _deadlen(length($b128))
+    my $b128 = _bytes( $_[1] );
+    _deadlen( length($b128) )
         if !defined($b128) || length($b128) != $V6_PACKED_BYTES;
-    @_ = ($a128, $b128, 0);
+    @_ = ( $a128, $b128, 0 );
     goto &slowadd128;
 }
 
@@ -398,14 +404,15 @@ Croaks if either argument is not 16 bytes.
 =cut
 
 sub sub128 {
+
     # copied before the second argument is read: its get magic can replace it
-    my $a128 = _bytes($_[0]);
-    _deadlen(length($a128))
+    my $a128 = _bytes( $_[0] );
+    _deadlen( length($a128) )
         if !defined($a128) || length($a128) != $V6_PACKED_BYTES;
-    my $b128 = _bytes($_[1]);
-    _deadlen(length($b128))
+    my $b128 = _bytes( $_[1] );
+    _deadlen( length($b128) )
         if !defined($b128) || length($b128) != $V6_PACKED_BYTES;
-    @_ = ($a128, ~$b128, 1);
+    @_ = ( $a128, ~$b128, 1 );
     goto &slowadd128;
 }
 
@@ -424,11 +431,11 @@ Croaks if the argument is not 16 bytes.
 
 sub notcontiguous($) {
     my $mask128 = _bytes(shift);
-    _deadlen(length($mask128))
+    _deadlen( length($mask128) )
         if !defined($mask128) || length($mask128) != $V6_PACKED_BYTES;
-    my @ua = unpack('N4', ~$mask128);
+    my @ua = unpack( 'N4', ~$mask128 );
     my $count;
-    for ($count = $IPV6_BITS;$count > 0; $count--) {
+    for ( $count = $IPV6_BITS ; $count > 0 ; $count-- ) {
         last unless $ua[3] & 1;
         $ua[3] >>= 1;
         $ua[3] |= 0x80000000 if $ua[2] & 1;
@@ -440,10 +447,10 @@ sub notcontiguous($) {
     }
 
     # 1 or 0, as the XS returns
-    my $spurious = ($ua[0] | $ua[1] | $ua[2] | $ua[3]) ? 1 : 0;
+    my $spurious = ( $ua[0] | $ua[1] | $ua[2] | $ua[3] ) ? 1 : 0;
     return $spurious
         unless wantarray;
-    return ($spurious, $count);
+    return ( $spurious, $count );
 }
 
 =back
@@ -464,9 +471,9 @@ Croaks if the argument is not 4 bytes.
 
 sub ipv4to6($) {
     my $netaddr = _bytes(shift);
-    _deadlen(length($netaddr), $IPV4_BITS)
+    _deadlen( length($netaddr), $IPV4_BITS )
         if !defined($netaddr) || length($netaddr) != $V4_PACKED_BYTES;
-    return pack('L3a4', 0, 0, 0, $netaddr);
+    return pack( 'L3a4', 0, 0, 0, $netaddr );
 }
 
 =item $ipv6naddr = mask4to6($netaddr);
@@ -484,9 +491,9 @@ Croaks if the argument is not 4 bytes.
 
 sub mask4to6($) {
     my $netaddr = _bytes(shift);
-    _deadlen(length($netaddr), $IPV4_BITS)
+    _deadlen( length($netaddr), $IPV4_BITS )
         if !defined($netaddr) || length($netaddr) != $V4_PACKED_BYTES;
-    return pack('L3a4', 0xffffffff, 0xffffffff, 0xffffffff, $netaddr);
+    return pack( 'L3a4', 0xffffffff, 0xffffffff, 0xffffffff, $netaddr );
 }
 
 =item $ipv6naddr = ipanyto6($netaddr);
@@ -502,14 +509,14 @@ Croaks if the argument is neither 4 nor 16 bytes.
 
 sub ipanyto6($) {
     my $naddr = _bytes(shift);
-    return _deadlen(undef, "$IPV4_BITS or $IPV6_BITS")
+    return _deadlen( undef, "$IPV4_BITS or $IPV6_BITS" )
         unless defined $naddr;
-    my $len   = length($naddr);
+    my $len = length($naddr);
     return $naddr
         if $len == $V6_PACKED_BYTES;
-    return pack('L3a4', 0, 0, 0, $naddr)
+    return pack( 'L3a4', 0, 0, 0, $naddr )
         if $len == $V4_PACKED_BYTES;
-    return _deadlen($len, "$IPV4_BITS or $IPV6_BITS");
+    return _deadlen( $len, "$IPV4_BITS or $IPV6_BITS" );
 }
 
 =item $ipv6naddr = maskanyto6($netaddr);
@@ -525,14 +532,14 @@ Croaks if the argument is neither 4 nor 16 bytes.
 
 sub maskanyto6($) {
     my $naddr = _bytes(shift);
-    return _deadlen(undef, "$IPV4_BITS or $IPV6_BITS")
+    return _deadlen( undef, "$IPV4_BITS or $IPV6_BITS" )
         unless defined $naddr;
-    my $len   = length($naddr);
+    my $len = length($naddr);
     return $naddr
         if $len == $V6_PACKED_BYTES;
-    return pack('L3a4', 0xffffffff, 0xffffffff, 0xffffffff, $naddr)
+    return pack( 'L3a4', 0xffffffff, 0xffffffff, 0xffffffff, $naddr )
         if $len == $V4_PACKED_BYTES;
-    return _deadlen($len, "$IPV4_BITS or $IPV6_BITS");
+    return _deadlen( $len, "$IPV4_BITS or $IPV6_BITS" );
 }
 
 =item $netaddr = ipv6to4($ipv6naddr);
@@ -549,10 +556,10 @@ Croaks if the argument is not 16 bytes.
 
 sub ipv6to4($;@) {
     my $naddr = _bytes(shift);
-    _deadlen(length($naddr))
+    _deadlen( length($naddr) )
         if !defined($naddr) || length($naddr) != $V6_PACKED_BYTES;
-    @_ = unpack('L3H8', $naddr);
-    return pack('H8', @{_}[3..10]);
+    @_ = unpack( 'L3H8', $naddr );
+    return pack( 'H8', @{_}[ 3 .. 10 ] );
 }
 
 =back
@@ -574,9 +581,9 @@ Croaks if the argument is not 16 bytes.
 
 sub bin2bcd($) {
     my $bits128 = _bytes(shift);
-    _deadlen(length($bits128))
+    _deadlen( length($bits128) )
         if !defined($bits128) || length($bits128) != $V6_PACKED_BYTES;
-    unpack("H$MAX_BCD_DIGITS", _bin2bcdn($bits128)) =~ /^0*(.+)/;
+    unpack( "H$MAX_BCD_DIGITS", _bin2bcdn($bits128) ) =~ /^0*(.+)/;
     return $1;
 }
 
@@ -595,10 +602,9 @@ character other than 0 to 9, or is a number too large for 128 bits.
 sub bcd2bin($;@) {
     my ($bcd) = @_;
     _bcdcheck($bcd);
-    @_ = ($bcd, 'NetAddr::IP::Util::bcd2bin');
+    @_ = ( $bcd, 'NetAddr::IP::Util::bcd2bin' );
     goto &_bcd2bin;
 }
-
 
 #=item $onescomp = comp128($bits128);
 #
@@ -615,7 +621,7 @@ sub bcd2bin($;@) {
 
 sub comp128($;@) {
     my $bits128 = _bytes(shift);
-    _deadlen(length($bits128))
+    _deadlen( length($bits128) )
         if !defined($bits128) || length($bits128) != $V6_PACKED_BYTES;
     return ~$bits128;
 }
@@ -634,43 +640,43 @@ sub comp128($;@) {
 
 sub bin2bcdn($) {
     my $bits128 = _bytes(shift);
-    _deadlen(length($bits128))
+    _deadlen( length($bits128) )
         if !defined($bits128) || length($bits128) != $V6_PACKED_BYTES;
     return _bin2bcdn($bits128);
 }
 
 sub _bin2bcdn {
     my ($b128) = @_;
-    my @binary = unpack('N4', $b128);
-    my @nbcd = (0, 0, 0, 0, 0);        # 5 - 32 bit registers
-    my ($add3, $msk8, $bcd8, $carry, $tmp);
-    my $j = 0;
-    my $k = -1;
+    my @binary = unpack( 'N4', $b128 );
+    my @nbcd   = ( 0, 0, 0, 0, 0 );       # 5 - 32 bit registers
+    my ( $add3, $msk8, $bcd8, $carry, $tmp );
+    my $j      = 0;
+    my $k      = -1;
     my $binmsk = 0;
-    foreach(0..127) {
+    foreach ( 0 .. 127 ) {
         unless ($binmsk) {
             $binmsk = 0x80000000;
             $k++;
         }
         $carry = $binary[$k] & $binmsk;
         $binmsk >>= 1;
-        next unless $carry || $j;      # skip leading zeros
-        foreach(4, 3, 2, 1, 0) {
+        next unless $carry || $j;    # skip leading zeros
+        foreach ( 4, 3, 2, 1, 0 ) {
             $bcd8 = $nbcd[$_];
             $add3 = 3;
             $msk8 = 8;
-            $j = 0;
-            while ($j < 8) {
+            $j    = 0;
+            while ( $j < 8 ) {
                 $tmp = $bcd8 + $add3;
-                if ($tmp & $msk8) {
+                if ( $tmp & $msk8 ) {
                     $bcd8 = $tmp;
                 }
                 $add3 <<= 4;
                 $msk8 <<= 4;
                 $j++;
             }
-            $tmp = $bcd8 & 0x80000000; # propagate carry
-            $bcd8 <<= 1;               # x2
+            $tmp = $bcd8 & 0x80000000;    # propagate carry
+            $bcd8 <<= 1;                  # x2
             if ($carry) {
                 $bcd8 += 1;
             }
@@ -678,7 +684,7 @@ sub _bin2bcdn {
             $carry = $tmp;
         }
     }
-    return pack('N5', @nbcd);
+    return pack( 'N5', @nbcd );
 }
 
 #=item $bcdtext = bcdn2txt($bcdpacked);
@@ -696,15 +702,15 @@ sub _bin2bcdn {
 
 sub bcdn2txt($) {
     my $bcdn = _bytes(shift);
-    if (!defined($bcdn) || length($bcdn) != $PACKED_BCD_BYTES) {
-        my $digits = defined $bcdn
+    if ( !defined($bcdn) || length($bcdn) != $PACKED_BCD_BYTES ) {
+        my $digits =
+            defined $bcdn
             ? 2 * length($bcdn)
             : 'undefined';
-        croak 'Bad arg length for NetAddr::IP::Util::bcdn2txt, length is '
-            . $digits
-            . ", should be $MAX_BCD_DIGITS digits"
+        croak 'Bad arg length for NetAddr::IP::Util::bcdn2txt, length is ' . $digits
+            . ", should be $MAX_BCD_DIGITS digits";
     }
-    my $txt = unpack("H$MAX_BCD_DIGITS", $bcdn);
+    my $txt = unpack( "H$MAX_BCD_DIGITS", $bcdn );
     _bcdcheck($txt);    # a nibble above 9 unpacks as a-f
     $txt =~ /^0*(.+)/;
     return $1;
@@ -735,46 +741,48 @@ a character outside 0-9.
 sub bcdn2bin($;@) {
     croak q|Bad usage, should have NetAddr::IP::Util::bcdn2bin('packedbcd','length')|
         if @_ < 2;
-    my ($bcd, $given) = (_bytes($_[0]), $_[1]);
+    my ( $bcd, $given ) = ( _bytes( $_[0] ), $_[1] );
     my $dc = _plain_number($given);
     $dc = 0 unless defined $dc && $dc ne '';
-    my $digits = defined $bcd
+    my $digits =
+        defined $bcd
         ? 2 * length($bcd)
         : 'undefined';
     croak "Bad arg length for NetAddr::IP::Util::bcdn2bin, length is $digits, should be 1 to $MAX_BCD_DIGITS digits"
         if !defined($bcd) || length($bcd) > $PACKED_BCD_BYTES;
+
     # an integer count, made plain because it goes into an unpack template
     croak "Bad digit count for NetAddr::IP::Util::bcdn2bin, is $dc, should be 1 to $digits digits"
         unless looks_like_number($dc) && $dc >= 1 && $dc < $digits + 1 && $dc == int($dc);
     $dc = int($dc);
-    my $txt = unpack("H$dc", $bcd);
+    my $txt = unpack( "H$dc", $bcd );
     _bcdcheck($txt);    # a nibble above 9 unpacks as a-f
-    return _bcd2bin($txt, 'NetAddr::IP::Util::bcdn2bin');
+    return _bcd2bin( $txt, 'NetAddr::IP::Util::bcdn2bin' );
 }
 
 sub _bcd2bin {
-    my $caller = $_[1] // 'NetAddr::IP::Util::_bcd2bin';
-    my @bcd = split('', $_[0]);
-    my @hbits = (0, 0, 0, 0);
-    my @digit = (0, 0, 0, 0);
-    my $found = 0;
+    my $caller   = $_[1] // 'NetAddr::IP::Util::_bcd2bin';
+    my @bcd      = split( '', $_[0] );
+    my @hbits    = ( 0, 0, 0, 0 );
+    my @digit    = ( 0, 0, 0, 0 );
+    my $found    = 0;
     my $overflow = 0;
-    foreach(@bcd) {
-        my $bcd = $_ & 0xf;        # just the nibble
+    foreach (@bcd) {
+        my $bcd = $_ & 0xf;    # just the nibble
         unless ($found) {
-            next unless $bcd;        # skip leading zeros
+            next unless $bcd;    # skip leading zeros
             $found = 1;
-            $hbits[3] = $bcd;        # set the first digit, no x10 necessary
+            $hbits[3] = $bcd;    # set the first digit, no x10 necessary
             next;
         }
-        $overflow |= _128x10(\@hbits);
+        $overflow |= _128x10( \@hbits );
         $digit[3] = $bcd;
-        $overflow |= _sa128(\@hbits,\@digit, 0);
+        $overflow |= _sa128( \@hbits, \@digit, 0 );
     }
     if ($overflow) {
         croak "Bad arg value for $caller, number is larger than 128 bits";
     }
-    return pack('N4', @hbits);
+    return pack( 'N4', @hbits );
 }
 
 #=item $bcdpacked = simple_pack($bcdtext);
@@ -789,22 +797,23 @@ sub _bcd2bin {
 #
 sub _bcdcheck {
     my ($bcd) = @_;
-    my $len = defined $bcd
+    my $len =
+        defined $bcd
         ? length($bcd)
         : 'undefined';
-    croak sprintf("Bad arg length for %s, length is %s, should be 1 to $MAX_BCD_DIGITS digits", _callersub(), $len)
+    croak sprintf( "Bad arg length for %s, length is %s, should be 1 to $MAX_BCD_DIGITS digits", _callersub(), $len )
         if !defined($bcd) || length($bcd) > $MAX_BCD_DIGITS || length($bcd) < 1;
-    croak sprintf("Bad char in string for %s, character is '%s', allowed are 0-9", _callersub(), $1)
+    croak sprintf( "Bad char in string for %s, character is '%s', allowed are 0-9", _callersub(), $1 )
         if $bcd =~ /([^0-9])/;
 }
 
 sub simple_pack($;@) {
     my ($bcd) = @_;
     _bcdcheck($bcd);
-    while (length($bcd) < $MAX_BCD_DIGITS) {
-        $bcd = '0'. $bcd;
+    while ( length($bcd) < $MAX_BCD_DIGITS ) {
+        $bcd = '0' . $bcd;
     }
-    return pack("H$MAX_BCD_DIGITS", $bcd);
+    return pack( "H$MAX_BCD_DIGITS", $bcd );
 }
 
 =back

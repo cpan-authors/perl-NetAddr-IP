@@ -27,9 +27,9 @@ my %try  = (
 for my $input ( sort keys %try ) {
     my $ip = NetAddr::IP::Lite->new($input);
     my $rv =
-      ( $input =~ /:/ )
-      ? $ip->within($net6)
-      : $ip->within($net4);
+        ( $input =~ /:/ )
+        ? $ip->within($net6)
+        : $ip->within($net4);
     cmp_ok( $rv, '==', $try{$input}, "$input within result is $try{$input}" );
 }
 
@@ -40,8 +40,7 @@ $rv = NetAddr::IP::Lite->new6('2001:db8::192.0.2.5')->within($net4);
 is( "$rv", '0', 'v6 within v4 is 0' );
 $rv = NetAddr::IP::Lite->new('::ffff:192.0.2.5')->within($net4);
 is( "$rv", '0', 'mapped v6 within v4 is 0' );
-$rv = NetAddr::IP::Lite->new('192.0.2.5')
-  ->within( NetAddr::IP::Lite->new6('2001:db8::192.0.2.5/126') );
+$rv = NetAddr::IP::Lite->new('192.0.2.5')->within( NetAddr::IP::Lite->new6('2001:db8::192.0.2.5/126') );
 is( "$rv", '0', 'v4 within v6 is 0' );
 $rv = eval { $net4->within('192.0.2.5') };
 ok( !defined $rv && $@ eq '', 'non object returns undef' );
@@ -57,9 +56,11 @@ subtest 'a class name is not an address to within or contains' => sub {
     };
     for my $class (qw(NetAddr::IP NetAddr::IP::Lite)) {
         is( $call->( within => $class ),
-            undef, "a call to within('$class') is undef" );
+            undef, "a call to within('$class') is undef"
+        );
         is( $call->( contains => $class ),
-            undef, "a call to contains('$class') is undef" );
+            undef, "a call to contains('$class') is undef"
+        );
     }
 };
 

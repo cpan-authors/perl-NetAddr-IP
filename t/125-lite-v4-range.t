@@ -52,11 +52,14 @@ subtest 'a space on one side of the dash is range notation too' => sub {
         is( defined $ip ? "$ip" : undef, '192.0.2.0/24', "range with $name" );
     }
     is( NetAddr::IP::Lite->new('192.0.2.1 -192.0.2.255'),
-        undef, 'an unaligned range with one space is still refused' );
+        undef, 'an unaligned range with one space is still refused'
+    );
     is( NetAddr::IP::Lite->new('192.0.2.255 -192.0.2.0'),
-        undef, 'a reversed range with one space is still refused' );
+        undef, 'a reversed range with one space is still refused'
+    );
     is( NetAddr::IP::Lite->new('192.0.2.0 -24'),
-        undef, 'a negative mask after a space is still refused' );
+        undef, 'a negative mask after a space is still refused'
+    );
 };
 
 subtest 'Weird octet offsets' => sub {
@@ -81,11 +84,10 @@ sub made {
 
 subtest 'a range bound or a negative number with a leading zero is refused by new' => sub {
     for my $text (
-        '10-011',        '192.0-03.',        '192.0.2-02',       '192.0.2-02.',
+        '10-011',        '192.0-03.',         '192.0.2-02',       '192.0.2-02.',
         '192.0.2.8-011', '198.51.100.0-0255', '192.0.2.8-011/32', '192.0.2.8-011 32',
-        '-012',          '-012/32',          '-012 32',
-      )
-    {
+        '-012',          '-012/32',           '-012 32',
+    ) {
         for my $method (qw( new new6 )) {
             is( made( $method, $text ), undef, "->$method('$text')" );
         }
@@ -117,6 +119,7 @@ subtest 'new_no reads a range bound or a negative number with a leading zero as 
 };
 
 subtest 'text that only looks like a range with a leading zero is still looked up' => sub {
+
     # the mock answers in place of the resolver, so nothing reaches the real one
     my @asked;
     my $mock = Test2::Mock->new(
@@ -125,13 +128,14 @@ subtest 'text that only looks like a range with a leading zero is still looked u
             _resolve_host => sub {
                 push @asked, $_[0];
                 return $_[0] eq '555-0123'
-                  ? pack( 'n8', 0x2001, 0x0db8, 0, 0, 0, 0, 0, 0x55 )
-                  : ();
+                    ? pack( 'n8', 0x2001, 0x0db8, 0, 0, 0, 0, 0, 0x55 )
+                    : ();
             },
         ],
     );
     is( made( 'new6', '555-0123' ), '2001:DB8:0:0:0:0:0:55/128',
-        "->new6('555-0123') is the name's address" );
+        "->new6('555-0123') is the name's address"
+    );
     is( \@asked, ['555-0123'], 'the name was looked up once' );
 };
 

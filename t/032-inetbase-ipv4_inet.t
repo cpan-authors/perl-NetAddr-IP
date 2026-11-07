@@ -6,10 +6,10 @@ use Test2::Plugin::NoWarnings;
 use NetAddr::IP::InetBase qw( fillIPv4 inet_aton inet_ntoa );
 
 my @addrs = qw(
-  0.0.0.0
-  255.255.255.255
-  192.0.2.4
-  192.0.2.5
+    0.0.0.0
+    255.255.255.255
+    192.0.2.4
+    192.0.2.5
 );
 
 for my $addr (@addrs) {

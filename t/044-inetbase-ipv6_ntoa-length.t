@@ -7,16 +7,14 @@ use Test2::Tools::Exception qw( dies );
 # ipv6_ntoa measures the argument itself, then calls inet_ntop
 use NetAddr::IP::InetBase qw( ipv6_ntoa );
 
-my $NTOA_DIES =
-  'Bad arg length for NetAddr::IP::InetBase::ipv6_ntoa, length is';
+my $NTOA_DIES = 'Bad arg length for NetAddr::IP::InetBase::ipv6_ntoa, length is';
 my $THIS_FILE = __FILE__;
 my $V6_TEXT   = '2001:db8::1';
 
 my $v4_packed = pack 'H*', 'c0000201';                            # 192.0.2.1
 my $v6_packed = pack 'H*', '20010db8000000000000000000000001';    # 2001:db8::1
 
-subtest 'a defined argument that is not 16 bytes is measured by ipv6_ntoa' =>
-  sub {
+subtest 'a defined argument that is not 16 bytes is measured by ipv6_ntoa' => sub {
     my @wrong = (
         [ 'an empty string',       q{},                         0 ],
         [ 'three bytes',           substr( $v6_packed, 0, 3 ),  3 ],
@@ -29,17 +27,17 @@ subtest 'a defined argument that is not 16 bytes is measured by ipv6_ntoa' =>
         my ( $line, $err ) = ( __LINE__, dies { ipv6_ntoa($packed) } );
         like(
             $err,
-qr/\A\Q$NTOA_DIES $bytes should be 16 bytes at $THIS_FILE\E line $line\b/,
+            qr/\A\Q$NTOA_DIES $bytes should be 16 bytes at $THIS_FILE\E line $line\b/,
             "ipv6_ntoa of $what measures $bytes bytes at the line of its call"
         );
     }
-  };
+};
 
 subtest 'an undefined argument is named as undefined' => sub {
     my ( $line, $err ) = ( __LINE__, dies { ipv6_ntoa(undef) } );
     like(
         $err,
-qr/\A\Q$NTOA_DIES undefined should be 16 bytes at $THIS_FILE\E line $line\b/,
+        qr/\A\Q$NTOA_DIES undefined should be 16 bytes at $THIS_FILE\E line $line\b/,
         'ipv6_ntoa of undef says undefined at the line of its call'
     );
 };

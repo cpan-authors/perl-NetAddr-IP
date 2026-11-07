@@ -76,17 +76,23 @@ subtest 'a class name is a string, not an address' => sub {
     };
     for my $class (qw(NetAddr::IP NetAddr::IP::Lite)) {
         is( $truth->( sub { $ip eq $class } ),
-            0, "the address eq '$class' is false" );
+            0, "the address eq '$class' is false"
+        );
         is( $truth->( sub { $class eq $ip } ),
-            0, "the string '$class' eq the address is false" );
+            0, "the string '$class' eq the address is false"
+        );
         is( $truth->( sub { $ip ne $class } ),
-            1, "the address ne '$class' is true" );
+            1, "the address ne '$class' is true"
+        );
         is( $truth->( sub { $ip == $class } ),
-            0, "the address == '$class' is false" );
+            0, "the address == '$class' is false"
+        );
         is( $truth->( sub { $class == $ip } ),
-            0, "the string '$class' == the address is false" );
+            0, "the string '$class' == the address is false"
+        );
         is( $truth->( sub { $ip != $class } ),
-            1, "the address != '$class' is true" );
+            1, "the address != '$class' is true"
+        );
     }
 };
 

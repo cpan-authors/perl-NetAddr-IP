@@ -14,7 +14,8 @@ if ( NetAddr::IP::Util_IS->not_pure ) {
 }
 else {
     is( $mode, 'Pure Perl',
-        'Makefile.PL chose Pure Perl and Pure Perl loaded' );
+        'Makefile.PL chose Pure Perl and Pure Perl loaded'
+    );
 }
 
 done_testing;

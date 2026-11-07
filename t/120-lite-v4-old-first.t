@@ -23,8 +23,7 @@ for my $key ( keys %nets ) {
     is( $ip->last->addr,  $nets{$key}->[2], "last address for $key", );
 
     my $new = $ip->nth(10);
-    is(
-        defined $new ? $new->addr : 'undef',
+    is( defined $new ? $new->addr : 'undef',
         $nets{$key}->[3],
         "nth(10) address for $key",
     );

@@ -5,10 +5,10 @@ use Test2::Plugin::NoWarnings;
 use Test2::Mock;
 
 use Socket qw(
-  SOCK_STREAM
-  inet_pton
-  pack_sockaddr_in
-  pack_sockaddr_in6
+    SOCK_STREAM
+    inet_pton
+    pack_sockaddr_in
+    pack_sockaddr_in6
 );
 
 # in place before Util imports getaddrinfo, so the lookup calls this
@@ -32,13 +32,13 @@ BEGIN {
 }
 
 use NetAddr::IP::Util qw(
-  AF_INET
-  AF_INET6
-  havegethostbyname2
-  inet_4map6
-  ipv4to6
-  ipv6_n2x
-  naip_gethostbyname
+    AF_INET
+    AF_INET6
+    havegethostbyname2
+    inet_4map6
+    ipv4to6
+    ipv6_n2x
+    naip_gethostbyname
 );
 
 my $v6  = inet_pton( AF_INET6, '2001:db8::1' );
@@ -72,18 +72,17 @@ ok( havegethostbyname2(), 'havegethostbyname2 is true' );
 subtest 'a name with AAAA and A returns only the IPv6 addresses' => sub {
     local @calls;
     my @rv = naip_gethostbyname('mixed.example');
-    is(
-        \@calls,
+    is( \@calls,
         [ [ 'mixed.example', '', { socktype => SOCK_STREAM } ] ],
         'one getaddrinfo, empty service, SOCK_STREAM, no family and no flags'
     );
-    is(
-        [ @rv[ 0 .. 3 ] ],
+    is( [ @rv[ 0 .. 3 ] ],
         [ 'mixed.example', '', AF_INET6(), 16 ],
         'name, empty alias, AF_INET6, length 16'
     );
     is( [ @rv[ 4 .. $#rv ] ],
-        [$v6], 'the AAAA address once, and the A address left out' );
+        [$v6], 'the AAAA address once, and the A address left out'
+    );
 };
 
 subtest 'an IPv4-only answer is mapped and keeps family AF_INET' => sub {
@@ -91,33 +90,33 @@ subtest 'an IPv4-only answer is mapped and keeps family AF_INET' => sub {
     my @rv     = naip_gethostbyname('v4.example');
     my $first  = inet_4map6( ipv4to6($v4) );
     my $second = inet_4map6( ipv4to6($v4b) );
-    is(
-        [ @rv[ 0 .. 3 ] ],
+    is( [ @rv[ 0 .. 3 ] ],
         [ 'v4.example', '', AF_INET(), 16 ],
         'name, empty alias, AF_INET, length 16'
     );
-    is(
-        [ @rv[ 4 .. $#rv ] ],
+    is( [ @rv[ 4 .. $#rv ] ],
         [ $first, $second ],
         'duplicates removed, both addresses mapped'
     );
     is( ipv6_n2x($first), '0:0:0:0:0:FFFF:C000:201',
-        'the mapped text of 192.0.2.1' );
+        'the mapped text of 192.0.2.1'
+    );
 };
 
 subtest 'a name getaddrinfo cannot resolve is an empty list' => sub {
     local @calls;
-    is( [ naip_gethostbyname('missing.example') ], [], 'missing.example' );
-    is( $calls[0][0], 'missing.example', 'getaddrinfo was asked' );
+    is( [ naip_gethostbyname('missing.example') ], [],                'missing.example' );
+    is( $calls[0][0],                              'missing.example', 'getaddrinfo was asked' );
 };
 
 subtest 'text ending in a number or 0x hex label is not looked up' => sub {
-    for my $text ( '0xc0.0.2.010', '0x7f.010', '0xc0.0.2.1', '0xc0000201', '192.0.2.1.',
-        '1.2.3.4.5' )
-    {
+    for my $text (
+        '0xc0.0.2.010', '0x7f.010', '0xc0.0.2.1', '0xc0000201', '192.0.2.1.',
+        '1.2.3.4.5'
+    ) {
         local @calls;
         is( [ naip_gethostbyname($text) ], [], "$text is an empty list" );
-        is( \@calls, [], "getaddrinfo was not asked for $text" );
+        is( \@calls,                       [], "getaddrinfo was not asked for $text" );
     }
     for my $text ( '::ffff:192.0.2.1', 'v4.example' ) {
         local @calls;
@@ -129,13 +128,16 @@ subtest 'text ending in a number or 0x hex label is not looked up' => sub {
 subtest 'a dotted quad is packed and not looked up' => sub {
     local @calls;
     is( ipv6_n2x( scalar naip_gethostbyname('127.1') ),
-        '0:0:0:0:0:FFFF:7F00:1', '127.1 is the mapped loopback' );
+        '0:0:0:0:0:FFFF:7F00:1', '127.1 is the mapped loopback'
+    );
     is( ipv6_n2x( scalar naip_gethostbyname('192.0.2.1') ),
-        '0:0:0:0:0:FFFF:C000:201', '192.0.2.1 is the mapped address' );
+        '0:0:0:0:0:FFFF:C000:201', '192.0.2.1 is the mapped address'
+    );
     is( \@calls, [], 'getaddrinfo was not asked' );
 };
 
 subtest 'an answer is unpacked in list context, as Socket before 2.005 needs' => sub {
+
     # before Socket 2.005, scalar context did not give the address
     my $mock = Test2::Mock->new(
         class    => 'NetAddr::IP::UtilPolluted',

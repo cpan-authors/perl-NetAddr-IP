@@ -21,8 +21,7 @@ my @t = (
 for ( my $i = 0 ; $i < @t ; $i += 9 ) {
     my $arg1 = $t[$i];
     my $arg2 = $t[ $i + 1 ];
-    my ( $lt, $le, $eq, $ge, $gt, $nc, $cmp ) =
-      @t[ $i + 2, $i + 3, $i + 4, $i + 5, $i + 6, $i + 7, $i + 8 ];
+    my ( $lt, $le, $eq, $ge, $gt, $nc, $cmp ) = @t[ $i + 2, $i + 3, $i + 4, $i + 5, $i + 6, $i + 7, $i + 8 ];
 
     subtest "comparison tests for $arg1->{val} vs $arg2->{val}" => sub {
         cmp_ok( $arg1 < $arg2,   '==', $lt,  "$arg1->{val} < $arg2->{val}" );

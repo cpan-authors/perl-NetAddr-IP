@@ -5,24 +5,21 @@ use Test2::Plugin::NoWarnings;
 use Test2::Tools::Exception qw( lives );
 
 plan skip_all => 'Storable not available'
-  unless eval { require Storable; Storable->import( 'freeze', 'thaw' ); 1 };
+    unless eval { require Storable; Storable->import( 'freeze', 'thaw' ); 1 };
 
 subtest 'require NetAddr::IP installs hooks' => sub {
     ok( lives { require NetAddr::IP; 1 }, 'require NetAddr::IP loads module' );
-    ok(
-        NetAddr::IP->can('STORABLE_freeze'),
+    ok( NetAddr::IP->can('STORABLE_freeze'),
         'require installs STORABLE_freeze hook'
     );
-    ok(
-        NetAddr::IP->can('STORABLE_thaw'),
+    ok( NetAddr::IP->can('STORABLE_thaw'),
         'require installs STORABLE_thaw hook'
     );
 };
 
 subtest 'use NetAddr::IP installs hooks' => sub {
     ok( lives { use NetAddr::IP; 1 }, 'use NetAddr::IP loads module' );
-    ok(
-        NetAddr::IP->can('STORABLE_freeze'),
+    ok( NetAddr::IP->can('STORABLE_freeze'),
         'use installs STORABLE_freeze hook'
     );
     ok( NetAddr::IP->can('STORABLE_thaw'), 'use installs STORABLE_thaw hook' );
@@ -63,20 +60,19 @@ subtest 'data frozen as a plain hash thaws with the hooks in place' => sub {
         local *NetAddr::IP::STORABLE_freeze;
         freeze($oip);
     };
-    unlike( $serialized, qr|/|,
-        'Data frozen as a plain hash holds no CIDR string' );
-    ok(
-        NetAddr::IP->can('STORABLE_freeze'),
+    unlike(
+        $serialized, qr|/|,
+        'Data frozen as a plain hash holds no CIDR string'
+    );
+    ok( NetAddr::IP->can('STORABLE_freeze'),
         'STORABLE_freeze is back after the block'
     );
 
-    ok(
-        NetAddr::IP->can('STORABLE_thaw'),
+    ok( NetAddr::IP->can('STORABLE_thaw'),
         'STORABLE_thaw is in place for the thaw'
     );
     my $nip;
-    ok(
-        lives { $nip = thaw($serialized) },
+    ok( lives { $nip = thaw($serialized) },
         'Thawing data frozen as a plain hash'
     );
     is( "$nip", '192.0.2.1/24', 'Thawed object eq original object' );

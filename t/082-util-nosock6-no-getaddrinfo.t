@@ -18,10 +18,10 @@ BEGIN {
 }
 
 use NetAddr::IP::Util qw(
-  :noSock6
-  havegethostbyname2
-  ipv6_n2x
-  naip_gethostbyname
+    :noSock6
+    havegethostbyname2
+    ipv6_n2x
+    naip_gethostbyname
 );
 
 ok( !havegethostbyname2(), ':noSock6 makes havegethostbyname2 false' );
@@ -35,9 +35,11 @@ sub looked_up {
 subtest 'under :noSock6 a name goes to gethostbyname, never to getaddrinfo' => sub {
     local @calls;
     is( looked_up('localhost'), '0:0:0:0:0:FFFF:7F00:1',
-        'localhost is the mapped IPv4 loopback' );
+        'localhost is the mapped IPv4 loopback'
+    );
     is( looked_up('127.1'), '0:0:0:0:0:FFFF:7F00:1',
-        '127.1 is the mapped IPv4 loopback' );
+        '127.1 is the mapped IPv4 loopback'
+    );
     is( \@calls, [], 'getaddrinfo was not asked' );
 };
 

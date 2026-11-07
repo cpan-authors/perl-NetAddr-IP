@@ -35,7 +35,8 @@ subtest 'ipv6_aton and ipv6_n2x' => sub {
             ok( $rv, "ipv6_aton($input) returns a value" );
             my $hex = ipv6_n2x($rv) || 'not defined';
             is( $hex, uc($expected),
-                "ipv6_n2x(ipv6_aton($input)) returns $expected" );
+                "ipv6_n2x(ipv6_aton($input)) returns $expected"
+            );
         }
         else {
             pass("ipv6_aton($input) - skipped, expected undef");

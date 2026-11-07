@@ -6,7 +6,7 @@ use Test2::Plugin::NoWarnings;
 use Test2::Tools::Warnings qw(warning);
 
 plan skip_all => 'LIGHTERIPTESTS = yes'
-  if defined $ENV{LIGHTERIPTESTS} && $ENV{LIGHTERIPTESTS} =~ m/yes/i;
+    if defined $ENV{LIGHTERIPTESTS} && $ENV{LIGHTERIPTESTS} =~ m/yes/i;
 
 use NetAddr::IP qw( Coalesce );
 
@@ -70,15 +70,13 @@ subtest 'result order is deterministic' => sub {
 
     my @got = map { "$_" } @$r;
     my @exp = map { "10.0.$_.0/24" } 0 .. 5;
-    is(
-        join( ',', @got ),
+    is( join( ',', @got ),
         join( ',', @exp ),
         'coalesce results are in address order'
     );
 
     my $rev = Coalesce( 24, 2, reverse @h );
-    is(
-        join( ',', map { "$_" } @$rev ),
+    is( join( ',', map { "$_" } @$rev ),
         join( ',', @got ),
         'reversing the argument list does not change the result'
     );
@@ -90,8 +88,7 @@ subtest 'result order is deterministic' => sub {
         '10.0.0.0/24', '10.0.1.0/24', '10.0.2.0/24', '10.0.3.0/24',
         '10.0.4.0/24', '10.0.5.0/24', '10.0.8.0/23'
     );
-    is(
-        join( ',', @got ),
+    is( join( ',', @got ),
         join( ',', @exp ),
         'a pass through net is sorted in with the counted nets'
     );
@@ -102,18 +99,18 @@ subtest 'coalesce counts subnet addresses, not usable hosts' => sub {
     # RFC 5737 test ranges: 192.0.2.0/24, 198.51.100.0/24, 203.0.113.0/24
     my @two25 = (
         NetAddr::IP->new('198.51.100.0/25'),
-        NetAddr::IP->new('198.51.100.128/25')
-    );
+        NetAddr::IP->new('198.51.100.128/25') );
     my @four26 =
-      map { NetAddr::IP->new( "203.0.113." . ( $_ * 64 ) . "/26" ) } 0 .. 3;
+        map { NetAddr::IP->new( "203.0.113." . ( $_ * 64 ) . "/26" ) } 0 .. 3;
     my @all30 =
-      map { NetAddr::IP->new( "192.0.2." . ( $_ * 4 ) . "/30" ) } 0 .. 63;
+        map { NetAddr::IP->new( "192.0.2." . ( $_ * 4 ) . "/30" ) } 0 .. 63;
     my @all32 = map { NetAddr::IP->new("203.0.113.$_/32") } 0 .. 255;
 
     my $r = Coalesce( 24, 256, @two25 );
     is( scalar @$r, 1, 'two /25 nets reach a threshold of 256' );
     is( "$r->[0]", '198.51.100.0/24',
-        'two /25 nets coalesce to 198.51.100.0/24' );
+        'two /25 nets coalesce to 198.51.100.0/24'
+    );
 
     $r = Coalesce( 24, 256, @four26 );
     is( scalar @$r, 1, 'four /26 nets reach a threshold of 256' );
@@ -123,7 +120,8 @@ subtest 'coalesce counts subnet addresses, not usable hosts' => sub {
 
     $r = Coalesce( 24, 256, @all32 );
     is( scalar @$r, 1,
-        'two hundred and fifty six /32 nets reach a threshold of 256' );
+        'two hundred and fifty six /32 nets reach a threshold of 256'
+    );
 
     $r = Coalesce( 24, 256, NetAddr::IP->new('203.0.113.0/25') );
     is( scalar @$r, 0, 'one /25 net does not reach a threshold of 256' );
@@ -152,32 +150,27 @@ subtest 'coalesce counts each address once' => sub {
     my $results = sub {
         my ( $masklen, $numbers, @subnets ) = @_;
         my @nets = map { NetAddr::IP->new($_) } @subnets;
-        return [ map { scalar @{ Coalesce( $masklen, $_, @nets ) } }
-              @$numbers ];
+        return [ map { scalar @{ Coalesce( $masklen, $_, @nets ) } } @$numbers ];
     };
 
     my @twice = ( '192.0.2.1/32', '192.0.2.1/32' );
-    is(
-        $results->( 24, [ 1, 2 ], @twice ),
+    is( $results->( 24, [ 1, 2 ], @twice ),
         [ 1, 0 ],
         'two copies of 192.0.2.1/32 count 1, reaching 1 but not 2'
     );
 
     my @inside = ( '192.0.2.0/30', '192.0.2.1/32' );
-    is(
-        $results->( 24, [ 4, 5 ], @inside ),
+    is( $results->( 24, [ 4, 5 ], @inside ),
         [ 1, 0 ],
         'a /30 with a /32 inside it counts 4, reaching 4 but not 5'
     );
-    is(
-        $results->( 24, [ 4, 5 ], reverse @inside ),
+    is( $results->( 24, [ 4, 5 ], reverse @inside ),
         [ 1, 0 ],
         'a /32 listed before the /30 holding it counts 4'
     );
 
     my @thrice = ( ('198.51.100.0/25') x 3, '198.51.100.64/26' );
-    is(
-        $results->( 24, [ 128, 129 ], @thrice ),
+    is( $results->( 24, [ 128, 129 ], @thrice ),
         [ 1, 0 ],
         'a /25 listed three times with a /26 inside it counts 128'
     );
@@ -186,38 +179,32 @@ subtest 'coalesce counts each address once' => sub {
         '203.0.113.0/27', '203.0.113.0/26',
         '203.0.113.0/25', '203.0.113.128/32'
     );
-    is(
-        $results->( 24, [ 129, 130 ], @nested ),
+    is( $results->( 24, [ 129, 130 ], @nested ),
         [ 1, 0 ],
         'nested /25, /26 and /27 count 128, and a /32 beside them makes 129'
     );
 
-    my @two24 =
-      ( '192.0.2.1/32', '198.51.100.1/32', '198.51.100.1/32', '192.0.2.1/32' );
-    is(
-        $results->( 24, [ 1, 2 ], @two24 ),
+    my @two24 = ( '192.0.2.1/32', '198.51.100.1/32', '198.51.100.1/32', '192.0.2.1/32' );
+    is( $results->( 24, [ 1, 2 ], @two24 ),
         [ 2, 0 ],
         'a /32 repeated in each of two /24 nets counts once in each'
     );
 
     my $me     = NetAddr::IP->new('203.0.113.7/32');
     my @method = map { scalar @{ $me->coalesce( 24, $_, $me->copy ) } } 1, 2;
-    is(
-        \@method,
+    is( \@method,
         [ 1, 0 ],
         'the method form counts an invocant and its copy once'
     );
 
     my @twice6 = ( '2001:db8::1/128', '2001:db8::1/128' );
-    is(
-        $results->( 120, [ 1, 2 ], @twice6 ),
+    is( $results->( 120, [ 1, 2 ], @twice6 ),
         [ 1, 0 ],
         'two copies of 2001:db8::1/128 count 1'
     );
 
     my @inside6 = ( '2001:db8::/126', '2001:db8::1/128' );
-    is(
-        $results->( 120, [ 4, 5 ], @inside6 ),
+    is( $results->( 120, [ 4, 5 ], @inside6 ),
         [ 1, 0 ],
         'an IPv6 /126 with a /128 inside it counts 4'
     );
@@ -234,34 +221,37 @@ subtest 'coalesce pass through nets' => sub {
     # shorter nets pass through
     my $r = Coalesce( 24, 2, NetAddr::IP->new('203.0.113.9/23') );
     is( scalar @$r, 1,
-        'a shorter net passes through even below the threshold' );
+        'a shorter net passes through even below the threshold'
+    );
     is( "$r->[0]", '203.0.112.0/23',
-        'a shorter net passes through as its network' );
+        'a shorter net passes through as its network'
+    );
 
     # equal nets pass through
     $r = Coalesce( 24, 1000, NetAddr::IP->new('192.0.2.9/24') );
     is( scalar @$r, 1, 'a net of exactly masklen passes through' );
     is( "$r->[0]", '192.0.2.0/24',
-        'a net of exactly masklen passes as its network' );
+        'a net of exactly masklen passes as its network'
+    );
 
     # a pass through net absorbs counted subnets
     my @h24 = map { NetAddr::IP->new("198.51.100.$_/32") } 1 .. 4;
     $r = Coalesce( 24, 2, NetAddr::IP->new('198.51.100.0/22'), @h24 );
     is( scalar @$r, 1,
-        'a containing pass through net absorbs a counted subnet' );
+        'a containing pass through net absorbs a counted subnet'
+    );
     is( "$r->[0]", '198.51.100.0/22', 'the containing net is the only result' );
 
     # default route absorbs everything
     $r = Coalesce( 24, 2, NetAddr::IP->new('default'), @h24 );
-    is( scalar @$r, 1, 'a default route pass through absorbs everything' );
+    is( scalar @$r, 1,           'a default route pass through absorbs everything' );
     is( "$r->[0]",  '0.0.0.0/0', 'the default route is the only result' );
 
     # duplicate pass through nets collapse
     $r = Coalesce(
         24, 2,
         NetAddr::IP->new('203.0.113.1/23'),
-        NetAddr::IP->new('203.0.113.5/23')
-    );
+        NetAddr::IP->new('203.0.113.5/23') );
     is( scalar @$r, 1, 'two args in the same shorter net give one result' );
 
     # unrelated pass through nets are kept
@@ -274,18 +264,15 @@ subtest 'coalesce method form' => sub {
     my $r  = $me->coalesce( 24, 2, NetAddr::IP->new('203.0.113.6/32') );
     is( scalar @$r, 1, 'the invocant counts towards masklen' );
     is( "$r->[0]", '203.0.113.0/24',
-        'the method call result is the containing /24' );
-    is(
-        scalar @{ $me->coalesce( 24, 3, NetAddr::IP->new('203.0.113.6/32') ) },
+        'the method call result is the containing /24'
+    );
+    is( scalar @{ $me->coalesce( 24, 3, NetAddr::IP->new('203.0.113.6/32') ) },
         0,
         'the invocant is counted once, not twice'
     );
-    my @method = map { "$_" }
-      @{ $me->coalesce( 24, 2, NetAddr::IP->new('203.0.113.6/32') ) };
-    my @func = map { "$_" }
-      @{ Coalesce( 24, 2, $me, NetAddr::IP->new('203.0.113.6/32') ) };
-    is(
-        join( ',', @method ),
+    my @method = map { "$_" } @{ $me->coalesce( 24, 2, NetAddr::IP->new('203.0.113.6/32') ) };
+    my @func   = map { "$_" } @{ Coalesce( 24, 2, $me, NetAddr::IP->new('203.0.113.6/32') ) };
+    is( join( ',', @method ),
         join( ',', @func ),
         'the method form and the function form agree'
     );
@@ -293,12 +280,14 @@ subtest 'coalesce method form' => sub {
 
 subtest 'coalesce does not modify arguments' => sub {
     my @in =
-      ( NetAddr::IP->new('192.0.2.7/23'), NetAddr::IP->new('192.0.2.25/23') );
+        ( NetAddr::IP->new('192.0.2.7/23'), NetAddr::IP->new('192.0.2.25/23') );
     Coalesce( 24, 2, @in );
     is( "$in[0]", '192.0.2.7/23',
-        'coalesce does not modify its first argument' );
+        'coalesce does not modify its first argument'
+    );
     is( "$in[1]", '192.0.2.25/23',
-        'coalesce does not modify its second argument' );
+        'coalesce does not modify its second argument'
+    );
 
     my $me = NetAddr::IP->new('203.0.113.1/32');
     Coalesce( 24, 2, $me );
@@ -312,21 +301,24 @@ subtest 'coalesce IPv6' => sub {
     my $r  = Coalesce( 120, 4, @h6 );
     is( scalar @$r, 1, 'four v6 /128 nets in one /120 give one result' );
     is( "$r->[0]", '2001:DB8:0:0:0:0:0:0/120',
-        'the v6 result is the containing /120' );
+        'the v6 result is the containing /120'
+    );
     ok( $r->[0]->{isv6}, 'the v6 result is an IPv6 object' );
     is( scalar @{ Coalesce( 120, 5, @h6 ) },
-        0, 'a v6 threshold above the count does not fire' );
+        0, 'a v6 threshold above the count does not fire'
+    );
     $r = Coalesce(
         120, 256,
         NetAddr::IP->new6('2001:db8::/121'),
-        NetAddr::IP->new6('2001:db8::80/121')
-    );
+        NetAddr::IP->new6('2001:db8::80/121') );
     is( scalar @$r, 1,
-        'two v6 /121 nets count the full 256 addresses of the /120' );
+        'two v6 /121 nets count the full 256 addresses of the /120'
+    );
     $r = Coalesce( 120, 2, NetAddr::IP->new6('2001:db8::/119'), @h6 );
     is( scalar @$r, 1, 'a shorter v6 net absorbs the counted v6 subnet' );
     is( "$r->[0]", '2001:DB8:0:0:0:0:0:0/119',
-        'the shorter v6 net is the only result' );
+        'the shorter v6 net is the only result'
+    );
 };
 
 subtest 'coalesce with mixed families' => sub {
@@ -334,14 +326,13 @@ subtest 'coalesce with mixed families' => sub {
     my @v6 = map { NetAddr::IP->new6( sprintf '2001:db8::%x/128', $_ ) } 1 .. 3;
 
     my $r = Coalesce( 24, 2, @v4, @v6 );
-    is( scalar @$r, 2,             'a mixed list gives one result per family' );
-    is( "$r->[0]",  '10.0.0.0/24', 'the IPv4 result comes first' );
+    is( scalar @$r, 2,                         'a mixed list gives one result per family' );
+    is( "$r->[0]",  '10.0.0.0/24',             'the IPv4 result comes first' );
     is( "$r->[1]",  '2001:D00:0:0:0:0:0:0/24', 'the IPv6 result comes second' );
     ok( !$r->[0]->{isv6}, 'the first result is an IPv4 object' );
     ok( $r->[1]->{isv6},  'the second result is an IPv6 object' );
 
-    is(
-        join( ',', map { "$_" } @{ Coalesce( 24, 2, @v6, @v4 ) } ),
+    is( join( ',', map { "$_" } @{ Coalesce( 24, 2, @v6, @v4 ) } ),
         join( ',', map { "$_" } @$r ),
         'the result does not depend on the order of the arguments'
     );
@@ -349,10 +340,10 @@ subtest 'coalesce with mixed families' => sub {
     $r = Coalesce(
         24, 1,
         NetAddr::IP->new('10.0.0.1/32'),
-        NetAddr::IP->new6('::10.0.0.1/128')
-    );
+        NetAddr::IP->new6('::10.0.0.1/128') );
     is( scalar @$r, 2,
-        'a v4 address and a v6 address with the same low bits stay separate' );
+        'a v4 address and a v6 address with the same low bits stay separate'
+    );
 
     like(
         dies { Coalesce( 64, 2, @v4, @v6 ) },
@@ -370,11 +361,11 @@ subtest 'coalesce on a subclass' => sub {
     ref_ok( $r, 'ARRAY', 'subclass coalesce returns an array ref' );
     is( scalar @$r, 1, 'subclass coalesce counts the invocant towards number' );
     is( "$r->[0]", '198.51.100.0/24',
-        'subclass coalesce result is the containing /24' );
+        'subclass coalesce result is the containing /24'
+    );
 
     my $p = $base->coalesce( 24, 2, NetAddr::IP->new('198.51.100.6/32') );
-    is(
-        join( ',', map { "$_" } @$r ),
+    is( join( ',', map { "$_" } @$r ),
         join( ',', map { "$_" } @$p ),
         'subclass coalesce agrees with NetAddr::IP coalesce'
     );
@@ -384,7 +375,8 @@ subtest 'coalesce on a subclass' => sub {
 
     $r = $sub->coalesce( 24, 1 );
     is( scalar @$r, 1,
-        'subclass coalesce with an empty list fires at number 1' );
+        'subclass coalesce with an empty list fires at number 1'
+    );
 };
 
 subtest 'coalesce on a class name croaks' => sub {
@@ -392,10 +384,9 @@ subtest 'coalesce on a class name croaks' => sub {
     # the croak for a call on a class name, reported at the caller's line
     my $on_class = sub {
         my ( $method, $function, $class ) = @_;
-        my $text =
-          sprintf '%s: call it on an object or as the function %s,'
-          . ' not on the class %s at %s line ', $method, $function, $class,
-          __FILE__;
+        my $text = sprintf '%s: call it on an object or as the function %s,' . ' not on the class %s at %s line ',
+            $method, $function, $class,
+            __FILE__;
         return qr/\A\Q$text\E[0-9]+/;
     };
     my @h = map { NetAddr::IP->new("192.0.2.$_") } 1 .. 3;
@@ -428,21 +419,18 @@ subtest 'coalesce on a NetAddr::IP::Lite object' => sub {
     my $r    = $lite->coalesce( 24, 2, @h[ 1, 2 ] );
     is( [ map { "$_" } @$r ],
         ['192.0.2.0/24'],
-        'coalesce on a NetAddr::IP::Lite object counts the invocant' );
+        'coalesce on a NetAddr::IP::Lite object counts the invocant'
+    );
     is( scalar @{ $lite->coalesce( 24, 2 ) },
-        0, 'coalesce on a NetAddr::IP::Lite object counts it once' );
-    is(
-        [ map { "$_" } @{ $lite->coalesce( 24, 2, @h ) } ],
+        0, 'coalesce on a NetAddr::IP::Lite object counts it once'
+    );
+    is( [ map { "$_" } @{ $lite->coalesce( 24, 2, @h ) } ],
         [ map { "$_" } @{ $h[0]->coalesce( 24, 2, @h ) } ],
         'coalesce on a NetAddr::IP::Lite object agrees with NetAddr::IP'
     );
 
     my $lite6 = NetAddr::IP::Lite->new('2001:db8::1');
-    is(
-        [
-            map { "$_" }
-              @{ $lite6->coalesce( 120, 2, NetAddr::IP->new('2001:db8::2') ) }
-        ],
+    is( [ map { "$_" } @{ $lite6->coalesce( 120, 2, NetAddr::IP->new('2001:db8::2') ) } ],
         ['2001:DB8:0:0:0:0:0:0/120'],
         'coalesce on an IPv6 NetAddr::IP::Lite object counts the invocant'
     );
@@ -452,7 +440,8 @@ subtest 'Coalesce with NetAddr::IP::Lite objects in the list' => sub {
     my @lites = map { NetAddr::IP::Lite->new("198.51.100.$_") } 1 .. 3;
     is( [ map { "$_" } @{ Coalesce( 24, 2, @lites ) } ],
         ['198.51.100.0/24'],
-        'Coalesce takes NetAddr::IP::Lite objects in the list' );
+        'Coalesce takes NetAddr::IP::Lite objects in the list'
+    );
 };
 
 subtest 'coalesce validates masklen and number' => sub {
@@ -460,8 +449,7 @@ subtest 'coalesce validates masklen and number' => sub {
     # RFC 5737 test ranges: 192.0.2.0/24, 198.51.100.0/24, 203.0.113.0/24
     my @h = (
         NetAddr::IP->new('192.0.2.1/32'),
-        NetAddr::IP->new('198.51.100.5/32')
-    );
+        NetAddr::IP->new('198.51.100.5/32') );
 
     like(
         dies { Coalesce( undef, 2, @h ) },
@@ -517,8 +505,7 @@ subtest 'coalesce validates masklen and number' => sub {
 
     ok( lives { Coalesce( 24, 0, @h ) }, 'a threshold of 0 is valid' );
 
-    ok(
-        lives { Coalesce( 24, 1000, @h ) },
+    ok( lives { Coalesce( 24, 1000, @h ) },
         'a threshold above the count is valid'
     );
 };

@@ -21,12 +21,15 @@ subtest 'local scopes name lookup' => sub {
     {
         local $NetAddr::IP::Lite::NoFQDN = 1;
         is( NetAddr::IP::Lite->new('192.0.2.1')->addr,
-            $addr->addr, 'an address is still an address' );
+            $addr->addr, 'an address is still an address'
+        );
         ok( !defined NetAddr::IP::Lite->new('not.a.real.host.example'),
-            'a name is not resolved inside the block' );
+            'a name is not resolved inside the block'
+        );
     }
     ok( !$NetAddr::IP::Lite::NoFQDN,
-        'name lookup is on again after the block' );
+        'name lookup is on again after the block'
+    );
 };
 
 subtest 'local scopes the old nth behaviour' => sub {

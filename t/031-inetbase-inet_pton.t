@@ -20,10 +20,10 @@ sub shown {
 
 subtest 'inet_pton and inet_ntop IPv4' => sub {
     my @num = qw(
-      0.0.0.0
-      255.255.255.255
-      1.2.3.4
-      10.253.230.9
+        0.0.0.0
+        255.255.255.255
+        1.2.3.4
+        10.253.230.9
     );
 
     for my $input (@num) {
@@ -48,7 +48,8 @@ subtest 'IPv4 text is four decimal parts and nothing else' => sub {
     );
     for my $text ( sort keys %packed ) {
         is( packed_hex( inet_pton( AF_INET, $text ) ),
-            $packed{$text}, "inet_pton(AF_INET, '$text')" );
+            $packed{$text}, "inet_pton(AF_INET, '$text')"
+        );
     }
     for my $text (
         '',                ' 192.0.2.1',
@@ -59,8 +60,7 @@ subtest 'IPv4 text is four decimal parts and nothing else' => sub {
         '192.0.2.1.',      '192.0.2.1/24',
         '256.0.0.1',       'localhost',
         "192.0.2.1\0junk", "\x{0661}.0.0.1",
-      )
-    {
+    ) {
         my $name = shown($text);
         is( inet_pton( AF_INET, $text ), undef, "inet_pton(AF_INET, '$name')" );
     }
@@ -77,8 +77,7 @@ subtest 'inet_pton and inet_ntop IPv6' => sub {
         '1::8'                                  => '1::8',
         'FF00::FFFF'                            => 'ff00::ffff',
         'FFFF::FFFF:FFFF'                       => 'ffff::ffff:ffff',
-        'A1B2:C3D4:E5D6:F7E8:08F9:190A:1.2.3.4' =>
-          'a1b2:c3d4:e5d6:f7e8:8f9:190a:102:304',
+        'A1B2:C3D4:E5D6:F7E8:08F9:190A:1.2.3.4' => 'a1b2:c3d4:e5d6:f7e8:8f9:190a:102:304',
     );
 
     for my $input ( sort keys %num ) {
@@ -94,17 +93,17 @@ subtest 'IPv6 text is the whole string and nothing else' => sub {
     for my $text (
         "2001:db8::1\0junk",  "2001:db8::1\n",
         '::ffff:192.0.2.010', "\x{0661}::1",
-      )
-    {
+    ) {
         my $name = shown($text);
         is( inet_pton( AF_INET6, $text ),
-            undef, "inet_pton(AF_INET6, '$name')" );
+            undef, "inet_pton(AF_INET6, '$name')"
+        );
     }
     is( inet_pton( AF_INET6, undef ), undef, 'inet_pton(AF_INET6, undef)' );
 };
 
-subtest 'inet_pton reads the text itself, whatever the C library accepts' =>
-  sub {
+subtest 'inet_pton reads the text itself, whatever the C library accepts' => sub {
+
     # a C library that takes any text, as some take short forms and octal
     my $lenient = Test2::Mock->new(
         class    => 'Socket',
@@ -118,10 +117,13 @@ subtest 'inet_pton reads the text itself, whatever the C library accepts' =>
         is( inet_pton( AF_INET, $text ), undef, "inet_pton(AF_INET, '$text')" );
     }
     is( inet_pton( AF_INET6, '::ffff:192.0.2.010' ),
-        undef, "inet_pton(AF_INET6, '::ffff:192.0.2.010')" );
-  };
+        undef, "inet_pton(AF_INET6, '::ffff:192.0.2.010')"
+    );
+};
 
-like( dies { inet_ntop( AF_INET6, '1234' ) },
-    qr/Bad arg/, 'bad argument length test for inet_ntop' );
+like(
+    dies { inet_ntop( AF_INET6, '1234' ) },
+    qr/Bad arg/, 'bad argument length test for inet_ntop'
+);
 
 done_testing;

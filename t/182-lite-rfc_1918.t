@@ -45,11 +45,11 @@ subtest 'an IPv4 address held in IPv6 answers as its IPv4 form' => sub {
     );
     for my $addr ( sort keys %held ) {
         is( NetAddr::IP::Lite->new($addr)->is_rfc1918(),
-            $held{$addr}, "is_rfc1918($addr) is $held{$addr}" );
+            $held{$addr}, "is_rfc1918($addr) is $held{$addr}"
+        );
     }
     for my $addr (qw(10.0.0.1 172.31.255.255 192.168.0.1 192.169.0.0)) {
-        is(
-            NetAddr::IP::Lite->new6($addr)->is_rfc1918(),
+        is( NetAddr::IP::Lite->new6($addr)->is_rfc1918(),
             NetAddr::IP::Lite->new($addr)->is_rfc1918(),
             "is_rfc1918(new6($addr)) matches is_rfc1918($addr)"
         );

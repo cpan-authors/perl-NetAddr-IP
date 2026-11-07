@@ -8,10 +8,10 @@ use NetAddr::IP::Util qw( AF_INET AF_INET6 inet_ntop inet_pton );
 
 subtest 'inet_pton and inet_ntop IPv4' => sub {
     my @num = qw(
-      0.0.0.0
-      255.255.255.255
-      1.2.3.4
-      10.253.230.9
+        0.0.0.0
+        255.255.255.255
+        1.2.3.4
+        10.253.230.9
     );
 
     for my $addr (@num) {
@@ -37,8 +37,7 @@ subtest 'inet_pton and inet_ntop IPv6' => sub {
         '1::8'                                  => '1::8',
         'FF00::FFFF'                            => 'ff00::ffff',
         'FFFF::FFFF:FFFF'                       => 'ffff::ffff:ffff',
-        'A1B2:C3D4:E5D6:F7E8:08F9:190A:1.2.3.4' =>
-          'a1b2:c3d4:e5d6:f7e8:8f9:190a:102:304',
+        'A1B2:C3D4:E5D6:F7E8:08F9:190A:1.2.3.4' => 'a1b2:c3d4:e5d6:f7e8:8f9:190a:102:304',
     );
 
     for my $input ( sort keys %num ) {
@@ -50,7 +49,9 @@ subtest 'inet_pton and inet_ntop IPv6' => sub {
     }
 };
 
-like( dies { inet_ntop( AF_INET6, '1234' ) },
-    qr/Bad arg/, 'inet_ntop dies on bad argument length' );
+like(
+    dies { inet_ntop( AF_INET6, '1234' ) },
+    qr/Bad arg/, 'inet_ntop dies on bad argument length'
+);
 
 done_testing;

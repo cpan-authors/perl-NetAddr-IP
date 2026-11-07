@@ -41,7 +41,8 @@ for my $input ( sort { $a <=> $b } keys %num ) {
 
 subtest 'bcd2bin reads its first argument alike in both builds' => sub {
     is( prototype('NetAddr::IP::Util::bcd2bin'),
-        '$;@', 'bcd2bin has the prototype $;@' );
+        '$;@', 'bcd2bin has the prototype $;@'
+    );
 
     my $arg = '12345';
 
@@ -49,7 +50,8 @@ subtest 'bcd2bin reads its first argument alike in both builds' => sub {
     my $answer = sub { return wantarray ? ( 'host.example', $arg ) : $arg };
     is( eval { bcd2bin( $answer->() ) },
         bcd2bin($arg),
-        'a first argument that returns a list is read in scalar context' );
+        'a first argument that returns a list is read in scalar context'
+    );
     is( $@, '', 'that call does not croak' );
 };
 
