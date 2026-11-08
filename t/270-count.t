@@ -36,7 +36,11 @@ my @OVERLAPPING = (
 my @OVERLAPPING_ADDRESSES = qw(198.51.100.1 198.51.100.2 198.51.100.77 198.51.100.200 203.0.113.9);
 
 subtest 'new takes a single subnet or an array reference per group' => sub {
-    my $counter = NetAddr::IP::Count->new(
+    my $counter = NetAddr::IP::Count->new;
+    isa_ok( $counter, ['NetAddr::IP::Count'],
+        'class method returns a NetAddr::IP::Count' );
+
+    $counter = NetAddr::IP::Count->new(
         single => NetAddr::IP->new('192.0.2.0/24'),
         list   => [ ips('198.51.100.0/24', '2001:db8::/32') ],
     );
