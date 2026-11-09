@@ -1,6 +1,8 @@
 Revision history for Perl extension NetAddr::IP
 
 {{$NEXT}}
+
+4.080_09  2026-11-10 00:24:39+11:00 Australia/Sydney (TRIAL RELEASE)
     - Add `.perltidyrc` and document how to run `perltidy` in `AGENTS.md`.
       Reformat tracked Perl source and tests with the new configuration.
 
