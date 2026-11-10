@@ -760,24 +760,29 @@ a character outside 0-9.
 =cut
 
 sub bcdn2bin($;@) {
-    croak q|Bad usage, should have NetAddr::IP::Util::bcdn2bin('packedbcd','length')|
-        if @_ < 2;
 
     # hold the digit count before packed bcd get magic; test tied before ref
     # because ref() reads a tied scalar, and older perls read through \arg
-    my $count_ref = (tied($_[0]) || ref($_[0])) ? \$_[1] : undef;
-    my $bcd       = _bytes($_[0]);
+    my $count_ref =
+        @_ >= 2 && (tied($_[0]) || ref($_[0]))
+        ? \$_[1]
+        : undef;
+    my $bcd = _bytes($_[0]);
     my $digits =
         defined $bcd
         ? 2 * length($bcd)
         : 'undefined';
-    if (!defined($bcd) || length($bcd) > $PACKED_BCD_BYTES) {
+
+    # the length comes before the argument count, the order the XS checks them in
+    if (!defined($bcd) || length($bcd) < 1 || length($bcd) > $PACKED_BCD_BYTES) {
 
         # die, not croak: older Carp reads tied caller arguments while building its message
         my ($file, $line) = (caller(0))[ 1, 2 ];
         die
 "Bad arg length for NetAddr::IP::Util::bcdn2bin, length is $digits, should be 1 to $MAX_BCD_DIGITS digits at $file line $line.\n";
     }
+    croak q|Bad usage, should have NetAddr::IP::Util::bcdn2bin('packedbcd','length')|
+        if @_ < 2;
     my $given = $count_ref ? ${$count_ref} : $_[1];
     my $dc    = _plain_number($given);
     $dc = 0 unless defined $dc && $dc ne '';

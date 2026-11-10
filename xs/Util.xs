@@ -487,14 +487,16 @@ _packed_ok(pTHX_ SV * sv)
 /*	the bytes of a packed argument after _packed_ok, without running its magic
 	again; an upgraded string is read through a downgraded copy	*/
 static unsigned char *
-_packed_bytes(pTHX_ SV * sv, STRLEN * lenp)
+_packed_bytes(pTHX_ CV * cv, SV * sv, STRLEN * lenp)
 {
   char * p = SvPV_nomg(sv, *lenp);	/* an object's overloading sets SvUTF8 on sv here */
 
   if (SvUTF8(sv)) {
     SV * copy = newSVpvn_flags(p, *lenp, SVs_TEMP | SVf_UTF8);
 
-    sv_utf8_downgrade(copy, FALSE);	/* croaks on a wide character */
+    /*	named as the pure Perl build names it; perl's own croak says "subroutine entry"	*/
+    if (!sv_utf8_downgrade(copy, TRUE))
+      croak("Wide character in %s%s", "NetAddr::IP::Util::", GvNAME(CvGV(cv)));
     p = SvPV_nomg(copy, *lenp);
   }
   return (unsigned char *) p;
@@ -581,7 +583,7 @@ PPCODE:
 	if (!_packed_ok(aTHX_ s))
 	  croak("Bad arg length for %s%s, length is undefined, should be 128",
 		"NetAddr::IP::Util::",subname);
-	ap = _packed_bytes(aTHX_ s,&len);
+	ap = _packed_bytes(aTHX_ cv,s,&len);
 	if (len != 16) {
 	  croak("Bad arg length for %s%s, length is %" UVuf ", should be %d",
 		"NetAddr::IP::Util::",subname,(UV)(len *8),128);
@@ -638,7 +640,7 @@ PPCODE:
 	if (!_packed_ok(aTHX_ as))
 	  croak("Bad arg length for %s%s, length is undefined, should be 128",
 		"NetAddr::IP::Util::",subname);
-	ap = _packed_bytes(aTHX_ as,&len);
+	ap = _packed_bytes(aTHX_ cv,as,&len);
 	if (len != 16) {
     Bail:
 	  croak("Bad arg length for %s%s, length is %" UVuf ", should be %d",
@@ -650,7 +652,7 @@ PPCODE:
 	if (!_packed_ok(aTHX_ bs))
 	  croak("Bad arg length for %s%s, length is undefined, should be 128",
 		"NetAddr::IP::Util::",subname);
-	bp = _packed_bytes(aTHX_ bs,&len);
+	bp = _packed_bytes(aTHX_ cv,bs,&len);
 	if (len != 16) {
 	  goto Bail;
 	}
@@ -686,7 +688,7 @@ PPCODE:
 	if (!_packed_ok(aTHX_ s))
 	  croak("Bad arg length for %s, length is undefined, should be 128",
 		"NetAddr::IP::Util::addconst");
-	ap = _packed_bytes(aTHX_ s,&len);
+	ap = _packed_bytes(aTHX_ cv,s,&len);
 	if (len != 16) {
 	  croak("Bad arg length for %s, length is %" UVuf ", should be %d",
 		"NetAddr::IP::Util::addconst",(UV)(len *8),128);
@@ -722,7 +724,7 @@ CODE:
 	if (!_packed_ok(aTHX_ s))
 	  croak("Bad arg length for %s%s, length is undefined, should be 128",
 		"NetAddr::IP::Util::",subname);
-	bp = _packed_bytes(aTHX_ s,&len);
+	bp = _packed_bytes(aTHX_ cv,s,&len);
 	if (len != 16) {
 	  croak("Bad arg length for %s%s, length is %" UVuf ", should be %d",
 		"NetAddr::IP::Util::",subname,(UV)(len *8),128);
@@ -748,7 +750,7 @@ PPCODE:
 		          : (ix == 1) ? "NetAddr::IP::Util::bin2bcdn"
 		                      : "NetAddr::IP::Util::bin2bcd",
 		(ix == 2) ? "40 digits" : "128");
-	cp = _packed_bytes(aTHX_ s,&len);
+	cp = _packed_bytes(aTHX_ cv,s,&len);
 	if (ix == 0) {
 	  if (len != 16) {
 	    croak("Bad arg length for %s, length is %" UVuf ", should be %d",
@@ -809,7 +811,7 @@ PPCODE:
 	  croak("Bad arg length for %s%s, length is undefined, should be 1 to 40 digits",
 		"NetAddr::IP::Util::",subname);
 	/* packed bcd is binary; the digit text is read in characters */
-	cp = (ix == 2) ? _packed_bytes(aTHX_ s,&len) : _digit_text(aTHX_ s,&len,subname);
+	cp = (ix == 2) ? _packed_bytes(aTHX_ cv,s,&len) : _digit_text(aTHX_ s,&len,subname);
 	/* bcdn2bin takes packed bcd, two digits per byte; the others take one digit per byte */
 	if (ix == 2)
 	  len <<= 1;
@@ -873,7 +875,7 @@ PPCODE:
 	if (!_packed_ok(aTHX_ s))
 	  croak("Bad arg length for %s, length is undefined, should be %d",
 		"NetAddr::IP::Util::notcontiguous",128);
-	ap = _packed_bytes(aTHX_ s,&len);
+	ap = _packed_bytes(aTHX_ cv,s,&len);
 	if (len != 16) {
 	  croak("Bad arg length for %s, length is %" UVuf ", should be %d",
 		"NetAddr::IP::Util::notcontiguous",(UV)(len *8),128);
@@ -905,7 +907,7 @@ PPCODE:
 	if (!_packed_ok(aTHX_ s))
 	  croak("Bad arg length for %s%s, length is undefined, should be 32",
 		"NetAddr::IP::Util::",subname);
-	ip = _packed_bytes(aTHX_ s,&len);
+	ip = _packed_bytes(aTHX_ cv,s,&len);
 	if (len != 4) {
 	  croak("Bad arg length for %s%s, length is %" UVuf ", should be 32",
 		"NetAddr::IP::Util::",subname,(UV)(len *8));
@@ -935,7 +937,7 @@ PPCODE:
 	if (!_packed_ok(aTHX_ s))
 	  croak("Bad arg length for %s%s, length is undefined, should be 32 or 128",
 		"NetAddr::IP::Util::",subname);
-	ip = _packed_bytes(aTHX_ s,&len);
+	ip = _packed_bytes(aTHX_ cv,s,&len);
 	if (len == 16)		/* if already 128 bits, return input	*/
 	  XPUSHs(sv_2mortal(newSVpvn((char *)ip,16)));
 	else if (len == 4) {

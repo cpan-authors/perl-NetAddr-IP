@@ -775,8 +775,8 @@ subtest 'wide string of the expected length croaks "Wide character in ..."' => s
 
         like(
             dies { $call->(NetAddr::IP::Util->can($func), $wide) },
-            qr/^Wide character in /,
-            "$desc via Util"
+            qr/^Wide character in NetAddr::IP::Util::\Q$func\E at \Q$THIS_FILE\E line [0-9]+/,
+            "$desc via Util names Util::$func"
         );
 
         like(
@@ -794,9 +794,25 @@ subtest 'wrong-length wide string still croaks as wide char, not length error' =
 
         like(
             dies { $call->(NetAddr::IP::Util->can($func), $wide) },
-            qr/^Wide character in /,
-            "$desc (2 wide chars) via Util"
+            qr/^Wide character in NetAddr::IP::Util::\Q$func\E at \Q$THIS_FILE\E line [0-9]+/,
+            "$desc (2 wide chars) via Util names Util::$func"
         );
+    }
+};
+
+subtest 'bcdn2bin checks the length of its packed input before the argument count' => sub {
+    my $at     = qr/ at \Q$THIS_FILE\E line [0-9]+/;
+    my $length = qr/^Bad arg length for NetAddr::IP::Util::bcdn2bin, length is/;
+    my $empty  = qr/$length 0, should be 1 to 40 digits$at/;
+    my $long   = qr/$length 42, should be 1 to 40 digits$at/;
+    my $usage  = qr/^Bad usage, should have NetAddr::IP::Util::bcdn2bin\('packedbcd','length'\)$at/;
+    for my $package (qw( NetAddr::IP::Util NetAddr::IP::UtilPP )) {
+        my $bcdn2bin = $package->can('bcdn2bin');
+        like(dies { $bcdn2bin->('', 1) },       $empty, "${package}::bcdn2bin of empty input and count 1");
+        like(dies { $bcdn2bin->('', 0) },       $empty, "${package}::bcdn2bin of empty input and count 0");
+        like(dies { $bcdn2bin->('') },          $empty, "${package}::bcdn2bin of empty input alone");
+        like(dies { $bcdn2bin->("\x12" x 21) }, $long,  "${package}::bcdn2bin of 21 packed bytes alone");
+        like(dies { $bcdn2bin->("\x12") },      $usage, "${package}::bcdn2bin of one packed byte alone");
     }
 };
 
