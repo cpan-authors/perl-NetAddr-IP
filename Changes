@@ -16,6 +16,9 @@ Revision history for Perl extension NetAddr::IP
       string. The InetBase functions that NetAddr::IP::Util exports, such as
       ipv6_n2x(), are unchanged; GH#326 covers them.
       Relates to GH#163.
+    - Fix GH#301: In the XS build, bcd2bin() and simple_pack() count the
+      characters of UTF-8 text, not its bytes, and name the bad character,
+      as the pure Perl build does.
 
 4.080_09  2026-11-10 00:24:39+11:00 Australia/Sydney (TRIAL RELEASE)
     - Add `.perltidyrc` and document how to run `perltidy` in `AGENTS.md`.
