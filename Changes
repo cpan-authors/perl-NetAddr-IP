@@ -3,6 +3,12 @@ Revision history for Perl extension NetAddr::IP
 {{$NEXT}}
     - Add `.perltidyrc` and document how to run `perltidy` in `AGENTS.md`.
       Reformat tracked Perl source and tests with the new configuration.
+    - Fix GH#286: In both builds, shiftleft(), addconst() and bcdn2bin()
+      read the address before the count, and keep the count alive when
+      the address can free it, so a tied address that frees the count is
+      reported rather than read from freed memory. A bad address is
+      reported before the count is read. The croak for a bad count prints
+      it as given, wide characters and NUL included.
 
 4.080_08  2026-11-07 01:17:12+11:00 Australia/Sydney (TRIAL RELEASE)
 
