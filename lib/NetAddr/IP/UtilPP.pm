@@ -61,6 +61,9 @@ sub _callersub {
 # a downgraded copy of a packed argument, so it is measured in bytes as the XS measures it
 sub _bytes {
     my ($packed) = @_;
+
+    # utf8::downgrade leaves a reference as it is, so an object is measured by its text
+    $packed = "$packed" if ref $packed;
     croak sprintf($WIDE_DIES, _callersub()) unless utf8::downgrade($packed, 1);
     return $packed;
 }

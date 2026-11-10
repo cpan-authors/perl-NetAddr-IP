@@ -9,6 +9,13 @@ Revision history for Perl extension NetAddr::IP
       it as given, wide characters and NUL included. Both builds also keep
       the second argument alive in add128() and sub128() while the first
       is read.
+    - Fix GH#300: An object passed as a packed argument is measured by the
+      text its overloading returns. The XS build no longer counts each byte
+      above 0x7F in the object's upgraded text twice, and the pure Perl build
+      croaks on a wide character in the object's text, as it does for a plain
+      string. The InetBase functions that NetAddr::IP::Util exports, such as
+      ipv6_n2x(), are unchanged; GH#326 covers them.
+      Relates to GH#163.
 
 4.080_09  2026-11-10 00:24:39+11:00 Australia/Sydney (TRIAL RELEASE)
     - Add `.perltidyrc` and document how to run `perltidy` in `AGENTS.md`.
