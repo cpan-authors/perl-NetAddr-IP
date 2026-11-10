@@ -18,6 +18,9 @@ Revision history for Perl extension NetAddr::IP
       upgraded address twice, and the pure Perl build croaks on a wide
       character in the object's text, as it does for a plain string.
       Relates to GH#163.
+    - Fix GH#301: In the XS build, bcd2bin() and simple_pack() count the
+      characters of UTF-8 text, not its bytes, and name the bad character,
+      as the pure Perl build does.
 
 4.080_08  2026-11-07 01:17:12+11:00 Australia/Sydney (TRIAL RELEASE)
 
