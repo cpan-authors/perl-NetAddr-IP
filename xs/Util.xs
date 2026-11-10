@@ -489,14 +489,15 @@ _packed_ok(pTHX_ SV * sv)
 static unsigned char *
 _packed_bytes(pTHX_ SV * sv, STRLEN * lenp)
 {
-  if (SvUTF8(sv)) {
-    SV * copy = sv_newmortal();
+  char * p = SvPV_nomg(sv, *lenp);	/* an object's overloading sets SvUTF8 on sv here */
 
-    sv_setsv_flags(copy, sv, SV_NOSTEAL);
+  if (SvUTF8(sv)) {
+    SV * copy = newSVpvn_flags(p, *lenp, SVs_TEMP | SVf_UTF8);
+
     sv_utf8_downgrade(copy, FALSE);	/* croaks on a wide character */
-    sv = copy;
+    p = SvPV_nomg(copy, *lenp);
   }
-  return (unsigned char *) SvPV_nomg(sv, *lenp);
+  return (unsigned char *) p;
 }
 
 /*	an argument as text for a croak message, without running its get magic
