@@ -46,6 +46,13 @@ Revision history for Perl extension NetAddr::IP
       address in force, so new('192.0.2.0/24', undef) gives 192.0.2.0/24
       where it gave undef. With no mask in the address, an undef mask is
       still the host mask, as GH#219 set for new6('loopback', undef).
+    - Fix GH#291: An IPv4 /0 from default, any, or a mask of default,
+      any or :: stores the same mask as 0.0.0.0/0. It stored 128 zero
+      bits, so arithmetic such as default - 1 left IPv4 space, and <=>,
+      cmp, the ordering operators, contains(), within(), full6m(), and
+      num() and nth() under :old_nth gave different results than for
+      0.0.0.0/0, though == and eq called the two equal. An IPv6 /0 keeps
+      its all-zero mask.
 
 4.080_09  2026-11-10 00:24:39+11:00 Australia/Sydney (TRIAL RELEASE)
     - Add `.perltidyrc` and document how to run `perltidy` in `AGENTS.md`.
