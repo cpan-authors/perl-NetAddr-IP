@@ -1184,6 +1184,9 @@ sub _xnew($$;$$) {
         # MASK to lower case AFTER ref test for Math::BigInt, 'lc' strips blessing
         $mask = lc $mask;
 
+        # a mask argument or a mask in the string, other than host
+        my $explicit_mask = $hasmask && $mask ne 'host';
+
         if ($mask !~ /[^0-9]/) {              # bcd or CIDR notation
             my $isCIDR = length($mask) < 4 && $mask <= $IPV6_BITS;
             if ($isV6) {
@@ -1277,10 +1280,14 @@ sub _xnew($$;$$) {
             return undef unless defined($mask = ipv6_aton($mask));    # try ipv6 form of mask
         }
 
+        # a short or range form below replaces the mask with the one its notation
+        # implies, and an explicit mask has to equal that one
+        my $given_mask = $mask;
+
         # process remaining IP's
-        if (index($ip, ':') < 0) {                                    # ipv4 address
+        if (index($ip, ':') < 0) {    # ipv4 address
             if ($ip =~ m/^([0-9]+)\.([0-9]+)\.([0-9]+)\.([0-9]+)$/) {
-                ;                                                     # the common case
+                ;                     # the common case
             }
             elsif (grep($ip eq $_, (qw(default any broadcast loopback)))) {
                 return undef unless defined($ip = $fip4{$ip});
@@ -1401,6 +1408,7 @@ sub _xnew($$;$$) {
 
                 # check for non-aligned left side
                 return undef if hasbits($ip & $tmp);
+                return undef if $explicit_mask && $mask ne $given_mask;
                 last;
             }
 
@@ -1431,6 +1439,7 @@ sub _xnew($$;$$) {
             else {
                 return undef;
             }
+            return undef if $explicit_mask && $mask ne $given_mask;
             return undef unless defined($ip = inet_aton($ip));
             $ip = ipv4to6($ip);
             last;
@@ -1502,6 +1511,15 @@ host address; with a mask it is the network of that size:
   NetAddr::IP::Lite->new('10.1', 8);      # 10.1.0.0/8
   NetAddr::IP::Lite->new('10.1.2');       # 10.1.0.2/32
   NetAddr::IP::Lite->new('10.1.2', 24);   # 10.1.2.0/24
+
+A trailing dot or a range is different: the form names a network, so
+it carries its own mask. A mask argument, or a mask after a slash, has
+to be that mask or C<host>, and any other mask returns undef:
+
+  NetAddr::IP::Lite->new('192.0.2.', 24);       # 192.0.2.0/24
+  NetAddr::IP::Lite->new('192.0.2.', 28);       # undef
+  NetAddr::IP::Lite->new('192.0.2.4-7', 30);    # 192.0.2.4/30
+  NetAddr::IP::Lite->new('192.0.2.4-7', 24);    # undef
 
 RFC 3986 brackets around an IPv6 literal, which is how a URI carries one:
 

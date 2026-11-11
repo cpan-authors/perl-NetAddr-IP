@@ -43,6 +43,11 @@ Revision history for Perl extension NetAddr::IP
       any or :: stores the IPv4 /0 mask. It stored 128 zero bits, so
       arithmetic left IPv4 space and the comparison operators said it
       differed from 0.0.0.0/0. An IPv6 /0 keeps its all-zero mask.
+    - Fix GH#293: A trailing-dot or range form, such as 192.0.2. or
+      192.0.2.4-7, given with a different mask returns undef. The form's
+      own mask replaced the one given, so new('192.0.2.', 28) gave
+      192.0.2.0/24. The form's own mask and host are still accepted. Calls
+      that 4.079 accepted now return undef, so this is a breaking change.
 
 4.080_08  2026-11-07 01:17:12+11:00 Australia/Sydney (TRIAL RELEASE)
 
