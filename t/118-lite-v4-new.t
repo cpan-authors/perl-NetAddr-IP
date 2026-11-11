@@ -222,4 +222,35 @@ is( NetAddr::IP::Lite->new("\x{0663}0."),
     undef, 'Arabic-Indic in implicit /8 rejected'
 );
 
+subtest 'an IPv4 /0 from a keyword or an all-zero mask equals the /0 from a prefix length' => sub {
+    my $show = sub { defined $_[0] ? "$_[0]" : undef };
+    for my $case (
+        [ ['default'],                '0.0.0.0/0',   '255.255.255.255/0' ],
+        [ ['any'],                    '0.0.0.0/0',   '255.255.255.255/0' ],
+        [ [ '192.0.2.1', 'any' ],     '192.0.2.1/0', '192.0.2.0/0' ],
+        [ [ '192.0.2.1', 'default' ], '192.0.2.1/0', '192.0.2.0/0' ],
+        [ [ '192.0.2.1', '::' ],      '192.0.2.1/0', '192.0.2.0/0' ],
+    ) {
+        my ($args, $prefix_form, $minus_one) = @$case;
+        my $name = sprintf 'new(%s)', join ', ', map { "'$_'" } @$args;
+        my $ip   = NetAddr::IP::Lite->new(@$args);
+        my $twin = NetAddr::IP::Lite->new($prefix_form);
+        is($show->($ip),  $prefix_form, "$name prints as $prefix_form");
+        is($ip <=> $twin, 0,            "$name <=> $prefix_form is 0");
+        is($ip cmp $twin, 0,            "$name cmp $prefix_form is 0");
+        ok($twin->contains($ip), "$prefix_form contains $name");
+        is($show->($ip - 1),     $minus_one,   "$name minus 1 stays in IPv4 space");
+        is($show->($ip + 2**32), $prefix_form, "$name plus 2**32 wraps within IPv4 space");
+    }
+
+    # an IPv6 /0 keeps its all-zero mask, so its arithmetic spans 128 bits
+    for my $args ([ 'default', 'ipv6' ], [ '::', '::' ]) {
+        my $name = sprintf 'new(%s)', join ', ', map { "'$_'" } @$args;
+        is( $show->(NetAddr::IP::Lite->new(@$args) - 1),
+            'FFFF:FFFF:FFFF:FFFF:FFFF:FFFF:FFFF:FFFF/0',
+            "$name minus 1 wraps across all 128 bits"
+        );
+    }
+};
+
 done_testing;
