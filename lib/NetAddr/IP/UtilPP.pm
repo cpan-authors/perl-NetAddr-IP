@@ -350,7 +350,7 @@ Croaks if C<$ipv6naddr> is not 16 bytes.
 
 =cut
 
-sub addconst {
+sub addconst($$) {
 
     # hold the constant before address get magic; test tied before ref because
     # ref() reads a tied scalar, and older perls read through \arg too
