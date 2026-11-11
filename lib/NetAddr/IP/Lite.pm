@@ -1459,6 +1459,9 @@ sub _xnew($$;$$) {
     return undef      if !$isV6 && $ones && $ones < $IPV4_OFFSET && isIPv4($ip);
     $ip |= $_ipv4FFFF if $map_ipv4 && !$v6_input;
 
+    # an IPv4 /0 gets the 96 ones above the address that a prefix length of 0 gives
+    $mask = $_v4mask if !$isV6 && !$ones && isIPv4($ip);
+
     my $self = {
         addr => $ip,
         mask => $mask,
