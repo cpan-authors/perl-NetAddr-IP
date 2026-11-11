@@ -71,4 +71,39 @@ subtest q{splitting leaves the caller's $_ alone} => sub {
     );
 };
 
+subtest 'a Math::BigInt mask is a mask length, not an address' => sub {
+    skip_all 'Math::BigInt not found' unless eval { require Math::BigInt; 1 };
+
+    # the CIDR text of each net from $ip->$method(@masks), or undef when it dies
+    my $nets = sub {
+        my ($ip, $method, @masks) = @_;
+        my @r = eval { $ip->$method(@masks) } or return undef;
+        return [ map { "$_" } ref $r[0] eq 'ARRAY' ? @{ $r[0] } : @r ];
+    };
+    my $net      = NetAddr::IP->new('192.0.2.0/24');
+    my @quarters = qw(192.0.2.0/26 192.0.2.64/26 192.0.2.128/26 192.0.2.192/26);
+
+    is( $nets->($net, 'splitref', Math::BigInt->new(26)),
+        \@quarters, 'splitref of a Math::BigInt 26 on 192.0.2.0/24 gives four /26 nets'
+    );
+    is( $nets->($net, 'split', Math::BigInt->new(26)),
+        \@quarters, 'split of a Math::BigInt 26 on 192.0.2.0/24 gives four /26 nets'
+    );
+    is( $nets->($net, 'rsplitref', Math::BigInt->new(25), Math::BigInt->new(26)),
+        [qw(192.0.2.0/26 192.0.2.64/26 192.0.2.128/25)],
+        'rsplitref of Math::BigInt 25 and 26 on 192.0.2.0/24 gives two /26 nets and one /25'
+    );
+    is( $nets->($net, 'splitref', Math::BigInt->new(25), Math::BigInt->new(26)),
+        [qw(192.0.2.0/25 192.0.2.128/26 192.0.2.192/26)],
+        'splitref of Math::BigInt 25 and 26 on 192.0.2.0/24 gives one /25 and two /26 nets'
+    );
+    is( $nets->(NetAddr::IP->new('2001:db8::/64'), 'splitref', Math::BigInt->new(66)),
+        [qw(2001:DB8:0:0:0:0:0:0/66 2001:DB8:0:0:4000:0:0:0/66 2001:DB8:0:0:8000:0:0:0/66 2001:DB8:0:0:C000:0:0:0/66)],
+        'splitref of a Math::BigInt 66 on 2001:db8::/64 gives four /66 nets'
+    );
+    is( $nets->($net, 'splitref', NetAddr::IP->new('255.255.255.192')),
+        \@quarters, 'splitref of a NetAddr::IP mask 255.255.255.192 still gives four /26 nets'
+    );
+};
+
 done_testing;
