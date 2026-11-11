@@ -1471,7 +1471,9 @@ sub _splitplan {
 
     my ($x, $maddr);
     for my $mask (@bits) {
-        if (ref $mask) {    # is a NetAddr::IP
+
+        # a Math::BigInt is a reference too, so test for an address object
+        if (_is_address($mask)) {
             $x = $mask->{isv6} ? $mask->{addr} : $mask->{addr} | V4mask;
             ($x, $maddr) = notcontiguous($x);
             return () if $x;    # spurious bits

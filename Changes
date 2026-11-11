@@ -35,6 +35,10 @@ Revision history for Perl extension NetAddr::IP
     - Fix GH#294: On a /31 or /127, nth('00'), nth('-0') and nth('-00')
       return the first host, as nth(0) does and as they do on any other
       prefix length. They returned undef.
+    - Fix GH#297: The split methods accept a Math::BigInt as a mask
+      length, as the constructor does. It warned and then croaked
+      "netmask error". An unblessed reference given as a mask now croaks
+      "netmask error" instead of dying with "Not a HASH reference".
 
 4.080_09  2026-11-10 00:24:39+11:00 Australia/Sydney (TRIAL RELEASE)
     - Add `.perltidyrc` and document how to run `perltidy` in `AGENTS.md`.
