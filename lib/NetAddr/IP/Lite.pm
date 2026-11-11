@@ -2169,7 +2169,9 @@ sub nth ($$) {
         return undef if ($count < 1 or $count > $self->num());
     }
     elsif ($slash31) {
-        return undef if ($count && $count != 1);    # only index 0, 1 allowed for /31
+
+        # only index 0 or 1, compared as numbers so that 00 and -0 are index 0
+        return undef if $count != 0 && $count != 1;
     }
     else {
         # read as a 128 bit number, so an index past 2**53 stays exact; -0 is index 0
