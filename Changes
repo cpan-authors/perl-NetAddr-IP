@@ -53,6 +53,11 @@ Revision history for Perl extension NetAddr::IP
       num() and nth() under :old_nth gave different results than for
       0.0.0.0/0, though == and eq called the two equal. An IPv6 /0 keeps
       its all-zero mask.
+    - Fix GH#293: A trailing-dot or range form, such as 192.0.2. or
+      192.0.2.4-7, given with a different mask returns undef. The form's
+      own mask replaced the one given, so new('192.0.2.', 28) gave
+      192.0.2.0/24. The form's own mask and host are still accepted. Calls
+      that 4.079 accepted now return undef, so this is a breaking change.
 
 4.080_09  2026-11-10 00:24:39+11:00 Australia/Sydney (TRIAL RELEASE)
     - Add `.perltidyrc` and document how to run `perltidy` in `AGENTS.md`.
