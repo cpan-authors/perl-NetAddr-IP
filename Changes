@@ -39,6 +39,10 @@ Revision history for Perl extension NetAddr::IP
       length, as the constructor does. It warned and then croaked
       "netmask error". An unblessed reference given as a mask now croaks
       "netmask error" instead of dying with "Not a HASH reference".
+    - Fix GH#292: An undef mask argument leaves a mask written in the
+      address in force, so new('192.0.2.0/24', undef) gives 192.0.2.0/24
+      where it gave undef. With no mask in the address, an undef mask is
+      still the host mask, as GH#219 set for new6('loopback', undef).
 
 4.080_09  2026-11-10 00:24:39+11:00 Australia/Sydney (TRIAL RELEASE)
     - Add `.perltidyrc` and document how to run `perltidy` in `AGENTS.md`.

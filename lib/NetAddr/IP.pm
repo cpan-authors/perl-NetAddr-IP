@@ -662,6 +662,9 @@ sub do_prefix ($$$) {
 The constructors C<new>, C<new4> and C<new6> create a new address with the
 supplied address in C<$addr> and an optional netmask C<$mask>, which can be
 omitted to get a /32 or /128 netmask for IPv4 / IPv6 addresses respectively.
+An undef C<$mask> leaves a mask written in C<$addr> in force, so
+C<new('192.0.2.0/24', undef)> is 192.0.2.0/24. Where C<$addr> has no
+mask, an undef C<$mask> gives the /32 or /128 netmask.
 All three accept the same notations. The C<new> constructor returns
 whichever family the input reads as, C<new4> returns IPv4 or undef, and
 C<new6> returns IPv6. See L</Numbers and masks> for how each one reads a
