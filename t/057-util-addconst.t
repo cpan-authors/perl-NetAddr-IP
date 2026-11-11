@@ -3,7 +3,8 @@
 use Test2::V1 -ipP;
 use Test2::Plugin::NoWarnings;
 
-use NetAddr::IP::Util qw( addconst ipv6_aton ipv6_n2x );
+use NetAddr::IP::Util   qw( addconst ipv6_aton ipv6_n2x );
+use NetAddr::IP::UtilPP ();
 
 subtest 'addconst positive' => sub {
     my %num = (
@@ -47,6 +48,30 @@ subtest 'addconst negative' => sub {
         $rv = ipv6_n2x($rv);
         is($rv, $expected, "addconst($input, -$const)");
     }
+};
+
+subtest 'addconst reads its arguments alike in both builds' => sub {
+    for my $package (qw( NetAddr::IP::Util NetAddr::IP::UtilPP )) {
+        is(prototype("${package}::addconst"), '$$', "${package}::addconst has the prototype \$\$");
+    }
+
+    my $addr = ipv6_aton('2001:db8::1');
+
+    # in list context this returns a name and the address, as a lookup does
+    my $answer = sub { return wantarray ? ('host.example', $addr) : $addr };
+    is( [ eval { addconst($answer->(), 1) } ],
+        [ addconst($addr, 1) ],
+        'a first argument that returns a list is read in scalar context'
+    );
+    is($@, '', 'that call does not croak');
+
+    my @pair = ($addr, 1);
+    ok(!eval 'addconst(@pair); 1', 'an array of two arguments does not compile');
+    like(
+        $@,
+        qr/^Not enough arguments for NetAddr::IP::Util(?:PP)?::addconst /,
+        'the compile error says there are not enough arguments'
+    );
 };
 
 done_testing;
