@@ -246,6 +246,34 @@ subtest 'new croaks on an odd number of arguments or a bad subnet' => sub {
     );
 };
 
+subtest 'new adds its pairs in order, so a repeated name appends as add does' => sub {
+    my @addresses = ips('192.0.2.1', '198.51.100.1');
+    my $counter   = NetAddr::IP::Count->new(
+        repeated => NetAddr::IP->new('192.0.2.0/24'),
+        repeated => [ ips('198.51.100.0/24') ],
+    );
+    is( $counter->count(@addresses)->result,
+        { repeated => 2 },
+        'a name given twice counts the addresses in the subnets of both pairs'
+    );
+    is( $counter->result,
+        counter_with([ repeated => '192.0.2.0/24' ], [ repeated => '198.51.100.0/24' ])->count(@addresses)->result,
+        'a name given twice to new counts as two calls to add'
+    );
+
+    my @bad = map { ("group-$_" => "subnet-$_") } 1 .. 8;
+    like(
+        dies { NetAddr::IP::Count->new(@bad) },
+        croaks_with('NetAddr::IP::Count::add needs a NetAddr::IP object' . " for argument 2, got 'subnet-1'"),
+        'of eight bad subnets, the first in argument order croaks'
+    );
+    like(
+        dies { NetAddr::IP::Count->new(undef, NetAddr::IP->new('192.0.2.0/24')) },
+        croaks_with('NetAddr::IP::Count::add needs a group name'),
+        'an undefined name croaks as it does in add'
+    );
+};
+
 subtest 'valcount croaks on bad pairs and changes no total' => sub {
     my $counter = counter_with(@OVERLAPPING);
     like(
