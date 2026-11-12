@@ -316,6 +316,10 @@ package NetAddr::IP::UtilPolluted {
         return unless defined $host;
         return if _numeric_text($host);
 
+        # A host name holds no colon, so this is an IPv6 literal. A C library may
+        # take a scope id, a five-digit group or a leading zero that ipv6_aton refuses.
+        return if index($host, ':') >= 0 && !defined NetAddr::IP::InetBase::ipv6_aton($host);
+
         # A literal is not a name. gethostbyname keeps one static buffer, so
         # a short form such as 127.1 is packed after fillIPv4 expands it.
         if (my $addr = _packed_quad($host)) {
@@ -949,7 +953,9 @@ A NAME with whitespace, or a dotted number with a leading zero in any
 part, gives an empty list, or undef in scalar context, without asking
 the resolver.  So does text whose last label is a number or C<0x> hex,
 such as C<0xc0.0.2.010>, other than a decimal dotted quad: the resolver
-would read it as a number, with C<010> in octal.
+would read it as a number, with C<010> in octal.  So does IPv6 text that
+C<ipv6_aton> refuses, such as a scope id in C<2001:db8::1%1> or the
+leading zero in C<::ffff:192.0.2.010>, which some C libraries accept.
 
 =item $trueif = havegethostbyname2();
 

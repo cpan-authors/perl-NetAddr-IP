@@ -65,7 +65,8 @@ $answers{'v4.example'} = [
     result(AF_INET, $v4,  \&pack_sockaddr_in),
     result(AF_INET, $v4b, \&pack_sockaddr_in),
 ];
-$answers{'192.0.2.1'} = [ result(AF_INET, $v4, \&pack_sockaddr_in) ];
+$answers{'192.0.2.1'}   = [ result(AF_INET,  $v4, \&pack_sockaddr_in) ];
+$answers{'2001:db8::1'} = [ result(AF_INET6, $v6, \&pack_sockaddr_in6) ];
 
 ok(havegethostbyname2(), 'havegethostbyname2 is true');
 
@@ -123,6 +124,28 @@ subtest 'text ending in a number or 0x hex label is not looked up' => sub {
         naip_gethostbyname($text);
         is($calls[0][0], $text, "getaddrinfo is still asked for $text");
     }
+};
+
+subtest 'IPv6 text that ipv6_aton refuses is not looked up' => sub {
+
+    # what a C library reads each text as: macOS takes all four, glibc the numeric scope id
+    my %libc_reads = (
+        '2001:db8::00001'    => $v6,
+        '2001:db8::1%1'      => $v6,
+        '2001:db8::1%lo0'    => $v6,
+        '::ffff:192.0.2.010' => inet_pton(AF_INET6, '::ffff:192.0.2.10'),
+    );
+    for my $text (sort keys %libc_reads) {
+        local $answers{$text} = [ result(AF_INET6, $libc_reads{$text}, \&pack_sockaddr_in6) ];
+        local @calls;
+        is([ naip_gethostbyname($text) ], [], "$text is an empty list");
+        is(\@calls,                       [], "getaddrinfo was not asked for $text");
+    }
+    local @calls;
+    is( ipv6_n2x(scalar naip_gethostbyname('2001:db8::1')),
+        '2001:DB8:0:0:0:0:0:1', 'a valid IPv6 literal still gets its answer'
+    );
+    is($calls[0][0], '2001:db8::1', 'getaddrinfo is still asked for 2001:db8::1');
 };
 
 subtest 'a dotted quad is packed and not looked up' => sub {
