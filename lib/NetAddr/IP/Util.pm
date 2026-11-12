@@ -277,7 +277,7 @@ package NetAddr::IP::UtilPolluted {
     sub _numeric_text {
         my ($host) = @_;
         return 0 if index($host, ':') >= 0 || $host =~ /\A[0-9]+(?:[.][0-9]+){3}\z/;
-        return $host =~ /(?:\A|[.])(?:[0-9]+|0[xX][0-9a-fA-F]*)[.]?\z/;
+        return NetAddr::IP::InetBase::_numeric_last_label($host);
     }
 
     # fillIPv4 has already rejected a leading zero and an octet past 255.
@@ -514,9 +514,11 @@ Convert a dot-quad IP address into an IPv4 packed network address.
   returns:  packed network address, or undef
 
 Short forms follow the BSD C<inet_aton> convention, not RFC 791:
-C<127.1> is 127.0.0.1 and C<192.0.2> is 192.0.0.2.  Its octal reading
-of a leading zero does not: C<192.0.2.010> returns undef.  A literal
-does not call C<gethostbyname>.  Other text does, and that function
+C<127.1> is 127.0.0.1 and C<192.0.2> is 192.0.0.2.  Its octal and hex
+readings do not: C<192.0.2.010> returns undef, and so does any text
+whose last label is a number or C<0x> hex, such as C<0xc0.0.2.1>,
+C<192.0.2.1.> or C<host.123>.  None of these calls C<gethostbyname>,
+and neither does a literal.  Other text does, and that function
 keeps one static buffer, so two threads resolving names at once can
 swap answers.  Returns undef for an octet above 255, for text with
 whitespace, and for text that does not resolve.
