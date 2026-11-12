@@ -25,14 +25,17 @@ sub new {
         '%s::new takes group name and subnet pairs, got %d arguments',
         __PACKAGE__, scalar @pairs
     ) if @pairs % 2;
-    my %groups = @pairs;
-    my $self   = bless {
+    my $self = bless {
         cache_size => $DEFAULT_CACHE_SIZE,
         subnets    => {},
         totals     => {},
         },
         ref $proto || $proto;
-    $self->add($_, $groups{$_}) for keys %groups;
+
+    # pair by pair, in argument order, so a repeated name appends as add does
+    while (my ($name, $subnets) = splice @pairs, 0, 2) {
+        $self->add($name, $subnets);
+    }
     return $self;
 }
 
@@ -177,7 +180,8 @@ round.
 
 This module has the interface of NetAddr::IP::Count 2.01, by Luis E. Munoz
 with C<valcount> by Alvaro Carvajal, and replaces it.  Where no two groups
-overlap, the totals are the same.  Three things differ:
+overlap and no name is given twice to C<new>, the totals are the same.  Four
+things differ:
 
 =over 4
 
@@ -189,10 +193,16 @@ size.
 
 =item *
 
+Repeated names.  A name given twice to C<new> holds the subnets of both
+pairs, as two calls to C<add> do.  Version 2.01 kept only the last pair.
+
+=item *
+
 Arguments.  Anything but a NetAddr::IP object where an address or subnet is
 expected, or anything but a number where a value is expected, croaks before
 any total changes.  Version 2.01 stopped counting at the first false
-element of a list.
+element of a list.  An undefined group name croaks too, where version 2.01
+made a group named with the empty string.
 
 =item *
 
@@ -205,13 +215,15 @@ changes how addresses are counted or how fast.
 
 =over 4
 
-=item C<< NetAddr::IP::Count->new(%groups) >>
+=item C<< NetAddr::IP::Count->new($name => $subnets, ...) >>
 
 Returns a new counter holding the given groups, each with a total of zero.
-Each key is a group name, and each value is a NetAddr::IP subnet or a
-reference to an array of them, as C<add> takes.  Croaks on an odd number of
-arguments or on a subnet that is not a NetAddr::IP object.  Called on a
-counter, it returns a new, empty counter of the same class.
+Each pair is a group name and a NetAddr::IP subnet or a reference to an
+array of them, as C<add> takes.  The pairs are added in order, as if by one
+call to C<add> each, so a name given twice holds the subnets of both pairs.
+Croaks on an odd number of arguments, an undefined name or a subnet that is
+not a NetAddr::IP object.  Called on a counter, it returns a new, empty
+counter of the same class.
 
   my $counter = NetAddr::IP::Count->new(
       lab => NetAddr::IP->new('203.0.113.0/24') );
