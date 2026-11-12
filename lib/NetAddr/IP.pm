@@ -447,8 +447,10 @@ This module defines hooks to collaborate with L<Storable> for
 serializing C<NetAddr::IP> objects, through compact and human readable
 strings. Data frozen as a plain hash, without the hooks, thaws the same
 way with them in place, because L<Storable> calls the thaw hook only for
-data the freeze hook wrote. To freeze as a plain hash instead, invoke
-this module as
+data the freeze hook wrote. An object of a subclass freezes as a plain
+hash, so it keeps its own keys, weak references and cycles, and data that
+a subclass object froze as its CIDR string still thaws. To freeze every
+object as a plain hash, invoke this module as
 
   use NetAddr::IP ':old_storable';
 
@@ -467,6 +469,10 @@ my $full6_lower = lc $full6_format;
 # "use NetAddr::IP" serialize the same way. The :old_storable tag removes them.
 sub STORABLE_freeze {
     my $self = shift;
+
+    # an object of a subclass takes Storable's own format, which keeps its
+    # other keys, weak references and cycles
+    return if ref($self) ne __PACKAGE__;
     return $self->cidr();    # use stringification
 }
 

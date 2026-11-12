@@ -99,6 +99,12 @@ Revision history for Perl extension NetAddr::IP
       shown $me->compactref(\@list) and Compact(\@list). Such a call now
       croaks too when its list is not an array reference, or when any
       second argument but undef or an empty array reference follows it.
+    - Fix GH#296: An object of a NetAddr::IP subclass keeps its own keys
+      through Storable freeze, thaw and dclone, because it now freezes as
+      a plain hash. Only the address and mask came back before. A plain
+      object still freezes as its CIDR text. A subclass key that holds a
+      code reference or a filehandle now makes Storable croak, as it does
+      for any other hash.
 
 4.080_09  2026-11-10 00:24:39+11:00 Australia/Sydney (TRIAL RELEASE)
     - Add `.perltidyrc` and document how to run `perltidy` in `AGENTS.md`.
