@@ -1650,6 +1650,9 @@ instead.
 With no list, C<$me-E<gt>compactref()> compacts C<$me> alone, as
 C<$me-E<gt>compactref([])> and C<$me-E<gt>compact()> do.
 
+A list that is not an array reference croaks, so a single object goes in
+as C<$me-E<gt>compactref([$other])>.
+
 Note that C<$me> must be a C<NetAddr::IP> or C<NetAddr::IP::Lite> object.
 
 =cut
@@ -1661,11 +1664,14 @@ sub compactref($) {
     # with no list, a method call compacts the invocant alone
     $rest //= [];
 
+    # a function call takes one array ref, a method call an array ref after the address
+    croak('compactref: a function call takes one array reference')
+        if ref $first eq 'ARRAY' && !(ref $rest eq 'ARRAY' && !@$rest);
+    croak('compactref: the list must be an array reference')
+        unless ref $rest eq 'ARRAY' && (ref $first eq 'ARRAY' || _is_address($first));
+
     # a method call compacts the invocant with the list, a function call the list alone
-    my $unr =
-        _is_address($first) && ref $rest eq 'ARRAY'
-        ? [ $first, @$rest ]
-        : $first;
+    my $unr = _is_address($first) ? [ $first, @$rest ] : $first;
     return [] unless @$unr;
 
     # work on network copies so the caller's objects are not modified, and
