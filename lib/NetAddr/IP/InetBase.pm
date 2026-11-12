@@ -78,12 +78,28 @@ sub inet_n2ad($);
 my $FAMILY_SHOULD_BE = sprintf 'should be AF_INET (%d) or AF_INET6 (%d)',
     AF_INET(), AF_INET6();
 
+# the whole numbers a C int of 32 bits holds, read as signed or unsigned
+my $INT32_MIN  = -2**31;
+my $UINT32_MAX = 2**32 - 1;
+
 # the length error from ipv6_n2x and ipv6_n2d, which name themselves quoted
 my $N2_LENGTH_DIES = q{Bad arg length for '%s', length is %s should be %d bytes};
 
 # the error for a packed argument with a character above 0xFF, worded as perl's
 # own from the XS, with the function named in place of "subroutine entry"
 my $WIDE_DIES = 'Wide character in %s';
+
+# Socket reads the family as a C int, dropping a fraction and the bits above 32,
+# so 2.5 and 2**32 + 2 would reach it as AF_INET and use the platform parser
+sub _is_family_number {
+    my ($af) = @_;
+    return
+           defined $af
+        && looks_like_number($af)
+        && $af == int($af)
+        && $af >= $INT32_MIN
+        && $af <= $UINT32_MAX;
+}
 
 # deprecated: AF_INET6 always comes from Socket, so there is no guess to report
 sub fake_AF_INET6 {
@@ -442,11 +458,12 @@ sub inet_pton {
     my ($af, $text) = @_;
 
     # A numeric compare, or Socket's int typemap, warns on undef and on
-    # text that is not a number. Those families croak here, with no warning.
+    # text that is not a number. The typemap also drops a fraction and the
+    # bits above 32. Those families croak here, with no warning.
     croak sprintf(
         'Bad address family for %s::inet_pton, got %s, %s',
         __PACKAGE__, defined $af ? $af : 'undefined', $FAMILY_SHOULD_BE
-    ) unless defined $af && looks_like_number($af);
+    ) unless _is_family_number($af);
 
     # any other number gets Socket's error
     goto &Socket::inet_pton unless $af == AF_INET() || $af == AF_INET6();
@@ -636,11 +653,12 @@ and case.
 sub inet_ntop {
     my ($af, $packed) = @_;
 
-    # Same gate as inet_pton: undef and a non-number must not reach Socket.
+    # Same gate as inet_pton: undef, a non-number and a number Socket would
+    # truncate must not reach it.
     croak sprintf(
         'Unsupported address family for %s::inet_ntop, af is %s, %s',
         __PACKAGE__, defined $af ? $af : 'undefined', $FAMILY_SHOULD_BE
-    ) unless defined $af && looks_like_number($af);
+    ) unless _is_family_number($af);
     if ($af == AF_INET()) {
 
         # inet_ntoa reads $_[0]. The family must not go with it.
