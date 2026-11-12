@@ -242,4 +242,48 @@ subtest 'a call with no list compacts the invocant alone' => sub {
     );
 };
 
+subtest 'compactref croaks on a list that is not an array reference' => sub {
+    my $croak = qr/\A\Qcompactref: the list must be an array reference at ${\__FILE__} line \E[0-9]+/;
+    my $low   = NetAddr::IP->new('192.0.2.0/25');
+    my $high  = NetAddr::IP->new('192.0.2.128/25');
+
+    like(
+        dies { $low->compactref($high) },
+        $croak, 'compactref of one object, not in a list, croaks'
+    );
+    like(
+        dies { $low->compactref({}) },
+        $croak, 'compactref of a hash reference croaks'
+    );
+    like(
+        dies { $low->compactref('192.0.2.128/25') },
+        $croak, 'compactref of CIDR text croaks'
+    );
+    like(
+        dies {
+            NetAddr::IP->new('2001:db8::/32')->compactref(NetAddr::IP->new('2001:db8:1::/48'))
+        },
+        $croak,
+        'compactref of one object on 2001:db8::/32 croaks before enumerating its hosts'
+    );
+    like(
+        dies {
+            NetAddr::IP::Lite->new('192.0.2.0/25')->compactref(NetAddr::IP::Lite->new('192.0.2.128/25'))
+        },
+        $croak,
+        'compactref of one Lite object on a Lite object croaks'
+    );
+    like(
+        dies { &NetAddr::IP::compactref(undef) },
+        $croak, 'the function compactref of undef croaks'
+    );
+    like(
+        dies { &NetAddr::IP::compactref('192.0.2.0/25') },
+        $croak, 'the function compactref of CIDR text croaks'
+    );
+    is( [ map { "$_" } @{ $low->compactref([$high]) } ],
+        ['192.0.2.0/24'], 'compactref of the same object in a list merges it'
+    );
+};
+
 done_testing;

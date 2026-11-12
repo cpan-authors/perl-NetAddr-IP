@@ -77,6 +77,10 @@ Revision history for Perl extension NetAddr::IP
       order, as calls to add do, so a group name given twice keeps the
       subnets of both pairs. Only the last pair counted before. An
       undefined group name croaks, as it does in add.
+    - Fix GH#295: Calling compactref with anything but an array reference
+      as the list, such as $low->compactref($high), croaks. It compacted
+      the host addresses of $low and dropped $high, or croaked "netlimit
+      exceeded" on a large network. This is a breaking change.
 
 4.080_08  2026-11-07 01:17:12+11:00 Australia/Sydney (TRIAL RELEASE)
 
