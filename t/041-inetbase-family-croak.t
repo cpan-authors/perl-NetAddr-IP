@@ -9,8 +9,10 @@ use NetAddr::IP::InetBase ();
 use Socket                ();
 
 my $BAD_FAMILY = 4_278_190_080;    # 0xFF000000, which is no address family
+my $INT32_MIN  = -2**31;           # the lowest number a 32-bit C int holds, read as signed
 my $NTOP_DIES  = 'Unsupported address family for NetAddr::IP::InetBase::inet_ntop, af is';
 my $PTON_DIES  = 'Bad address family for NetAddr::IP::InetBase::inet_pton, got';
+my $UINT32_MAX = 2**32 - 1;        # the highest number a 32-bit C int holds, read as unsigned
 my $V4_TEXT    = '192.0.2.1';
 my $V6_TEXT    = '2001:db8::1';
 
@@ -89,6 +91,29 @@ subtest 'a family that is not a number is named, without a warning' => sub {
 
 subtest 'a family that is a number followed by text is refused' => sub {
     refused_without_warning($_) for "${AF_INET6}abc", "${AF_INET}abc";
+};
+
+subtest 'a family that Socket would truncate to AF_INET or AF_INET6 is refused' => sub {
+    refused_without_warning($_)
+        for $AF_INET + 0.5, $AF_INET6 + 0.5, 2**32 + $AF_INET, 2**32 + $AF_INET6,
+        $AF_INET - 2**32;
+};
+
+subtest 'a whole family at either end of the 32-bit range is Socket' => sub {
+    for my $af ($INT32_MIN, $UINT32_MAX) {
+        my $ntop = socket_message(dies { Socket::inet_ntop($af, $v6_packed) });
+        my $pton = socket_message(dies { Socket::inet_pton($af, $V4_TEXT) });
+        like(
+            dies { NetAddr::IP::InetBase::inet_ntop($af, $v4_packed) },
+            qr/\A\Q$ntop\E at /,
+            "inet_ntop of family $af matches Socket"
+        );
+        like(
+            dies { NetAddr::IP::InetBase::inet_pton($af, $V4_TEXT) },
+            qr/\A\Q$pton\E at /,
+            "inet_pton of family $af matches Socket"
+        );
+    }
 };
 
 subtest 'a padded, signed or exponent family still converts' => sub {
