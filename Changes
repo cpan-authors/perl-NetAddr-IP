@@ -66,6 +66,13 @@ Revision history for Perl extension NetAddr::IP
       lookup. The C resolver read 0xc0.0.2.010 as 192.0.2.8 on macOS and
       sent it to DNS on Linux. Host names still resolve. This breaks code
       on macOS that relied on hex, such as 0xc0000201 for 192.0.2.1.
+    - Fix GH#287: Under perl -T, the pure Perl build keeps the taint of
+      what goes in on what comes out, as the XS build does. Before,
+      add128(), addconst(), bcd2bin(), bcdn2bin(), bcdn2txt(), bin2bcd(),
+      bin2bcdn(), ipv6to4(), shiftleft(), simple_pack() and sub128() gave
+      back clean results for tainted input. Code that used such a result
+      unchecked now dies with "Insecure dependency", as it does on XS.
+      Tests in t/085.
 
 4.080_08  2026-11-07 01:17:12+11:00 Australia/Sydney (TRIAL RELEASE)
 

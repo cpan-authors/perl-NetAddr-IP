@@ -68,6 +68,17 @@ sub _bytes {
     return $packed;
 }
 
+# under perl -T, the result takes the taint of the inputs it was computed from, as the
+# XS result does; a regex capture, pack() of numbers and unpack('H') drop taint
+sub _taint_as {
+    my ($result, @inputs) = @_;
+    return $result unless ${^TAINT};
+
+    # an empty tail carries the taint; the inputs are bytes, so it cannot upgrade the result
+    $result .= substr($_, 0, 0) for grep { defined } @inputs;
+    return $result;
+}
+
 1;
 
 =head1 SYNOPSIS
@@ -273,7 +284,7 @@ sub shiftleft($;@) {
         if !defined($bits) || length($bits) != $V6_PACKED_BYTES;
     my $given  = $count_ref ? ${$count_ref} : @_ >= 2 ? $_[1] : undef;
     my $shifts = _plain_number($given);
-    return $bits unless defined $shifts && $shifts ne '';
+    return _taint_as($bits, $shifts) unless defined $shifts && $shifts ne '';
 
     # an integer count from 0 to 128; undef or the empty string returns the input
     croak "Bad arg value for NetAddr::IP::Util::shiftleft, is $given, should be 0 thru $MAX_SHIFTLEFT"
@@ -281,17 +292,17 @@ sub shiftleft($;@) {
         && $shifts >= 0
         && $shifts <= $MAX_SHIFTLEFT
         && $shifts == int($shifts);
-    return $bits if $shifts == 0;
+    return _taint_as($bits, $shifts) if $shifts == 0;
     my @uint32t = unpack('N4', $bits);
     _128x2(\@uint32t) for 1 .. $shifts;
-    return pack('N4', @uint32t);
+    return _taint_as(pack('N4', @uint32t), $bits, $shifts);
 }
 
 sub slowadd128 {
     my @ua    = unpack('N4', $_[0]);
     my @ub    = unpack('N4', $_[1]);
     my $carry = _sa128(\@ua, \@ub, $_[2]);
-    return ($carry, pack('N4', @ua))
+    return ($carry, _taint_as(pack('N4', @ua), @_[ 0, 1 ]))
         if wantarray;
     return $carry;
 }
@@ -364,7 +375,7 @@ sub addconst($$) {
     my $given = $const_ref ? ${$const_ref} : @_ >= 2 ? $_[1] : undef;
     my $const = _plain_number($given);
     unless (defined $const && $const ne '') {
-        return (wantarray) ? (0, $a128) : 0;
+        return (wantarray) ? (0, _taint_as($a128, $const)) : 0;
     }
 
     # an integer in the signed 32 bit range, the rule the XS applies
@@ -374,9 +385,9 @@ sub addconst($$) {
         && $const >= -2_147_483_648
         && $const <= 2_147_483_647
         && $const == int($const);
-    return (wantarray) ? (0, $a128) : 0 if $const == 0;
+    return (wantarray) ? (0, _taint_as($a128, $const)) : 0 if $const == 0;
     my $sign = ($const < 0) ? 0xffffffff : 0;
-    my $b128 = pack('N4', $sign, $sign, $sign, $const);
+    my $b128 = _taint_as(pack('N4', $sign, $sign, $sign, $const), $const);
     @_ = ($a128, $b128, 0);
     goto &slowadd128;
 }
@@ -580,7 +591,7 @@ sub ipv6to4($;@) {
     _deadlen(length($naddr))
         if !defined($naddr) || length($naddr) != $V6_PACKED_BYTES;
     @_ = unpack('L3H8', $naddr);
-    return pack('H8', @{_}[ 3 .. 10 ]);
+    return _taint_as(pack('H8', @{_}[ 3 .. 10 ]), $naddr);
 }
 
 =back
@@ -605,7 +616,7 @@ sub bin2bcd($) {
     _deadlen(length($bits128))
         if !defined($bits128) || length($bits128) != $V6_PACKED_BYTES;
     unpack("H$MAX_BCD_DIGITS", _bin2bcdn($bits128)) =~ /^0*(.+)/;
-    return $1;
+    return _taint_as($1, $bits128);
 }
 
 =item $bits128 = bcd2bin($bcdtxt);
@@ -663,7 +674,7 @@ sub bin2bcdn($) {
     my $bits128 = _bytes(shift);
     _deadlen(length($bits128))
         if !defined($bits128) || length($bits128) != $V6_PACKED_BYTES;
-    return _bin2bcdn($bits128);
+    return _taint_as(_bin2bcdn($bits128), $bits128);
 }
 
 sub _bin2bcdn {
@@ -734,7 +745,7 @@ sub bcdn2txt($) {
     my $txt = unpack("H$MAX_BCD_DIGITS", $bcdn);
     _bcdcheck($txt);    # a nibble above 9 unpacks as a-f
     $txt =~ /^0*(.+)/;
-    return $1;
+    return _taint_as($1, $bcdn);
 }
 
 #=item $bits128 = bcdn2bin($bcdpacked,$ndigits);
@@ -793,7 +804,7 @@ sub bcdn2bin($;@) {
     $dc = int($dc);
     my $txt = unpack("H$dc", $bcd);
     _bcdcheck($txt);    # a nibble above 9 unpacks as a-f
-    return _bcd2bin($txt, 'NetAddr::IP::Util::bcdn2bin');
+    return _taint_as(_bcd2bin($txt, 'NetAddr::IP::Util::bcdn2bin'), $bcd, $dc);
 }
 
 sub _bcd2bin {
@@ -818,7 +829,7 @@ sub _bcd2bin {
     if ($overflow) {
         croak "Bad arg value for $caller, number is larger than 128 bits";
     }
-    return pack('N4', @hbits);
+    return _taint_as(pack('N4', @hbits), $_[0]);
 }
 
 #=item $bcdpacked = simple_pack($bcdtext);
@@ -849,7 +860,7 @@ sub simple_pack($;@) {
     while (length($bcd) < $MAX_BCD_DIGITS) {
         $bcd = '0' . $bcd;
     }
-    return pack("H$MAX_BCD_DIGITS", $bcd);
+    return _taint_as(pack("H$MAX_BCD_DIGITS", $bcd), $bcd);
 }
 
 =back
