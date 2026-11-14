@@ -91,6 +91,12 @@ subtest 'a family that is a number followed by text is refused' => sub {
     refused_without_warning($_) for "${AF_INET6}abc", "${AF_INET}abc";
 };
 
+subtest 'a family that Socket would truncate to AF_INET or AF_INET6 is refused' => sub {
+    refused_without_warning($_)
+        for $AF_INET + 0.5, $AF_INET6 + 0.5, 2**32 + $AF_INET, 2**32 + $AF_INET6,
+        $AF_INET - 2**32;
+};
+
 subtest 'a padded, signed or exponent family still converts' => sub {
     my @written = (
         [ 'a decimal point',    "$AF_INET.0",    $v4_packed, $V4_TEXT ],

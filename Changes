@@ -55,6 +55,13 @@ Revision history for Perl extension NetAddr::IP
       accept it: macOS read 2001:db8::00001 as 2001:db8::1 and dropped the
       scope id from 2001:db8::1%lo0, and glibc dropped a numeric scope id
       such as the %1 in 2001:db8::1%1.
+    - Fix GH#289: A family that is not a whole number, such as 2.5, or that
+      does not fit in 32 bits, such as 2**32 + 2, makes inet_pton() and
+      inet_ntop() croak with the family error. Socket cut such a number
+      down to AF_INET or AF_INET6, so the call skipped this module's
+      parser, and on macOS inet_pton(2.5, '192.0.2.010') returned
+      192.0.2.10. A call that passed such a number and got an address now
+      croaks.
 
 4.080_08  2026-11-07 01:17:12+11:00 Australia/Sydney (TRIAL RELEASE)
 
