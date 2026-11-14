@@ -25,6 +25,10 @@ Revision history for Perl extension NetAddr::IP
       subroutine entry". In the pure Perl build, bcdn2bin() checks the
       length of its input first and refuses empty input with the XS
       length error, not "should be 1 to 0 digits". Tests in t/076.
+    - Fix GH#299: In the pure Perl build, addconst() takes the prototype
+      $$, as it does in the XS build. A call that passes both arguments
+      from an array, or passes a third one, now fails to compile there
+      too.
 
 4.080_08  2026-11-07 01:17:12+11:00 Australia/Sydney (TRIAL RELEASE)
 
