@@ -29,6 +29,8 @@ Revision history for Perl extension NetAddr::IP
       $$, as it does in the XS build. A call that passes both arguments
       from an array, or passes a third one, now fails to compile there
       too.
+    - Fix GH#303: Calling inet_4map6() with undef returns undef without
+      first warning "Use of uninitialized value" twice.
 
 4.080_08  2026-11-07 01:17:12+11:00 Australia/Sydney (TRIAL RELEASE)
 

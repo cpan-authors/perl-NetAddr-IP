@@ -3,6 +3,7 @@
 use Test2::V1 -ipP;
 use Test2::Plugin::NoWarnings;
 use Test2::Tools::Exception qw(lives);
+use Test2::Tools::Warnings  qw(warnings);
 
 use NetAddr::IP::Util      qw(:all);
 use NetAddr::IP::Constants qw($V4_PACKED_BYTES $V6_PACKED_BYTES);
@@ -24,6 +25,12 @@ subtest 'inet_4map6 handles IPv6-length inputs' => sub {
 
     my $v6 = pack('C16', 0x20, 0x01, 0x0d, 0xb8, (0) x 12);
     is(inet_4map6($v6), undef, 'pure IPv6 address does not map');
+};
+
+subtest 'inet_4map6 of undef returns undef without a warning' => sub {
+    my $mapped = 'not called';
+    is(warnings { $mapped = inet_4map6(undef) }, [],    'inet_4map6 of undef does not warn');
+    is($mapped,                                  undef, 'inet_4map6 of undef is undef');
 };
 
 subtest '_end_gethostbyname and _addrs_once guard branches' => sub {
