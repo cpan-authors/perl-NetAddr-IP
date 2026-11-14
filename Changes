@@ -83,6 +83,9 @@ Revision history for Perl extension NetAddr::IP
       as the list, such as $low->compactref($high), croaks. It compacted
       the host addresses of $low and dropped $high, or croaked "netlimit
       exceeded" on a large network. This is a breaking change.
+    - Fix GH#296: An object of a NetAddr::IP subclass keeps its own keys
+      through Storable freeze, thaw and dclone. Only the address and mask
+      came back before. A plain object still freezes as its CIDR text.
 
 4.080_08  2026-11-07 01:17:12+11:00 Australia/Sydney (TRIAL RELEASE)
 

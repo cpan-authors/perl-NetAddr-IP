@@ -78,4 +78,54 @@ subtest 'data frozen as a plain hash thaws with the hooks in place' => sub {
     is("$nip", '192.0.2.1/24', 'Thawed object eq original object');
 };
 
+# a subclass that keeps keys of its own beside addr, mask and isv6
+{
+
+    package Local::Labelled;
+    our @ISA = ('NetAddr::IP');
+}
+
+subtest 'a subclass object keeps its own keys through Storable' => sub {
+    my $oip = bless { %{ NetAddr::IP->new('192.0.2.1/24') }, label => 'edge', tags => ['core'] },
+        'Local::Labelled';
+    for my $case (
+        [ 'freeze and thaw' => sub { thaw(freeze($_[0])) } ],
+        [ 'dclone'          => sub { Storable::dclone($_[0]) } ],
+    ) {
+        my ($how, $copy) = @{$case};
+        my $nip = $copy->($oip);
+        isa_ok($nip, ['Local::Labelled'], "$how keeps the subclass");
+        is("$nip",                '192.0.2.1/24',                  "$how keeps the address and mask");
+        is($nip->{label},         'edge',                          "$how keeps a subclass key holding text");
+        is($nip->{tags},          ['core'],                        "$how keeps a subclass key holding a reference");
+        is([ sort keys %{$nip} ], [qw(addr isv6 label mask tags)], "$how adds no keys");
+    }
+};
+
+subtest 'a plain object freezes as its CIDR text alone' => sub {
+    is( [ NetAddr::IP->new('192.0.2.1/24')->STORABLE_freeze(0) ],
+        ['192.0.2.1/24'], 'the freeze hook of an IPv4 object returns only its CIDR text'
+    );
+    is( [ NetAddr::IP->new('2001:db8::1/64')->STORABLE_freeze(0) ],
+        ['2001:DB8:0:0:0:0:0:1/64'], 'the freeze hook of an IPv6 object returns only its CIDR text'
+    );
+};
+
+subtest 'data frozen as CIDR text alone still thaws' => sub {
+
+    # nfreeze output of 4.080_09, whose hooks froze only the CIDR text
+    my $plain    = pack 'H*', '050b13020b4e6574416464723a3a49500c3139322e302e322e312f3234';
+    my $labelled = pack 'H*',
+        '050b13020f4c6f63616c3a3a4c6162656c6c656417323030313a4442383a303a303a303a303a303a312f3634';
+
+    my $nip = thaw($plain);
+    isa_ok($nip, ['NetAddr::IP'], 'a plain object frozen as CIDR text thaws as NetAddr::IP');
+    is("$nip",                '192.0.2.1/24',       'a plain object frozen as CIDR text keeps its address and mask');
+    is([ sort keys %{$nip} ], [qw(addr isv6 mask)], 'a plain object frozen as CIDR text gains no keys');
+
+    $nip = thaw($labelled);
+    isa_ok($nip, ['Local::Labelled'], 'a subclass object frozen as CIDR text keeps its subclass');
+    is("$nip", '2001:DB8:0:0:0:0:0:1/64', 'a subclass object frozen as CIDR text keeps its address and mask');
+};
+
 done_testing;
