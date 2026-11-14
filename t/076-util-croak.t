@@ -230,6 +230,53 @@ for my $input ("1\x002", "5\x003\x001", "\xb1\xb2", "1\xb2") {
     );
 }
 
+subtest 'bcd2bin and simple_pack count and name the characters of UTF-8 text' => sub {
+    my $digit_e_acute = "1\xe9";
+    utf8::upgrade($digit_e_acute);
+    my $thirty_e_acute = "\xe9" x 30;
+    utf8::upgrade($thirty_e_acute);
+    my $upgraded_digits = '1' x 25;
+    utf8::upgrade($upgraded_digits);
+    for my $name (qw(bcd2bin simple_pack)) {
+        my $function = NetAddr::IP::Util->can($name);
+        my $bad_char = qr/^Bad char in string for NetAddr::IP::Util::$name, character is/;
+        like(
+            dies { $function->($digit_e_acute) },
+            qr/$bad_char '\xe9', allowed are 0-9/,
+            "$name names U+00E9 in upgraded text"
+        );
+        like(
+            dies { $function->($thirty_e_acute) },
+            qr/$bad_char '\xe9', allowed are 0-9/,
+            "$name counts 30 upgraded U+00E9 as 30 characters"
+        );
+        like(
+            dies { $function->("\x{663}" x 21) },
+            qr/$bad_char '\x{663}', allowed are 0-9/,
+            "$name counts 21 U+0663 as 21 characters"
+        );
+        like(
+            dies { $function->("12\x{663}") },
+            qr/$bad_char '\x{663}', allowed are 0-9/,
+            "$name names U+0663 after two digits"
+        );
+        like(
+            dies { $function->("1\xe9\x{663}") },
+            qr/$bad_char '\xe9', allowed are 0-9/,
+            "$name names U+00E9 ahead of U+0663"
+        );
+        like(
+            dies { $function->("\x{663}" x 41) },
+            qr/^Bad arg length for NetAddr::IP::Util::$name, length is 41, should be 1 to 40 digits/,
+            "$name reports 41 U+0663 as length 41"
+        );
+        is( $function->($upgraded_digits),
+            $function->('1' x 25),
+            "$name reads 25 upgraded digits as the same digits"
+        );
+    }
+};
+
 subtest 'bcdn2bin and bcdn2txt croak on a packed digit above 9' => sub {
     for my $case (
         [ "\x1a",     2, 'a' ], [ "\xf1", 2, 'f' ],

@@ -522,6 +522,36 @@ _hold_args(pTHX_ SV ** args, I32 items)
     sv_2mortal(SvREFCNT_inc_simple_NN(args[i]));
 }
 
+/*	the digit text of bcd2bin or simple_pack, read after _packed_ok and
+	measured in characters as the pure Perl build measures it; text that
+	holds a character above 0xFF croaks here, as too long or naming it	*/
+static unsigned char *
+_digit_text(pTHX_ SV * sv, STRLEN * lenp, const char * subname)
+{
+  SV * copy;
+  const U8 * p, * e;
+  STRLEN chars;
+  char * text = SvPV_nomg(sv, *lenp);	/* an object's overloading sets SvUTF8 on sv here */
+
+  if (!SvUTF8(sv))
+    return (unsigned char *) text;
+  copy = newSVpvn_flags(text, *lenp, SVs_TEMP | SVf_UTF8);
+  if (sv_utf8_downgrade(copy, TRUE))
+    return (unsigned char *) SvPV_nomg(copy, *lenp);
+  p = (const U8 *) text;
+  e = p + *lenp;
+  chars = utf8_length(p, e);
+  if (chars > 40)
+    croak("Bad arg length for %s%s, length is %" UVuf ", should be 1 to 40 digits",
+	"NetAddr::IP::Util::",subname,(UV)chars);
+  while (p < e && *p >= '0' && *p <= '9')	/* a digit is one byte, so p stays on a character */
+    p++;
+  croak("Bad char in string for %s%s, character is '%" SVf "', allowed are 0-9",
+	"NetAddr::IP::Util::",subname,
+	SVfARG(newSVpvn_flags((const char *) p, UTF8SKIP(p), SVs_TEMP | SVf_UTF8)));
+  return NULL;	/* not reached */
+}
+
 
 MODULE = NetAddr::IP::Util    PACKAGE = NetAddr::IP::Util
 
@@ -778,8 +808,8 @@ PPCODE:
 	if (!_packed_ok(aTHX_ s))
 	  croak("Bad arg length for %s%s, length is undefined, should be 1 to 40 digits",
 		"NetAddr::IP::Util::",subname);
-	/* packed bcd is binary; the digit text is checked byte by byte, so stays as is */
-	cp = (ix == 2) ? _packed_bytes(aTHX_ s,&len) : (unsigned char *) SvPV_nomg(s,len);
+	/* packed bcd is binary; the digit text is read in characters */
+	cp = (ix == 2) ? _packed_bytes(aTHX_ s,&len) : _digit_text(aTHX_ s,&len,subname);
 	/* bcdn2bin takes packed bcd, two digits per byte; the others take one digit per byte */
 	if (ix == 2)
 	  len <<= 1;
