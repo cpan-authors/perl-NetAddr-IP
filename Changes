@@ -75,6 +75,10 @@ Revision history for Perl extension NetAddr::IP
       back clean results for tainted input. Code that used such a result
       unchecked now dies with "Insecure dependency", as it does on XS.
       Tests in t/085.
+    - Fix GH#298: The constructor of NetAddr::IP::Count adds its pairs in
+      order, as calls to add do, so a group name given twice keeps the
+      subnets of both pairs. Only the last pair counted before. An
+      undefined group name croaks, as it does in add.
 
 4.080_08  2026-11-07 01:17:12+11:00 Australia/Sydney (TRIAL RELEASE)
 

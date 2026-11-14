@@ -25,14 +25,17 @@ sub new {
         '%s::new takes group name and subnet pairs, got %d arguments',
         __PACKAGE__, scalar @pairs
     ) if @pairs % 2;
-    my %groups = @pairs;
-    my $self   = bless {
+    my $self = bless {
         cache_size => $DEFAULT_CACHE_SIZE,
         subnets    => {},
         totals     => {},
         },
         ref $proto || $proto;
-    $self->add($_, $groups{$_}) for keys %groups;
+
+    # pair by pair, in argument order, so a repeated name appends as add does
+    while (my ($name, $subnets) = splice @pairs, 0, 2) {
+        $self->add($name, $subnets);
+    }
     return $self;
 }
 
@@ -209,9 +212,11 @@ changes how addresses are counted or how fast.
 
 Returns a new counter holding the given groups, each with a total of zero.
 Each key is a group name, and each value is a NetAddr::IP subnet or a
-reference to an array of them, as C<add> takes.  Croaks on an odd number of
-arguments or on a subnet that is not a NetAddr::IP object.  Called on a
-counter, it returns a new, empty counter of the same class.
+reference to an array of them, as C<add> takes.  The pairs are added in
+order, as if by one call to C<add> each, so a name given twice holds the
+subnets of both pairs.  Croaks on an odd number of arguments, an undefined
+name or a subnet that is not a NetAddr::IP object.  Called on a counter, it
+returns a new, empty counter of the same class.
 
   my $counter = NetAddr::IP::Count->new(
       lab => NetAddr::IP->new('203.0.113.0/24') );
