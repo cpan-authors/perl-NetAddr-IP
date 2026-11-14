@@ -391,7 +391,7 @@ like(
     'addconst dies on an object that numifies to text'
 );
 
-## the count is read before the address it may modify
+## the address is copied before the count, whose overloading may reallocate or delete it
 
 our $moving = ipv6_aton('2001:db8::1');
 {
@@ -407,7 +407,7 @@ our $moving = ipv6_aton('2001:db8::1');
 }
 is( ipv6_n2x(shiftleft($moving, bless {}, 'Local::Moves')),
     '4002:1B70:0:0:0:0:0:2',
-    'shiftleft reads the address after the count reallocates it'
+    'shiftleft is unaffected by a count that reallocates the address'
 );
 
 our %holder = (address => ipv6_aton('2001:db8::1'));
@@ -420,8 +420,107 @@ our %holder = (address => ipv6_aton('2001:db8::1'));
 }
 is( ipv6_n2x(shiftleft($holder{address}, bless {}, 'Local::Deletes')),
     '4002:1B70:0:0:0:0:0:2',
-    'shiftleft keeps the address alive while the count deletes it'
+    'shiftleft is unaffected by a count that deletes the address'
 );
+
+## the address is read before the count on both builds, and its get magic cannot free the count
+
+{
+
+    package Local::FetchCalls;
+
+    sub TIESCALAR {
+        my ($class, $code) = @_;
+        return bless { code => $code }, $class;
+    }
+    sub FETCH { my ($self) = @_; return $self->{code}->() }
+    sub STORE { return }
+}
+
+subtest 'a count whose get magic changes the address sees the address as passed' => sub {
+    my $address_passed      = ipv6_aton('2001:db8::1');
+    my $address_replacement = ipv6_aton('2001:db8::2');
+    my $address             = $address_passed;
+    tie my $count, 'Local::FetchCalls', sub { $address = $address_replacement; return 1 };
+    is( ipv6_n2x(shiftleft($address, $count)),
+        '4002:1B70:0:0:0:0:0:2',
+        'shiftleft shifts the address as passed, not the one its count stores'
+    );
+    $address = $address_passed;
+    is( ipv6_n2x((addconst($address, $count))[1]),
+        '2001:DB8:0:0:0:0:0:2',
+        'addconst adds to the address as passed, not the one its constant stores'
+    );
+    my $bcd = pack('H*', '1234');
+    tie my $digits, 'Local::FetchCalls', sub { $bcd = pack('H*', '5678'); return 4 };
+    is( bin2bcd(bcdn2bin($bcd, $digits)), '1234',
+        'bcdn2bin converts the packed bcd as passed, not the one its digit count stores'
+    );
+};
+
+subtest "a count that the address's get magic deletes is still read" => sub {
+    my $address = ipv6_aton('2001:db8::1');
+    for my $case (
+        [   addconst => $address,
+            qr/^Bad arg value for NetAddr::IP::Util::addconst, is not a number, should be an integer /
+        ],
+        [   bcdn2bin => pack('H*', '1234'),
+            qr/^Bad digit count for NetAddr::IP::Util::bcdn2bin, is not a number, should be 1 to 4 digits/
+        ],
+        [   shiftleft => $address,
+            qr/^Bad arg value for NetAddr::IP::Util::shiftleft, is not a number, should be 0 thru 128/
+        ],
+    ) {
+        my ($name, $value, $want) = @{$case};
+        my $function = NetAddr::IP::Util->can($name);
+        my %holder   = (count => 'not a number');
+        tie my $deletes, 'Local::FetchCalls', sub { delete $holder{count}; return $value };
+        like(
+            dies { $function->($deletes, $holder{count}) },
+            $want, "$name reports a count that the address's get magic deletes"
+        );
+    }
+};
+
+subtest 'a bad address is reported before the count is read' => sub {
+    tie my $dies, 'Local::FetchCalls', sub { die "count read\n" };
+    like(
+        dies { addconst('short', $dies) },
+        qr/^Bad arg length for NetAddr::IP::Util::addconst, length is 40, should be 128/,
+        'addconst reports a short address before reading its constant'
+    );
+    like(
+        dies { bcdn2bin('x' x 21, $dies) },
+        qr/^Bad arg length for NetAddr::IP::Util::bcdn2bin, length is 42, should be 1 to 40 digits/,
+        'bcdn2bin reports an over-long packed bcd before reading its digit count'
+    );
+    like(
+        dies { shiftleft('short', $dies) },
+        qr/^Bad arg length for NetAddr::IP::Util::shiftleft, length is 40, should be 128/,
+        'shiftleft reports a short address before reading its count'
+    );
+};
+
+subtest 'a bad count is echoed with its characters and any NUL byte' => sub {
+    for my $count ("\x{663}", "3\0") {
+        my $shown = join q{ }, map { sprintf 'U+%04X', ord } split //, $count;
+        like(
+            dies { shiftleft($v, $count) },
+            qr/^Bad arg value for NetAddr::IP::Util::shiftleft, is \Q$count\E, should be 0 thru 128/,
+            "shiftleft echoes the count $shown"
+        );
+        like(
+            dies { addconst($v, $count) },
+            qr/^Bad arg value for NetAddr::IP::Util::addconst, is \Q$count\E, should be an integer /,
+            "addconst echoes the constant $shown"
+        );
+        like(
+            dies { bcdn2bin($packed_bcd, $count) },
+            qr/^Bad digit count for NetAddr::IP::Util::bcdn2bin, is \Q$count\E, should be 1 to 8 digits/,
+            "bcdn2bin echoes the digit count $shown"
+        );
+    }
+};
 
 ## the first address is copied before the second runs its overloading
 
@@ -483,6 +582,40 @@ for my $name (qw(add128 sub128)) {
         "$name reports a short first address before an undefined second"
     );
 }
+
+## an address whose own overloading frees it leaves the freed slot alone
+
+our %frees_itself;
+our @pushed;
+{
+
+    package Local::FreesItself;
+    use overload
+        q{""} => sub {
+        my $text = $main::frees_itself{text};
+        delete $main::frees_itself{address};
+        push @main::pushed, "\x{100}";    # takes the slot the delete freed
+        return $text;
+        },
+        fallback => 1;
+}
+
+subtest 'an address that frees itself leaves the scalar that reuses its slot alone' => sub {
+    my $object = bless {}, 'Local::FreesItself';    # so only the hash's reference is freed
+    for my $case (
+        [ addconst  => ipv6_aton('2001:db8::1'), 1 ],
+        [ bcdn2bin  => pack('H*', '1234'),       4 ],
+        [ shiftleft => ipv6_aton('2001:db8::1'), 1 ],
+    ) {
+        my ($name, $text, $count) = @{$case};
+        %frees_itself = (address => $object, text => $text);
+        @pushed       = ();
+        NetAddr::IP::Util->can($name)->($frees_itself{address}, $count);
+        ok( utf8::is_utf8($pushed[-1]),
+            "$name leaves the UTF-8 flag on the scalar that takes the freed slot"
+        );
+    }
+};
 
 ## fractional digit counts and argument order
 

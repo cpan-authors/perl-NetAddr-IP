@@ -499,6 +499,28 @@ _packed_bytes(pTHX_ SV * sv, STRLEN * lenp)
   return (unsigned char *) SvPV_nomg(sv, *lenp);
 }
 
+/*	an argument as text for a croak message, without running its get magic
+	again; unlike %s this keeps an embedded NUL and the UTF-8 flag	*/
+static SV *
+_arg_text(pTHX_ SV * sv)
+{
+  STRLEN len;
+  const char * p = SvPV_nomg(sv, len);	/* an overload sets SvUTF8 on sv here */
+
+  return newSVpvn_flags(p, len, SVs_TEMP | (SvUTF8(sv) ? SVf_UTF8 : 0));
+}
+
+/*	keeps every argument alive until the XSUB returns: the stack holds no
+	reference, and an argument's get magic or overloading can free any of them	*/
+static void
+_hold_args(pTHX_ SV ** args, I32 items)
+{
+  I32 i;
+
+  for (i = 0; i < items; i++)
+    sv_2mortal(SvREFCNT_inc_simple_NN(args[i]));
+}
+
 
 MODULE = NetAddr::IP::Util    PACKAGE = NetAddr::IP::Util
 
@@ -524,9 +546,7 @@ PPCODE:
 	  subname = is_shiftleft;
 	else
 	  subname = is_comp128;
-	/* the count is read before ap, which its magic or overloading could free */
-	sv_2mortal(SvREFCNT_inc_simple_NN(s));	/* and could free s itself */
-	k = (ix == 1 && items >= 2) ? _num_arg(aTHX_ ST(1), &nv) : 0;
+	_hold_args(aTHX_ &ST(0), items);
 	if (!_packed_ok(aTHX_ s))
 	  croak("Bad arg length for %s%s, length is undefined, should be 128",
 		"NetAddr::IP::Util::",subname);
@@ -539,21 +559,20 @@ PPCODE:
 	  XPUSHs(sv_2mortal(newSVpvn((char *)(ap +12),4)));
 	  XSRETURN(1);
 	}
+	/* copied before the count is read, whose magic or overloading can change or free s */
+	memcpy(wa,ap,16);
 	if (ix == 1) {
-	  if (k == 0) {
-	    memcpy(wa,ap,16);
-	  }
+	  k = (items >= 2) ? _num_arg(aTHX_ ST(1), &nv) : 0;
+	  if (k == 0)		/* no count, undef or the empty string: no shift */
+	    nv = 0;
 	  /* NaN fails the range test, so it never reaches the cast */
-	  else if (k < 0 || !(nv >= 0 && nv <= 128) || nv != (NV)(IV)nv) {
-	    croak("Bad arg value for %s, is %s, should be 0 thru 128",
-		"NetAddr::IP::Util::shiftleft",SvPV_nomg_nolen(ST(1)));
+	  if (k < 0 || !(nv >= 0 && nv <= 128) || nv != (NV)(IV)nv) {
+	    croak("Bad arg value for %s, is %" SVf ", should be 0 thru 128",
+		"NetAddr::IP::Util::shiftleft",SVfARG(_arg_text(aTHX_ ST(1))));
 	  }
-	  else if (nv == 0) {
-	    memcpy(wa,ap,16);
-	  }
-	  else {
+	  if (nv > 0) {
 	    i = (int)nv;
-	    netswap_copy(wa,ap,4);
+	    netswap(wa,4);
 	    do {
 	      _128x2(wa);
 	      i--;
@@ -562,7 +581,6 @@ PPCODE:
 	  }
 	}
 	else {
-	  memcpy(wa,ap,16);
 	  fastcomp128(wa);
 	}
 	XPUSHs(sv_2mortal(newSVpvn((char *)wa,16)));
@@ -633,9 +651,7 @@ PREINIT:
 	I32 cnst;
 	int k;
 PPCODE:
-	/* the constant is read before ap, which its magic or overloading could free */
-	sv_2mortal(SvREFCNT_inc_simple_NN(s));	/* and could free s itself */
-	k = _num_arg(aTHX_ c, &nv);
+	_hold_args(aTHX_ &ST(0), items);
 	if (!_packed_ok(aTHX_ s))
 	  croak("Bad arg length for %s, length is undefined, should be 128",
 		"NetAddr::IP::Util::addconst");
@@ -644,14 +660,16 @@ PPCODE:
 	  croak("Bad arg length for %s, length is %" UVuf ", should be %d",
 		"NetAddr::IP::Util::addconst",(UV)(len *8),128);
 	}
+	/* copied before the constant is read, whose magic or overloading can change or free s */
+	netswap_copy(wa,ap,4);
+	k = _num_arg(aTHX_ c, &nv);
 	if (k == 0)
 	  cnst = 0;
 	else if (k < 0 || !(nv >= -2147483648.0 && nv <= 2147483647.0) || nv != (NV)(I32)nv)
-	  croak("Bad arg value for %s, is %s, should be an integer from -2147483648 thru 2147483647",
-		"NetAddr::IP::Util::addconst",SvPV_nomg_nolen(c));
+	  croak("Bad arg value for %s, is %" SVf ", should be an integer from -2147483648 thru 2147483647",
+		"NetAddr::IP::Util::addconst",SVfARG(_arg_text(aTHX_ c)));
 	else
 	  cnst = (I32)nv;
-	netswap_copy(wa,ap,4);
 	XPUSHs(sv_2mortal(newSViv((I32)addercon(wa,wb,&a128,cnst))));
 	if (GIMME_V == G_ARRAY) {
 	  netswap(a128.u,4);
@@ -743,7 +761,7 @@ ALIAS:
 PREINIT:
 	BCD n;
 	n128 c128, a128;
-	unsigned char * cp, badc;
+	unsigned char * cp, badc, packed[20];
 	const char * subname;
 	int digits, k;
 	NV nv;
@@ -755,12 +773,10 @@ PPCODE:
 	  subname = is_simple_pack;
 	else
 	  subname = is_bcdn2bin;
+	_hold_args(aTHX_ &ST(0), items);
 	if (!_packed_ok(aTHX_ s))
 	  croak("Bad arg length for %s%s, length is undefined, should be 1 to 40 digits",
 		"NetAddr::IP::Util::",subname);
-	/* the digit count is read before cp, which its magic or overloading could free */
-	sv_2mortal(SvREFCNT_inc_simple_NN(s));	/* and could free s itself */
-	k = (ix == 2 && items >= 2) ? _num_arg(aTHX_ ST(1), &nv) : 0;
 	/* packed bcd is binary; the digit text is checked byte by byte, so stays as is */
 	cp = (ix == 2) ? _packed_bytes(aTHX_ s,&len) : (unsigned char *) SvPV_nomg(s,len);
 	/* bcdn2bin takes packed bcd, two digits per byte; the others take one digit per byte */
@@ -776,17 +792,22 @@ PPCODE:
 	    croak("Bad usage, should have %s('packedbcd','length')",
 		"NetAddr::IP::Util::bcdn2bin");
 	  }
+	  /* copied before the count is read, whose magic or overloading can change or free s */
+	  memcpy(packed,cp,len);
+	  k = _num_arg(aTHX_ ST(1), &nv);
 	  if (k <= 0 || !(nv >= 1 && nv < (NV)(len << 1) + 1) || nv != (NV)(int)nv) {
-	    croak("Bad digit count for %s%s, is %s, should be 1 to %d digits",
-		"NetAddr::IP::Util::",subname,k == 0 ? "0" : SvPV_nomg_nolen(ST(1)),(int)(len << 1));
+	    croak("Bad digit count for %s%s, is %" SVf ", should be 1 to %" SVf " digits",
+		"NetAddr::IP::Util::",subname,
+		SVfARG(k == 0 ? newSVpvs_flags("0", SVs_TEMP) : _arg_text(aTHX_ ST(1))),
+		SVfARG(sv_2mortal(newSViv((int)(len << 1)))));
 	  }
 	  digits = (int)nv;
 	  subname = is_bcdn2bin;
-	  if ((badc = _bcdn_bad(cp, digits))) {
+	  if ((badc = _bcdn_bad(packed, digits))) {
 	    croak("Bad char in string for %s%s, character is '%c', allowed are 0-9",
 		"NetAddr::IP::Util::",subname,badc);
 	  }
-	  if (_bcdn2bin(cp,&a128,&c128,digits))
+	  if (_bcdn2bin(packed,&a128,&c128,digits))
 	    croak("Bad arg value for %s%s, number is larger than 128 bits",
 		"NetAddr::IP::Util::",subname);
 	  netswap(a128.u,4);
