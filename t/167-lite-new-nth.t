@@ -144,4 +144,28 @@ subtest '-0, leading zeros, and the one host of a /32 or /128' => sub {
     );
 };
 
+subtest 'a /31 or /127 has hosts at index 0 and 1, however the index is written' => sub {
+    my $addr = sub {
+        my $rv = $_[0]->nth($_[1]);
+        return defined $rv ? $rv->addr : 'undef';
+    };
+    my $label = sub { ref $_[0] ? "Math::BigInt $_[0]" : "'$_[0]'" };
+    for my $case (
+        [ '192.0.2.4/31',    '192.0.2.4',            '192.0.2.5' ],
+        [ '2001:db8::4/127', '2001:DB8:0:0:0:0:0:4', '2001:DB8:0:0:0:0:0:5' ],
+    ) {
+        my ($cidr, $first, $second) = @$case;
+        my $net = NetAddr::IP::Lite->new($cidr);
+        for my $index (0, '00', '-0', '-00', Math::BigInt->new(0)) {
+            is($addr->($net, $index), $first, sprintf 'nth(%s) of %s is index 0', $label->($index), $cidr);
+        }
+        for my $index (1, '01', '001', Math::BigInt->new(1)) {
+            is($addr->($net, $index), $second, sprintf 'nth(%s) of %s is index 1', $label->($index), $cidr);
+        }
+        for my $index (2, '02', -1, '-01', '18446744073709551616') {
+            is($addr->($net, $index), 'undef', sprintf 'nth(%s) of %s is undef', $label->($index), $cidr);
+        }
+    }
+};
+
 done_testing;
