@@ -11,6 +11,10 @@ Revision history for Perl extension NetAddr::IP
       reported rather than read from freed memory. A bad address is
       reported before the count is read. The croak for a bad count prints
       it as given, wide characters and NUL included.
+    - Fix GH#300: An object passed as a packed argument is measured by the
+      text its overloading returns. The XS build no longer counts an upgraded
+      address twice, and the pure Perl build croaks on a wide character in
+      the object's text, as it does for a plain string. Relates to GH#163.
 
 4.080_08  2026-11-07 01:17:12+11:00 Australia/Sydney (TRIAL RELEASE)
 

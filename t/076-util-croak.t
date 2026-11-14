@@ -873,4 +873,53 @@ like(
     'add128 reports a tied undef second argument as undefined'
 );
 
+## an overloaded object is measured by the text its overloading returns
+
+{
+
+    package Local::CountsText;
+    use overload
+        q{""}    => sub { my ($self) = @_; $self->{calls}++; return $self->{text} },
+        fallback => 1;
+
+    sub new {
+        my ($class, $text) = @_;
+        return bless { calls => 0, text => $text }, $class;
+    }
+}
+
+# bcd2bin and simple_pack take digit text, not packed bytes
+my @packed_names = grep { $_ ne 'bcd2bin' && $_ ne 'simple_pack' } sort keys %packed_call;
+
+subtest 'an object whose text is an upgraded packed argument' => sub {
+    for my $name (@packed_names) {
+        my ($code, @args) = @{ $packed_call{$name} };
+        my @objects = map { my $text = $_; utf8::upgrade($text); Local::CountsText->new($text) } @args;
+
+        # a croak is the result, so one function that dies does not hide the rest
+        my $got = eval { $code->(@objects) } // $@;
+        is($got,                             $code->(@args),  "$name reads the bytes of an object's upgraded text");
+        is([ map { $_->{calls} } @objects ], [ (1) x @args ], "$name stringifies each object once");
+    }
+    my $high_bcd     = pack('H*', '9876');
+    my $upgraded_bcd = $high_bcd;
+    utf8::upgrade($upgraded_bcd);
+    is( eval { bcdn2bin(Local::CountsText->new($upgraded_bcd), 4) } // $@,
+        bcdn2bin($high_bcd, 4),
+        'bcdn2bin reads the bytes of an object whose upgraded text holds bytes above 0x7F'
+    );
+};
+
+subtest 'an object whose text has a character above 0xFF' => sub {
+    for my $name (@packed_names) {
+        my ($code, @args) = @{ $packed_call{$name} };
+        my $wide = Local::CountsText->new("\x{100}" x length $args[0]);
+        like(
+            dies { $code->($wide, @args[ 1 .. $#args ]) },
+            qr/^Wide character in /,
+            "$name croaks on an object whose text has a wide character"
+        );
+    }
+};
+
 done_testing;
