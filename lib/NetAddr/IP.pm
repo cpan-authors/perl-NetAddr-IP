@@ -877,6 +877,15 @@ host address; with a mask it is the network of that size:
   NetAddr::IP->new('10.1.2');        # 10.1.0.2/32
   NetAddr::IP->new('10.1.2', 24);    # 10.1.2.0/24
 
+A trailing dot or a range is different: the form names a network, so
+it carries its own mask. A mask argument, or a mask after a slash, has
+to be that mask or C<host>, and any other mask returns undef:
+
+  NetAddr::IP->new('192.0.2.', 24);       # 192.0.2.0/24
+  NetAddr::IP->new('192.0.2.', 28);       # undef
+  NetAddr::IP->new('192.0.2.4-7', 30);    # 192.0.2.4/30
+  NetAddr::IP->new('192.0.2.4-7', 24);    # undef
+
 RFC 3986 brackets around an IPv6 literal, which is how a URI carries one:
 
   NetAddr::IP->new('[2001:db8::1]/64');   # 2001:DB8:0:0:0:0:0:1/64

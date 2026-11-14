@@ -71,4 +71,32 @@ subtest 'every range in the last octet is defined exactly when it is one block' 
     is(\@wrong, [], 'no range is accepted or refused against the rule');
 };
 
+subtest 'a short or range form takes only its own mask or host as a mask' => sub {
+    for my $case (
+        [ '192.',                  8,  '192.0.0.0/8' ],
+        [ '192-195.',              6,  '192.0.0.0/6' ],
+        [ '192.0.',                16, '192.0.0.0/16' ],
+        [ '192.0-3.',              14, '192.0.0.0/14' ],
+        [ '192.0.2.',              24, '192.0.2.0/24' ],
+        [ '192.0.0-3.',            22, '192.0.0.0/22' ],
+        [ '192.0.2.4-7',           30, '192.0.2.4/30' ],
+        [ '192.0.2.0-192.0.2.255', 24, '192.0.2.0/24' ],
+    ) {
+        my ($form, $own, $want) = @$case;
+        my $other = $own == 24 ? 28 : 24;
+        is(show($L->new($form, $own)),   $want, "a call new('$form', $own) is $want");
+        is(show($L->new($form, 'host')), $want, "a call new('$form', 'host') is $want");
+        is($L->new($form, $other),       undef, "a call new('$form', $other) is undef");
+        is($L->new("$form/$other"),      undef, "a call new('$form/$other') is undef");
+    }
+    is( $L->new('192.0.2.', '255.255.255.240'),
+        undef, "a call new('192.0.2.', '255.255.255.240') is undef"
+    );
+    is($L->new6('192.0.2.', 24), undef, "a call new6('192.0.2.', 24) is undef");
+    is( show($L->new6('192.0.2.', 120)),
+        '0:0:0:0:0:0:C000:200/120',
+        "a call new6('192.0.2.', 120) is ::192.0.2.0/120"
+    );
+};
+
 done_testing;
