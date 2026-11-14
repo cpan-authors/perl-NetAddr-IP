@@ -41,6 +41,10 @@ Revision history for Perl extension NetAddr::IP
       address in force, so new('192.0.2.0/24', undef) gives 192.0.2.0/24
       where it gave undef. With no mask in the address, an undef mask is
       still the host mask, as GH#219 set for new6('loopback', undef).
+    - Fix GH#291: An IPv4 /0 from default, any, or a mask of default,
+      any or :: stores the IPv4 /0 mask. It stored 128 zero bits, so
+      arithmetic left IPv4 space and the comparison operators said it
+      differed from 0.0.0.0/0. An IPv6 /0 keeps its all-zero mask.
 
 4.080_08  2026-11-07 01:17:12+11:00 Australia/Sydney (TRIAL RELEASE)
 
