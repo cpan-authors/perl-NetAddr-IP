@@ -215,4 +215,33 @@ subtest 'the mapped and cis constructors use the same number reading' => sub {
     is($cis, undef, 'a call new_cis6 of -1 is undef');
 };
 
+subtest 'an undef mask argument defers to the mask written in the string' => sub {
+    for my $case (
+        [ 'new',    '192.0.2.0/24',            '192.0.2.0/24' ],
+        [ 'new',    '192.0.2.0 24',            '192.0.2.0/24' ],
+        [ 'new',    '192.0.2.0/255.255.255.0', '192.0.2.0/24' ],
+        [ 'new',    '[2001:db8::1]/64',        '2001:DB8:0:0:0:0:0:1/64' ],
+        [ 'new',    '[2001:db8::1/64]',        '2001:DB8:0:0:0:0:0:1/64' ],
+        [ 'new4',   '192.0.2.0/24',            '192.0.2.0/24' ],
+        [ 'new6',   '2001:db8::/32',           '2001:DB8:0:0:0:0:0:0/32' ],
+        [ 'new6',   'loopback/64',             '0:0:0:0:0:0:0:1/64' ],
+        [ 'new_no', '192.0.2.0/24',            '192.0.2.0/24' ],
+    ) {
+        my ($ctor, $text, $want) = @$case;
+        is(show($L->$ctor($text)),        $want, "a call $ctor('$text') gives $want");
+        is(show($L->$ctor($text, undef)), $want, "a call $ctor('$text', undef) gives $want");
+    }
+
+    # with no mask in the string, an undef mask is still a host mask
+    for my $case (
+        [ 'new',  '192.0.2.1', '192.0.2.1/32' ],
+        [ 'new',  '10.1',      '10.0.0.1/32' ],
+        [ 'new6', 'loopback',  '0:0:0:0:0:0:0:1/128' ],
+        [ 'new6', '::',        '0:0:0:0:0:0:0:0/128' ],
+    ) {
+        my ($ctor, $text, $want) = @$case;
+        is(show($L->$ctor($text, undef)), $want, "a call $ctor('$text', undef) gives $want");
+    }
+};
+
 done_testing;

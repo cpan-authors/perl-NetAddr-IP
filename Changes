@@ -37,6 +37,10 @@ Revision history for Perl extension NetAddr::IP
     - Fix GH#297: The split methods accept a Math::BigInt as a mask
       length, as the constructor does. It warned and then croaked
       "netmask error".
+    - Fix GH#292: An undef mask argument leaves a mask written in the
+      address in force, so new('192.0.2.0/24', undef) gives 192.0.2.0/24
+      where it gave undef. With no mask in the address, an undef mask is
+      still the host mask, as GH#219 set for new6('loopback', undef).
 
 4.080_08  2026-11-07 01:17:12+11:00 Australia/Sydney (TRIAL RELEASE)
 
