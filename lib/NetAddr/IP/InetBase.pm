@@ -217,6 +217,9 @@ sub fillIPv4 {
 # whitespace, which no address or host name holds, is refused before the resolver sees it
 my $WHITESPACE = qr/[\t\n\x0B\f\r ]/;
 
+# a last label of digits or 0x hex, with or without a final dot, is a number to the resolver
+my $NUMERIC_LAST_LABEL = qr/(?:\A|[.])(?:[0-9]+|0[xX][0-9a-fA-F]*)[.]?\z/;
+
 sub inet_aton {
     return undef if defined $_[0] && $_[0] =~ $WHITESPACE;
     my $host = fillIPv4($_[0]);
@@ -227,6 +230,9 @@ sub inet_aton {
     if ($host =~ /\A([0-9]+)[.]([0-9]+)[.]([0-9]+)[.]([0-9]+)\z/) {
         return pack('C4', $1, $2, $3, $4);
     }
+
+    # BSD C libraries read such text with hex and octal parts, glibc sends it to DNS
+    return undef if $host =~ $NUMERIC_LAST_LABEL;
     return scalar gethostbyname($host);
 }
 
@@ -352,9 +358,11 @@ Convert a dot-quad IP address into an IPv4 packed network address.
   returns:  packed network address, or undef
 
 Short forms follow the BSD C<inet_aton> convention, not RFC 791:
-C<127.1> is 127.0.0.1 and C<192.0.2> is 192.0.0.2.  Its octal reading
-of a leading zero does not: C<192.0.2.010> returns undef.  A literal
-does not call C<gethostbyname>.  Other text does, and that function
+C<127.1> is 127.0.0.1 and C<192.0.2> is 192.0.0.2.  Its octal and hex
+readings do not: C<192.0.2.010> returns undef, and so does any text
+whose last label is a number or C<0x> hex, such as C<0xc0.0.2.1>,
+C<192.0.2.1.> or C<host.123>.  None of these calls C<gethostbyname>,
+and neither does a literal.  Other text does, and that function
 keeps one static buffer, so two threads resolving names at once can
 swap answers.  Returns undef for an octet above 255, for text with
 whitespace, and for text that does not resolve.

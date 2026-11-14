@@ -3,13 +3,21 @@
 use Test2::V1 -ipP;
 use Test2::Plugin::NoWarnings;
 
-# a resolver that trims surrounding whitespace, as a platform's may, while $RESOLVER_TRIMS is set;
-# no mock tool can replace a builtin, so CORE::GLOBAL takes it before the modules compile
+# a resolver that trims surrounding whitespace, as a platform's may, while $RESOLVER_TRIMS is set,
+# and answers from %answer_of first; no mock tool can replace a builtin, so CORE::GLOBAL takes it
+# before the modules compile
 our $RESOLVER_TRIMS = 0;
+our %answer_of;
+our @looked_up;
 
 BEGIN {
     *CORE::GLOBAL::gethostbyname = sub {
         my ($name) = @_;
+        push @looked_up, $name;
+        if (exists $answer_of{$name}) {
+            my $addr = $answer_of{$name};
+            return wantarray ? ($name, '', 2, 4, $addr) : $addr;
+        }
         $name =~ s/\A[\t\n\x0B\f\r ]+|[\t\n\x0B\f\r ]+\z//g if $RESOLVER_TRIMS;
         return CORE::gethostbyname($name);
     };
@@ -145,6 +153,35 @@ subtest 'text with a NUL byte is not an address or a name' => sub {
         is( [ naip_gethostbyname($text) ], [],
             "naip_gethostbyname of '$name'"
         );
+    }
+};
+
+subtest 'text whose last label is a number or 0x hex does not reach the resolver' => sub {
+
+    # an answer for each text: what a BSD C library gives for the hex forms, what a DNS server could
+    # give for the rest, so a lookup shows in the result as well as in @looked_up
+    local %answer_of = (
+        '0XC0.0.2.1'   => pack('C4', 192, 0,  2, 1),
+        '0xc0.0.2.010' => pack('C4', 192, 0,  2, 8),
+        '0xc0.0.2.1'   => pack('C4', 192, 0,  2, 1),
+        '0xc0000201'   => pack('C4', 192, 0,  2, 1),
+        '192.0.2.1.'   => pack('C4', 192, 0,  2, 1),
+        '192.0.2.1.5'  => pack('C4', 192, 0,  2, 1),
+        '198.51.0x64'  => pack('C4', 198, 51, 0, 100),
+        'example.123'  => pack('C4', 192, 0,  2, 1),
+        'name.example' => pack('C4', 192, 0,  2, 1),
+    );
+    {
+        local @looked_up;
+        is( packed_hex(inet_aton('name.example')),
+            'c0000201', 'a host name reaches the resolver and gets its answer'
+        ) or bail_out('the resolver override is not in place');
+        is(\@looked_up, ['name.example'], 'the resolver was asked for name.example');
+    }
+    for my $text (sort grep { $_ ne 'name.example' } keys %answer_of) {
+        local @looked_up;
+        is(packed_hex(inet_aton($text)), undef, "inet_aton of '$text'");
+        is(\@looked_up,                  [],    "the resolver was not asked for '$text'");
     }
 };
 

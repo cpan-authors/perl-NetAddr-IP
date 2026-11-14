@@ -62,6 +62,12 @@ Revision history for Perl extension NetAddr::IP
       parser, and on macOS inet_pton(2.5, '192.0.2.010') returned
       192.0.2.10. A call that passed such a number and got an address now
       croaks.
+    - Fix GH#288: Text whose last label is a number or 0x hex, such as
+      0xc0.0.2.010, or that ends in a dot after a number, such as
+      192.0.2.1 followed by a dot, gets undef from inet_aton() without a
+      lookup. The C resolver read 0xc0.0.2.010 as 192.0.2.8 on macOS and
+      sent it to DNS on Linux. Host names still resolve. This breaks code
+      on macOS that relied on hex, such as 0xc0000201 for 192.0.2.1.
 
 4.080_08  2026-11-07 01:17:12+11:00 Australia/Sydney (TRIAL RELEASE)
 
