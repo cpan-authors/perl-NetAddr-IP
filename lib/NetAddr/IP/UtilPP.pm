@@ -179,7 +179,10 @@ sub _deadlen {
         defined $len
         ? $len * $OCTET_BITS
         : 'undefined';
-    croak "Bad arg length for $sub, length is $bits, should be $should";
+
+    # die, not croak: older Carp reads tied caller arguments while building its message
+    my ($file, $line) = (caller(1))[ 1, 2 ];
+    die "Bad arg length for $sub, length is $bits, should be $should at $file line $line.\n";
 }
 
 sub hasbits($) {
@@ -255,10 +258,17 @@ sub _plain_number {
 }
 
 sub shiftleft($;@) {
+
+    # hold the count before address get magic; test tied before ref because
+    # ref() reads a tied scalar, and older perls read through \arg too
+    my $count_ref =
+        (defined(tied($_[0])) || ref($_[0])) && @_ >= 2
+        ? \$_[1]
+        : undef;
     my $bits = _bytes($_[0]);
     _deadlen(length($bits))
         if !defined($bits) || length($bits) != $V6_PACKED_BYTES;
-    my $given  = $_[1];
+    my $given  = $count_ref ? ${$count_ref} : @_ >= 2 ? $_[1] : undef;
     my $shifts = _plain_number($given);
     return $bits unless defined $shifts && $shifts ne '';
 
@@ -338,10 +348,18 @@ Croaks if C<$ipv6naddr> is not 16 bytes.
 =cut
 
 sub addconst {
-    my ($a128, $given) = (_bytes($_[0]), $_[1]);
-    my $const = _plain_number($given);
+
+    # hold the constant before address get magic; test tied before ref because
+    # ref() reads a tied scalar, and older perls read through \arg too
+    my $const_ref =
+        (defined(tied($_[0])) || ref($_[0])) && @_ >= 2
+        ? \$_[1]
+        : undef;
+    my $a128 = _bytes($_[0]);
     _deadlen(length($a128))
         if !defined($a128) || length($a128) != $V6_PACKED_BYTES;
+    my $given = $const_ref ? ${$const_ref} : @_ >= 2 ? $_[1] : undef;
+    my $const = _plain_number($given);
     unless (defined $const && $const ne '') {
         return (wantarray) ? (0, $a128) : 0;
     }
@@ -374,11 +392,14 @@ Croaks if either argument is not 16 bytes.
 
 sub add128 {
 
+    # hold the second before the first is read: the first's FETCH can delete the second
+    my $b_ref = @_ >= 2 ? \$_[1] : undef;
+
     # copied before the second argument is read: its get magic can replace it
     my $a128 = _bytes($_[0]);
     _deadlen(length($a128))
         if !defined($a128) || length($a128) != $V6_PACKED_BYTES;
-    my $b128 = _bytes($_[1]);
+    my $b128 = _bytes($b_ref ? $$b_ref : $_[1]);
     _deadlen(length($b128))
         if !defined($b128) || length($b128) != $V6_PACKED_BYTES;
     @_ = ($a128, $b128, 0);
@@ -405,11 +426,14 @@ Croaks if either argument is not 16 bytes.
 
 sub sub128 {
 
+    # hold the second before the first is read: the first's FETCH can delete the second
+    my $b_ref = @_ >= 2 ? \$_[1] : undef;
+
     # copied before the second argument is read: its get magic can replace it
     my $a128 = _bytes($_[0]);
     _deadlen(length($a128))
         if !defined($a128) || length($a128) != $V6_PACKED_BYTES;
-    my $b128 = _bytes($_[1]);
+    my $b128 = _bytes($b_ref ? $$b_ref : $_[1]);
     _deadlen(length($b128))
         if !defined($b128) || length($b128) != $V6_PACKED_BYTES;
     @_ = ($a128, ~$b128, 1);
@@ -741,15 +765,25 @@ a character outside 0-9.
 sub bcdn2bin($;@) {
     croak q|Bad usage, should have NetAddr::IP::Util::bcdn2bin('packedbcd','length')|
         if @_ < 2;
-    my ($bcd, $given) = (_bytes($_[0]), $_[1]);
-    my $dc = _plain_number($given);
-    $dc = 0 unless defined $dc && $dc ne '';
+
+    # hold the digit count before packed bcd get magic; test tied before ref
+    # because ref() reads a tied scalar, and older perls read through \arg
+    my $count_ref = (defined(tied($_[0])) || ref($_[0])) ? \$_[1] : undef;
+    my $bcd       = _bytes($_[0]);
     my $digits =
         defined $bcd
         ? 2 * length($bcd)
         : 'undefined';
-    croak "Bad arg length for NetAddr::IP::Util::bcdn2bin, length is $digits, should be 1 to $MAX_BCD_DIGITS digits"
-        if !defined($bcd) || length($bcd) > $PACKED_BCD_BYTES;
+    if (!defined($bcd) || length($bcd) > $PACKED_BCD_BYTES) {
+
+        # die, not croak: older Carp reads tied caller arguments while building its message
+        my ($file, $line) = (caller(0))[ 1, 2 ];
+        die
+"Bad arg length for NetAddr::IP::Util::bcdn2bin, length is $digits, should be 1 to $MAX_BCD_DIGITS digits at $file line $line.\n";
+    }
+    my $given = $count_ref ? ${$count_ref} : $_[1];
+    my $dc    = _plain_number($given);
+    $dc = 0 unless defined $dc && $dc ne '';
 
     # an integer count, made plain because it goes into an unpack template
     croak "Bad digit count for NetAddr::IP::Util::bcdn2bin, is $dc, should be 1 to $digits digits"
