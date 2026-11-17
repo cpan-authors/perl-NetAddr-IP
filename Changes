@@ -1,6 +1,9 @@
 Revision history for Perl extension NetAddr::IP
 
 {{$NEXT}}
+    - Fix GH#328: The split methods no longer pass the net's address
+      family to new() as a third argument, which new() never read. No
+      result changes.
     - Fix GH#286: In both builds, shiftleft(), addconst() and bcdn2bin()
       read the address before the count, and keep the count alive when
       the address can free it, so a tied address that frees the count is
