@@ -58,12 +58,17 @@ sub _callersub {
     return $sub;
 }
 
+# an argument as text, read once as the XS reads it; length, because ref() is false for class '0'
+sub _text {
+    my ($value) = @_;
+    return length ref $value ? "$value" : $value;
+}
+
 # a downgraded copy of a packed argument, so it is measured in bytes as the XS measures it
 sub _bytes {
-    my ($packed) = @_;
 
     # utf8::downgrade leaves a reference as it is, so an object is measured by its text
-    $packed = "$packed" if ref $packed;
+    my $packed = _text($_[0]);
     croak sprintf($WIDE_DIES, _callersub()) unless utf8::downgrade($packed, 1);
     return $packed;
 }
@@ -638,7 +643,7 @@ character other than 0 to 9, or is a number too large for 128 bits.
 =cut
 
 sub bcd2bin($;@) {
-    my ($bcd) = @_;
+    my $bcd = _text($_[0]);
     _bcdcheck($bcd);
     @_ = ($bcd, 'NetAddr::IP::Util::bcd2bin');
     goto &_bcd2bin;
@@ -861,7 +866,7 @@ sub _bcdcheck {
 }
 
 sub simple_pack($;@) {
-    my ($bcd) = @_;
+    my $bcd = _text($_[0]);
     _bcdcheck($bcd);
     while (length($bcd) < $MAX_BCD_DIGITS) {
         $bcd = '0' . $bcd;

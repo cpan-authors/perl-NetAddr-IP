@@ -1030,17 +1030,17 @@ like(
     }
 }
 
-# bcd2bin and simple_pack take digit text, not packed bytes
+# the digit text of bcd2bin and simple_pack is not packed, so a wide character in it is a bad digit
 my @packed_names = grep { $_ ne 'bcd2bin' && $_ ne 'simple_pack' } sort keys %packed_call;
 
-subtest 'an object whose text is an upgraded packed argument' => sub {
-    for my $name (@packed_names) {
+subtest 'an object whose text is an upgraded argument' => sub {
+    for my $name (sort keys %packed_call) {
         my ($code, @args) = @{ $packed_call{$name} };
         my @objects = map { my $text = $_; utf8::upgrade($text); Local::CountsText->new($text) } @args;
 
         # a croak is the result, so one function that dies does not hide the rest
         my $got = eval { $code->(@objects) } // $@;
-        is($got,                             $code->(@args),  "$name reads the bytes of an object's upgraded text");
+        is($got,                             $code->(@args),  "$name reads an object's upgraded text");
         is([ map { $_->{calls} } @objects ], [ (1) x @args ], "$name stringifies each object once");
     }
     my $high_bcd     = pack('H*', '9876');
@@ -1077,6 +1077,22 @@ subtest 'an object returned unchanged comes back as its bytes' => sub {
         my $got  = $code->(Local::CountsText->new($packed));
         is(ref $got, q{},              "$label returns a plain string for an object");
         is($got,     $code->($packed), "$label returns the object's bytes");
+    }
+};
+
+subtest 'an object of a class whose name is false is stringified once' => sub {
+    my ($calls, $text) = (0);
+    overload::OVERLOAD('0', q{""} => sub { $calls++; return $text }, fallback => 1);
+    my %object_call = (
+        bcd2bin     => '12345',
+        hasbits     => pack('H32', '20010db8000000000000000000000001'),
+        simple_pack => '12345',
+    );
+    for my $name (sort keys %object_call) {
+        my $code = NetAddr::IP::Util->can($name);
+        ($calls, $text) = (0, $object_call{$name});
+        is($code->(bless {}, '0'), $code->($text), "$name reads an object of class 0 by its text");
+        is($calls,                 1,              "$name stringifies an object of class 0 once");
     }
 };
 

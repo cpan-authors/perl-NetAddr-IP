@@ -1,6 +1,9 @@
 Revision history for Perl extension NetAddr::IP
 
 {{$NEXT}}
+    - Fix GH#324: In the pure Perl build, bcd2bin() and simple_pack() read
+      an object's text once, as the XS build does, so its overloading runs
+      once per call.
     - Fix GH#328: The split methods no longer pass the net's address
       family to new() as a third argument, which new() never read. No
       result changes.
