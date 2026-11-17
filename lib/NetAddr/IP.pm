@@ -1482,18 +1482,20 @@ sub _splitplan {
             return () if $x;    # spurious bits
             $mask = $isV6 ? $maddr : $maddr - $IPV4_OFFSET;
         }
-        elsif ($mask = NetAddr::IP->new($addr, $mask, $isV6)) { # will be undefined if bad mask and will fall into oops!
+
+        # will be undefined if bad mask and will fall into oops!
+        elsif ($mask = NetAddr::IP->new($addr, $mask)) {
             $mask = $mask->masklen();
         }
         else {
-            return ();                                          # oops!
+            return ();          # oops!
         }
-        $dif = $mask - $basem;                                  # for normalization
-        return () if $dif < 0;                                  # overange nets not allowed
-        return (\@bits, undef) unless ($dif || $#bits);         # return if original net = mask alone
+        $dif = $mask - $basem;                             # for normalization
+        return () if $dif < 0;                             # overange nets not allowed
+        return (\@bits, undef) unless ($dif || $#bits);    # return if original net = mask alone
         $denom = $dif if $dif > $denom;
         next          if exists $nets{$mask};
-        $nets{$mask} = $mask - $basem;                          # for normalization
+        $nets{$mask} = $mask - $basem;                     # for normalization
     }
 
     # $denom is the normalization denominator, since these are all exponents
