@@ -531,8 +531,9 @@ sub import {
 sub compact {
     _croak_on_class('compact', 'Compact', $_[0]);
 
-    # a reference in, a reference out; a list in, a list out
-    return compactref($_[0]) if ref $_[0] eq 'ARRAY';
+    # a reference in, a reference out; a list in, a list out; compactref checks
+    # what follows a reference
+    return &compactref(@_) if ref $_[0] eq 'ARRAY';
     return @{ compactref(\@_) };
 }
 
@@ -1645,7 +1646,8 @@ Note that if fed with the same IP subnets multiple times, a more
 returned.
 
 Note that C<$me> and all C<$addr>'s must be C<NetAddr::IP> or
-C<NetAddr::IP::Lite> objects.
+C<NetAddr::IP::Lite> objects. Any other element, such as CIDR text or
+undef, croaks.
 
 IPv4 and IPv6 objects are compacted separately. The returned list holds the
 IPv4 results followed by the IPv6 results. The objects passed in are not
@@ -1665,6 +1667,9 @@ C<$me-E<gt>compactref([])> and C<$me-E<gt>compact()> do.
 A list that is not an array reference croaks, so a single object goes in
 as C<$me-E<gt>compactref([$other])>.
 
+The function C<Compact> takes the array reference alone, or followed by
+one undef or empty list. Anything else after it croaks.
+
 Note that C<$me> must be a C<NetAddr::IP> or C<NetAddr::IP::Lite> object.
 
 =cut
@@ -1678,13 +1683,15 @@ sub compactref($) {
 
     # a function call takes one array ref, a method call an array ref after the address
     croak('compactref: a function call takes one array reference')
-        if ref $first eq 'ARRAY' && !(ref $rest eq 'ARRAY' && !@$rest);
+        if ref $first eq 'ARRAY' && (@_ > 2 || !(ref $rest eq 'ARRAY' && !@$rest));
     croak('compactref: the list must be an array reference')
         unless ref $rest eq 'ARRAY' && (ref $first eq 'ARRAY' || _is_address($first));
 
     # a method call compacts the invocant with the list, a function call the list alone
-    my $unr = _is_address($first) ? [ $first, @$rest ] : $first;
+    # copied, so the check below and the loop read each element of a tied list once
+    my $unr = _is_address($first) ? [ $first, @$rest ] : [@$first];
     return [] unless @$unr;
+    croak('compactref: the list must hold only NetAddr::IP objects') if grep { !_is_address($_) } @$unr;
 
     # work on network copies so the caller's objects are not modified, and
     # keep the address families apart: a 128 bit mask comparison would

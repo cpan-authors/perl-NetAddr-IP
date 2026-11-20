@@ -294,12 +294,72 @@ subtest 'compactref croaks on a list that is not an array reference' => sub {
         dies { &NetAddr::IP::compactref([$low], $high) },
         $one_list, 'the function compactref of a list followed by an object croaks'
     );
+    like(
+        dies { &NetAddr::IP::compactref([$low], undef, $high) },
+        $one_list, 'the function compactref of a list followed by undef and an object croaks'
+    );
     is( [ map { "$_" } @{ &NetAddr::IP::compactref([$low], []) } ],
         ['192.0.2.0/25'], 'the function compactref of a list followed by an empty list compacts the list'
     );
     is( [ map { "$_" } @{ $low->compactref([$high]) } ],
         ['192.0.2.0/24'], 'compactref of the same object in a list merges it'
     );
+};
+
+subtest 'compact and compactref croak on a list element that is not an address' => sub {
+    my $croak = qr/\A\Qcompactref: the list must hold only NetAddr::IP objects at ${\__FILE__} line \E[0-9]+/;
+    my $low   = NetAddr::IP->new('192.0.2.0/25');
+    my $high  = NetAddr::IP->new('192.0.2.128/25');
+    like(dies { Compact('192.0.2.0/25') },              $croak, 'Compact of CIDR text croaks');
+    like(dies { Compact(undef) },                       $croak, 'Compact of undef croaks');
+    like(dies { Compact({}) },                          $croak, 'Compact of a hash reference croaks');
+    like(dies { Compact([ $low, '192.0.2.128/25' ]) },  $croak, 'Compact of a list holding CIDR text croaks');
+    like(dies { $low->compactref(['192.0.2.128/25']) }, $croak, 'compactref of a list holding CIDR text croaks');
+    like(dies { $low->compact([$high]) },               $croak, 'the method compact of an array reference croaks');
+    is([ map { "$_" } Compact($low, $high) ], ['192.0.2.0/24'], 'Compact of two objects merges them');
+};
+
+subtest 'Compact of an array reference takes only undef or an empty list after it' => sub {
+    my $croak = qr/\A\Qcompactref: a function call takes one array reference at ${\__FILE__} line \E[0-9]+/;
+    my $low   = NetAddr::IP->new('192.0.2.0/25');
+    my $high  = NetAddr::IP->new('192.0.2.128/25');
+    like(dies { Compact([$low], [$high]) },      $croak, 'Compact of a list followed by a second list croaks');
+    like(dies { Compact([$low], $high) },        $croak, 'Compact of a list followed by an object croaks');
+    like(dies { Compact([$low], undef, $high) }, $croak, 'Compact of a list followed by undef and an object croaks');
+    like(dies { Compact([$low], undef, undef) }, $croak, 'Compact of a list followed by two undefs croaks');
+    like(
+        dies { Compact([$low], [], $high) },
+        $croak, 'Compact of a list followed by an empty list and an object croaks'
+    );
+    is( [ map { "$_" } @{ Compact([ $low, $high ]) } ],
+        ['192.0.2.0/24'], 'Compact of one array reference merges its objects'
+    );
+    is( [ map { "$_" } @{ Compact([$low], []) } ],
+        ['192.0.2.0/25'], 'Compact of a list followed by an empty list compacts the list'
+    );
+    is( [ map { "$_" } @{ Compact([$low], undef) } ],
+        ['192.0.2.0/25'], 'Compact of a list followed by undef compacts the list'
+    );
+};
+
+{
+
+    package Local::CountsFetch;
+
+    require Tie::Array;
+    our @ISA = ('Tie::Array');
+
+    sub TIEARRAY  { my ($class, @list) = @_; return bless { fetches => 0, list => [@list] }, $class }
+    sub FETCH     { my ($self, $index) = @_; $self->{fetches}++; return $self->{list}[$index] }
+    sub FETCHSIZE { my ($self) = @_; return scalar @{ $self->{list} } }
+}
+
+subtest 'Compact reads each element of a tied list once' => sub {
+    tie my @list, 'Local::CountsFetch', NetAddr::IP->new('192.0.2.0/25'), NetAddr::IP->new('192.0.2.128/25');
+    is( [ map { "$_" } @{ Compact(\@list) } ],
+        ['192.0.2.0/24'], 'Compact of a tied list merges its objects'
+    );
+    is(tied(@list)->{fetches}, 2, 'Compact fetches each element of a tied list once');
 };
 
 done_testing;
