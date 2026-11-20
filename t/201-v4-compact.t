@@ -302,4 +302,31 @@ subtest 'compactref croaks on a list that is not an array reference' => sub {
     );
 };
 
+subtest 'compact and compactref croak on a list element that is not an address' => sub {
+    my $croak = qr/\A\Qcompactref: the list must hold only NetAddr::IP objects at ${\__FILE__} line \E[0-9]+/;
+    my $low   = NetAddr::IP->new('192.0.2.0/25');
+    my $high  = NetAddr::IP->new('192.0.2.128/25');
+    like(dies { Compact('192.0.2.0/25') },              $croak, 'Compact of CIDR text croaks');
+    like(dies { Compact(undef) },                       $croak, 'Compact of undef croaks');
+    like(dies { Compact({}) },                          $croak, 'Compact of a hash reference croaks');
+    like(dies { Compact([ $low, '192.0.2.128/25' ]) },  $croak, 'Compact of a list holding CIDR text croaks');
+    like(dies { $low->compactref(['192.0.2.128/25']) }, $croak, 'compactref of a list holding CIDR text croaks');
+    like(dies { $low->compact([$high]) },               $croak, 'compact of an array reference croaks');
+    is([ map { "$_" } Compact($low, $high) ], ['192.0.2.0/24'], 'Compact of two objects merges them');
+};
+
+subtest 'Compact of an array reference takes only undef or an empty list after it' => sub {
+    my $croak = qr/\A\Qcompactref: a function call takes one array reference at ${\__FILE__} line \E[0-9]+/;
+    my $low   = NetAddr::IP->new('192.0.2.0/25');
+    my $high  = NetAddr::IP->new('192.0.2.128/25');
+    like(dies { Compact([$low], [$high]) }, $croak, 'Compact of a list followed by a second list croaks');
+    like(dies { Compact([$low], $high) },   $croak, 'Compact of a list followed by an object croaks');
+    is( [ map { "$_" } @{ Compact([ $low, $high ]) } ],
+        ['192.0.2.0/24'], 'Compact of one array reference merges its objects'
+    );
+    is( [ map { "$_" } @{ Compact([$low], []) } ],
+        ['192.0.2.0/25'], 'Compact of a list followed by an empty list compacts the list'
+    );
+};
+
 done_testing;
