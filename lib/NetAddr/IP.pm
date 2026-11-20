@@ -9,9 +9,8 @@ package NetAddr::IP;
 
 # VERSION
 
-use parent       qw(Exporter NetAddr::IP::Lite);
-use Carp         qw( croak );
-use Scalar::Util qw( blessed );
+use parent qw(Exporter NetAddr::IP::Lite);
+use Carp   qw( croak );
 
 use NetAddr::IP::Constants qw(
     $DEFAULT_NETLIMIT_EXP
@@ -536,10 +535,8 @@ sub Coalesce {
     return &coalesce;
 }
 
-# a NetAddr::IP::Lite object, so a NetAddr::IP and a subclass count too
-sub _is_address {
-    return blessed $_[0] && $_[0]->isa('NetAddr::IP::Lite');
-}
+# the address test in NetAddr::IP::Lite, so this module accepts the same objects
+*_is_address = \&NetAddr::IP::Lite::_is_address;
 
 # the class name is not an object: NetAddr::IP->compact(@list) is a mistake
 sub _croak_on_class {

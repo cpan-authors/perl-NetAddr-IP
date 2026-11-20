@@ -1,6 +1,10 @@
 Revision history for Perl extension NetAddr::IP
 
 {{$NEXT}}
+    - Fix GH#329: One helper in NetAddr::IP::Lite decides what counts as
+      an address object for NetAddr::IP, and for cmp, address order and
+      subtraction. NetAddr::IP::Count keeps its own copy and does not
+      load NetAddr::IP::Lite.
     - Fix GH#328: The split methods no longer pass the net's address
       family to new() as a third argument, which new() never read. No
       result changes.

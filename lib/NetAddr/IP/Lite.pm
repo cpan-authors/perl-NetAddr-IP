@@ -278,7 +278,7 @@ use overload
     'cmp' => sub {
     my ($ip, $other, $swapped) = @_;
     return comp_addr_mask($ip, $other)
-        if blessed $other && $other->isa(__PACKAGE__);
+        if _is_address($other);
 
     # a non-object is the CIDR text, in the written order, as eq does
     return $swapped ? $other cmp $ip->cidr : $ip->cidr cmp $other;
@@ -287,7 +287,7 @@ use overload
 sub comp_addr_mask {
 
     # no address order against a non-object: undef, as <=> is for NaN
-    return undef unless blessed $_[1] && $_[1]->isa(__PACKAGE__);
+    return undef unless _is_address($_[1]);
     my ($c, $rv) = sub128($_[0]->{addr}, $_[1]->{addr});
     return -1 unless $c;
     return 1 if hasbits($rv);
@@ -518,10 +518,9 @@ sub minus {
     croak 'cannot subtract a NetAddr::IP::Lite object from a constant'
         if $swapped;
 
-    # A Math::BigInt is a reference too, so test for an address rather
-    # than for any reference. blessed first, or the isa call on an
-    # unblessed reference dies instead of being answered.
-    unless (blessed $arg && $arg->isa(__PACKAGE__)) {
+    # a Math::BigInt is a reference too, so test for an address
+    # rather than for any reference
+    unless (_is_address($arg)) {
         return _add_constant($ip, $arg, 1);
     }
 
@@ -2001,8 +2000,8 @@ different addresses.
 
 =cut
 
-# true for a NetAddr::IP::Lite object, NetAddr::IP included; a class name
-# such as 'NetAddr::IP' is a string, not an address
+# a Lite object, including NetAddr::IP. A class name is a string.
+# blessed comes first: isa dies on an unblessed reference.
 sub _is_address {
     return blessed $_[0] && $_[0]->isa(__PACKAGE__);
 }
