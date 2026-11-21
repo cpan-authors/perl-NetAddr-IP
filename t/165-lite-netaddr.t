@@ -63,7 +63,7 @@ sub matchNetAddr {
     return 0;
 }
 
-## test 2	instantiate netaddr array
+## test 2   instantiate netaddr array
 subtest 'list2NetAddr builds correct number of objects' => sub {
     my @tstrng = (
 
@@ -88,14 +88,14 @@ subtest 'list2NetAddr builds correct number of objects' => sub {
     is($rv, 6, 'correct number of NA objects');
 };
 
-## test 3-5	check disallowed terms
+## test 3-5 check disallowed terms
 subtest 'matchNetAddr rejects invalid inputs' => sub {
     ok(!matchNetAddr(),        'rejects null parameter');
     ok(!matchNetAddr('junk'),  'rejects non-numeric parameter');
     ok(!matchNetAddr('1.2.3'), 'rejects short IP segment');
 };
 
-## test 6-35	bracket NA objects
+## test 6-35    bracket NA objects
 my @tstrng = (
     '11.22.33.44',               '22.33.44.55 - 22.33.44.65',
     '45.67.89.10-45.67.89.32',   '5.6.7.16/28',

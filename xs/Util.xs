@@ -219,6 +219,9 @@ netswap(void * ap, int len)
 	     ((*a & 0x0000ff00) <<  8) | ((*a & 0x000000ff) << 24));
     a++;
   }
+#else
+  PERL_UNUSED_ARG(ap);
+  PERL_UNUSED_ARG(len);
 #endif
 }
 

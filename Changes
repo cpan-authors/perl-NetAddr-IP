@@ -1,6 +1,8 @@
 Revision history for Perl extension NetAddr::IP
 
 {{$NEXT}}
+    - Fix GH#304: The XS builds without unused-parameter warnings on a
+      big-endian host.
     - Fix GH#324: In the pure Perl build, bcd2bin() and simple_pack() read
       an object's text once, as the XS build does, so its overloading runs
       once per call.
