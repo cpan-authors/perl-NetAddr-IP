@@ -10,9 +10,10 @@ use NetAddr::IP::UtilPP ();
 # an empty string that carries the taint of the environment
 my $TAINT = substr(join('', %ENV), 0, 0);
 
-my $V4   = pack('C4',  192, 0, 2, 1);                          # 192.0.2.1
-my $V6   = pack('H32', '20010db8000000000000000000000001');    # 2001:db8::1
-my $BCDN = pack('H40', '0' x 38 . '42');
+my $V4             = pack('C4',  192, 0, 2, 1);                          # 192.0.2.1
+my $V6             = pack('H32', '20010db8000000000000000000000001');    # 2001:db8::1
+my $BCDN           = pack('H40', '0' x 38 . '42');
+my $MAX_BCD_DIGITS = 40;
 
 # label, function, arguments, index of the string result in list context, that result in hex
 my @CASES = (
@@ -83,6 +84,25 @@ for my $package (qw( NetAddr::IP::Util NetAddr::IP::UtilPP )) {
                 is( $result, $plain,
                     "$name: $label, argument $position tainted, has the same value"
                 );
+            }
+        }
+    };
+}
+
+# label, tainted digit text, its length
+my @BAD_TEXTS = (
+    [ 'empty text',                    $TAINT,                                 0 ],
+    [ 'text one digit over the limit', ('1' x ($MAX_BCD_DIGITS + 1)) . $TAINT, $MAX_BCD_DIGITS + 1 ],
+);
+
+for my $package (qw( NetAddr::IP::Util NetAddr::IP::UtilPP )) {
+    subtest "$package croaks with the length error for tainted digit text of a bad length" => sub {
+        for my $name (qw( bcd2bin simple_pack )) {
+            for my $text (@BAD_TEXTS) {
+                my ($label, $bcd, $length) = @{$text};
+                my $error = "Bad arg length for NetAddr::IP::Util::$name, length is $length, "
+                    . "should be 1 to $MAX_BCD_DIGITS digits";
+                like(dies { $package->can($name)->($bcd) }, qr/\A\Q$error\E at /, "$name: $label");
             }
         }
     };
