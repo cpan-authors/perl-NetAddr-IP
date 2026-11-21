@@ -11,6 +11,7 @@ package NetAddr::IP::UtilPP;
 
 use parent 'Exporter';
 use Carp                   qw( croak );
+use overload               ();
 use Scalar::Util           qw( looks_like_number );
 use NetAddr::IP::Constants qw(
     $IPV4_BITS
@@ -268,12 +269,17 @@ sub _128x10 {
     return $overflow;
 }
 
-# a count or constant as a plain scalar: an object goes through its numeric
-# conversion, as the XS reads it, or else its text
+# a count or constant as a plain scalar, read once as the XS reads it: an object goes
+# through its numeric conversion when that gives a number, or else its text
 sub _plain_number {
     my ($n) = @_;
-    return $n unless ref $n;
-    return looks_like_number($n) ? sprintf('%.17g', $n) : "$n";
+    return $n unless length ref $n;
+    if (my $numify = overload::Method($n, '0+')) {
+        my $number = $numify->($n, undef, q{});
+        return sprintf('%.17g', $number) if looks_like_number($number);
+    }
+    my $text = "$n";
+    return looks_like_number($text) ? sprintf('%.17g', $text) : $text;
 }
 
 sub shiftleft($;@) {
