@@ -859,7 +859,7 @@ sub _bcdcheck {
         defined $bcd
         ? length($bcd)
         : 'undefined';
-    croak sprintf("Bad arg length for %s, length is %s, should be 1 to $MAX_BCD_DIGITS digits", _callersub(), $len)
+    croak sprintf('Bad arg length for %s, length is %s, should be 1 to %d digits', _callersub(), $len, $MAX_BCD_DIGITS)
         if !defined($bcd) || length($bcd) > $MAX_BCD_DIGITS || length($bcd) < 1;
     croak sprintf("Bad char in string for %s, character is '%s', allowed are 0-9", _callersub(), $1)
         if $bcd =~ /([^0-9])/;
