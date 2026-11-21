@@ -31,7 +31,7 @@ use NetAddr::IP::Util qw(
     sub128
 );
 
-## simple_pack – bad character input
+## simple_pack rejects bad character input
 
 for my $input (
     '1234/',
@@ -48,52 +48,52 @@ for my $input (
     );
 }
 
-## bcd2bin – bad character input
+## bcd2bin rejects bad character input
 
 for my $input ('1234/', '1234:', 'a1234', '&1234',) {
     like(dies { bcd2bin($input) }, qr/Bad/, "bcd2bin dies on '$input'");
 }
 
-## bcdn2bin – bad vector string length
+## bcdn2bin rejects a bad vector string length
 
 like(
     dies { bcdn2bin('123456789012345678901') },
     qr/Bad/, 'bcdn2bin dies on bad length'
 );
 
-## bcdn2bin – missing length specifier
+## bcdn2bin rejects a missing length specifier
 
 like(
     dies { bcdn2bin('12345678901234567890') },
     qr/Bad/, 'bcdn2bin dies on missing length specifier'
 );
 
-## bin2bcd – bad vector string length
+## bin2bcd rejects a bad vector string length
 
 like(dies { bin2bcd('123') }, qr/Bad/, 'bin2bcd dies on bad length');
 
-## bin2bcdn – bad vector string length
+## bin2bcdn rejects a bad vector string length
 
 like(dies { bin2bcdn('123') }, qr/Bad/, 'bin2bcdn dies on bad length');
 
-## bcdn2txt – bad vector string length
+## bcdn2txt rejects a bad vector string length
 
 like(
     dies { bcdn2txt('123456789012345678901') },
     qr/Bad/, 'bcdn2txt dies on bad length'
 );
 
-## bcdn2txt – success case
+## bcdn2txt success case
 
 my $rv  = bcdn2txt('12345678901234567890');
 my $exp = '3132333435363738393031323334353637383930';
 is($rv, $exp, 'bcdn2txt returns expected value');
 
-## hasbits – bad vector string length
+## hasbits rejects a bad vector string length
 
 like(dies { hasbits('123') }, qr/Bad/, 'hasbits dies on bad length');
 
-## isIPv4 – bad vector string length
+## isIPv4 rejects a bad vector string length
 
 like(
     dies { isIPv4('12345678901234567') },
@@ -117,69 +117,69 @@ like(
     'isAnyIPv4 names itself, not the isIPv4 it calls'
 );
 
-## add128 – bad vector string length
+## add128 rejects a bad vector string length
 
 like(
     dies { add128('123', '1234567890123456') },
     qr/Bad/, 'add128 dies on bad length'
 );
 
-## sub128 – bad vector string length
+## sub128 rejects a bad vector string length
 
 like(
     dies { sub128('1234567890123456', '12345678901234567') },
     qr/Bad/, 'sub128 dies on bad length'
 );
 
-## comp128 – bad vector string length
+## comp128 rejects a bad vector string length
 
 like(dies { comp128('123') }, qr/Bad/, 'comp128 dies on bad length');
 
-## shiftleft – bad vector string length
+## shiftleft rejects a bad vector string length
 
 like(
     dies { shiftleft('12345678901234567') },
     qr/Bad/, 'shiftleft dies on bad length'
 );
 
-## shiftleft – bad shift count (negative)
+## shiftleft rejects a negative shift count
 
 like(
     dies { shiftleft('1234567890123456', -1) },
     qr/Bad/, 'shiftleft dies on negative shift count'
 );
 
-## shiftleft – bad shift count (too large)
+## shiftleft rejects a shift count that is too large
 
 like(
     dies { shiftleft('1234567890123456', 129) },
     qr/Bad/, 'shiftleft dies on shift count too large'
 );
 
-## bcd2bin – empty string
+## bcd2bin rejects an empty string
 
 like(dies { bcd2bin('') }, qr/Bad/, 'bcd2bin dies on empty string');
 
-## simple_pack – empty string
+## simple_pack rejects an empty string
 
 like(dies { simple_pack('') }, qr/Bad/, 'simple_pack dies on empty string');
 
-## bcdn2txt – empty string
+## bcdn2txt rejects an empty string
 
 like(dies { bcdn2txt('') }, qr/Bad/, 'bcdn2txt dies on empty string');
 
-## bcdn2bin – empty string
+## bcdn2bin rejects an empty string
 
 like(dies { bcdn2bin('', 40) }, qr/Bad/, 'bcdn2bin dies on empty string');
 
-## bcdn2bin – digit count larger than packed string
+## bcdn2bin rejects a digit count larger than the packed string
 
 like(
     dies { bcdn2bin("\x12", 40) },
     qr/Bad/, 'bcdn2bin dies on digit count larger than input'
 );
 
-## bcdn2bin - over-long packed input reports its length in digits, like every other length croak
+## bcdn2bin reports an overlong packed input length in digits, like every other length croak
 
 like(
     dies { bcdn2bin("\x12" x 21, 40) },
@@ -192,7 +192,7 @@ like(
     'bcdn2bin reports 41 packed bytes as 82 digits'
 );
 
-## bcd2bin – values that do not fit in 128 bits must die
+## bcd2bin rejects values that do not fit in 128 bits
 
 like(
     dies { bcd2bin('340282366920938463463374607431768211456') },
@@ -205,7 +205,7 @@ like(
     'bcd2bin dies on 40 nines'
 );
 
-## bcdn2bin – values that do not fit in 128 bits must die
+## bcdn2bin rejects values that do not fit in 128 bits
 
 like(
     dies {
@@ -215,7 +215,7 @@ like(
     'bcdn2bin dies on 2**128'
 );
 
-## simple_pack and bcd2bin - a NUL or a high-bit byte is not a digit
+## a NUL or a high bit byte is not a digit to simple_pack or bcd2bin
 
 for my $input ("1\x002", "5\x003\x001", "\xb1\xb2", "1\xb2") {
     like(
@@ -327,7 +327,7 @@ subtest 'bcdn2bin and bcdn2txt croak on a packed digit above 9' => sub {
     );
 };
 
-## shiftleft, addconst, bcdn2bin - a count or constant out of range dies on both builds
+## shiftleft, addconst and bcdn2bin die on a count or constant out of range on both builds
 
 my $v = ipv6_aton('::1');
 
@@ -430,7 +430,7 @@ like(
     'bcdn2bin dies on a digit count that a C int would wrap'
 );
 
-## objects as counts and constants - numified through their overloading
+## objects as counts and constants are numified through their overloading
 
 {
 

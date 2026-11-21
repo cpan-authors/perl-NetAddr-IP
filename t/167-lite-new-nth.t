@@ -42,7 +42,7 @@ subtest 'nth tests' => sub {
     is($num, 2, 'num() returns 2 for /31');
 }
 
-## issue #10 – non-integer indices must be rejected
+## issue #10 rejects indices that are not integers
 
 my $net = NetAddr::IP::Lite->new('10.0.0.0/24');
 

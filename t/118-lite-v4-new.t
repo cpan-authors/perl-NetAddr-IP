@@ -85,7 +85,7 @@ for my $entry (@a) {
     }
 }
 
-## issue #5 – trailing newline accepted, leading whitespace rejected
+## issue #5 accepts a trailing newline but rejects leading whitespace
 
 is( NetAddr::IP::Lite->new("10.0.0.1\n"),
     "10.0.0.1/32", 'trailing newline accepted'
@@ -101,7 +101,7 @@ is( NetAddr::IP::Lite->new("10.0.0.1/24\n"),
 );
 is(NetAddr::IP::Lite->new("  "), undef, 'whitespace-only returns undef');
 
-## issue #31 – large decimal integers should be recognized as IPv6
+## issue #31 recognizes large decimal integers as IPv6
 
 my $big = NetAddr::IP::Lite->new(4294967296);
 is($big->version, 6,                     'new(4294967296) is version 6');
@@ -124,7 +124,7 @@ is( NetAddr::IP::Lite->new("\x{FF13}\x{FF13}\x{FF13}\x{FF13}"),
     undef, 'Fullwidth digits rejected'
 );
 
-## issue #4 – 0b and 0x literals
+## issue #4 parses 0b and 0x literals
 
 is( NetAddr::IP::Lite->new("0b101"),
     "0.0.0.5/32", 'binary 0b101 parses correctly'
