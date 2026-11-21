@@ -105,6 +105,11 @@ Revision history for Perl extension NetAddr::IP
       object still freezes as its CIDR text. A subclass key that holds a
       code reference or a filehandle now makes Storable croak, as it does
       for any other hash.
+    - Fix GH#338: compact(), Compact() and compactref() croak when an
+      element of their list is not a NetAddr::IP object, where Perl died
+      inside the module. Compact() croaks, as compactref() does, when
+      anything but undef or an empty list follows an array reference,
+      which it dropped. (follow-up to GH#229)
 
 4.080_09  2026-11-10 00:24:39+11:00 Australia/Sydney (TRIAL RELEASE)
     - Add `.perltidyrc` and document how to run `perltidy` in `AGENTS.md`.

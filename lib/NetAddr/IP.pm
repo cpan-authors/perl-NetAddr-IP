@@ -531,8 +531,9 @@ sub import {
 sub compact {
     _croak_on_class('compact', 'Compact', $_[0]);
 
-    # a reference in, a reference out; a list in, a list out
-    return compactref($_[0]) if ref $_[0] eq 'ARRAY';
+    # a reference in, a reference out; a list in, a list out; compactref checks
+    # what follows a reference
+    return &compactref(@_) if ref $_[0] eq 'ARRAY';
     return @{ compactref(\@_) };
 }
 
@@ -1682,6 +1683,7 @@ sub compactref($) {
     # a method call compacts the invocant with the list, a function call the list alone
     my $unr = _is_address($first) ? [ $first, @$rest ] : $first;
     return [] unless @$unr;
+    croak('compactref: the list must hold only NetAddr::IP objects') if grep { !_is_address($_) } @$unr;
 
     # work on network copies so the caller's objects are not modified, and
     # keep the address families apart: a 128 bit mask comparison would
