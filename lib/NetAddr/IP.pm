@@ -752,13 +752,15 @@ The B<prefix> notation is understood, with the limitation that the range
 specified by the prefix must match with a valid subnet.
 
 An IPv6-form mask on an IPv4 address covers all 128 bits, so it needs
-the 96 leading ones above the address.  A mask with 1 to 95 ones
-returns C<undef>; through C<new6> the same mask is an IPv6 prefix:
+the 96 leading ones above the address, unless it has no ones at all:
+C<::> gives /0.  A mask with 1 to 95 ones returns C<undef>; through
+C<new6> the same mask is an IPv6 prefix:
 
   NetAddr::IP->new('192.0.2.4', 'ffff::');    # undef
   NetAddr::IP->new6('192.0.2.4', 'ffff::');   # 0:0:0:0:0:0:C000:204/16
   NetAddr::IP->new('192.0.2.4',
       'ffff:ffff:ffff:ffff:ffff:ffff:ffff:ff00');   # 192.0.2.4/24
+  NetAddr::IP->new('192.0.2.4', '::');        # 192.0.2.4/0
 
 The same holds for a mask written as a whole number. One that fits in
 32 bits is an IPv4 mask. A wider one covers all 128 bits, so it needs
@@ -971,7 +973,8 @@ A mask is read for the family of the address:
   prefix length 33 to 128   undef                 IPv6 prefix
   dotted, 255.255.255.0     IPv4 mask             96 plus its length
   IPv6 form, ffff::         needs the 96          IPv6 mask
-                            leading ones
+                            leading ones; ::
+                            is /0
   whole number above 128    32 bits, or 128       128 bits
                             with the 96 leading
                             ones
