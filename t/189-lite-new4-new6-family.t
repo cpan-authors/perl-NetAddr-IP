@@ -234,12 +234,12 @@ subtest 'an undef mask argument defers to the mask written in the string' => sub
 
     # with no mask in the string, an undef mask is the host mask
     for my $case (
-        [ 'new',  '192.0.2.1', '192.0.2.1/32' ],
-        [ 'new',  '10.1',      '10.0.0.1/32' ],
-        [ 'new6', 'loopback',  '0:0:0:0:0:0:0:1/128' ],
-        [ 'new6', '::',        '0:0:0:0:0:0:0:0/128' ],
-        [ 'new',  'default',   '0.0.0.0/32' ],
-        [ 'new6', 'default',   '0:0:0:0:0:0:0:0/128' ],
+        [ 'new',  '192.0.2.1',   '192.0.2.1/32' ],
+        [ 'new',  '10.1',        '10.0.0.1/32' ],
+        [ 'new6', 'loopback',    '0:0:0:0:0:0:0:1/128' ],
+        [ 'new6', '2001:db8::1', '2001:DB8:0:0:0:0:0:1/128' ],
+        [ 'new',  'default',     '0.0.0.0/32' ],
+        [ 'new6', 'default',     '0:0:0:0:0:0:0:0/128' ],
     ) {
         my ($ctor, $text, $want) = @$case;
         is(show($L->$ctor($text, undef)), $want, "a call $ctor('$text', undef) gives $want");
