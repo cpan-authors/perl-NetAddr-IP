@@ -1080,6 +1080,42 @@ subtest 'an object returned unchanged comes back as its bytes' => sub {
     }
 };
 
+{
+
+    package Local::CountsNumify;
+    use overload q{0+} => sub { $_[0]{calls}++; return $_[0]{value} }, fallback => 1;
+
+    sub new {
+        my ($class, $value) = @_;
+        return bless { calls => 0, value => $value }, $class;
+    }
+}
+
+subtest 'an object passed as a count or constant is converted once' => sub {
+    my $address = ipv6_aton('2001:db8::1');
+
+    # function, the arguments before the count, the count
+    my @count_calls = (
+        [ 'addconst',  [$address],   1 ],
+        [ 'bcdn2bin',  ["\x12\x34"], 4 ],
+        [ 'shiftleft', [$address],   1 ],
+    );
+    for my $package (qw( NetAddr::IP::Util NetAddr::IP::UtilPP )) {
+        for my $call (@count_calls) {
+            my ($name, $before, $count) = @{$call};
+            my $code = $package->can($name);
+            for my $class (qw( Local::CountsNumify Local::CountsText )) {
+                my $object = $class->new($count);
+                is( [ $code->(@{$before}, $object) ],
+                    [ $code->(@{$before}, $count) ],
+                    "$package $name reads a $class count by its value"
+                );
+                is($object->{calls}, 1, "$package $name converts a $class count once");
+            }
+        }
+    }
+};
+
 subtest 'an object of a class whose name is false is stringified once' => sub {
     my ($calls, $text) = (0);
     overload::OVERLOAD('0', q{""} => sub { $calls++; return $text }, fallback => 1);
