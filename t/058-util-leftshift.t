@@ -5,7 +5,7 @@ use Test2::Plugin::NoWarnings;
 
 use NetAddr::IP::Util qw( ipv6_aton ipv6_n2x shiftleft );
 
-my @num =    # input	shift	expected
+my @num =    # input    shift   expected
     (
     [ '1::1', 'none', '1:0:0:0:0:0:0:1' ],
     [ '1::1', '0',    '1:0:0:0:0:0:0:1' ],
