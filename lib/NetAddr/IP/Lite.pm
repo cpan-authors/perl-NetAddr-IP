@@ -925,7 +925,7 @@ sub new_cis($;$$) {
         'new_cis is deprecated and will be removed in version 5; ->new() accepts the same notation'
     );
     my @in = @_;
-    if ($in[1] && $in[1] =~ m!^(.+)\s+(.+)$!) {
+    if ($in[1] && $in[1] !~ /\s-|-\s/ && $in[1] =~ m!^(.+)\s+(.+)$!) {
         $in[1] = $1 . '/' . $2;
     }
     @_ = (0, @in);
@@ -938,7 +938,7 @@ sub new_cis6($;$$) {
         'new_cis6 is deprecated and will be removed in version 5; ->new6() accepts the same notation'
     );
     my @in = @_;
-    if ($in[1] && $in[1] =~ m!^(.+)\s+(.+)$!) {
+    if ($in[1] && $in[1] !~ /\s-|-\s/ && $in[1] =~ m!^(.+)\s+(.+)$!) {
         $in[1] = $1 . '/' . $2;
     }
     @_ = (1, @in);
