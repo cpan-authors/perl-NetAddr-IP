@@ -100,4 +100,21 @@ subtest 'v4 new_cis' => sub {
     }
 };
 
+subtest 'spaced ranges pass through and existing forms are unchanged' => sub {
+    my @cases = (
+        [ '192.0.2.0 - 192.0.2.3', '192.0.2.0/30' ],
+        [ '192.0.2.0-192.0.2.3',   '192.0.2.0/30' ],
+        [ '192.0.2.0 30',          '192.0.2.0/30' ],
+    );
+    for my $case (@cases) {
+        my ($text, $want) = @{$case};
+        my $ip = new_cis_quiet($text);
+        is(defined $ip ? "$ip" : undef, $want, "new_cis('$text') gives $want");
+    }
+    my $masked = new_cis_quiet('192.0.2.0 - 192.0.2.3', 30);
+    is( defined $masked ? "$masked" : undef, '192.0.2.0/30',
+        'a spaced range with a mask argument reaches new'
+    );
+};
+
 done_testing;

@@ -75,4 +75,11 @@ $ip = new_cis6_quiet('f35::1 40');
 isa_ok($ip, 'NetAddr::IP::Lite');
 ok($ip->network->contains($ip), '->contains');
 
+subtest 'a v4 range with spaces around the dash is left for new6' => sub {
+    my $ip = new_cis6_quiet('192.0.2.0 - 192.0.2.3');
+    is( defined $ip ? "$ip" : undef, '0:0:0:0:0:0:C000:200/126',
+        'new_cis6 passes a spaced v4 range through to new6'
+    );
+};
+
 done_testing;
