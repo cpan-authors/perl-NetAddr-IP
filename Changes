@@ -1,6 +1,10 @@
 Revision history for Perl extension NetAddr::IP
 
 {{$NEXT}}
+    - Fix GH#304: new() refuses a prefix length written with a leading
+      zero, such as 192.0.2.0/024, in the address string or as a separate
+      mask, for both address families. new_no() still reads such a prefix
+      as decimal. This reverses the earlier rule that kept the zeros.
     - Fix GH#337: In the pure Perl build, addconst(), shiftleft() and
       bcdn2bin() run the overloading of an object passed as a count once,
       as the XS build does. They ran it twice.

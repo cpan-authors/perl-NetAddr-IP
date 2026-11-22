@@ -88,11 +88,10 @@ subtest 'an IPv4 address with a leading zero in any part is not an address' => s
         undef, "->new('192.0.2.0', '255.255.255.000')"
     );
     my %cidr = (
-        '0'             => '0.0.0.0/32',
-        '0.0.0.0'       => '0.0.0.0/32',
-        '0001:db8::1'   => '1:DB8:0:0:0:0:0:1/128',
-        '10.1'          => '10.0.0.1/32',
-        '192.0.2.0/024' => '192.0.2.0/24',
+        '0'           => '0.0.0.0/32',
+        '0.0.0.0'     => '0.0.0.0/32',
+        '0001:db8::1' => '1:DB8:0:0:0:0:0:1/128',
+        '10.1'        => '10.0.0.1/32',
     );
     for my $text (sort keys %cidr) {
         is(made('new', $text), $cidr{$text}, "->new('$text')");
@@ -106,6 +105,31 @@ subtest 'an IPv4 address with a leading zero in any part is not an address' => s
             $decimal{$text}, "->new_no('$text') reads decimal"
         );
     }
+};
+
+subtest 'a prefix with a leading zero is strict in new and decimal in new_no' => sub {
+    my @cases = (
+        [ '192.0.2.1/024',  '192.0.2.1/24' ],
+        [ '192.0.2.1/001',  '192.0.2.1/1' ],
+        [ '2001:db8::/010', '2001:DB8:0:0:0:0:0:0/10' ],
+        [ '192.0.2.1',      '024', '192.0.2.1/24' ],
+    );
+    for my $case (@cases) {
+        my @args = @{$case};
+        my $want = pop @args;
+        my $name = join q{, }, map { "'$_'" } @args;
+        is(made('new',    @args), undef, "->new($name) is undef");
+        is(made('new_no', @args), $want, "->new_no($name) reads decimal");
+    }
+};
+
+subtest 'a mask that is not a prefix length keeps its leading zeros' => sub {
+    is( made('new', '2001:db8::1', '0000::'),
+        '2001:DB8:0:0:0:0:0:1/0', "->new('2001:db8::1', '0000::') keeps the IPv6 mask"
+    );
+    is( made('new', '192.0.2.1', '04294967295'),
+        '192.0.2.1/32', "->new('192.0.2.1', '04294967295') keeps the raw mask"
+    );
 };
 
 # :aton is process-wide, so it goes last
