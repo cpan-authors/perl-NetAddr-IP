@@ -717,8 +717,11 @@ C<new('10')>.
 
 IPv6 text is left alone, so C<2001:db8::1> is the same address from
 both constructors, and C<::ffff:192.0.2.010> is C<undef> from both.
-A prefix length is decimal either way, so C<192.0.2.0/024> is
-192.0.2.0/24 from both.  A dotted mask is stripped the same way as
+The C<new> constructor refuses a prefix length written with a leading
+zero, so C<192.0.2.0/024> and C<192.0.2.0/0024> are C<undef>.
+The C<new_no> constructor reads them as decimal, giving 192.0.2.0/24
+for both.
+A dotted mask is stripped the same way as
 an address: C<new_no('192.0.2.0', '255.255.255.000')> is 192.0.2.0/24
 and C<new> returns C<undef>.
 
