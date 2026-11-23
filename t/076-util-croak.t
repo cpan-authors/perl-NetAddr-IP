@@ -1161,4 +1161,50 @@ subtest 'a croak fetches a tied argument at most once' => sub {
     }
 };
 
+## a call through a code reference with an argument count the XS signature rejects
+
+subtest 'a code reference call with the wrong number of arguments croaks as the XS does' => sub {
+
+    # function => its XS signature, then the arguments of a whole call
+    my %signature = (
+        add128        => [ 'as, bs', [ $packed, $packed ] ],
+        addconst      => [ 's, c',   [ $packed, 1 ] ],
+        bcd2bin       => [ 's, ...', ['12345'] ],
+        bcdn2bin      => [ 's, ...', [ $packed_bcd, 5 ] ],
+        bcdn2txt      => [ 's',      [ bin2bcdn($packed) ] ],
+        bin2bcd       => [ 's',      [$packed] ],
+        bin2bcdn      => [ 's',      [$packed] ],
+        comp128       => [ 's, ...', [$packed] ],
+        hasbits       => [ 's',      [$packed] ],
+        ipanyto6      => [ 's',      [$four] ],
+        ipv4to6       => [ 's',      [$four] ],
+        ipv6to4       => [ 's, ...', [$packed] ],
+        mask4to6      => [ 's',      [$four] ],
+        maskanyto6    => [ 's',      [$four] ],
+        notcontiguous => [ 's',      [$mask] ],
+        shiftleft     => [ 's, ...', [ $packed, 1 ] ],
+        simple_pack   => [ 's, ...', ['12345'] ],
+        sub128        => [ 'as, bs', [ $packed, $packed ] ],
+    );
+    for my $name (sort keys %signature) {
+        my ($signature, $args) = @{ $signature{$name} };
+        my $code = NetAddr::IP::Util->can($name);
+        my @calls =
+            $signature =~ /[.][.][.]\z/
+            ? ([ 'no arguments', [] ])
+            : (
+            [ 'one argument too few',  [ @{$args}[ 0 .. $#{$args} - 1 ] ] ],
+            [ 'one argument too many', [ @{$args}, 1 ] ],
+            );
+        for my $call (@calls) {
+            my ($label, $passed) = @{$call};
+            my ($line,  $err)    = (__LINE__, dies { $code->(@{$passed}) });
+            is( $err,
+                "Usage: NetAddr::IP::Util::$name($signature) at $THIS_FILE line $line.\n",
+                "$name with $label croaks its usage at the caller's line"
+            );
+        }
+    }
+};
+
 done_testing;

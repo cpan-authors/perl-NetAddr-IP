@@ -1,6 +1,10 @@
 Revision history for Perl extension NetAddr::IP
 
 {{$NEXT}}
+    - Fix GH#327: In the pure Perl build, a Util function called with an
+      argument count its XS signature rejects croaks the XS usage line,
+      "Usage: NetAddr::IP::Util::NAME(SIGNATURE)", at the caller's line. It
+      reported a bad length or returned normally.
     - Fix GH#351: The compact test builds its main fixture from
       documentation addresses.
     - Fix GH#325: In the pure Perl build, an error from NetAddr::IP::Util
