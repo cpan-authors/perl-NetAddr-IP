@@ -357,4 +357,30 @@ subtest 'Compact reads each element of a tied list once' => sub {
     is(tied(@list)->{fetches}, 2, 'Compact fetches each element of a tied list once');
 };
 
+subtest 'the method compactref takes nothing after its list' => sub {
+    my $croak   = qr/\A\Qcompactref: a method call takes nothing after its list at ${\__FILE__} line \E[0-9]+/;
+    my $low     = NetAddr::IP->new('192.0.2.0/25');
+    my $high    = NetAddr::IP->new('192.0.2.128/25');
+    my $other   = NetAddr::IP->new('198.51.100.0/24');
+    my $lite    = NetAddr::IP::Lite->new('192.0.2.0/25');
+    my $v6_low  = NetAddr::IP->new('2001:db8::/33');
+    my $v6_high = NetAddr::IP->new('2001:db8:8000::/33');
+    like(dies { $low->compactref([$high], $other) },   $croak, 'compactref of a list followed by an object croaks');
+    like(dies { $low->compactref([$high], [$other]) }, $croak, 'compactref of a list followed by a second list croaks');
+    like(dies { $low->compactref([$high], undef) },    $croak, 'compactref of a list followed by undef croaks');
+    like(dies { $low->compactref([$high], []) },       $croak, 'compactref of a list followed by an empty list croaks');
+    like(
+        dies { $low->compactref(undef, [$high]) }, $croak,
+        'compactref of undef followed by a list croaks'
+    );
+    like(
+        dies { $lite->compactref([$high], $other) }, $croak,
+        'compactref on a Lite object of a list and an object croaks'
+    );
+    like(
+        dies { $v6_low->compactref([$v6_high], $other) }, $croak,
+        'compactref on an IPv6 object of a list and an object croaks'
+    );
+};
+
 done_testing;

@@ -1,6 +1,9 @@
 Revision history for Perl extension NetAddr::IP
 
 {{$NEXT}}
+    - Fix GH#352: The method compactref() croaks on any argument after its
+      list, undef and an empty list included, where it dropped it. This is
+      a breaking change.
     - Fix GH#326: The InetBase functions that take a packed address, and
       inet_4map6(), read an object passed as that address once, by the text
       its overloading returns. An object whose text holds a character

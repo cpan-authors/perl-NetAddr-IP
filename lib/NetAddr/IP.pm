@@ -1670,6 +1670,9 @@ as C<$me-E<gt>compactref([$other])>.
 The function C<Compact> takes the array reference alone, or followed by
 one undef or empty list. Anything else after it croaks.
 
+The method C<compactref> takes nothing after the list. Any further
+argument croaks, undef and an empty list included.
+
 Note that C<$me> must be a C<NetAddr::IP> or C<NetAddr::IP::Lite> object.
 
 =cut
@@ -1686,6 +1689,9 @@ sub compactref($) {
         if ref $first eq 'ARRAY' && (@_ > 2 || !(ref $rest eq 'ARRAY' && !@$rest));
     croak('compactref: the list must be an array reference')
         unless ref $rest eq 'ARRAY' && (ref $first eq 'ARRAY' || _is_address($first));
+
+    # the checks above leave only a method call here with more than two arguments
+    croak('compactref: a method call takes nothing after its list') if @_ > 2;
 
     # a method call compacts the invocant with the list, a function call the list alone
     # copied, so the check below and the loop read each element of a tied list once
