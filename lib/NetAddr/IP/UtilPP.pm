@@ -10,7 +10,6 @@ package NetAddr::IP::UtilPP;
 # VERSION
 
 use parent 'Exporter';
-use Carp                   qw( croak );
 use overload               ();
 use Scalar::Util           qw( looks_like_number );
 use NetAddr::IP::Constants qw(
@@ -59,6 +58,16 @@ sub _callersub {
     return $sub;
 }
 
+# dies at the call into NetAddr::IP::Util, where croak reports an error; croak
+# itself reads tied caller arguments again while it builds the message
+sub _croak {
+    my ($message) = @_;
+    my $level = 1;
+    $level++ while (caller($level))[0] eq __PACKAGE__;
+    my ($file, $line) = (caller($level))[ 1, 2 ];
+    die "$message at $file line $line.\n";
+}
+
 # an argument as text, read once as the XS reads it; length, because ref() is false for class '0'
 sub _text {
     my ($value) = @_;
@@ -70,7 +79,7 @@ sub _bytes {
 
     # utf8::downgrade leaves a reference as it is, so an object is measured by its text
     my $packed = _text($_[0]);
-    croak sprintf($WIDE_DIES, _callersub()) unless utf8::downgrade($packed, 1);
+    _croak sprintf($WIDE_DIES, _callersub()) unless utf8::downgrade($packed, 1);
     return $packed;
 }
 
@@ -200,9 +209,7 @@ sub _deadlen {
         ? $len * $OCTET_BITS
         : 'undefined';
 
-    # die, not croak: older Carp reads tied caller arguments while building its message
-    my ($file, $line) = (caller(1))[ 1, 2 ];
-    die "Bad arg length for $sub, length is $bits, should be $should at $file line $line.\n";
+    _croak("Bad arg length for $sub, length is $bits, should be $should");
 }
 
 sub hasbits($) {
@@ -298,7 +305,7 @@ sub shiftleft($;@) {
     return _taint_as($bits, $shifts) unless defined $shifts && $shifts ne '';
 
     # an integer count from 0 to 128; undef or the empty string returns the input
-    croak "Bad arg value for NetAddr::IP::Util::shiftleft, is $given, should be 0 thru $MAX_SHIFTLEFT"
+    _croak "Bad arg value for NetAddr::IP::Util::shiftleft, is $given, should be 0 thru $MAX_SHIFTLEFT"
         unless looks_like_number($shifts)
         && $shifts >= 0
         && $shifts <= $MAX_SHIFTLEFT
@@ -390,7 +397,7 @@ sub addconst($$) {
     }
 
     # an integer in the signed 32 bit range, the rule the XS applies
-    croak
+    _croak
 "Bad arg value for NetAddr::IP::Util::addconst, is $given, should be an integer from -2147483648 thru 2147483647"
         unless looks_like_number($const)
         && $const >= -2_147_483_648
@@ -756,7 +763,7 @@ sub bcdn2txt($) {
             defined $bcdn
             ? 2 * length($bcdn)
             : 'undefined';
-        croak 'Bad arg length for NetAddr::IP::Util::bcdn2txt, length is ' . $digits
+        _croak 'Bad arg length for NetAddr::IP::Util::bcdn2txt, length is ' . $digits
             . ", should be $MAX_BCD_DIGITS digits";
     }
     my $txt = unpack("H$MAX_BCD_DIGITS", $bcdn);
@@ -802,21 +809,16 @@ sub bcdn2bin($;@) {
         : 'undefined';
 
     # the length comes before the argument count, the order the XS checks them in
-    if (!defined($bcd) || length($bcd) < 1 || length($bcd) > $PACKED_BCD_BYTES) {
-
-        # die, not croak: older Carp reads tied caller arguments while building its message
-        my ($file, $line) = (caller(0))[ 1, 2 ];
-        die
-"Bad arg length for NetAddr::IP::Util::bcdn2bin, length is $digits, should be 1 to $MAX_BCD_DIGITS digits at $file line $line.\n";
-    }
-    croak q|Bad usage, should have NetAddr::IP::Util::bcdn2bin('packedbcd','length')|
+    _croak("Bad arg length for NetAddr::IP::Util::bcdn2bin, length is $digits, should be 1 to $MAX_BCD_DIGITS digits")
+        if !defined($bcd) || length($bcd) < 1 || length($bcd) > $PACKED_BCD_BYTES;
+    _croak q|Bad usage, should have NetAddr::IP::Util::bcdn2bin('packedbcd','length')|
         if @_ < 2;
     my $given = $count_ref ? ${$count_ref} : $_[1];
     my $dc    = _plain_number($given);
     $dc = 0 unless defined $dc && $dc ne '';
 
     # an integer count, made plain because it goes into an unpack template
-    croak "Bad digit count for NetAddr::IP::Util::bcdn2bin, is $dc, should be 1 to $digits digits"
+    _croak "Bad digit count for NetAddr::IP::Util::bcdn2bin, is $dc, should be 1 to $digits digits"
         unless looks_like_number($dc) && $dc >= 1 && $dc < $digits + 1 && $dc == int($dc);
     $dc = int($dc);
     my $txt = unpack("H$dc", $bcd);
@@ -844,7 +846,7 @@ sub _bcd2bin {
         $overflow |= _sa128(\@hbits, \@digit, 0);
     }
     if ($overflow) {
-        croak "Bad arg value for $caller, number is larger than 128 bits";
+        _croak "Bad arg value for $caller, number is larger than 128 bits";
     }
     return _taint_as(pack('N4', @hbits), $_[0]);
 }
@@ -865,9 +867,9 @@ sub _bcdcheck {
         defined $bcd
         ? length($bcd)
         : 'undefined';
-    croak sprintf('Bad arg length for %s, length is %s, should be 1 to %d digits', _callersub(), $len, $MAX_BCD_DIGITS)
+    _croak sprintf('Bad arg length for %s, length is %s, should be 1 to %d digits', _callersub(), $len, $MAX_BCD_DIGITS)
         if !defined($bcd) || length($bcd) > $MAX_BCD_DIGITS || length($bcd) < 1;
-    croak sprintf("Bad char in string for %s, character is '%s', allowed are 0-9", _callersub(), $1)
+    _croak sprintf("Bad char in string for %s, character is '%s', allowed are 0-9", _callersub(), $1)
         if $bcd =~ /([^0-9])/;
 }
 

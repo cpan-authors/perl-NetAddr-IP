@@ -1132,4 +1132,33 @@ subtest 'an object of a class whose name is false is stringified once' => sub {
     }
 };
 
+subtest 'a croak fetches a tied argument at most once' => sub {
+    my $address = ipv6_aton('2001:db8::1');
+    my $bcd     = pack('H*', '1234');
+
+    # label, function, arguments, index of the tied argument
+    my @cases = (
+        [ 'addconst bad constant, tied address',  \&addconst,    [ $address, 'abc' ],          0 ],
+        [ 'addconst bad constant, tied constant', \&addconst,    [ $address, 'abc' ],          1 ],
+        [ 'bcd2bin bad character, tied text',     \&bcd2bin,     ['12a'],                      0 ],
+        [ 'bcd2bin too long, tied text',          \&bcd2bin,     [ '1' x 41 ],                 0 ],
+        [ 'bcdn2bin bad digit count, tied bcd',   \&bcdn2bin,    [ $bcd, 'abc' ],              0 ],
+        [ 'bcdn2bin bad digit count, tied count', \&bcdn2bin,    [ $bcd, 'abc' ],              1 ],
+        [ 'bcdn2bin no digit count, tied bcd',    \&bcdn2bin,    [$bcd],                       0 ],
+        [ 'bcdn2bin too large, tied bcd',         \&bcdn2bin,    [ pack('H*', '9' x 40), 40 ], 0 ],
+        [ 'bcdn2txt wrong length, tied bcd',      \&bcdn2txt,    [ 'x' x 3 ],                  0 ],
+        [ 'comp128 wide character, tied address', \&comp128,     [ "\x{100}" x 16 ],           0 ],
+        [ 'shiftleft bad count, tied address',    \&shiftleft,   [ $address, 'abc' ],          0 ],
+        [ 'shiftleft bad count, tied count',      \&shiftleft,   [ $address, 'abc' ],          1 ],
+        [ 'simple_pack bad character, tied text', \&simple_pack, ['12a'],                      0 ],
+    );
+    for my $case (@cases) {
+        my ($label, $code, $args, $tied_at) = @{$case};
+        my @call = @{$args};
+        tie $call[$tied_at], 'Local::CountsFetch', $call[$tied_at];
+        like(dies { $code->(@call) }, qr/^(Bad|Wide character in) /, "$label croaks");
+        cmp_ok(tied($call[$tied_at])->{fetches}, '<=', 1, "$label fetches the tied argument at most once");
+    }
+};
+
 done_testing;
