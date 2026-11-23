@@ -74,6 +74,17 @@ sub _text {
     return length ref $value ? "$value" : $value;
 }
 
+# croaks as the XS does when the argument count does not fit the signature, such
+# as 's', 'as, bs' or 's, ...'; _croak gives the line of the call into the module
+sub _usage {
+    my ($signature, $count) = @_;
+    my @params = split /, /, $signature;
+    my $open   = $params[-1] eq '...';
+    my $needed = $open ? @params - 1 : @params;
+    return if $count == $needed || ($open && $count > $needed);
+    _croak(sprintf 'Usage: %s(%s)', _callersub(), $signature);
+}
+
 # a downgraded copy of a packed argument, so it is measured in bytes as the XS measures it
 sub _bytes {
 
@@ -213,6 +224,7 @@ sub _deadlen {
 }
 
 sub hasbits($) {
+    _usage('s', scalar @_);
     my $bits128 = _bytes(shift);
     _deadlen(length($bits128))
         if !defined($bits128) || length($bits128) != $V6_PACKED_BYTES;
@@ -290,6 +302,7 @@ sub _plain_number {
 }
 
 sub shiftleft($;@) {
+    _usage('s, ...', scalar @_);
 
     # hold the count before address get magic; test tied before ref because
     # ref() reads a tied scalar, and older perls read through \arg too
@@ -380,6 +393,7 @@ Croaks if C<$ipv6naddr> is not 16 bytes.
 =cut
 
 sub addconst($$) {
+    _usage('s, c', scalar @_);
 
     # hold the constant before address get magic; test tied before ref because
     # ref() reads a tied scalar, and older perls read through \arg too
@@ -423,6 +437,7 @@ Croaks if either argument is not 16 bytes.
 =cut
 
 sub add128 {
+    _usage('as, bs', scalar @_);
 
     # hold the second before the first is read: the first's FETCH can delete the second
     my $b_ref = @_ >= 2 ? \$_[1] : undef;
@@ -457,6 +472,7 @@ Croaks if either argument is not 16 bytes.
 =cut
 
 sub sub128 {
+    _usage('as, bs', scalar @_);
 
     # hold the second before the first is read: the first's FETCH can delete the second
     my $b_ref = @_ >= 2 ? \$_[1] : undef;
@@ -486,6 +502,7 @@ Croaks if the argument is not 16 bytes.
 =cut
 
 sub notcontiguous($) {
+    _usage('s', scalar @_);
     my $mask128 = _bytes(shift);
     _deadlen(length($mask128))
         if !defined($mask128) || length($mask128) != $V6_PACKED_BYTES;
@@ -526,6 +543,7 @@ Croaks if the argument is not 4 bytes.
 =cut
 
 sub ipv4to6($) {
+    _usage('s', scalar @_);
     my $netaddr = _bytes(shift);
     _deadlen(length($netaddr), $IPV4_BITS)
         if !defined($netaddr) || length($netaddr) != $V4_PACKED_BYTES;
@@ -546,6 +564,7 @@ Croaks if the argument is not 4 bytes.
 =cut
 
 sub mask4to6($) {
+    _usage('s', scalar @_);
     my $netaddr = _bytes(shift);
     _deadlen(length($netaddr), $IPV4_BITS)
         if !defined($netaddr) || length($netaddr) != $V4_PACKED_BYTES;
@@ -564,6 +583,7 @@ Croaks if the argument is neither 4 nor 16 bytes.
 =cut
 
 sub ipanyto6($) {
+    _usage('s', scalar @_);
     my $naddr = _bytes(shift);
     return _deadlen(undef, "$IPV4_BITS or $IPV6_BITS")
         unless defined $naddr;
@@ -587,6 +607,7 @@ Croaks if the argument is neither 4 nor 16 bytes.
 =cut
 
 sub maskanyto6($) {
+    _usage('s', scalar @_);
     my $naddr = _bytes(shift);
     return _deadlen(undef, "$IPV4_BITS or $IPV6_BITS")
         unless defined $naddr;
@@ -611,6 +632,7 @@ Croaks if the argument is not 16 bytes.
 =cut
 
 sub ipv6to4($;@) {
+    _usage('s, ...', scalar @_);
     my $naddr = _bytes(shift);
     _deadlen(length($naddr))
         if !defined($naddr) || length($naddr) != $V6_PACKED_BYTES;
@@ -636,6 +658,7 @@ Croaks if the argument is not 16 bytes.
 =cut
 
 sub bin2bcd($) {
+    _usage('s', scalar @_);
     my $bits128 = _bytes(shift);
     _deadlen(length($bits128))
         if !defined($bits128) || length($bits128) != $V6_PACKED_BYTES;
@@ -656,6 +679,7 @@ character other than 0 to 9, or is a number too large for 128 bits.
 =cut
 
 sub bcd2bin($;@) {
+    _usage('s, ...', scalar @_);
     my $bcd = _text($_[0]);
     _bcdcheck($bcd);
     @_ = ($bcd, 'NetAddr::IP::Util::bcd2bin');
@@ -676,6 +700,7 @@ sub bcd2bin($;@) {
 #=cut
 
 sub comp128($;@) {
+    _usage('s, ...', scalar @_);
     my $bits128 = _bytes(shift);
     _deadlen(length($bits128))
         if !defined($bits128) || length($bits128) != $V6_PACKED_BYTES;
@@ -695,6 +720,7 @@ sub comp128($;@) {
 #=cut
 
 sub bin2bcdn($) {
+    _usage('s', scalar @_);
     my $bits128 = _bytes(shift);
     _deadlen(length($bits128))
         if !defined($bits128) || length($bits128) != $V6_PACKED_BYTES;
@@ -757,6 +783,7 @@ sub _bin2bcdn {
 #=cut
 
 sub bcdn2txt($) {
+    _usage('s', scalar @_);
     my $bcdn = _bytes(shift);
     if (!defined($bcdn) || length($bcdn) != $PACKED_BCD_BYTES) {
         my $digits =
@@ -795,6 +822,7 @@ a character outside 0-9.
 =cut
 
 sub bcdn2bin($;@) {
+    _usage('s, ...', scalar @_);
 
     # hold the digit count before packed bcd get magic; test tied before ref
     # because ref() reads a tied scalar, and older perls read through \arg
@@ -874,6 +902,7 @@ sub _bcdcheck {
 }
 
 sub simple_pack($;@) {
+    _usage('s, ...', scalar @_);
     my $bcd = _text($_[0]);
     _bcdcheck($bcd);
     while (length($bcd) < $MAX_BCD_DIGITS) {
