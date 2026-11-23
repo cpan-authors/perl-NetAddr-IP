@@ -1,6 +1,8 @@
 Revision history for Perl extension NetAddr::IP
 
 {{$NEXT}}
+    - Fix GH#351: The compact test builds its main fixture from
+      documentation addresses.
     - Fix GH#325: In the pure Perl build, an error from NetAddr::IP::Util
       reads a tied argument once, as the XS build does. The old message
       builder in Carp read it a second time.
