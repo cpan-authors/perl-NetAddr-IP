@@ -175,7 +175,7 @@ sub mode() { $Mode }
 my $_newV4compat = pack('N4', 0, 0, 0xffff, 0);
 
 sub inet_4map6 {
-    my $naddr = shift;
+    my $naddr = NetAddr::IP::InetBase::_packed_text(shift);
     return undef unless defined $naddr;
     if (length($naddr) == $V4_PACKED_BYTES) {
         $naddr = ipv4to6($naddr);
