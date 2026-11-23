@@ -2,6 +2,7 @@
 
 use Test2::V1 -ipP;
 use Test2::Plugin::NoWarnings;
+use Test2::Tools::Exception qw( dies );
 
 use NetAddr::IP::Util qw( inet_4map6 inet_aton ipv6_aton ipv6_n2d );
 
@@ -43,5 +44,38 @@ for my $idx (0 .. $#stuff) {
         ok(!$rv, "no valid mapping for $stuff[$idx]");
     }
 }
+
+{
+
+    package Local::Text;    # an object whose text is fixed, counting how often it is read
+
+    use overload q{""} => sub { $_[0]{calls}++; $_[0]{text} }, fallback => 1;
+
+    sub new {
+        my ($class, $text) = @_;
+        return bless { calls => 0, text => $text }, $class;
+    }
+}
+
+# an object reblessed into class '0', whose name ref() reports as false, reads the same way
+overload::OVERLOAD('0', q{""} => overload::Method('Local::Text', q{""}), fallback => 1);
+
+subtest 'an object is read once, and maps as its text does' => sub {
+    for my $text (inet_aton('192.0.2.1'), ipv6_aton('::ffff:192.0.2.1')) {
+        my $bytes = length $text;
+        for my $class (qw( 0 Local::Text )) {
+            my $object = bless Local::Text->new($text), $class;
+            is( inet_4map6($object), inet_4map6($text),
+                "inet_4map6 of an object of class $class holding $bytes bytes returns what its text gives"
+            );
+            is($object->{calls}, 1, "inet_4map6 reads an object of class $class holding $bytes bytes once");
+        }
+    }
+    like(
+        dies { inet_4map6(Local::Text->new("\x{100}" x 16)) },
+        qr/\AWide character in NetAddr::IP::InetBase::isAnyIPv4 at /,
+        'inet_4map6 of an object holding 16 wide characters croaks as the string does'
+    );
+};
 
 done_testing;

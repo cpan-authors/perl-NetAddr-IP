@@ -7,9 +7,12 @@ use Test2::Tools::Exception qw( dies );
 # an upgraded argument is downgraded before Socket's inet_ntop reads it
 use NetAddr::IP::InetBase qw(
     :lower
+    AF_INET
+    AF_INET6
     inet_n2ad
     inet_n2dx
     inet_ntoa
+    inet_ntop
     ipv6_n2d
     ipv6_n2x
     ipv6_ntoa
@@ -18,6 +21,9 @@ use NetAddr::IP::InetBase qw(
     isNewIPv4
 );
 
+my $BAD_FAMILY  = 4_278_190_080;    # 0xFF000000, which is no address family
+my $FAMILY_DIES = 'Unsupported address family for NetAddr::IP::InetBase::inet_ntop, af is %s, '
+    . 'should be AF_INET (%d) or AF_INET6 (%d)';
 my $THIS_FILE = __FILE__;
 my $V4_TEXT   = '192.0.2.1';
 my $V6_TEXT   = '2001:db8::1';
@@ -108,6 +114,96 @@ subtest 'an upgraded string is read as the bytes it holds' => sub {
             "$name leaves the caller's upgraded argument upgraded"
         );
     }
+};
+
+{
+
+    package Local::Text;    # an object whose text is fixed, counting how often it is read
+
+    use overload q{""} => sub { $_[0]{calls}++; $_[0]{text} }, fallback => 1;
+
+    sub new {
+        my ($class, $text) = @_;
+        return bless { calls => 0, text => $text }, $class;
+    }
+}
+
+# an object reblessed into class '0', whose name ref() reports as false, reads the same way
+overload::OVERLOAD('0', q{""} => overload::Method('Local::Text', q{""}), fallback => 1);
+
+subtest 'an object whose text is a wide string croaks as the string does' => sub {
+    for my $function (@functions) {
+        my ($name, $code, $right) = @{$function};
+        my $chars = length $right;
+        for my $class (qw( 0 Local::Text )) {
+            my $object = bless Local::Text->new($WIDE x $chars), $class;
+            my ($line, $err) = (__LINE__, dies { $code->($object) });
+            like(
+                $err,
+                said_at(sprintf($WIDE_DIES, $name), $line),
+                "$name of an object of class $class holding $chars wide characters croaks naming $name"
+            );
+        }
+    }
+    my ($line, $err) = (__LINE__, dies { inet_ntop(AF_INET6, Local::Text->new($WIDE x 16)) });
+    like(
+        $err,
+        said_at(sprintf($WIDE_DIES, 'inet_ntop'), $line),
+        'inet_ntop of an object holding 16 wide characters croaks naming inet_ntop'
+    );
+    ($line, $err) = (__LINE__, dies { inet_n2dx(Local::Text->new($WIDE x 16)) });
+    like(
+        $err,
+        said_at(sprintf($WIDE_DIES, 'isAnyIPv4'), $line),
+        'inet_n2dx of an object holding 16 wide characters croaks naming isAnyIPv4'
+    );
+    ($line, $err) = (__LINE__, dies { inet_n2ad(Local::Text->new($WIDE x 16)) });
+    like(
+        $err,
+        said_at(sprintf($WIDE_DIES, 'ipv6_n2d'), $line),
+        'inet_n2ad of an object holding 16 wide characters croaks naming ipv6_n2d'
+    );
+};
+
+subtest 'an object is read once, and converts as its text does' => sub {
+    my @calls = (
+        @functions,
+        [ 'inet_n2ad', \&inet_n2ad,                        $v6_packed, $V6_TEXT_D ],
+        [ 'inet_n2dx', \&inet_n2dx,                        $v6_packed, $V6_TEXT_X ],
+        [ 'inet_ntop', sub { inet_ntop(AF_INET6, $_[0]) }, $v6_packed, $V6_TEXT ],
+    );
+    for my $call (@calls) {
+        my ($name, $code, $right, $returns) = @{$call};
+        for my $class (qw( 0 Local::Text )) {
+            my $object = bless Local::Text->new($right), $class;
+            my $got    = eval { $code->($object) } // "died: $@";
+            is($got,             $returns, "$name of an object of class $class returns what its text gives");
+            is($object->{calls}, 1,        "$name reads an object of class $class once");
+        }
+    }
+};
+
+subtest 'inet_ntop checks the family before it reads an object' => sub {
+    for my $af (undef, 'x') {
+        my $named  = defined $af ? $af : 'undefined';
+        my $object = Local::Text->new($v6_packed);
+        my ($line, $err) = (__LINE__, dies { inet_ntop($af, $object) });
+        like(
+            $err,
+            said_at(sprintf($FAMILY_DIES, $named, AF_INET, AF_INET6), $line),
+            "inet_ntop of family $named croaks naming it"
+        );
+        is($object->{calls}, 0, "inet_ntop of family $named leaves the object unread");
+    }
+    my $object = Local::Text->new($v4_packed);
+    my $got    = eval { inet_ntop(AF_INET, $object) } // "died: $@";
+    is($got,             $V4_TEXT, 'inet_ntop of family AF_INET returns what the text of an object gives');
+    is($object->{calls}, 1,        'inet_ntop of family AF_INET reads an object once');
+    $object = Local::Text->new($v6_packed);
+    ok(dies { inet_ntop($BAD_FAMILY, $object) }, 'inet_ntop of family 0xFF000000 dies');
+
+    # at most once, as the release of Socket here may read the address before it refuses the family
+    ok($object->{calls} <= 1, 'inet_ntop of family 0xFF000000 reads an object at most once');
 };
 
 subtest 'a string that was never upgraded still converts' => sub {

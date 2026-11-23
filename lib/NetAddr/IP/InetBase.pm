@@ -101,6 +101,13 @@ sub _is_family_number {
         && $af <= $UINT32_MAX;
 }
 
+# a packed argument as a plain string: an object is read once, through its overloading, so the checks and the
+# conversion all see the same text; length, because ref() is false for an object of class '0'
+sub _packed_text {
+    my ($packed) = @_;
+    return length ref $packed ? "$packed" : $packed;
+}
+
 # deprecated: AF_INET6 always comes from Socket, so there is no guess to report
 sub fake_AF_INET6 {
     warnings::warnif(
@@ -135,7 +142,7 @@ sub _case_tags {
 }
 
 sub ipv6_n2x {
-    my $packed = $_[0];
+    my $packed = _packed_text($_[0]);
 
     # measure bytes, as the XS does: a character above 0xFF fails to downgrade
     croak sprintf($WIDE_DIES, __PACKAGE__ . '::ipv6_n2x')
@@ -148,7 +155,7 @@ sub ipv6_n2x {
 }
 
 sub ipv6_n2d {
-    my $packed = $_[0];
+    my $packed = _packed_text($_[0]);
     croak sprintf($WIDE_DIES, __PACKAGE__ . '::ipv6_n2d')
         unless utf8::downgrade($packed, 1);
     croak sprintf(
@@ -243,7 +250,7 @@ my $_zero     = pack('L4', 0,          0,          0,          0);
 my $_ipv4mask = pack('L4', 0xffffffff, 0xffffffff, 0xffffffff, 0);
 
 sub isIPv4 {
-    my $naddr = $_[0];
+    my $naddr = _packed_text($_[0]);
     my $bytes = utf8::downgrade($naddr, 1);
     if (!$bytes || !defined $naddr || length($naddr) != $V6_PACKED_BYTES) {
 
@@ -263,16 +270,17 @@ sub isIPv4 {
 my $_newV4compat = pack('N4', 0, 0, 0xffff, 0);
 
 sub isNewIPv4 {
+    my $packed = _packed_text($_[0]);
 
     # croaks unless 16 bytes, naming isNewIPv4, as isIPv4 and isAnyIPv4 do
-    isIPv4($_[0]);
-    my $naddr = $_[0] ^ $_newV4compat;
+    isIPv4($packed);
+    my $naddr = $packed ^ $_newV4compat;
     return isIPv4($naddr);
 }
 
 sub isAnyIPv4 {
-    my $naddr = $_[0];
-    my $rv    = isIPv4($_[0]);
+    my $naddr = _packed_text($_[0]);
+    my $rv    = isIPv4($naddr);
     return $rv if $rv;
     return isNewIPv4($naddr);
 }
@@ -510,7 +518,7 @@ Croaks if the argument is not 4 bytes.
 =cut
 
 sub inet_ntoa {
-    my $packed = $_[0];
+    my $packed = _packed_text($_[0]);
     croak sprintf($WIDE_DIES, __PACKAGE__ . '::inet_ntoa')
         unless utf8::downgrade($packed, 1);
     croak 'Bad arg length for '
@@ -548,7 +556,7 @@ Stringification goes through ipv6_n2x, which is pure Perl on every host.
 =cut
 
 sub ipv6_ntoa {
-    my $packed = $_[0];
+    my $packed = _packed_text($_[0]);
 
     # measured here, so the error names ipv6_ntoa, and the string is
     # downgraded before Socket reads it
@@ -602,7 +610,7 @@ Croaks if the argument is not 16 bytes.
 =cut
 
 sub inet_n2dx($) {
-    my ($nadr) = @_;
+    my $nadr = _packed_text($_[0]);
     if (isAnyIPv4($nadr)) {
         local $1;
         ipv6_n2d($nadr) =~ /([^:]+)$/;
@@ -628,7 +636,7 @@ Croaks if the argument is not 16 bytes.
 =cut
 
 sub inet_n2ad($) {
-    my ($nadr) = @_;
+    my $nadr = _packed_text($_[0]);
     my $addr = ipv6_n2d($nadr);
     return $addr unless isAnyIPv4($nadr);
     local $1;
@@ -677,6 +685,7 @@ sub inet_ntop {
         goto &inet_ntoa;
     }
     if ($af == AF_INET6()) {
+        $packed = _packed_text($packed);
 
         # Socket 1.94 copies 16 bytes and does not check the length, so a
         # shorter string would be read past its end.
@@ -688,6 +697,9 @@ sub inet_ntop {
             . (defined $packed ? length($packed) : 'undefined')
             . " should be $V6_PACKED_BYTES bytes"
             unless defined $packed && length($packed) == $V6_PACKED_BYTES;
+
+        # the bytes checked here go to Socket, not the object again
+        @_ = ($af, $packed);
     }
     goto &Socket::inet_ntop;
 }

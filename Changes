@@ -1,6 +1,12 @@
 Revision history for Perl extension NetAddr::IP
 
 {{$NEXT}}
+    - Fix GH#326: The InetBase functions that take a packed address, and
+      inet_4map6(), read an object passed as that address once, by the text
+      its overloading returns. An object whose text holds a character
+      above 0xFF croaks "Wide character in ..." as a plain string does,
+      where some returned zeros and others died with a message from perl.
+      Relates to GH#300.
     - Fix GH#327: In the pure Perl build, a Util function called with an
       argument count its XS signature rejects croaks the XS usage line,
       "Usage: NetAddr::IP::Util::NAME(SIGNATURE)", at the caller's line. It
