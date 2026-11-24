@@ -73,9 +73,24 @@ subtest 'an object is read once, and maps as its text does' => sub {
     }
     like(
         dies { inet_4map6(Local::Text->new("\x{100}" x 16)) },
-        qr/\AWide character in NetAddr::IP::InetBase::isAnyIPv4 at /,
+        qr/\AWide character in NetAddr::IP::Util::inet_4map6 at /,
         'inet_4map6 of an object holding 16 wide characters croaks as the string does'
     );
+};
+
+subtest 'a wide string croaks naming inet_4map6, at the line of the call' => sub {
+    for my $chars (4, 5, 16) {
+        my ($line, $err) = (__LINE__, dies { inet_4map6("\x{100}" x $chars) });
+        like(
+            $err,
+            qr/\AWide character in NetAddr::IP::Util::inet_4map6 at \Q${\ __FILE__}\E line $line\b/,
+            "inet_4map6 of $chars wide characters croaks naming inet_4map6 at the line of the call"
+        );
+    }
+    my $text     = inet_aton('192.0.2.1');
+    my $upgraded = $text;
+    utf8::upgrade($upgraded);
+    is(inet_4map6($upgraded), inet_4map6($text), 'inet_4map6 of an upgraded string maps as its bytes do');
 };
 
 done_testing;

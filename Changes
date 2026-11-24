@@ -1,6 +1,11 @@
 Revision history for Perl extension NetAddr::IP
 
 {{$NEXT}}
+    - Fix GH#355: The function inet_4map6() croaks "Wide character in
+      NetAddr::IP::Util::inet_4map6" at the caller's line for text of any
+      length with a character above 0xFF. It named isAnyIPv4 or ipv4to6,
+      at a line inside NetAddr::IP::Util, and returned undef for lengths
+      other than 4 and 16. This is a breaking change.
     - Fix GH#352: The method compactref() croaks on any argument after its
       list, undef and an empty list included, where it dropped it. This is
       a breaking change.
