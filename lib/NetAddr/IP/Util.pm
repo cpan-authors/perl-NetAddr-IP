@@ -9,6 +9,7 @@ package NetAddr::IP::Util;
 
 # VERSION
 
+use Carp       qw( croak );
 use parent     qw(Exporter DynaLoader);
 use DynaLoader ();
 
@@ -174,9 +175,15 @@ sub mode() { $Mode }
 
 my $_newV4compat = pack('N4', 0, 0, 0xffff, 0);
 
+# the message for text with a character above 0xFF, as InetBase and the XS word it
+my $WIDE_DIES = 'Wide character in %s';
+
 sub inet_4map6 {
     my $naddr = NetAddr::IP::InetBase::_packed_text(shift);
     return undef unless defined $naddr;
+
+    # checked here, so the croak names this function and the line of the call
+    croak sprintf($WIDE_DIES, __PACKAGE__ . '::inet_4map6') unless utf8::downgrade($naddr, 1);
     if (length($naddr) == $V4_PACKED_BYTES) {
         $naddr = ipv4to6($naddr);
     }
@@ -819,6 +826,8 @@ An IPv6 input must already be in one of the two IPv4-embedded spaces.
 i.e.
 
   ::ffff:d.d.d.d    or    ::d.d.d.d
+
+Croaks on a character above 0xFF.
 
 =back
 
