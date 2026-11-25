@@ -339,7 +339,7 @@ subtest 'Compact of an array reference takes only undef or an empty list after i
 
 {
 
-    package Local::CountsFetch;
+    package Local::CountsArrayFetch;
 
     require Tie::Array;
     our @ISA = ('Tie::Array');
@@ -350,7 +350,7 @@ subtest 'Compact of an array reference takes only undef or an empty list after i
 }
 
 subtest 'Compact reads each element of a tied list once' => sub {
-    tie my @list, 'Local::CountsFetch', NetAddr::IP->new('192.0.2.0/25'), NetAddr::IP->new('192.0.2.128/25');
+    tie my @list, 'Local::CountsArrayFetch', NetAddr::IP->new('192.0.2.0/25'), NetAddr::IP->new('192.0.2.128/25');
     is( [ map { "$_" } @{ Compact(\@list) } ],
         ['192.0.2.0/24'], 'Compact of a tied list merges its objects'
     );
