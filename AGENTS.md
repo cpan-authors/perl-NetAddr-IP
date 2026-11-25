@@ -123,7 +123,7 @@ adds the `author-` and `release-` files, so the numbers stay clear of them.
 - **Check regexes after any mechanical formatting pass.** A comma-spacing pass
   once turned `{1,3}` into `{1, 3}`, which is literal text, and two parsers
   broke silently.
-- In `xs/Util.xs`, `PERL_NO_GET_CONTEXT` is defined, so a helper calling the
+- In `lib/NetAddr/IP/Util.xs`, `PERL_NO_GET_CONTEXT` is defined, so a helper calling the
   Perl API takes `pTHX_` and is called with `aTHX_`. Keep no mutable state at
   file scope, or the XS is not thread safe.
 - For long numbers, add an underscore after every third digit. i.e. 10_000

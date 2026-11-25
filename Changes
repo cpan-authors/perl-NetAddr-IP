@@ -1,6 +1,14 @@
 Revision history for Perl extension NetAddr::IP
 
 {{$NEXT}}
+    - Fix GH#358: An XS install records itself in the packlist
+      auto/NetAddr/IP/.packlist, under the name NetAddr::IP, as a pure
+      Perl install and 4.079 do. It wrote auto/NetAddr/IP/Util/.packlist
+      under NetAddr::IP::Util, so tools that read packlists saw a second
+      distribution, and an upgrade from 4.079 left the old packlist
+      behind. The XS source moves to lib/NetAddr/IP/Util.xs and builds
+      with MakeMaker's XSMULTI, so configuring needs ExtUtils::MakeMaker
+      7.12.
     - Fix GH#355: The function inet_4map6() croaks "Wide character in
       NetAddr::IP::Util::inet_4map6" at the caller's line for text of any
       length with a character above 0xFF. It named isAnyIPv4 or ipv4to6,

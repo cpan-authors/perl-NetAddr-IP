@@ -1,8 +1,8 @@
 use Config;
 use Getopt::Long qw(GetOptions);
 
-# an XS build writes these under lib/, where the next perl Makefile.PL would take them for module files
-my @xs_outputs = qw(lib/NetAddr/IP/Util.c lib/NetAddr/IP/Util.c.xsc lib/NetAddr/IP/Util.o);
+# an XS build writes these under lib/, beside Util.xs, where the next perl Makefile.PL would take them for module files
+my @xs_outputs = qw(lib/NetAddr/IP/Util.c lib/NetAddr/IP/Util.bs lib/NetAddr/IP/Util.o);
 
 # and puts its shared object here, which a pure Perl build would install
 my $xs_blib_dir = 'blib/arch/auto/NetAddr/IP/Util';
@@ -127,13 +127,10 @@ close F;
 our @mm_args;
 if ($useXS) {
     push @mm_args, (
-        NAME   => 'NetAddr::IP::Util',
-        XS     => { 'xs/Util.xs' => 'lib/NetAddr/IP/Util.c' },
-        C      => ['lib/NetAddr/IP/Util.c'],
-        OBJECT => 'lib/NetAddr/IP/Util.o',
-        INC    => '-Ixs',
-        LIBS   => [],
-        depend => { 'lib/NetAddr/IP/Util.c' => 'xs/localconf.h' },
+        XSMULTI => 1,
+        INC     => '-Ixs',
+        LIBS    => [],
+        depend  => { 'lib/NetAddr/IP/Util.c' => 'xs/localconf.h' },
     );
 }
 
