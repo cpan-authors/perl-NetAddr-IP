@@ -1,17 +1,10 @@
 package MY;
 
-sub postamble {
-    my $util_xs = 'xs/Util.xs';
-    my $util_c  = 'lib/NetAddr/IP/Util.c';
-    my $util_o  = 'lib/NetAddr/IP/Util.o';
-
-    return <<"END_POSTAMBLE";
-$util_c : $util_xs
-\tcd xs && \$(PERLRUN) \$(XSUBPP) \$(XSUBPPARGS) Util.xs > ../$util_c.xsc
-\t\$(MV) $util_c.xsc $util_c
-
-$util_o : $util_c
-\t\$(CCCMD) -Ixs \$(CCCDLFLAGS) "-I\$(PERL_INC)" \$(PASTHRU_DEFINE) \$(DEFINE) -o $util_o $util_c
-
-END_POSTAMBLE
+# A pure Perl build has XSMULTI off, so MakeMaker would install the Util.xs
+# file under lib/ as an ordinary module. Leave it out then; an XS build claims
+# it through XSMULTI and does not install it.
+sub libscan {
+    my ($self, $path) = @_;
+    return if !$useXS && $path =~ m{Util\.xs\z};
+    return $path;
 }

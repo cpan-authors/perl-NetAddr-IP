@@ -137,8 +137,13 @@ jobs:
           perl Makefile.PL
           make
           make pure_install DESTDIR="$PWD/stage"
-          stray=$(find stage -path '*/NetAddr/IP/*' \( -name '*.c' -o -name '*.o' -o -name '*.xsc' \))
+          stray=$(find stage -path '*/NetAddr/IP/*' \( -name '*.xs' -o -name '*.c' -o -name '*.o' -o -name '*.xsc' -o -name '*.bs' \))
           if [ -n "$stray" ]; then echo "build products installed: $stray"; exit 1; fi
+          packlists=$(find stage -name .packlist | sort)
+          case "$packlists" in
+            "$PWD/stage/auto/NetAddr/IP/.packlist") ;;
+            *) echo "unexpected packlists: $packlists"; exit 1 ;;
+          esac
       - name: Check that configure tests the compiler and linker the build uses
         if: success()
         # CC= and LD= given to Makefile.PL decide, and LD in the environment does not, as for MakeMaker
@@ -191,6 +196,19 @@ jobs:
           make
           perl -Mblib -MNetAddr::IP::Util -e 'my $mode = NetAddr::IP::Util::mode(); $mode eq q{Pure Perl} or die "built $mode, expected Pure Perl\n"'
           make test
+      - name: Check what a pure Perl install writes
+        if: success()
+        # XSMULTI is off, so Util.xs must not be installed and the packlist
+        # must stay auto/NetAddr/IP/.packlist, same as an XS install.
+        run: |
+          make pure_install DESTDIR="$PWD/stage"
+          stray=$(find stage -path '*/NetAddr/IP/*' \( -name '*.xs' -o -name '*.c' -o -name '*.o' -o -name '*.xsc' -o -name '*.bs' \))
+          if [ -n "$stray" ]; then echo "build products installed: $stray"; exit 1; fi
+          packlists=$(find stage -name .packlist | sort)
+          case "$packlists" in
+            "$PWD/stage/auto/NetAddr/IP/.packlist") ;;
+            *) echo "unexpected packlists: $packlists"; exit 1 ;;
+          esac
 
   test_macos:
     runs-on: ${{ matrix.os }}
