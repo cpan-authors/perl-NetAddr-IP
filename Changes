@@ -9,6 +9,10 @@ Revision history for Perl extension NetAddr::IP
       behind. The XS source moves to lib/NetAddr/IP/Util.xs and builds
       with MakeMaker's XSMULTI, so configuring needs ExtUtils::MakeMaker
       7.12.
+    - Fix GH#357: The tests load one copy of the object that counts how
+      often its text is read, from t/lib/Local/CountsText.pm, where three
+      test files each defined their own. The tied scalar and the tied
+      array that count their fetches no longer share one class name.
     - Fix GH#355: The function inet_4map6() croaks "Wide character in
       NetAddr::IP::Util::inet_4map6" at the caller's line for text of any
       length with a character above 0xFF. It named isAnyIPv4 or ipv4to6,

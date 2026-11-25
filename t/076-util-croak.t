@@ -5,6 +5,9 @@ use Test2::Plugin::NoWarnings;
 use Test2::Tools::Exception qw( dies );
 use Tie::Hash;
 
+use lib 't/lib';
+use Local::CountsText;
+
 use NetAddr::IP::Util qw(
     add128
     addconst
@@ -977,7 +980,7 @@ for my $name (sort keys %packed_call) {
 
 {
 
-    package Local::CountsFetch;
+    package Local::CountsScalarFetch;
 
     sub TIESCALAR {
         my ($class, $value) = @_;
@@ -989,8 +992,8 @@ for my $name (sort keys %packed_call) {
 
 for my $name (sort keys %packed_call) {
     my ($code, @args) = @{ $packed_call{$name} };
-    tie my $first,  'Local::CountsFetch', $args[0];
-    tie my $second, 'Local::CountsFetch', $args[1];
+    tie my $first,  'Local::CountsScalarFetch', $args[0];
+    tie my $second, 'Local::CountsScalarFetch', $args[1];
     is( $code->($first, $second),
         $code->(@args), "$name reads a tied packed argument"
     );
@@ -1003,7 +1006,7 @@ for my $name (sort keys %packed_call) {
     );
 }
 
-tie my $tied_undef, 'Local::CountsFetch', undef;
+tie my $tied_undef, 'Local::CountsScalarFetch', undef;
 like(
     dies { hasbits($tied_undef) },
     qr/^Bad arg length for NetAddr::IP::Util::hasbits, length is undefined, should be 128/,
@@ -1016,19 +1019,6 @@ like(
 );
 
 ## an overloaded object is measured by the text its overloading returns
-
-{
-
-    package Local::CountsText;
-    use overload
-        q{""}    => sub { my ($self) = @_; $self->{calls}++; return $self->{text} },
-        fallback => 1;
-
-    sub new {
-        my ($class, $text) = @_;
-        return bless { calls => 0, text => $text }, $class;
-    }
-}
 
 # the digit text of bcd2bin and simple_pack is not packed, so a wide character in it is a bad digit
 my @packed_names = grep { $_ ne 'bcd2bin' && $_ ne 'simple_pack' } sort keys %packed_call;
@@ -1155,7 +1145,7 @@ subtest 'a croak fetches a tied argument at most once' => sub {
     for my $case (@cases) {
         my ($label, $code, $args, $tied_at) = @{$case};
         my @call = @{$args};
-        tie $call[$tied_at], 'Local::CountsFetch', $call[$tied_at];
+        tie $call[$tied_at], 'Local::CountsScalarFetch', $call[$tied_at];
         like(dies { $code->(@call) }, qr/^(Bad|Wide character in) /, "$label croaks");
         cmp_ok(tied($call[$tied_at])->{fetches}, '<=', 1, "$label fetches the tied argument at most once");
     }
