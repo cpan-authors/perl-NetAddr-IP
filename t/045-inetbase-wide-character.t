@@ -186,11 +186,13 @@ subtest 'inet_ntop checks the family before it reads an object' => sub {
         );
         is($object->{calls}, 0, "inet_ntop of family $named leaves the object unread");
     }
-    my $object = Local::CountsText->new($v4_packed);
-    my $got    = eval { inet_ntop(AF_INET, $object) } // "died: $@";
-    is($got,             $V4_TEXT, 'inet_ntop of family AF_INET returns what the text of an object gives');
-    is($object->{calls}, 1,        'inet_ntop of family AF_INET reads an object once');
-    $object = Local::CountsText->new($v6_packed);
+    for my $class (qw( 0 Local::CountsText )) {
+        my $v4_object = bless Local::CountsText->new($v4_packed), $class;
+        my $got       = eval { inet_ntop(AF_INET, $v4_object) } // "died: $@";
+        is($got, $V4_TEXT, "inet_ntop of family AF_INET returns what the text of an object of class $class gives");
+        is($v4_object->{calls}, 1, "inet_ntop of family AF_INET reads an object of class $class once");
+    }
+    my $object = Local::CountsText->new($v6_packed);
     ok(dies { inet_ntop($BAD_FAMILY, $object) }, 'inet_ntop of family 0xFF000000 dies');
 
     # at most once, as the release of Socket here may read the address before it refuses the family

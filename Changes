@@ -4,6 +4,12 @@ Revision history for Perl extension NetAddr::IP
     - Fix GH#360: A release made with dzil release commits Changes, tags
       that commit and pushes both, so each release tag holds the release's
       own Changes entry.
+    - Fix GH#359: The InetBase functions built on others, isNewIPv4(),
+      isAnyIPv4(), inet_n2dx() and inet_n2ad(), check their argument
+      once, where they checked it up to four times. NetAddr::IP::UtilPP
+      reads an object argument through the same helper as InetBase. The
+      NetAddr::IP::Util POD says that inet_4map6() croaks on a character
+      above 0xFF.
     - Fix GH#358: An XS install records itself in the packlist
       auto/NetAddr/IP/.packlist, under the name NetAddr::IP, as a pure
       Perl install and 4.079 do. It wrote auto/NetAddr/IP/Util/.packlist
