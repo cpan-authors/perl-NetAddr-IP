@@ -479,7 +479,8 @@ before it reads an address.
 
 Text that is not an address is not an error.  Four functions,
 C<inet_aton>, C<ipv6_aton>, C<inet_any2n> and C<inet_pton>, return undef
-for it, and C<inet_4map6> returns undef for an argument it cannot map.
+for it, and C<inet_4map6> returns undef for an argument it cannot map
+unless the argument holds a character above 0xFF, which croaks.
 A binary argument of the wrong length is an error.  Most functions that
 take one croak, on both implementations, with a message that names the
 function and gives both lengths in bits:

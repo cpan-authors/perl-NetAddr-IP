@@ -39,6 +39,7 @@ our @EXPORT_OK = qw(
     isAnyIPv4
     AF_INET
     AF_INET6
+    _packed_text
     fake_AF_INET6
     fillIPv4
 );
@@ -141,33 +142,33 @@ sub _case_tags {
     return;
 }
 
-sub ipv6_n2x {
-    my $packed = _packed_text($_[0]);
-
-    # measure bytes, as the XS does: a character above 0xFF fails to downgrade
-    croak sprintf($WIDE_DIES, __PACKAGE__ . '::ipv6_n2x')
+# 16 bytes read once from the argument of ipv6_n2x or ipv6_n2d, measured in bytes as the XS measures them; croaks
+# for a character above 0xFF or another length, naming that function
+sub _n2_bytes {
+    my ($name, $packed) = ($_[0], _packed_text($_[1]));
+    croak sprintf($WIDE_DIES, __PACKAGE__ . "::$name")
         unless utf8::downgrade($packed, 1);
     croak sprintf(
-        $N2_LENGTH_DIES,                                 'ipv6_n2x',
+        $N2_LENGTH_DIES,                                 $name,
         defined $packed ? length($packed) : 'undefined', $V6_PACKED_BYTES
     ) unless defined $packed && length($packed) == $V6_PACKED_BYTES;
-    return sprintf($Upper ? $n2x_upper : $n2x_format, unpack("n8", $packed));
+    return $packed;
+}
+
+# each checks a plain 16 byte string inline, sparing a further call, and leaves every other argument to
+# _n2_bytes, which croaks for it
+sub ipv6_n2x {
+    my $packed = _packed_text($_[0]);
+    $packed = _n2_bytes('ipv6_n2x', $packed)
+        unless utf8::downgrade($packed, 1) && defined $packed && length($packed) == $V6_PACKED_BYTES;
+    return sprintf($Upper ? $n2x_upper : $n2x_format, unpack('n8', $packed));
 }
 
 sub ipv6_n2d {
     my $packed = _packed_text($_[0]);
-    croak sprintf($WIDE_DIES, __PACKAGE__ . '::ipv6_n2d')
-        unless utf8::downgrade($packed, 1);
-    croak sprintf(
-        $N2_LENGTH_DIES,                                 'ipv6_n2d',
-        defined $packed ? length($packed) : 'undefined', $V6_PACKED_BYTES
-    ) unless defined $packed && length($packed) == $V6_PACKED_BYTES;
-    my @hex = (unpack("n8", $packed));
-    $hex[9] = $hex[7] & $MAX_OCTET;
-    $hex[8] = $hex[7] >> $OCTET_BITS;
-    $hex[7] = $hex[6] & $MAX_OCTET;
-    $hex[6] >>= $OCTET_BITS;
-    return sprintf($Upper ? $n2d_upper : $n2d_format, @hex);
+    $packed = _n2_bytes('ipv6_n2d', $packed)
+        unless utf8::downgrade($packed, 1) && defined $packed && length($packed) == $V6_PACKED_BYTES;
+    return sprintf($Upper ? $n2d_upper : $n2d_format, unpack('n6 C4', $packed));
 }
 
 # if Socket lib is broken in some way, check for overange values
@@ -249,40 +250,41 @@ sub inet_aton {
 my $_zero     = pack('L4', 0,          0,          0,          0);
 my $_ipv4mask = pack('L4', 0xffffffff, 0xffffffff, 0xffffffff, 0);
 
-sub isIPv4 {
-    my $naddr = _packed_text($_[0]);
+# 16 bytes read once from the argument of $sub, measured in bytes; croaks for a character above 0xFF or another
+# length, naming $sub and giving the length in bits
+sub _v6_bytes {
+    my ($sub, $naddr) = ($_[0], _packed_text($_[1]));
     my $bytes = utf8::downgrade($naddr, 1);
-    if (!$bytes || !defined $naddr || length($naddr) != $V6_PACKED_BYTES) {
-
-        # name the InetBase function the caller entered, else isIPv4 itself
-        my $caller = (caller(1))[3];
-        my $sub =
-            defined $caller && index($caller, __PACKAGE__ . '::') == 0
-            ? $caller
-            : (caller(0))[3];
-        croak sprintf($WIDE_DIES, $sub) unless $bytes;
-        my $bits = defined $naddr ? length($naddr) * $OCTET_BITS : 'undefined';
-        croak "Bad arg length for $sub, length is $bits, should be $IPV6_BITS";
-    }
-    return ($naddr & $_ipv4mask) eq $_zero ? 1 : 0;
+    return $naddr if $bytes && defined $naddr && length($naddr) == $V6_PACKED_BYTES;
+    croak sprintf($WIDE_DIES, $sub) unless $bytes;
+    my $bits = defined $naddr ? length($naddr) * $OCTET_BITS : 'undefined';
+    croak "Bad arg length for $sub, length is $bits, should be $IPV6_BITS";
 }
 
 my $_newV4compat = pack('N4', 0, 0, 0xffff, 0);
 
-sub isNewIPv4 {
-    my $packed = _packed_text($_[0]);
+# whether 16 checked bytes are ::d.d.d.d, as 1 or 0
+sub _is_compat_bytes { return ($_[0] & $_ipv4mask) eq $_zero ? 1 : 0 }
 
-    # croaks unless 16 bytes, naming isNewIPv4, as isIPv4 and isAnyIPv4 do
-    isIPv4($packed);
-    my $naddr = $packed ^ $_newV4compat;
-    return isIPv4($naddr);
+# whether 16 checked bytes are ::ffff:d.d.d.d, as 1 or 0
+sub _is_mapped_bytes { return (($_[0] ^ $_newV4compat) & $_ipv4mask) eq $_zero ? 1 : 0 }
+
+# the low 32 bits of 16 checked bytes as a dotted quad
+sub _v4_text { return sprintf('%d.%d.%d.%d', unpack('x12 C4', $_[0])) }
+
+# checks a plain 16 byte string inline, as ipv6_n2x does, and leaves every other argument to _v6_bytes
+sub isIPv4 {
+    my $naddr = _packed_text($_[0]);
+    $naddr = _v6_bytes(__PACKAGE__ . '::isIPv4', $naddr)
+        unless utf8::downgrade($naddr, 1) && defined $naddr && length($naddr) == $V6_PACKED_BYTES;
+    return _is_compat_bytes($naddr);
 }
 
+sub isNewIPv4 { return _is_mapped_bytes(_v6_bytes(__PACKAGE__ . '::isNewIPv4', $_[0])) }
+
 sub isAnyIPv4 {
-    my $naddr = _packed_text($_[0]);
-    my $rv    = isIPv4($naddr);
-    return $rv if $rv;
-    return isNewIPv4($naddr);
+    my $naddr = _v6_bytes(__PACKAGE__ . '::isAnyIPv4', $_[0]);
+    return _is_compat_bytes($naddr) || _is_mapped_bytes($naddr);
 }
 
 sub DESTROY { }
@@ -610,13 +612,10 @@ Croaks if the argument is not 16 bytes.
 =cut
 
 sub inet_n2dx($) {
-    my $nadr = _packed_text($_[0]);
-    if (isAnyIPv4($nadr)) {
-        local $1;
-        ipv6_n2d($nadr) =~ /([^:]+)$/;
-        return $1;
-    }
-    return ipv6_n2x($nadr);
+
+    # checked as isAnyIPv4 checks, and named so in a croak
+    my $naddr = _v6_bytes(__PACKAGE__ . '::isAnyIPv4', $_[0]);
+    return _is_compat_bytes($naddr) || _is_mapped_bytes($naddr) ? _v4_text($naddr) : ipv6_n2x($naddr);
 }
 
 =item $dotquad or $dec_text = inet_n2ad($ipv6naddr);
@@ -636,12 +635,10 @@ Croaks if the argument is not 16 bytes.
 =cut
 
 sub inet_n2ad($) {
-    my $nadr = _packed_text($_[0]);
-    my $addr = ipv6_n2d($nadr);
-    return $addr unless isAnyIPv4($nadr);
-    local $1;
-    $addr =~ /([^:]+)$/;
-    return $1;
+
+    # checked as ipv6_n2d checks, and named so in a croak
+    my $naddr = _n2_bytes('ipv6_n2d', $_[0]);
+    return _is_compat_bytes($naddr) || _is_mapped_bytes($naddr) ? _v4_text($naddr) : ipv6_n2d($naddr);
 }
 
 =item $text_addr = inet_ntop($AF_family,$netaddr);
@@ -680,7 +677,7 @@ sub inet_ntop {
     ) unless _is_family_number($af);
     if ($af == AF_INET()) {
 
-        # inet_ntoa reads $_[0]. The family must not go with it.
+        # the address alone goes on to inet_ntoa, which reads $_[0]
         @_ = ($packed);
         goto &inet_ntoa;
     }

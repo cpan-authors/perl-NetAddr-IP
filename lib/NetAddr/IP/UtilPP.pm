@@ -23,6 +23,9 @@ use NetAddr::IP::Constants qw(
     $V6_PACKED_BYTES
 );
 
+# for its _packed_text, which reads an argument as text once, as the XS reads it
+use NetAddr::IP::InetBase qw(_packed_text);
+
 our @EXPORT_OK = qw(
     hasbits
     shiftleft
@@ -68,12 +71,6 @@ sub _croak {
     die "$message at $file line $line.\n";
 }
 
-# an argument as text, read once as the XS reads it; length, because ref() is false for class '0'
-sub _text {
-    my ($value) = @_;
-    return length ref $value ? "$value" : $value;
-}
-
 # croaks as the XS does when the argument count does not fit the signature, such
 # as 's', 'as, bs' or 's, ...'; _croak gives the line of the call into the module
 sub _usage {
@@ -89,7 +86,7 @@ sub _usage {
 sub _bytes {
 
     # utf8::downgrade leaves a reference as it is, so an object is measured by its text
-    my $packed = _text($_[0]);
+    my $packed = _packed_text($_[0]);
     _croak sprintf($WIDE_DIES, _callersub()) unless utf8::downgrade($packed, 1);
     return $packed;
 }
@@ -680,7 +677,7 @@ character other than 0 to 9, or is a number too large for 128 bits.
 
 sub bcd2bin($;@) {
     _usage('s, ...', scalar @_);
-    my $bcd = _text($_[0]);
+    my $bcd = _packed_text($_[0]);
     _bcdcheck($bcd);
     @_ = ($bcd, 'NetAddr::IP::Util::bcd2bin');
     goto &_bcd2bin;
@@ -903,7 +900,7 @@ sub _bcdcheck {
 
 sub simple_pack($;@) {
     _usage('s, ...', scalar @_);
-    my $bcd = _text($_[0]);
+    my $bcd = _packed_text($_[0]);
     _bcdcheck($bcd);
     while (length($bcd) < $MAX_BCD_DIGITS) {
         $bcd = '0' . $bcd;
