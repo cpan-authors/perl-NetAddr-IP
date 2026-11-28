@@ -1,6 +1,8 @@
 Revision history for Perl extension NetAddr::IP
 
 {{$NEXT}}
+
+4.080_10  2026-11-28 13:24:38+11:00 Australia/Sydney (TRIAL RELEASE)
     - Fix GH#360: A release made with dzil release commits Changes, tags
       that commit and pushes both, so each release tag holds the release's
       own Changes entry.
